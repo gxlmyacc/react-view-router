@@ -38,8 +38,7 @@
     "prop-types": ">=15",
     "react": ">=16",
     "react-is": ">=16",
-    "react-router-dom": ">=5",
-    "regenerator-runtime": ">=0.13"
+    "react-router-dom": ">=5"
   },
   "devDependencies": {
     "@babel/core": "^7.5.4",
