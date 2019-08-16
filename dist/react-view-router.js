@@ -2912,7 +2912,8 @@ Object.defineProperty(exports, "__esModule", {
 var _exportNames = {
   RouterLink: true,
   RouterView: true,
-  useRouteGuards: true
+  useRouteGuards: true,
+  REACT_FORWARD_REF_TYPE: true
 };
 Object.defineProperty(exports, "RouterLink", {
   enumerable: true,
@@ -2930,6 +2931,12 @@ Object.defineProperty(exports, "useRouteGuards", {
   enumerable: true,
   get: function get() {
     return _routeGuard.useRouteGuards;
+  }
+});
+Object.defineProperty(exports, "REACT_FORWARD_REF_TYPE", {
+  enumerable: true,
+  get: function get() {
+    return _routeGuard.REACT_FORWARD_REF_TYPE;
   }
 });
 exports.default = void 0;
@@ -3075,11 +3082,17 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.useRouteGuards = useRouteGuards;
-exports.RouteCuards = exports.RouteComponentGuards = void 0;
+exports.RouteCuards = exports.REACT_FORWARD_REF_TYPE = void 0;
 
 var _react = _interopRequireDefault(__webpack_require__(/*! react */ "react"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -3095,27 +3108,12 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var RouteComponentGuards =
-/*#__PURE__*/
-function () {
-  function RouteComponentGuards(component, guards) {
-    _classCallCheck(this, RouteComponentGuards);
+var ForwardRefMeth = _react.default.forwardRef(function () {
+  return null;
+});
 
-    this.component = component;
-    this.guards = guards;
-  }
-
-  _createClass(RouteComponentGuards, [{
-    key: "render",
-    value: function render(props) {
-      return _react.default.createElement(this.component, props);
-    }
-  }]);
-
-  return RouteComponentGuards;
-}();
-
-exports.RouteComponentGuards = RouteComponentGuards;
+var REACT_FORWARD_REF_TYPE = ForwardRefMeth.$$typeof;
+exports.REACT_FORWARD_REF_TYPE = REACT_FORWARD_REF_TYPE;
 
 var RouteCuards =
 /*#__PURE__*/
@@ -3155,7 +3153,16 @@ exports.RouteCuards = RouteCuards;
 
 function useRouteGuards(component) {
   var guards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  return new RouteComponentGuards(component, new RouteCuards(guards || {}));
+  return {
+    $$typeof: ForwardRefMeth.$$typeof,
+    __guards: new RouteCuards(guards || {}),
+    __component: component,
+    render: function render(props, ref) {
+      return _react.default.createElement(component, _objectSpread({}, props, {
+        ref: ref
+      }));
+    }
+  };
 }
 
 /***/ }),
@@ -3820,6 +3827,7 @@ function () {
         var fr = from.matched[i];
         if (!fr || fr.path !== tr.path) return true;
         ret.push.apply(ret, _toConsumableArray(_this3._getComponentGurads(tr, 'beforeRouteUpdate')));
+        if (fr.config.beforeUpdate) ret.push(fr.config.beforeUpdate);
       });
       return ret;
     }
@@ -4057,8 +4065,6 @@ var _reactRouterDom = __webpack_require__(/*! react-router-dom */ "./node_module
 var _react = _interopRequireDefault(__webpack_require__(/*! react */ "react"));
 
 var _qs = _interopRequireDefault(__webpack_require__(/*! ./qs */ "./src/qs.js"));
-
-var _routeGuard = __webpack_require__(/*! ./route-guard */ "./src/route-guard.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -4316,12 +4322,12 @@ function lazyImport(importMethod) {
 }
 
 function resolveRouteGuards(c, route) {
-  if (c instanceof _routeGuard.RouteComponentGuards) {
+  if (c && c.__guards) {
     if (route) {
-      if (route.routeGuards) route.routeGuards.merge(c.guards);else route.routeGuards = c.guards;
+      if (route.routeGuards) route.routeGuards.merge(c.__guardss);else route.routeGuards = c.__guards;
     }
 
-    c = c.component;
+    c = c.__component;
   }
 
   return c;
@@ -4345,7 +4351,7 @@ function normalizeRoutes(routes, parent) {
 
     r.path = parent ? "".concat(parent.path).concat(r.path === '/' ? '' : "/".concat(r.path)) : r.path;
     if (parent) r.parent = parent;
-    if (r.children) r.children = normalizeRoutes(r.children, r);
+    if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
     if (r.exact === undefined && r.redirect) r.exact = true;
 
     if (r.component instanceof RouteLazy) {
@@ -4391,8 +4397,9 @@ function normalizeRoutePath(route, path) {
   return path;
 }
 
-function matchRoutes(routes, pathname, branch) {
+function matchRoutes(routes, pathname, branch, parent) {
   if (branch === undefined) branch = [];
+  if (isFunction(routes)) routes = routes(pathname, parent, branch);
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
@@ -4408,7 +4415,7 @@ function matchRoutes(routes, pathname, branch) {
           route: route,
           match: match
         });
-        if (route.children) matchRoutes(route.children, pathname, branch);
+        if (route.children) matchRoutes(route.children, pathname, branch, route);
       }
 
       if (match) break;

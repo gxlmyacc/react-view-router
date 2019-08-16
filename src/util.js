@@ -1,7 +1,6 @@
 import { matchPath, withRouter, Router, Route, Redirect, Switch } from 'react-router-dom';
 import React from 'react';
 import qs from './qs';
-import { RouteComponentGuards } from './route-guard';
 
 class RouterCache {
   constructor() {
@@ -70,12 +69,12 @@ export function lazyImport(importMethod) {
 }
 
 export function resolveRouteGuards(c, route) {
-  if (c instanceof RouteComponentGuards) {
+  if (c && c.__guards) {
     if (route) {
-      if (route.routeGuards) route.routeGuards.merge(c.guards);
-      else route.routeGuards = c.guards;
+      if (route.routeGuards) route.routeGuards.merge(c.__guardss);
+      else route.routeGuards = c.__guards;
     }
-    c = c.component;
+    c = c.__component;
   }
   return c;
 }
@@ -91,7 +90,7 @@ function normalizeRoutes(routes, parent) {
     let r = { ...route, subpath: route.path };
     r.path = parent ? `${parent.path}${r.path === '/' ? '' : `/${r.path}`}` : r.path;
     if (parent) r.parent = parent;
-    if (r.children) r.children = normalizeRoutes(r.children, r);
+    if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
     if (r.exact === undefined && r.redirect) r.exact = true;
     if (r.component instanceof RouteLazy) {
       r.component.updater = c => r.component = resolveRouteGuards(c, r);
@@ -127,8 +126,10 @@ function normalizeRoutePath(route, path) {
   return path;
 }
 
-function matchRoutes(routes, pathname, branch) {
+function matchRoutes(routes, pathname, branch, parent) {
   if (branch === undefined) branch = [];
+
+  if (isFunction(routes)) routes = routes(pathname, parent, branch);
 
   for (let route of routes) {
     let match = route.path
@@ -140,7 +141,7 @@ function matchRoutes(routes, pathname, branch) {
     if (match) {
       branch.push({ route,  match });
 
-      if (route.children) matchRoutes(route.children, pathname, branch);
+      if (route.children) matchRoutes(route.children, pathname, branch, route);
     }
     if (match) break;
   }

@@ -1,15 +1,7 @@
 import React from 'react';
 
-export class RouteComponentGuards {
-  constructor(component, guards) {
-    this.component = component;
-    this.guards = guards;
-  }
-
-  render(props) {
-    return React.createElement(this.component, props);
-  }
-}
+const ForwardRefMeth = React.forwardRef(() => null);
+export const REACT_FORWARD_REF_TYPE = ForwardRefMeth.$$typeof;
 
 export class RouteCuards {
   constructor(guards) {
@@ -29,5 +21,12 @@ export class RouteCuards {
 }
 
 export function useRouteGuards(component, guards = {}) {
-  return new RouteComponentGuards(component, new RouteCuards(guards || {}));
+  return {
+    $$typeof: ForwardRefMeth.$$typeof,
+    __guards: new RouteCuards(guards || {}),
+    __component: component,
+    render(props, ref) {
+      return React.createElement(component, { ...props, ref });
+    }
+  };
 }

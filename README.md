@@ -31,7 +31,6 @@ export default router;
 import { RouterView } from 'react-view-router';
 import router from './router';
 import routes from './routes';
-import { createHashHistory } from 'history';
 
 router.use({ routes });
 
@@ -154,6 +153,8 @@ const routes = normalizeRoutes([
         path: 'main',
         // lazy load
         component: lazyImport(() => import(/* webpackChunkName: "home" */ './home/main')),
+        // route meta infos
+        meta: { needLogin: true },
         children: [
           { path: '/', redirect: to => ({ path: 'some', query: { aa: 1, bb: 2 } }) },
           {
@@ -199,7 +200,7 @@ const routes = normalizeRoutes([
 
 ### Route Component Props
 
-Includes all props from `react-router` and the following props.
+Includes all props from `react-router-dom` and the following props.
 
 - `route` current route infos.
 - `parent` the RouterView instance.
@@ -207,6 +208,9 @@ Includes all props from `react-router` and the following props.
 ### RouterView Props
 
 - `name` Use for `Named Views`, see [vue-router instructions](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
+
+### RouterLink Component
+- `RouterLink` is `NavLink` component that in `react-router-dom`, just re-exported.
 
 ### ReactViewRouter Props
 - `currentRoute` current matched route infos:
@@ -227,6 +231,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 - `afterEach` [global After Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 - `push`、`replace`、`go`、`back`、`forward` [history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
+
 
 ## License
 
