@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 [![NPM downloads](https://img.shields.io/npm/dm/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 
-> Route configuration component for `react-router-dom`. write route config like vue-router in react. see: (https://router.vuejs.org/guide/essentials/nested-routes.html)
+> Route configuration component for `react-router-dom`. write route config like vue-router in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
 
 ## Installation
 
@@ -73,7 +73,7 @@ export default function HomeMainIndex() {
   )
 }
 ```
-`Named Views` see: (https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
+[Named Views](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
 
 ```javascript
 /// home/home/main/some/index.js
@@ -108,7 +108,7 @@ export default useRouteGuards(HomeMainSomeIndex, {
   },
 });
 ```
-`in-component-guards`, see: (https://router.vuejs.org/guide/advanced/navigation-guards.html#in-component-guards)
+[In Component Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#in-component-guards)
 
 ```javascript
 /// home/main/some/footer.js
@@ -179,7 +179,7 @@ const routes = normalizeRoutes([
   }
 ])
 ```
-`Per-Route Guard`, see: (https://router.vuejs.org/guide/advanced/navigation-guards.html#per-route-guard)
+[Per-Route Guard](https://router.vuejs.org/guide/advanced/navigation-guards.html#per-route-guard)
 
 
 ## APIs
@@ -192,7 +192,7 @@ const routes = normalizeRoutes([
 - `exact` Whether only matches with `location.pathname` exactly.
 - `redirect` Navigates to new location, can be string or function.
 - `children` Nested child routes.
-- `meta` some custom route infos, see: (https://router.vuejs.org/guide/advanced/meta.html).
+- `meta` some custom route infos, see: [Route Meta Fields](https://router.vuejs.org/guide/advanced/meta.html).
 - `props` Pass url params as a prop into route component.
 - `paramsProps` Pass url params as props into route component.
 - `queryProps` Pass url query as props into route component.
@@ -208,9 +208,27 @@ Includes all props from `react-router` and the following props.
 
 - `name` Use for `Named Views`, see [vue-router instructions](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
 
+### ReactViewRouter Props
+- `currentRoute` current matched route infos:
+```javascript
+{
+  path: String,
+  url: String,
+  isExart: Boolean,
+  matched: Array,
+  params: Object,
+  query: Object
+}
+```
+see: [Route Object Properties](https://router.vuejs.org/api/#route-object-properties)
+
 ### ReactViewRouter instance Methods
-- `beforeEach` global Before Guards see: (https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
-- `afterEach` global After Guards see: (https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
-- `push`、`replace`、`go`、`back`、`forward` history navigation methods, see:(https://router.vuejs.org/guide/essentials/navigation.html)
+- `beforeEach` [global Before Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
+- `afterEach` [global After Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
+- `push`、`replace`、`go`、`back`、`forward` [history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
+
+## License
+
+[MIT](./LICENSE)
 
