@@ -3576,7 +3576,7 @@ function (_React$Component) {
 
       if (currentRoute) currentRoute.componentInstance = ref;
       if (this.props && this.props._updateRef) this.props._updateRef(ref);
-      if (currentRoute.path !== this.state.currentRoute.path) this.setState({
+      if (currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({
         currentRoute: currentRoute
       });
     }
