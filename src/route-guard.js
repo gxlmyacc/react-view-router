@@ -7,6 +7,7 @@ export class RouteCuards {
   constructor(guards) {
     this.beforeRouteEnter = [];
     this.beforeRouteUpdate = [];
+    this.afterRouteEnter = [];
     this.beforeRouteLeave = [];
     this.afterRouteLeave = [];
     Object.keys(guards).forEach(key => this[key] && this[key].push(guards[key]));
@@ -21,12 +22,19 @@ export class RouteCuards {
 }
 
 export function useRouteGuards(component, guards = {}) {
-  return {
+  const ret = {
     $$typeof: ForwardRefMeth.$$typeof,
-    __guards: new RouteCuards(guards || {}),
-    __component: component,
     render(props, ref) {
       return React.createElement(component, { ...props, ref });
     }
   };
+  Object.defineProperty(ret, '__guards', {
+    enumerable: false,
+    value: new RouteCuards(guards || {}),
+  });
+  Object.defineProperty(ret, '__component', {
+    enumerable: false,
+    value: component,
+  });
+  return ret;
 }

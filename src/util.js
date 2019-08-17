@@ -1,72 +1,7 @@
 import { matchPath, withRouter, Router, Route, Redirect, Switch } from 'react-router-dom';
 import React from 'react';
 import qs from './qs';
-
-class RouterCache {
-  constructor() {
-    this.cached = {};
-    this.seed = 0;
-  }
-
-  create(data) {
-    const key = `[route_cache_id:${++this.seed}]`;
-    this.cached[key] = data;
-    return key;
-  }
-
-  flush(seed) {
-    if (!seed) return;
-    let ret = this.cached[seed];
-    delete this.cached[seed];
-    return ret;
-  }
-}
-
-export const routeCache = new RouterCache();
-
-export class RouteLazy {
-  constructor(importMethod) {
-    this.importMethod = importMethod;
-    this.resolved = false;
-    this.updater = null;
-  }
-
-  toResolve() {
-    return new Promise((resolve, reject) => {
-      let _resolve = v => {
-        if (this.updater) v = this.updater(v) || v;
-        this.resolved = true;
-        resolve(v);
-      };
-      let component = this.importMethod();
-      if (component instanceof Promise) {
-        component.then(c => {
-          component = c.__esModule ? c.default : c;
-          return _resolve(component);
-        }).catch(function () { return reject(arguments); });
-      } else _resolve(component);
-    });
-  }
-}
-
-export async function resolveRouteLazyList(matched) {
-  if (!matched) return;
-  const toResolve = function (routeLazy) {
-    if (!routeLazy || !(routeLazy instanceof RouteLazy)) return;
-    return routeLazy.toResolve();
-  };
-  for (let r of matched) {
-    const config = r.config;
-    await toResolve(config.component, config);
-    if (config.components) {
-      for (let key of config.components) await toResolve(config.components[key], config);
-    }
-  }
-}
-
-export function lazyImport(importMethod) {
-  return new RouteLazy(importMethod);
-}
+import { RouteLazy } from './route-lazy';
 
 export function resolveRouteGuards(c, route) {
   if (c && c.__guards) {
@@ -79,6 +14,33 @@ export function resolveRouteGuards(c, route) {
   return c;
 }
 
+function normalizeRoute(route, parent, index) {
+  if (route instanceof RouteLazy && parent && index > -1) {
+    route.updater = r => (parent.children && (parent.children[index] = r));
+    return route;
+  }
+  let r = { ...route, subpath: route.path };
+  r.path = parent ? `${parent.path}${r.path === '/' ? '' : `/${r.path}`}` : r.path;
+  if (parent) r.parent = parent;
+  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
+  if (r.exact === undefined && r.redirect) r.exact = true;
+  if (r.component instanceof RouteLazy) {
+    r.component.updater = c => r.component = resolveRouteGuards(c, r);
+  }
+  if (r.components) {
+    Object.keys(r.components).forEach(key => {
+      let comp = r.components[key];
+      if (comp instanceof RouteLazy) {
+        comp.updater = c => r.components[key] = resolveRouteGuards(c, r);
+      }
+    });
+  }
+  if (r.props) r.props = normalizeProps(r.props);
+  if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
+  if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
+  return r;
+}
+
 function normalizeRoutes(routes, parent) {
   if (!routes) routes = [];
   if (routes._normalized) return routes;
@@ -87,26 +49,7 @@ function normalizeRoutes(routes, parent) {
       route.updater = r => routes[routeIndex] = r;
       return;
     }
-    let r = { ...route, subpath: route.path };
-    r.path = parent ? `${parent.path}${r.path === '/' ? '' : `/${r.path}`}` : r.path;
-    if (parent) r.parent = parent;
-    if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
-    if (r.exact === undefined && r.redirect) r.exact = true;
-    if (r.component instanceof RouteLazy) {
-      r.component.updater = c => r.component = resolveRouteGuards(c, r);
-    }
-    if (r.components) {
-      Object.keys(r.components).forEach(key => {
-        let comp = r.components[key];
-        if (comp instanceof RouteLazy) {
-          comp.updater = c => r.components[key] = resolveRouteGuards(c, r);
-        }
-      });
-    }
-    if (r.props) r.props = normalizeProps(r.props);
-    if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
-    if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
-    return r;
+    return normalizeRoute(route, parent, routeIndex);
   });
   Object.defineProperty(ret, '_normalized', {
     enumerable: false,
@@ -116,8 +59,8 @@ function normalizeRoutes(routes, parent) {
   return ret;
 }
 
-function normalizeRoutePath(route, path) {
-  if (!path || path[0] === '/') return path;
+function normalizeRoutePath(path, route) {
+  if (!path || path[0] === '/' || !route) return path || '';
   let parent = route.parent;
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
@@ -126,36 +69,43 @@ function normalizeRoutePath(route, path) {
   return path;
 }
 
-function matchRoutes(routes, pathname, branch, parent) {
+function matchRoutes(routes, location, branch, parent) {
   if (branch === undefined) branch = [];
+  location = normalizeLocation(location);
 
-  if (isFunction(routes)) routes = routes(pathname, parent, branch);
+  if (isFunction(routes)) {
+    routes = normalizeRoutes(routes({
+      location,
+      parent,
+      branch,
+      prevChildren: parent && parent.prevChildren
+    }), parent);
+    if (parent) parent.prevChildren = routes;
+  }
 
   for (let route of routes) {
     let match = route.path
-      ? matchPath(pathname, route)
+      ? matchPath(location.path, route)
       : branch.length
         ? branch[branch.length - 1].match // use parent match
-        : Router.computeRootMatch(pathname); // use default "root" match
+        : Router.computeRootMatch(location.path); // use default "root" match
 
     if (match) {
       branch.push({ route,  match });
 
-      if (route.children) matchRoutes(route.children, pathname, branch, route);
+      if (route.children) matchRoutes(route.children, location, branch, route);
     }
     if (match) break;
   }
   return branch;
 }
 
-function normalizeLocation(location) {
-  if (typeof location === 'string') location = { path: location };
-  const { path, pathname, query, search, ...others } = location;
-  return {
-    pathname: path || pathname,
-    search: query ? qs.stringifyQuery(query) : (search || ''),
-    ...others
-  };
+function normalizeLocation(to, parent) {
+  if (!to) return to;
+  if (typeof to === 'string') to = { pathname: to };
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, parent);
+  to.search = to.search || (to.query ? qs.stringifyQuery(to.query) : '');
+  return to;
 }
 
 const _toString = Object.prototype.toString;
@@ -224,11 +174,16 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
     if (route.render) return route.render(Object.assign(_props, props, extraProps, { route }));
     component = resolveRouteGuards(component, route);
-
+    let ref = null;
+    if (component && component.prototype) {
+      if (component.prototype instanceof React.Component
+        || component.prototype.componentDidMount !== undefined) ref = options.ref;
+    }
     const ret = React.createElement(
       component,
       Object.assign(_props, props, extraProps, {
-        route
+        route,
+        ref
       })
     );
     // console.log('renderComp', route, ret);
@@ -240,9 +195,8 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       : route.exact;
     if (route.redirect) {
       let to = route.redirect;
-      if (typeof to === 'function') to = to(Object.assign({}, extraProps, { route }));
-      to = normalizeLocation(to);
-      to.pathname = normalizeRoutePath(route, to.pathname);
+      if (isFunction(to)) to = to({ ...extraProps, route });
+      to = normalizeLocation(to, route);
       return React.createElement(Redirect, {
         key: route.key || i,
         exact,
@@ -266,6 +220,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
 
 export {
   withRouter,
+  normalizeRoute,
   normalizeRoutes,
   normalizeRoutePath,
   normalizeLocation,

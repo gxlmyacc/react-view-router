@@ -1,6 +1,6 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { renderRoutes } from './util';
+import { renderRoutes, normalizeRoutes } from './util';
 
 class RouterView extends React.Component {
   constructor(props) {
@@ -16,6 +16,7 @@ class RouterView extends React.Component {
 
       router,
       parentRoute: null,
+      currentRoute: null,
       routes: router ? this.filterRoutes(router.routes) : [],
     };
     this.state = state;
@@ -25,9 +26,10 @@ class RouterView extends React.Component {
   }
 
   _updateRef(ref) {
-    const { parentRoute } = this.state;
-    if (parentRoute) parentRoute.componentInstance = ref;
+    let currentRoute = this._refreshCurrentRoute();
+    if (currentRoute) currentRoute.componentInstance = ref;
     if (this.props && this.props._updateRef) this.props._updateRef(ref);
+    if (currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({ currentRoute });
   }
 
   filterRoutes(routes) {
@@ -40,6 +42,16 @@ class RouterView extends React.Component {
         ? (r.components && r.components[name])
         : r.component || (r.components && r.components.default);
     });
+  }
+
+  _refreshCurrentRoute(state) {
+    if (!state) state = this.state;
+    const matched = state.router.currentRoute.matched;
+    const ret = matched.length > state._routerDepth
+      ? matched[state._routerDepth]
+      : null;
+    if (ret) ret.viewInstance = this;
+    return ret;
   }
 
   async componentDidMount() {
@@ -61,20 +73,20 @@ class RouterView extends React.Component {
       }
     }
 
-    if (!state.routes.length && state._routerDepth) {
-      // state.router.updateRoute();
+    if (!state.routes.length) {
       const matched = state.router.currentRoute.matched;
-      state.parentRoute = matched.length > state._routerDepth
-        ? matched[state._routerDepth - 1]
-        : null;
-      if (state.parentRoute) {
-        state.parentRoute.viewInstance = this;
+      state.currentRoute = this._refreshCurrentRoute(state);
+      if (state._routerDepth) {
+        // state.router.updateRoute();
+        state.parentRoute = matched.length >= state._routerDepth
+          ? matched[state._routerDepth - 1]
+          : null;
+        state.routes = state.parentRoute ? this.filterRoutes(state.parentRoute.config.children) : [];
       }
-      state.routes = state.parentRoute ? this.filterRoutes(state.parentRoute.config.children) : [];
     }
 
     if (state._routerRoot && state.router) {
-      state.router._handleRouteInterceptor(state.router.location, ok => ok && this.setState(state));
+      state.router._handleRouteInterceptor(state.router.location, ok => ok && this.setState(state), true);
     } else this.setState(state);
   }
 
@@ -82,8 +94,35 @@ class RouterView extends React.Component {
     return !nextProps.location || (nextProps.location.pathname !== this.props.location.pathname);
   }
 
+  push(routes) {
+    const state = { ...this.state };
+    state.routes.push(...normalizeRoutes(routes));
+    this.setState(state);
+  }
+
+  splice(index, routes) {
+    const state = { ...this.state };
+    state.routes.splice(index, routes.length, ...normalizeRoutes(routes));
+    this.setState(state);
+  }
+
+  indexOf(route) {
+    if (typeof route === 'string') route = { path: route };
+    const { routes } = this.state;
+    return routes.findIndex(r => r.path === route.path);
+  }
+
+  remove(route) {
+    if (typeof route === 'string') route = { path: route };
+    const { routes } = this.state;
+    const index = this.indexOf(route);
+    if (~index) routes.splice(index, 1);
+    this.setState({ routes });
+  }
+
   render() {
     const { routes, router, _routerRoot, _routerInited } = this.state;
+    // eslint-disable-next-line
     const { _updateRef, ...props } = this.props || {};
     if (!_routerInited) return props.fallback || null;
     const { query, params } = router.currentRoute;
@@ -92,10 +131,9 @@ class RouterView extends React.Component {
       {
         ...props,
         parent: this,
-        ref: _updateRef ? this._updateRef : undefined
       },
       { },
-      { name: props.name, query, params });
+      { name: props.name, query, params, ref: this._updateRef });
     let ret = null;
     if (_routerRoot) {
       ret = React.createElement(Router, { history: router }, _render());

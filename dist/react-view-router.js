@@ -2913,7 +2913,8 @@ var _exportNames = {
   RouterLink: true,
   RouterView: true,
   useRouteGuards: true,
-  REACT_FORWARD_REF_TYPE: true
+  REACT_FORWARD_REF_TYPE: true,
+  lazyImport: true
 };
 Object.defineProperty(exports, "RouterLink", {
   enumerable: true,
@@ -2939,6 +2940,12 @@ Object.defineProperty(exports, "REACT_FORWARD_REF_TYPE", {
     return _routeGuard.REACT_FORWARD_REF_TYPE;
   }
 });
+Object.defineProperty(exports, "lazyImport", {
+  enumerable: true,
+  get: function get() {
+    return _routeLazy.lazyImport;
+  }
+});
 exports.default = void 0;
 
 var _router = _interopRequireDefault(__webpack_require__(/*! ./router */ "./src/router.js"));
@@ -2948,6 +2955,8 @@ var _reactRouterDom = __webpack_require__(/*! react-router-dom */ "./node_module
 var _routerView = _interopRequireDefault(__webpack_require__(/*! ./router-view */ "./src/router-view.js"));
 
 var _routeGuard = __webpack_require__(/*! ./route-guard */ "./src/route-guard.js");
+
+var _routeLazy = __webpack_require__(/*! ./route-lazy */ "./src/route-lazy.js");
 
 var _util = __webpack_require__(/*! ./util */ "./src/util.js");
 
@@ -3068,6 +3077,63 @@ exports.default = _default;
 
 /***/ }),
 
+/***/ "./src/route-cache.js":
+/*!****************************!*\
+  !*** ./src/route-cache.js ***!
+  \****************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var RouterCache =
+/*#__PURE__*/
+function () {
+  function RouterCache() {
+    _classCallCheck(this, RouterCache);
+
+    this.cached = {};
+    this.seed = 0;
+  }
+
+  _createClass(RouterCache, [{
+    key: "create",
+    value: function create(data) {
+      var key = "[route_cache_id:".concat(++this.seed, "]");
+      this.cached[key] = data;
+      return key;
+    }
+  }, {
+    key: "flush",
+    value: function flush(seed) {
+      if (!seed) return;
+      var ret = this.cached[seed];
+      delete this.cached[seed];
+      return ret;
+    }
+  }]);
+
+  return RouterCache;
+}();
+
+var routeCache = new RouterCache();
+var _default = routeCache;
+exports.default = _default;
+
+/***/ }),
+
 /***/ "./src/route-guard.js":
 /*!****************************!*\
   !*** ./src/route-guard.js ***!
@@ -3125,6 +3191,7 @@ function () {
 
     this.beforeRouteEnter = [];
     this.beforeRouteUpdate = [];
+    this.afterRouteEnter = [];
     this.beforeRouteLeave = [];
     this.afterRouteLeave = [];
     Object.keys(guards).forEach(function (key) {
@@ -3153,16 +3220,256 @@ exports.RouteCuards = RouteCuards;
 
 function useRouteGuards(component) {
   var guards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  return {
+  var ret = {
     $$typeof: ForwardRefMeth.$$typeof,
-    __guards: new RouteCuards(guards || {}),
-    __component: component,
     render: function render(props, ref) {
       return _react.default.createElement(component, _objectSpread({}, props, {
         ref: ref
       }));
     }
   };
+  Object.defineProperty(ret, '__guards', {
+    enumerable: false,
+    value: new RouteCuards(guards || {})
+  });
+  Object.defineProperty(ret, '__component', {
+    enumerable: false,
+    value: component
+  });
+  return ret;
+}
+
+/***/ }),
+
+/***/ "./src/route-lazy.js":
+/*!***************************!*\
+  !*** ./src/route-lazy.js ***!
+  \***************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.resolveRouteLazyList = resolveRouteLazyList;
+exports.lazyImport = lazyImport;
+exports.RouteLazy = void 0;
+
+var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var RouteLazy =
+/*#__PURE__*/
+function () {
+  function RouteLazy(importMethod) {
+    _classCallCheck(this, RouteLazy);
+
+    this.importMethod = importMethod;
+    this.resolved = false;
+    this.updater = null;
+  }
+
+  _createClass(RouteLazy, [{
+    key: "toResolve",
+    value: function toResolve() {
+      var _this = this;
+
+      return new Promise(function (resolve, reject) {
+        var _resolve = function _resolve(v) {
+          if (_this.updater) v = _this.updater(v) || v;
+          _this.resolved = true;
+          resolve(v);
+        };
+
+        var component = _this.importMethod();
+
+        if (component instanceof Promise) {
+          component.then(function (c) {
+            component = c.__esModule ? c.default : c;
+            return _resolve(component);
+          }).catch(function () {
+            return reject(arguments);
+          });
+        } else _resolve(component);
+      });
+    }
+  }]);
+
+  return RouteLazy;
+}();
+
+exports.RouteLazy = RouteLazy;
+
+function resolveRouteLazyList(_x) {
+  return _resolveRouteLazyList.apply(this, arguments);
+}
+
+function _resolveRouteLazyList() {
+  _resolveRouteLazyList = _asyncToGenerator(
+  /*#__PURE__*/
+  _regenerator.default.mark(function _callee(matched) {
+    var toResolve, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, r, config, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, key;
+
+    return _regenerator.default.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            if (matched) {
+              _context.next = 2;
+              break;
+            }
+
+            return _context.abrupt("return");
+
+          case 2:
+            toResolve = function toResolve(routeLazy) {
+              if (!routeLazy || !(routeLazy instanceof RouteLazy)) return;
+              return routeLazy.toResolve();
+            };
+
+            _iteratorNormalCompletion = true;
+            _didIteratorError = false;
+            _iteratorError = undefined;
+            _context.prev = 6;
+            _iterator = matched[Symbol.iterator]();
+
+          case 8:
+            if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+              _context.next = 43;
+              break;
+            }
+
+            r = _step.value;
+            config = r.config;
+            _context.next = 13;
+            return toResolve(config.component, config);
+
+          case 13:
+            if (!config.components) {
+              _context.next = 40;
+              break;
+            }
+
+            _iteratorNormalCompletion2 = true;
+            _didIteratorError2 = false;
+            _iteratorError2 = undefined;
+            _context.prev = 17;
+            _iterator2 = config.components[Symbol.iterator]();
+
+          case 19:
+            if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
+              _context.next = 26;
+              break;
+            }
+
+            key = _step2.value;
+            _context.next = 23;
+            return toResolve(config.components[key], config);
+
+          case 23:
+            _iteratorNormalCompletion2 = true;
+            _context.next = 19;
+            break;
+
+          case 26:
+            _context.next = 32;
+            break;
+
+          case 28:
+            _context.prev = 28;
+            _context.t0 = _context["catch"](17);
+            _didIteratorError2 = true;
+            _iteratorError2 = _context.t0;
+
+          case 32:
+            _context.prev = 32;
+            _context.prev = 33;
+
+            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+              _iterator2.return();
+            }
+
+          case 35:
+            _context.prev = 35;
+
+            if (!_didIteratorError2) {
+              _context.next = 38;
+              break;
+            }
+
+            throw _iteratorError2;
+
+          case 38:
+            return _context.finish(35);
+
+          case 39:
+            return _context.finish(32);
+
+          case 40:
+            _iteratorNormalCompletion = true;
+            _context.next = 8;
+            break;
+
+          case 43:
+            _context.next = 49;
+            break;
+
+          case 45:
+            _context.prev = 45;
+            _context.t1 = _context["catch"](6);
+            _didIteratorError = true;
+            _iteratorError = _context.t1;
+
+          case 49:
+            _context.prev = 49;
+            _context.prev = 50;
+
+            if (!_iteratorNormalCompletion && _iterator.return != null) {
+              _iterator.return();
+            }
+
+          case 52:
+            _context.prev = 52;
+
+            if (!_didIteratorError) {
+              _context.next = 55;
+              break;
+            }
+
+            throw _iteratorError;
+
+          case 55:
+            return _context.finish(52);
+
+          case 56:
+            return _context.finish(49);
+
+          case 57:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, null, [[6, 45, 49, 57], [17, 28, 32, 40], [33,, 35, 39], [50,, 52, 56]]);
+  }));
+  return _resolveRouteLazyList.apply(this, arguments);
+}
+
+function lazyImport(importMethod) {
+  return new RouteLazy(importMethod);
 }
 
 /***/ }),
@@ -3197,6 +3504,14 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
 
 function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
@@ -3245,6 +3560,7 @@ function (_React$Component) {
       _routerInited: false,
       router: router,
       parentRoute: null,
+      currentRoute: null,
       routes: router ? _this.filterRoutes(router.routes) : []
     };
     _this.state = state;
@@ -3256,9 +3572,13 @@ function (_React$Component) {
   _createClass(RouterView, [{
     key: "_updateRef",
     value: function _updateRef(ref) {
-      var parentRoute = this.state.parentRoute;
-      if (parentRoute) parentRoute.componentInstance = ref;
+      var currentRoute = this._refreshCurrentRoute();
+
+      if (currentRoute) currentRoute.componentInstance = ref;
       if (this.props && this.props._updateRef) this.props._updateRef(ref);
+      if (currentRoute.path !== this.state.currentRoute.path) this.setState({
+        currentRoute: currentRoute
+      });
     }
   }, {
     key: "filterRoutes",
@@ -3270,6 +3590,15 @@ function (_React$Component) {
         if (r.redirect) return hasName ? name === r.name : !r.name;
         return hasName ? r.components && r.components[name] : r.component || r.components && r.components.default;
       });
+    }
+  }, {
+    key: "_refreshCurrentRoute",
+    value: function _refreshCurrentRoute(state) {
+      if (!state) state = this.state;
+      var matched = state.router.currentRoute.matched;
+      var ret = matched.length > state._routerDepth ? matched[state._routerDepth] : null;
+      if (ret) ret.viewInstance = this;
+      return ret;
     }
   }, {
     key: "componentDidMount",
@@ -3329,22 +3658,21 @@ function (_React$Component) {
                 break;
 
               case 17:
-                if (!state.routes.length && state._routerDepth) {
-                  // state.router.updateRoute();
+                if (!state.routes.length) {
                   matched = state.router.currentRoute.matched;
-                  state.parentRoute = matched.length > state._routerDepth ? matched[state._routerDepth - 1] : null;
+                  state.currentRoute = this._refreshCurrentRoute(state);
 
-                  if (state.parentRoute) {
-                    state.parentRoute.viewInstance = this;
+                  if (state._routerDepth) {
+                    // state.router.updateRoute();
+                    state.parentRoute = matched.length >= state._routerDepth ? matched[state._routerDepth - 1] : null;
+                    state.routes = state.parentRoute ? this.filterRoutes(state.parentRoute.config.children) : [];
                   }
-
-                  state.routes = state.parentRoute ? this.filterRoutes(state.parentRoute.config.children) : [];
                 }
 
                 if (state._routerRoot && state.router) {
                   state.router._handleRouteInterceptor(state.router.location, function (ok) {
                     return ok && _this2.setState(state);
-                  });
+                  }, true);
                 } else this.setState(state);
 
               case 19:
@@ -3367,6 +3695,52 @@ function (_React$Component) {
       return !nextProps.location || nextProps.location.pathname !== this.props.location.pathname;
     }
   }, {
+    key: "push",
+    value: function push(routes) {
+      var _state$routes;
+
+      var state = _objectSpread({}, this.state);
+
+      (_state$routes = state.routes).push.apply(_state$routes, _toConsumableArray((0, _util.normalizeRoutes)(routes)));
+
+      this.setState(state);
+    }
+  }, {
+    key: "splice",
+    value: function splice(index, routes) {
+      var _state$routes2;
+
+      var state = _objectSpread({}, this.state);
+
+      (_state$routes2 = state.routes).splice.apply(_state$routes2, [index, routes.length].concat(_toConsumableArray((0, _util.normalizeRoutes)(routes))));
+
+      this.setState(state);
+    }
+  }, {
+    key: "indexOf",
+    value: function indexOf(route) {
+      if (typeof route === 'string') route = {
+        path: route
+      };
+      var routes = this.state.routes;
+      return routes.findIndex(function (r) {
+        return r.path === route.path;
+      });
+    }
+  }, {
+    key: "remove",
+    value: function remove(route) {
+      if (typeof route === 'string') route = {
+        path: route
+      };
+      var routes = this.state.routes;
+      var index = this.indexOf(route);
+      if (~index) routes.splice(index, 1);
+      this.setState({
+        routes: routes
+      });
+    }
+  }, {
     key: "render",
     value: function render() {
       var _this3 = this;
@@ -3375,7 +3749,7 @@ function (_React$Component) {
           routes = _this$state.routes,
           router = _this$state.router,
           _routerRoot = _this$state._routerRoot,
-          _routerInited = _this$state._routerInited;
+          _routerInited = _this$state._routerInited; // eslint-disable-next-line
 
       var _ref = this.props || {},
           _updateRef = _ref._updateRef,
@@ -3388,12 +3762,12 @@ function (_React$Component) {
 
       var _render = function _render() {
         return (0, _util.renderRoutes)(routes, _objectSpread({}, props, {
-          parent: _this3,
-          ref: _updateRef ? _this3._updateRef : undefined
+          parent: _this3
         }), {}, {
           name: props.name,
           query: query,
-          params: params
+          params: params,
+          ref: _this3._updateRef
         });
       };
 
@@ -3446,6 +3820,10 @@ var _qs = _interopRequireDefault(__webpack_require__(/*! ./qs */ "./src/qs.js"))
 
 var _util = __webpack_require__(/*! ./util */ "./src/util.js");
 
+var _routeCache = _interopRequireDefault(__webpack_require__(/*! ./route-cache */ "./src/route-cache.js"));
+
+var _routeLazy = __webpack_require__(/*! ./route-lazy */ "./src/route-lazy.js");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
@@ -3486,7 +3864,7 @@ function _routetInterceptors() {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
-            _routetInterceptor = function _ref4() {
+            _routetInterceptor = function _ref5() {
               _routetInterceptor = _asyncToGenerator(
               /*#__PURE__*/
               _regenerator.default.mark(function _callee3(interceptor, index, to, from, next) {
@@ -3510,7 +3888,7 @@ function _routetInterceptors() {
                         return interceptor(to, from,
                         /*#__PURE__*/
                         function () {
-                          var _ref2 = _asyncToGenerator(
+                          var _ref3 = _asyncToGenerator(
                           /*#__PURE__*/
                           _regenerator.default.mark(function _callee2(f1) {
                             return _regenerator.default.wrap(function _callee2$(_context2) {
@@ -3570,7 +3948,7 @@ function _routetInterceptors() {
                           }));
 
                           return function (_x12) {
-                            return _ref2.apply(this, arguments);
+                            return _ref3.apply(this, arguments);
                           };
                         }());
 
@@ -3587,7 +3965,7 @@ function _routetInterceptors() {
               return _routetInterceptor.apply(this, arguments);
             };
 
-            routetInterceptor = function _ref3(_x7, _x8, _x9, _x10, _x11) {
+            routetInterceptor = function _ref4(_x7, _x8, _x9, _x10, _x11) {
               return _routetInterceptor.apply(this, arguments);
             };
 
@@ -3710,6 +4088,8 @@ function () {
         this.history = (0, _historyFix.createHashHistory)(options);
     }
 
+    this.mode = options.mode;
+    this.basename = options.basename;
     this.routes = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
@@ -3718,7 +4098,7 @@ function () {
       return _this.updateRoute(location);
     });
     this.history.block(function (location) {
-      return _util.routeCache.create(location);
+      return _routeCache.default.create(location);
     });
     Object.keys(this.history).forEach(function (key) {
       return !HISTORY_METHODS.includes(key) && (_this[key] = _this.history[key]);
@@ -3747,23 +4127,55 @@ function () {
   }, {
     key: "_getComponentGurads",
     value: function _getComponentGurads(r, guardName) {
+      var _ret;
+
       var ret = [];
+      var componentInstance = r.componentInstance;
       if (r.config) r = r.config;
       if (!r.routeGuards || !r.routeGuards[guardName] || !r.routeGuards[guardName].length) return ret;
-      ret.push.apply(ret, _toConsumableArray(r.routeGuards[guardName]));
+
+      (_ret = ret).push.apply(_ret, _toConsumableArray(r.routeGuards[guardName]));
+
+      if (componentInstance) ret = ret.map(function (v) {
+        return v.bind(componentInstance);
+      });
       return ret;
     }
   }, {
     key: "_getRouteComponentGurads",
-    value: function _getRouteComponentGurads(route, guardName) {
+    value: function _getRouteComponentGurads(matched, guardName) {
       var _this2 = this;
 
       var reverse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      var bindInstance = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
       var ret = [];
-      route.matched.forEach(function (r) {
-        return ret.push.apply(ret, _toConsumableArray(_this2._getComponentGurads(r, guardName)));
+      matched.forEach(function (r) {
+        var guards = _this2._getComponentGurads(r, guardName);
+
+        if (bindInstance && r.componentInstance) guards = guards.map(function (v) {
+          return v.bind(r.componentInstance);
+        });
+        ret.push.apply(ret, _toConsumableArray(guards));
       });
       return reverse ? ret.reverse() : ret;
+    }
+  }, {
+    key: "_getChangeMatched",
+    value: function _getChangeMatched(route, compare) {
+      var ret = [];
+      if (!compare) return _toConsumableArray(route.matched);
+      var start = false;
+      route && route.matched.some(function (tr, i) {
+        var fr = compare.matched[i];
+
+        if (!start) {
+          start = !fr || fr.path !== tr.path;
+          if (!start) return;
+        }
+
+        ret.push(tr);
+      });
+      return ret;
     }
   }, {
     key: "_getBeforeEachGuards",
@@ -3771,8 +4183,10 @@ function () {
       var ret = [];
 
       if (from) {
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(from, 'beforeRouteLeave', true)));
-        ret.push.apply(ret, _toConsumableArray(from.matched.filter(function (r) {
+        var fm = this._getChangeMatched(from, to);
+
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteLeave', true)));
+        ret.push.apply(ret, _toConsumableArray(fm.filter(function (r) {
           return r.config.beforeLeave;
         }).map(function (r) {
           return r.config.beforeLeave;
@@ -3780,8 +4194,10 @@ function () {
       }
 
       if (to) {
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(to, 'beforeRouteEnter')));
-        ret.push.apply(ret, _toConsumableArray(to.matched.filter(function (r) {
+        var tm = this._getChangeMatched(to, from);
+
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(tm, 'beforeRouteEnter')));
+        ret.push.apply(ret, _toConsumableArray(tm.filter(function (r) {
           return r.config.beforeEnter;
         }).map(function (r) {
           return r.config.beforeEnter;
@@ -3792,13 +4208,38 @@ function () {
       return ret;
     }
   }, {
+    key: "_getRouteUpdateGuards",
+    value: function _getRouteUpdateGuards(to, from) {
+      var _this3 = this;
+
+      var ret = [];
+      to && to.matched.some(function (tr, i) {
+        var _guards;
+
+        var guards = [];
+        var fr = from.matched[i];
+        if (!fr || fr.path !== tr.path) return true;
+        if (fr.config.beforeUpdate) guards.push(fr.config.beforeUpdate);
+
+        (_guards = guards).push.apply(_guards, _toConsumableArray(_this3._getComponentGurads(tr, 'beforeRouteUpdate')));
+
+        if (fr.componentInstance) guards = guards.map(function (v) {
+          return v.bind(fr.componentInstance);
+        });
+        ret.push.apply(ret, _toConsumableArray(guards));
+      });
+      return ret.reverse();
+    }
+  }, {
     key: "_getAfterEachGuards",
     value: function _getAfterEachGuards(to, from) {
       var ret = [];
 
       if (from) {
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(from, 'afterRouteLeave', true)));
-        ret.push.apply(ret, _toConsumableArray(from.matched.filter(function (r) {
+        var fm = this._getChangeMatched(from, to);
+
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'afterRouteLeave', true)));
+        ret.push.apply(ret, _toConsumableArray(fm.filter(function (r) {
           return r.config.afterLeave;
         }).map(function (r) {
           return r.config.afterLeave;
@@ -3806,8 +4247,10 @@ function () {
       }
 
       if (to) {
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(from, 'afterRouteEnter')));
-        ret.push.apply(ret, _toConsumableArray(from.matched.filter(function (r) {
+        var tm = this._getChangeMatched(to, from);
+
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(tm, 'afterRouteEnter')));
+        ret.push.apply(ret, _toConsumableArray(tm.filter(function (r) {
           return r.config.afterEnter;
         }).map(function (r) {
           return r.config.afterEnter;
@@ -3818,20 +4261,6 @@ function () {
       return ret;
     }
   }, {
-    key: "_getRouteUpdateGuards",
-    value: function _getRouteUpdateGuards(to, from) {
-      var _this3 = this;
-
-      var ret = [];
-      to.matched.some(function (tr, i) {
-        var fr = from.matched[i];
-        if (!fr || fr.path !== tr.path) return true;
-        ret.push.apply(ret, _toConsumableArray(_this3._getComponentGurads(tr, 'beforeRouteUpdate')));
-        if (fr.config.beforeUpdate) ret.push(fr.config.beforeUpdate);
-      });
-      return ret;
-    }
-  }, {
     key: "_handleRouteInterceptor",
     value: function () {
       var _handleRouteInterceptor2 = _asyncToGenerator(
@@ -3839,62 +4268,69 @@ function () {
       _regenerator.default.mark(function _callee(location, callback) {
         var _this4 = this;
 
-        var isContinue, to, from;
+        var isInit,
+            isContinue,
+            to,
+            from,
+            _args = arguments;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                if (typeof location === 'string') location = _util.routeCache.flush(location);
+                isInit = _args.length > 2 && _args[2] !== undefined ? _args[2] : false;
+                if (typeof location === 'string') location = _routeCache.default.flush(location);
 
                 if (location) {
-                  _context.next = 3;
+                  _context.next = 4;
                   break;
                 }
 
                 return _context.abrupt("return", callback(true));
 
-              case 3:
+              case 4:
                 isContinue = false;
-                _context.prev = 4;
-                to = this._createRoute(location);
-                from = this.currentRoute;
-                _context.next = 9;
-                return (0, _util.resolveRouteLazyList)(to && to.matched);
+                _context.prev = 5;
+                to = this.createRoute(location);
+                from = isInit ? null : this.currentRoute;
+                _context.next = 10;
+                return (0, _routeLazy.resolveRouteLazyList)(to && to.matched);
 
-              case 9:
+              case 10:
                 routetInterceptors(this._getBeforeEachGuards(to, from), to, from, function (ok) {
                   if (ok && typeof ok === 'string') ok = {
                     path: ok
                   };
-                  isContinue = Boolean(ok === undefined || ok && !(0, _util.isLocation)(ok));
+                  isContinue = Boolean(ok === undefined || ok && !(ok instanceof Error) && !(0, _util.isLocation)(ok));
                   callback(isContinue);
 
                   if (!isContinue) {
                     if ((0, _util.isLocation)(ok)) _this4.replace(ok);
-                    if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort((0, _util.isLocation)(ok) ? ok : undefined);
+                    if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
                     return;
                   }
 
-                  if ((0, _util.isFunction)(ok)) ok(to);
-                  if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
-                  routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
-                  routetInterceptors(_this4._getRouteUpdateGuards(to, from), to, from);
+                  _this4.nextTick(function () {
+                    if ((0, _util.isFunction)(ok)) ok(to);
+                    if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, from), to, from);
+                    if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
+                    routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
+                  });
                 });
-                _context.next = 16;
+                _context.next = 17;
                 break;
 
-              case 12:
-                _context.prev = 12;
-                _context.t0 = _context["catch"](4);
+              case 13:
+                _context.prev = 13;
+                _context.t0 = _context["catch"](5);
                 console.error(_context.t0);
                 if (!isContinue) callback(isContinue);
 
-              case 16:
+              case 17:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[4, 12]]);
+        }, _callee, this, [[5, 13]]);
       }));
 
       function _handleRouteInterceptor(_x5, _x6) {
@@ -3904,19 +4340,49 @@ function () {
       return _handleRouteInterceptor;
     }()
   }, {
-    key: "_createRoute",
-    value: function _createRoute(location) {
-      var matched = (0, _util.matchRoutes)(this.routes, location.pathname);
+    key: "nextTick",
+    value: function nextTick(cb, ctx) {
+      if (!cb) return;
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+          return resolve(ctx ? cb.call(ctx) : cb());
+        }, 0);
+      });
+    }
+  }, {
+    key: "createRoute",
+    value: function createRoute(to) {
+      var matched = (0, _util.matchRoutes)(this.routes, to);
       var last = matched.length ? matched[matched.length - 1] : null;
+      var from = this.currentRoute;
+
+      function copyInstance(to, from) {
+        if (!from) return;
+        if (from.componentInstance) to.componentInstance = from.componentInstance;
+        if (from.viewInstance) to.viewInstance = from.viewInstance;
+      }
+
       return last ? _objectSpread({}, last.match, {
-        query: location.search ? _qs.default.parseQuery(location.search.substr(1)) : {},
-        path: location.pathname,
-        matched: matched.map(function (v) {
+        query: to.search ? _qs.default.parseQuery(to.search.substr(1)) : {},
+        path: to.pathname,
+        fullPath: "".concat(to.path).concat(to.search),
+        matched: matched.map(function (_ref2, i) {
+          var route = _ref2.route;
           var ret = {};
-          Object.keys(v.route).forEach(function (key) {
-            return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = v.route[key]);
+          Object.keys(route).forEach(function (key) {
+            return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = route[key]);
           });
-          ret.config = v.route;
+          ret.config = route;
+
+          if (from) {
+            var fr = from.matched[i];
+            if (!i) copyInstance(ret, fr);else {
+              var pfr = from.matched[i - 1];
+              var ptr = matched[i - 1];
+              if (pfr && ptr && pfr.path === ptr.route.path) copyInstance(ret, fr);
+            }
+          }
+
           return ret;
         }),
         meta: last.route.meta || {}
@@ -3926,7 +4392,7 @@ function () {
     key: "updateRoute",
     value: function updateRoute(location) {
       if (!location) location = this.history.location;
-      this.currentRoute = this._createRoute(location);
+      this.currentRoute = this.createRoute(location);
     }
   }, {
     key: "push",
@@ -4032,12 +4498,11 @@ exports.default = ReactViewRouter;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.resolveRouteLazyList = resolveRouteLazyList;
-exports.lazyImport = lazyImport;
 exports.resolveRouteGuards = resolveRouteGuards;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
 exports.isLocation = isLocation;
+exports.normalizeRoute = normalizeRoute;
 exports.normalizeRoutes = normalizeRoutes;
 exports.normalizeRoutePath = normalizeRoutePath;
 exports.normalizeLocation = normalizeLocation;
@@ -4056,9 +4521,6 @@ Object.defineProperty(exports, "withRouter", {
     return _reactRouterDom.withRouter;
   }
 });
-exports.RouteLazy = exports.routeCache = void 0;
-
-var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js"));
 
 var _reactRouterDom = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router-dom/esm/react-router-dom.js");
 
@@ -4066,260 +4528,15 @@ var _react = _interopRequireDefault(__webpack_require__(/*! react */ "react"));
 
 var _qs = _interopRequireDefault(__webpack_require__(/*! ./qs */ "./src/qs.js"));
 
+var _routeLazy = __webpack_require__(/*! ./route-lazy */ "./src/route-lazy.js");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
-
-function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-var RouterCache =
-/*#__PURE__*/
-function () {
-  function RouterCache() {
-    _classCallCheck(this, RouterCache);
-
-    this.cached = {};
-    this.seed = 0;
-  }
-
-  _createClass(RouterCache, [{
-    key: "create",
-    value: function create(data) {
-      var key = "[route_cache_id:".concat(++this.seed, "]");
-      this.cached[key] = data;
-      return key;
-    }
-  }, {
-    key: "flush",
-    value: function flush(seed) {
-      if (!seed) return;
-      var ret = this.cached[seed];
-      delete this.cached[seed];
-      return ret;
-    }
-  }]);
-
-  return RouterCache;
-}();
-
-var routeCache = new RouterCache();
-exports.routeCache = routeCache;
-
-var RouteLazy =
-/*#__PURE__*/
-function () {
-  function RouteLazy(importMethod) {
-    _classCallCheck(this, RouteLazy);
-
-    this.importMethod = importMethod;
-    this.resolved = false;
-    this.updater = null;
-  }
-
-  _createClass(RouteLazy, [{
-    key: "toResolve",
-    value: function toResolve() {
-      var _this = this;
-
-      return new Promise(function (resolve, reject) {
-        var _resolve = function _resolve(v) {
-          if (_this.updater) v = _this.updater(v) || v;
-          _this.resolved = true;
-          resolve(v);
-        };
-
-        var component = _this.importMethod();
-
-        if (component instanceof Promise) {
-          component.then(function (c) {
-            component = c.__esModule ? c.default : c;
-            return _resolve(component);
-          }).catch(function () {
-            return reject(arguments);
-          });
-        } else _resolve(component);
-      });
-    }
-  }]);
-
-  return RouteLazy;
-}();
-
-exports.RouteLazy = RouteLazy;
-
-function resolveRouteLazyList(_x) {
-  return _resolveRouteLazyList.apply(this, arguments);
-}
-
-function _resolveRouteLazyList() {
-  _resolveRouteLazyList = _asyncToGenerator(
-  /*#__PURE__*/
-  _regenerator.default.mark(function _callee(matched) {
-    var toResolve, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, r, config, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, key;
-
-    return _regenerator.default.wrap(function _callee$(_context) {
-      while (1) {
-        switch (_context.prev = _context.next) {
-          case 0:
-            if (matched) {
-              _context.next = 2;
-              break;
-            }
-
-            return _context.abrupt("return");
-
-          case 2:
-            toResolve = function toResolve(routeLazy) {
-              if (!routeLazy || !(routeLazy instanceof RouteLazy)) return;
-              return routeLazy.toResolve();
-            };
-
-            _iteratorNormalCompletion2 = true;
-            _didIteratorError2 = false;
-            _iteratorError2 = undefined;
-            _context.prev = 6;
-            _iterator2 = matched[Symbol.iterator]();
-
-          case 8:
-            if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-              _context.next = 43;
-              break;
-            }
-
-            r = _step2.value;
-            config = r.config;
-            _context.next = 13;
-            return toResolve(config.component, config);
-
-          case 13:
-            if (!config.components) {
-              _context.next = 40;
-              break;
-            }
-
-            _iteratorNormalCompletion3 = true;
-            _didIteratorError3 = false;
-            _iteratorError3 = undefined;
-            _context.prev = 17;
-            _iterator3 = config.components[Symbol.iterator]();
-
-          case 19:
-            if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
-              _context.next = 26;
-              break;
-            }
-
-            key = _step3.value;
-            _context.next = 23;
-            return toResolve(config.components[key], config);
-
-          case 23:
-            _iteratorNormalCompletion3 = true;
-            _context.next = 19;
-            break;
-
-          case 26:
-            _context.next = 32;
-            break;
-
-          case 28:
-            _context.prev = 28;
-            _context.t0 = _context["catch"](17);
-            _didIteratorError3 = true;
-            _iteratorError3 = _context.t0;
-
-          case 32:
-            _context.prev = 32;
-            _context.prev = 33;
-
-            if (!_iteratorNormalCompletion3 && _iterator3.return != null) {
-              _iterator3.return();
-            }
-
-          case 35:
-            _context.prev = 35;
-
-            if (!_didIteratorError3) {
-              _context.next = 38;
-              break;
-            }
-
-            throw _iteratorError3;
-
-          case 38:
-            return _context.finish(35);
-
-          case 39:
-            return _context.finish(32);
-
-          case 40:
-            _iteratorNormalCompletion2 = true;
-            _context.next = 8;
-            break;
-
-          case 43:
-            _context.next = 49;
-            break;
-
-          case 45:
-            _context.prev = 45;
-            _context.t1 = _context["catch"](6);
-            _didIteratorError2 = true;
-            _iteratorError2 = _context.t1;
-
-          case 49:
-            _context.prev = 49;
-            _context.prev = 50;
-
-            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-              _iterator2.return();
-            }
-
-          case 52:
-            _context.prev = 52;
-
-            if (!_didIteratorError2) {
-              _context.next = 55;
-              break;
-            }
-
-            throw _iteratorError2;
-
-          case 55:
-            return _context.finish(52);
-
-          case 56:
-            return _context.finish(49);
-
-          case 57:
-          case "end":
-            return _context.stop();
-        }
-      }
-    }, _callee, null, [[6, 45, 49, 57], [17, 28, 32, 40], [33,, 35, 39], [50,, 52, 56]]);
-  }));
-  return _resolveRouteLazyList.apply(this, arguments);
-}
-
-function lazyImport(importMethod) {
-  return new RouteLazy(importMethod);
-}
 
 function resolveRouteGuards(c, route) {
   if (c && c.__guards) {
@@ -4333,11 +4550,53 @@ function resolveRouteGuards(c, route) {
   return c;
 }
 
+function normalizeRoute(route, parent, index) {
+  if (route instanceof _routeLazy.RouteLazy && parent && index > -1) {
+    route.updater = function (r) {
+      return parent.children && (parent.children[index] = r);
+    };
+
+    return route;
+  }
+
+  var r = _objectSpread({}, route, {
+    subpath: route.path
+  });
+
+  r.path = parent ? "".concat(parent.path).concat(r.path === '/' ? '' : "/".concat(r.path)) : r.path;
+  if (parent) r.parent = parent;
+  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
+  if (r.exact === undefined && r.redirect) r.exact = true;
+
+  if (r.component instanceof _routeLazy.RouteLazy) {
+    r.component.updater = function (c) {
+      return r.component = resolveRouteGuards(c, r);
+    };
+  }
+
+  if (r.components) {
+    Object.keys(r.components).forEach(function (key) {
+      var comp = r.components[key];
+
+      if (comp instanceof _routeLazy.RouteLazy) {
+        comp.updater = function (c) {
+          return r.components[key] = resolveRouteGuards(c, r);
+        };
+      }
+    });
+  }
+
+  if (r.props) r.props = normalizeProps(r.props);
+  if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
+  if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
+  return r;
+}
+
 function normalizeRoutes(routes, parent) {
   if (!routes) routes = [];
   if (routes._normalized) return routes;
   var ret = routes.map(function (route, routeIndex) {
-    if (route instanceof RouteLazy) {
+    if (route instanceof _routeLazy.RouteLazy) {
       route.updater = function (r) {
         return routes[routeIndex] = r;
       };
@@ -4345,37 +4604,7 @@ function normalizeRoutes(routes, parent) {
       return;
     }
 
-    var r = _objectSpread({}, route, {
-      subpath: route.path
-    });
-
-    r.path = parent ? "".concat(parent.path).concat(r.path === '/' ? '' : "/".concat(r.path)) : r.path;
-    if (parent) r.parent = parent;
-    if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
-    if (r.exact === undefined && r.redirect) r.exact = true;
-
-    if (r.component instanceof RouteLazy) {
-      r.component.updater = function (c) {
-        return r.component = resolveRouteGuards(c, r);
-      };
-    }
-
-    if (r.components) {
-      Object.keys(r.components).forEach(function (key) {
-        var comp = r.components[key];
-
-        if (comp instanceof RouteLazy) {
-          comp.updater = function (c) {
-            return r.components[key] = resolveRouteGuards(c, r);
-          };
-        }
-      });
-    }
-
-    if (r.props) r.props = normalizeProps(r.props);
-    if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
-    if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
-    return r;
+    return normalizeRoute(route, parent, routeIndex);
   });
   Object.defineProperty(ret, '_normalized', {
     enumerable: false,
@@ -4385,8 +4614,8 @@ function normalizeRoutes(routes, parent) {
   return ret;
 }
 
-function normalizeRoutePath(route, path) {
-  if (!path || path[0] === '/') return path;
+function normalizeRoutePath(path, route) {
+  if (!path || path[0] === '/' || !route) return path || '';
   var parent = route.parent;
 
   while (parent && path[0] !== '/') {
@@ -4397,9 +4626,20 @@ function normalizeRoutePath(route, path) {
   return path;
 }
 
-function matchRoutes(routes, pathname, branch, parent) {
+function matchRoutes(routes, location, branch, parent) {
   if (branch === undefined) branch = [];
-  if (isFunction(routes)) routes = routes(pathname, parent, branch);
+  location = normalizeLocation(location);
+
+  if (isFunction(routes)) {
+    routes = normalizeRoutes(routes({
+      location: location,
+      parent: parent,
+      branch: branch,
+      prevChildren: parent && parent.prevChildren
+    }), parent);
+    if (parent) parent.prevChildren = routes;
+  }
+
   var _iteratorNormalCompletion = true;
   var _didIteratorError = false;
   var _iteratorError = undefined;
@@ -4407,15 +4647,15 @@ function matchRoutes(routes, pathname, branch, parent) {
   try {
     for (var _iterator = routes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var route = _step.value;
-      var match = route.path ? (0, _reactRouterDom.matchPath)(pathname, route) : branch.length ? branch[branch.length - 1].match // use parent match
-      : _reactRouterDom.Router.computeRootMatch(pathname); // use default "root" match
+      var match = route.path ? (0, _reactRouterDom.matchPath)(location.path, route) : branch.length ? branch[branch.length - 1].match // use parent match
+      : _reactRouterDom.Router.computeRootMatch(location.path); // use default "root" match
 
       if (match) {
         branch.push({
           route: route,
           match: match
         });
-        if (route.children) matchRoutes(route.children, pathname, branch, route);
+        if (route.children) matchRoutes(route.children, location, branch, route);
       }
 
       if (match) break;
@@ -4438,22 +4678,14 @@ function matchRoutes(routes, pathname, branch, parent) {
   return branch;
 }
 
-function normalizeLocation(location) {
-  if (typeof location === 'string') location = {
-    path: location
+function normalizeLocation(to, parent) {
+  if (!to) return to;
+  if (typeof to === 'string') to = {
+    pathname: to
   };
-
-  var _location = location,
-      path = _location.path,
-      pathname = _location.pathname,
-      query = _location.query,
-      search = _location.search,
-      others = _objectWithoutProperties(_location, ["path", "pathname", "query", "search"]);
-
-  return _objectSpread({
-    pathname: path || pathname,
-    search: query ? _qs.default.stringifyQuery(query) : search || ''
-  }, others);
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, parent);
+  to.search = to.search || (to.query ? _qs.default.stringifyQuery(to.query) : '');
+  return to;
 }
 
 var _toString = Object.prototype.toString;
@@ -4533,9 +4765,15 @@ function renderRoutes(routes, extraProps, switchProps) {
       route: route
     }));
     component = resolveRouteGuards(component, route);
+    var ref = null;
+
+    if (component && component.prototype) {
+      if (component.prototype instanceof _react.default.Component || component.prototype.componentDidMount !== undefined) ref = options.ref;
+    }
 
     var ret = _react.default.createElement(component, Object.assign(_props, props, extraProps, {
-      route: route
+      route: route,
+      ref: ref
     })); // console.log('renderComp', route, ret);
 
 
@@ -4547,11 +4785,10 @@ function renderRoutes(routes, extraProps, switchProps) {
 
     if (route.redirect) {
       var to = route.redirect;
-      if (typeof to === 'function') to = to(Object.assign({}, extraProps, {
+      if (isFunction(to)) to = to(_objectSpread({}, extraProps, {
         route: route
       }));
-      to = normalizeLocation(to);
-      to.pathname = normalizeRoutePath(route, to.pathname);
+      to = normalizeLocation(to, route);
       return _react.default.createElement(_reactRouterDom.Redirect, {
         key: route.key || i,
         exact: exact,
