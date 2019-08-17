@@ -159,8 +159,8 @@ const routes = normalizeRoutes([
           { path: '/', redirect: to => ({ path: 'some', query: { aa: 1, bb: 2 } }) },
           {
             path: 'some',
-            component: lazyImport(() => import(/* webpackChunkName: "home" */ './home/main/some')),
             components: {
+              default: lazyImport(() => import(/* webpackChunkName: "home" */ './home/main/some')),
               footer: lazyImport(() => import(/* webpackChunkName: "home" */ './home/main/some/footer.js')),
             }
             // route guards:

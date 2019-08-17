@@ -2,8 +2,9 @@ import { matchPath, withRouter, Router, Route, Redirect, Switch } from 'react-ro
 import React from 'react';
 import qs from './qs';
 import { RouteLazy } from './route-lazy';
+import { REACT_FORWARD_REF_TYPE } from './route-guard';
 
-export function resolveRouteGuards(c, route) {
+function resolveRouteGuards(c, route) {
   if (c && c.__guards) {
     if (route) {
       if (route.routeGuards) route.routeGuards.merge(c.__guardss);
@@ -23,7 +24,9 @@ function normalizeRoute(route, parent, index) {
   r.path = parent ? `${parent.path}${r.path === '/' ? '' : `/${r.path}`}` : r.path;
   if (parent) r.parent = parent;
   if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
-  if (r.exact === undefined && r.redirect) r.exact = true;
+  r.exact = r.exact === undefined
+    ? Boolean(!r.children || !r.children.length)
+    : r.exact;
   if (r.component instanceof RouteLazy) {
     r.component.updater = c => r.component = resolveRouteGuards(c, r);
   }
@@ -109,14 +112,14 @@ function normalizeLocation(to, parent) {
 }
 
 const _toString = Object.prototype.toString;
-export function isPlainObject(obj) {
+function isPlainObject(obj) {
   return _toString.call(obj) === '[object Object]';
 }
-export function isFunction(value) {
+function isFunction(value) {
   return typeof value === 'function';
 }
 
-export function isLocation(v) {
+function isLocation(v) {
   return isPlainObject(v) && (v.path || v.pathname);
 }
 
@@ -175,9 +178,11 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     if (route.render) return route.render(Object.assign(_props, props, extraProps, { route }));
     component = resolveRouteGuards(component, route);
     let ref = null;
-    if (component && component.prototype) {
-      if (component.prototype instanceof React.Component
-        || component.prototype.componentDidMount !== undefined) ref = options.ref;
+    if (component) {
+      if (component.prototype) {
+        if (component.prototype instanceof React.Component
+          || component.prototype.componentDidMount !== undefined) ref = options.ref;
+      } else if (component.$$typeof === REACT_FORWARD_REF_TYPE) ref = options.ref;
     }
     const ret = React.createElement(
       component,
@@ -190,16 +195,13 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     return ret;
   }
   const ret = routes ? React.createElement(Switch, switchProps, routes.map(function (route, i) {
-    const exact = route.exact === undefined
-      ? Boolean(!route.children || !route.children.length)
-      : route.exact;
     if (route.redirect) {
       let to = route.redirect;
       if (isFunction(to)) to = to({ ...extraProps, route });
       to = normalizeLocation(to, route);
       return React.createElement(Redirect, {
         key: route.key || i,
-        exact,
+        exact: route.exact,
         strict: route.strict,
         from: route.path,
         to,
@@ -209,7 +211,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     return React.createElement(Route, {
       key: route.key || i,
       path: route.path,
-      exact,
+      exact: route.exact,
       strict: route.strict,
       render: props => renderComp(route, component, props, options)
     });
@@ -219,6 +221,9 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
 
 
 export {
+  isPlainObject,
+  isFunction,
+  isLocation,
   withRouter,
   normalizeRoute,
   normalizeRoutes,
@@ -227,5 +232,6 @@ export {
   normalizeProps,
   matchPath,
   matchRoutes,
-  renderRoutes
+  renderRoutes,
+  resolveRouteGuards
 };

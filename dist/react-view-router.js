@@ -4498,7 +4498,6 @@ exports.default = ReactViewRouter;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.resolveRouteGuards = resolveRouteGuards;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
 exports.isLocation = isLocation;
@@ -4509,6 +4508,7 @@ exports.normalizeLocation = normalizeLocation;
 exports.normalizeProps = normalizeProps;
 exports.matchRoutes = matchRoutes;
 exports.renderRoutes = renderRoutes;
+exports.resolveRouteGuards = resolveRouteGuards;
 Object.defineProperty(exports, "matchPath", {
   enumerable: true,
   get: function get() {
@@ -4529,6 +4529,8 @@ var _react = _interopRequireDefault(__webpack_require__(/*! react */ "react"));
 var _qs = _interopRequireDefault(__webpack_require__(/*! ./qs */ "./src/qs.js"));
 
 var _routeLazy = __webpack_require__(/*! ./route-lazy */ "./src/route-lazy.js");
+
+var _routeGuard = __webpack_require__(/*! ./route-guard */ "./src/route-guard.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -4566,7 +4568,7 @@ function normalizeRoute(route, parent, index) {
   r.path = parent ? "".concat(parent.path).concat(r.path === '/' ? '' : "/".concat(r.path)) : r.path;
   if (parent) r.parent = parent;
   if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
-  if (r.exact === undefined && r.redirect) r.exact = true;
+  r.exact = r.exact === undefined ? Boolean(!r.children || !r.children.length) : r.exact;
 
   if (r.component instanceof _routeLazy.RouteLazy) {
     r.component.updater = function (c) {
@@ -4767,8 +4769,10 @@ function renderRoutes(routes, extraProps, switchProps) {
     component = resolveRouteGuards(component, route);
     var ref = null;
 
-    if (component && component.prototype) {
-      if (component.prototype instanceof _react.default.Component || component.prototype.componentDidMount !== undefined) ref = options.ref;
+    if (component) {
+      if (component.prototype) {
+        if (component.prototype instanceof _react.default.Component || component.prototype.componentDidMount !== undefined) ref = options.ref;
+      } else if (component.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE) ref = options.ref;
     }
 
     var ret = _react.default.createElement(component, Object.assign(_props, props, extraProps, {
@@ -4781,8 +4785,6 @@ function renderRoutes(routes, extraProps, switchProps) {
   }
 
   var ret = routes ? _react.default.createElement(_reactRouterDom.Switch, switchProps, routes.map(function (route, i) {
-    var exact = route.exact === undefined ? Boolean(!route.children || !route.children.length) : route.exact;
-
     if (route.redirect) {
       var to = route.redirect;
       if (isFunction(to)) to = to(_objectSpread({}, extraProps, {
@@ -4791,7 +4793,7 @@ function renderRoutes(routes, extraProps, switchProps) {
       to = normalizeLocation(to, route);
       return _react.default.createElement(_reactRouterDom.Redirect, {
         key: route.key || i,
-        exact: exact,
+        exact: route.exact,
         strict: route.strict,
         from: route.path,
         to: to
@@ -4802,7 +4804,7 @@ function renderRoutes(routes, extraProps, switchProps) {
     return _react.default.createElement(_reactRouterDom.Route, {
       key: route.key || i,
       path: route.path,
-      exact: exact,
+      exact: route.exact,
       strict: route.strict,
       render: function render(props) {
         return renderComp(route, component, props, options);
