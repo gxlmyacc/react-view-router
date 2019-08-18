@@ -3148,11 +3148,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.useRouteGuards = useRouteGuards;
-exports.RouteCuards = exports.REACT_FORWARD_REF_TYPE = void 0;
+exports.RouteCuards = exports.REACT_LAZY_TYPE = exports.REACT_FORWARD_REF_TYPE = void 0;
 
-var _react = _interopRequireDefault(__webpack_require__(/*! react */ "react"));
+var _react = _interopRequireWildcard(__webpack_require__(/*! react */ "react"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
@@ -3180,13 +3180,14 @@ var ForwardRefMeth = _react.default.forwardRef(function () {
 
 var REACT_FORWARD_REF_TYPE = ForwardRefMeth.$$typeof;
 exports.REACT_FORWARD_REF_TYPE = REACT_FORWARD_REF_TYPE;
+var LazyMeth = (0, _react.lazy)(function () {});
+var REACT_LAZY_TYPE = LazyMeth.$$typeof;
+exports.REACT_LAZY_TYPE = REACT_LAZY_TYPE;
 
 var RouteCuards =
 /*#__PURE__*/
 function () {
   function RouteCuards(guards) {
-    var _this = this;
-
     _classCallCheck(this, RouteCuards);
 
     this.beforeRouteEnter = [];
@@ -3194,21 +3195,20 @@ function () {
     this.afterRouteEnter = [];
     this.beforeRouteLeave = [];
     this.afterRouteLeave = [];
-    Object.keys(guards).forEach(function (key) {
-      return _this[key] && _this[key].push(guards[key]);
-    });
+    this.merge(guards || {});
   }
 
   _createClass(RouteCuards, [{
     key: "merge",
     value: function merge(guards) {
-      var _this2 = this;
+      var _this = this;
 
+      if (!guards) return;
       Object.keys(guards).forEach(function (key) {
-        var _this2$key;
-
-        if (!_this2[key]) return;
-        if (guards[key]) (_this2$key = _this2[key]).push.apply(_this2$key, _toConsumableArray(guards[key]));
+        var guard = _this[key];
+        var v = guards[key];
+        if (!guard) return;
+        if (Array.isArray(v)) guard.push.apply(guard, _toConsumableArray(v));else guard.push(v);
       });
     }
   }]);
@@ -3221,7 +3221,7 @@ exports.RouteCuards = RouteCuards;
 function useRouteGuards(component) {
   var guards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   var ret = {
-    $$typeof: ForwardRefMeth.$$typeof,
+    $$typeof: REACT_FORWARD_REF_TYPE,
     render: function render(props, ref) {
       return _react.default.createElement(component, _objectSpread({}, props, {
         ref: ref
@@ -3229,11 +3229,9 @@ function useRouteGuards(component) {
     }
   };
   Object.defineProperty(ret, '__guards', {
-    enumerable: false,
-    value: new RouteCuards(guards || {})
+    value: new RouteCuards(guards)
   });
   Object.defineProperty(ret, '__component', {
-    enumerable: false,
     value: component
   });
   return ret;
@@ -3260,6 +3258,8 @@ exports.RouteLazy = void 0;
 
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ "./node_modules/@babel/runtime/regenerator/index.js"));
 
+var _routeGuard = __webpack_require__(/*! ./route-guard */ "./src/route-guard.js");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
@@ -3275,12 +3275,26 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var RouteLazy =
 /*#__PURE__*/
 function () {
-  function RouteLazy(importMethod) {
+  function RouteLazy(ctor) {
     _classCallCheck(this, RouteLazy);
 
-    this.importMethod = importMethod;
-    this.resolved = false;
-    this.updater = null;
+    this.$$typeof = _routeGuard.REACT_LAZY_TYPE;
+    this._ctor = ctor;
+    this._status = -1;
+    this._result = null;
+    this.defaultProps = undefined;
+    this.propTypes = undefined;
+    Object.defineProperty(this, 'resolved', {
+      writable: true,
+      value: false
+    });
+    Object.defineProperty(this, 'updater', {
+      writable: true,
+      value: null
+    });
+    Object.defineProperty(this, 'toResolve', {
+      value: this.toResolve
+    });
   }
 
   _createClass(RouteLazy, [{
@@ -3295,7 +3309,7 @@ function () {
           resolve(v);
         };
 
-        var component = _this.importMethod();
+        var component = _this._ctor();
 
         if (component instanceof Promise) {
           component.then(function (c) {
@@ -3561,11 +3575,11 @@ function (_React$Component) {
       router: router,
       parentRoute: null,
       currentRoute: null,
-      routes: router ? _this.filterRoutes(router.routes) : []
+      routes: router ? _this._filterRoutes(router.routes) : []
     };
     _this.state = state;
     _this._updateRef = _this._updateRef.bind(_assertThisInitialized(_this));
-    _this.filterRoutes = _this.filterRoutes.bind(_assertThisInitialized(_this));
+    _this._filterRoutes = _this._filterRoutes.bind(_assertThisInitialized(_this));
     return _this;
   }
 
@@ -3581,8 +3595,8 @@ function (_React$Component) {
       });
     }
   }, {
-    key: "filterRoutes",
-    value: function filterRoutes(routes) {
+    key: "_filterRoutes",
+    value: function _filterRoutes(routes) {
       var name = this.props.name;
       return routes.filter(function (r) {
         if (r.config) r = r.config;
@@ -3665,11 +3679,13 @@ function (_React$Component) {
                   if (state._routerDepth) {
                     // state.router.updateRoute();
                     state.parentRoute = matched.length >= state._routerDepth ? matched[state._routerDepth - 1] : null;
-                    state.routes = state.parentRoute ? this.filterRoutes(state.parentRoute.config.children) : [];
+                    state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
                   }
                 }
 
                 if (state._routerRoot && state.router) {
+                  state.router.viewRoot = this;
+
                   state.router._handleRouteInterceptor(state.router.location, function (ok) {
                     return ok && _this2.setState(state);
                   }, true);
@@ -3688,33 +3704,44 @@ function (_React$Component) {
       }
 
       return componentDidMount;
-    }()
-  }, {
-    key: "shouldComponentUpdate",
-    value: function shouldComponentUpdate(nextProps, nextState) {
-      return !nextProps.location || nextProps.location.pathname !== this.props.location.pathname;
-    }
+    }() // shouldComponentUpdate(nextProps, nextState) {
+    //   const nr = nextState.currentRoute;
+    //   const cr = this.state.currentRoute;
+    //   if (nr && cr) return nr.path !== cr.path;
+    //   return !this.state._routerInited || nr !== cr;
+    // }
+
   }, {
     key: "push",
-    value: function push(routes) {
+    value: function push() {
       var _state$routes;
 
       var state = _objectSpread({}, this.state);
 
-      (_state$routes = state.routes).push.apply(_state$routes, _toConsumableArray((0, _util.normalizeRoutes)(routes)));
+      for (var _len = arguments.length, routes = new Array(_len), _key = 0; _key < _len; _key++) {
+        routes[_key] = arguments[_key];
+      }
+
+      (_state$routes = state.routes).push.apply(_state$routes, _toConsumableArray((0, _util.normalizeRoutes)(routes, state.parentRoute)));
 
       this.setState(state);
+      return state.routes;
     }
   }, {
     key: "splice",
-    value: function splice(index, routes) {
+    value: function splice(idx, len) {
       var _state$routes2;
 
       var state = _objectSpread({}, this.state);
 
-      (_state$routes2 = state.routes).splice.apply(_state$routes2, [index, routes.length].concat(_toConsumableArray((0, _util.normalizeRoutes)(routes))));
+      for (var _len2 = arguments.length, routes = new Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
+        routes[_key2 - 2] = arguments[_key2];
+      }
+
+      (_state$routes2 = state.routes).splice.apply(_state$routes2, [idx, len].concat(_toConsumableArray((0, _util.normalizeRoutes)(routes, state.parentRoute))));
 
       this.setState(state);
+      return state.routes;
     }
   }, {
     key: "indexOf",
@@ -3739,6 +3766,7 @@ function (_React$Component) {
       this.setState({
         routes: routes
       });
+      return ~index ? route : undefined;
     }
   }, {
     key: "render",
@@ -4094,6 +4122,7 @@ function () {
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
     this.currentRoute = null;
+    this.viewRoot = null;
     this.history.listen(function (location) {
       return _this.updateRoute(location);
     });
@@ -4132,13 +4161,14 @@ function () {
       var ret = [];
       var componentInstance = r.componentInstance;
       if (r.config) r = r.config;
-      if (!r.routeGuards || !r.routeGuards[guardName] || !r.routeGuards[guardName].length) return ret;
+      if (!r.guards || !r.guards[guardName] || !r.guards[guardName].length) return ret;
 
-      (_ret = ret).push.apply(_ret, _toConsumableArray(r.routeGuards[guardName]));
+      (_ret = ret).push.apply(_ret, _toConsumableArray(r.guards[guardName]));
 
       if (componentInstance) ret = ret.map(function (v) {
         return v.bind(componentInstance);
       });
+      ret = ret.flat();
       return ret;
     }
   }, {
@@ -4205,7 +4235,7 @@ function () {
       }
 
       ret.push.apply(ret, _toConsumableArray(this.beforeEachGuards));
-      return ret;
+      return ret.flat();
     }
   }, {
     key: "_getRouteUpdateGuards",
@@ -4228,7 +4258,7 @@ function () {
         });
         ret.push.apply(ret, _toConsumableArray(guards));
       });
-      return ret.reverse();
+      return ret.flat().reverse();
     }
   }, {
     key: "_getAfterEachGuards",
@@ -4258,7 +4288,7 @@ function () {
       }
 
       ret.push.apply(ret, _toConsumableArray(this.afterEachGuards));
-      return ret;
+      return ret.flat();
     }
   }, {
     key: "_handleRouteInterceptor",
@@ -4390,23 +4420,23 @@ function () {
     }
   }, {
     key: "updateRoute",
-    value: function updateRoute(location) {
-      if (!location) location = this.history.location;
-      this.currentRoute = this.createRoute(location);
+    value: function updateRoute(to) {
+      if (!to) to = this.history.location;
+      this.currentRoute = this.createRoute(to);
     }
   }, {
     key: "push",
-    value: function push(location, onComplete, onAbort) {
-      if ((0, _util.isFunction)(onComplete)) location.onComplete = onComplete;
-      if ((0, _util.isFunction)(onAbort)) location.onAbort = onAbort;
-      this.history.push((0, _util.normalizeLocation)(location));
+    value: function push(to, onComplete, onAbort) {
+      if ((0, _util.isFunction)(onComplete)) to.onComplete = onComplete;
+      if ((0, _util.isFunction)(onAbort)) to.onAbort = onAbort;
+      this.history.push((0, _util.normalizeLocation)(to));
     }
   }, {
     key: "replace",
-    value: function replace(location, onComplete, onAbort) {
-      if ((0, _util.isFunction)(onComplete)) location.onComplete = onComplete;
-      if ((0, _util.isFunction)(onAbort)) location.onAbort = onAbort;
-      this.history.replace((0, _util.normalizeLocation)(location));
+    value: function replace(to, onComplete, onAbort) {
+      if ((0, _util.isFunction)(onComplete)) to.onComplete = onComplete;
+      if ((0, _util.isFunction)(onAbort)) to.onAbort = onAbort;
+      this.history.replace((0, _util.normalizeLocation)(to));
     }
   }, {
     key: "go",
@@ -4451,19 +4481,22 @@ function () {
     }
   }, {
     key: "addRoutes",
-    value: function addRoutes(children, parentRoute) {
+    value: function addRoutes(routes, parentRoute) {
+      if (!routes) return;
+      if (!Array.isArray(routes)) routes = [routes];
+      routes = (0, _util.normalizeRoutes)(routes, parentRoute);
+      var children = parentRoute ? parentRoute.children : this.routes;
       if (!children) return;
-      if (!parentRoute) parentRoute = {
-        children: this.routes
-      };
-      if (!parentRoute.children) parentRoute.children = [];
-      if (!Array.isArray(children)) children = [children];
-      children = (0, _util.normalizeRoutes)(children, parentRoute);
-      children.forEach(function (r) {
-        var i = parentRoute.children.findIndex(function (v) {
+      routes.forEach(function (r) {
+        var i = children.findIndex(function (v) {
           return v.path === r.path;
         });
-        if (~i) parentRoute.children.splice(i, 1, r);else parentRoute.children.push(r);
+        if (~i) children.splice(i, 1, r);else children.push(r);
+      });
+      if (parentRoute && parentRoute.viewInstance) parentRoute.viewInstance.setState({
+        routes: routes
+      });else if (this.state.viewRoot) this.state.viewRoot.setState({
+        routes: routes
       });
     }
   }, {
@@ -4543,7 +4576,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 function resolveRouteGuards(c, route) {
   if (c && c.__guards) {
     if (route) {
-      if (route.routeGuards) route.routeGuards.merge(c.__guardss);else route.routeGuards = c.__guards;
+      if (route.guards) route.guards.merge(c.__guards);else route.guards = c.__guards;
     }
 
     c = c.__component;
@@ -4552,20 +4585,14 @@ function resolveRouteGuards(c, route) {
   return c;
 }
 
-function normalizeRoute(route, parent, index) {
-  if (route instanceof _routeLazy.RouteLazy && parent && index > -1) {
-    route.updater = function (r) {
-      return parent.children && (parent.children[index] = r);
-    };
-
-    return route;
-  }
+function normalizeRoute(route, parent) {
+  var path = parent ? "".concat(parent.path).concat(route.path === '/' ? '' : "/".concat(route.path)) : route.path;
 
   var r = _objectSpread({}, route, {
-    subpath: route.path
+    subpath: route.path,
+    path: path
   });
 
-  r.path = parent ? "".concat(parent.path).concat(r.path === '/' ? '' : "/".concat(r.path)) : r.path;
   if (parent) r.parent = parent;
   if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
   r.exact = r.exact === undefined ? Boolean(!r.children || !r.children.length) : r.exact;
@@ -4597,23 +4624,13 @@ function normalizeRoute(route, parent, index) {
 function normalizeRoutes(routes, parent) {
   if (!routes) routes = [];
   if (routes._normalized) return routes;
-  var ret = routes.map(function (route, routeIndex) {
-    if (route instanceof _routeLazy.RouteLazy) {
-      route.updater = function (r) {
-        return routes[routeIndex] = r;
-      };
-
-      return;
-    }
-
-    return normalizeRoute(route, parent, routeIndex);
+  routes = routes.filter(Boolean).map(function (route) {
+    return normalizeRoute(route, parent);
   });
-  Object.defineProperty(ret, '_normalized', {
-    enumerable: false,
-    configurable: false,
+  Object.defineProperty(routes, '_normalized', {
     value: true
   });
-  return ret;
+  return routes;
 }
 
 function normalizeRoutePath(path, route) {

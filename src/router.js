@@ -62,6 +62,7 @@ export default class ReactViewRouter {
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
     this.currentRoute = null;
+    this.viewRoot = null;
     this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
 
@@ -85,9 +86,10 @@ export default class ReactViewRouter {
     let ret = [];
     const componentInstance = r.componentInstance;
     if (r.config) r = r.config;
-    if (!r.routeGuards || !r.routeGuards[guardName] || !r.routeGuards[guardName].length) return ret;
-    ret.push(...r.routeGuards[guardName]);
+    if (!r.guards || !r.guards[guardName] || !r.guards[guardName].length) return ret;
+    ret.push(...r.guards[guardName]);
     if (componentInstance) ret = ret.map(v => v.bind(componentInstance));
+    ret = ret.flat();
     return ret;
   }
 
@@ -129,7 +131,7 @@ export default class ReactViewRouter {
       ret.push(...tm.filter(r => r.config.beforeEnter).map(r => r.config.beforeEnter));
     }
     ret.push(...this.beforeEachGuards);
-    return ret;
+    return ret.flat();
   }
 
   _getRouteUpdateGuards(to, from) {
@@ -143,7 +145,7 @@ export default class ReactViewRouter {
       if (fr.componentInstance) guards = guards.map(v => v.bind(fr.componentInstance));
       ret.push(...guards);
     });
-    return ret.reverse();
+    return ret.flat().reverse();
   }
 
   _getAfterEachGuards(to, from) {
@@ -159,7 +161,7 @@ export default class ReactViewRouter {
       ret.push(...tm.filter(r => r.config.afterEnter).map(r => r.config.afterEnter));
     }
     ret.push(...this.afterEachGuards);
-    return ret;
+    return ret.flat();
   }
 
   async _handleRouteInterceptor(location, callback, isInit = false) {
@@ -237,21 +239,21 @@ export default class ReactViewRouter {
     } : null;
   }
 
-  updateRoute(location) {
-    if (!location) location = this.history.location;
-    this.currentRoute = this.createRoute(location);
+  updateRoute(to) {
+    if (!to) to = this.history.location;
+    this.currentRoute = this.createRoute(to);
   }
 
-  push(location, onComplete, onAbort) {
-    if (isFunction(onComplete)) location.onComplete = onComplete;
-    if (isFunction(onAbort)) location.onAbort = onAbort;
-    this.history.push(normalizeLocation(location));
+  push(to, onComplete, onAbort) {
+    if (isFunction(onComplete)) to.onComplete = onComplete;
+    if (isFunction(onAbort)) to.onAbort = onAbort;
+    this.history.push(normalizeLocation(to));
   }
 
-  replace(location, onComplete, onAbort) {
-    if (isFunction(onComplete)) location.onComplete = onComplete;
-    if (isFunction(onAbort)) location.onAbort = onAbort;
-    this.history.replace(normalizeLocation(location));
+  replace(to, onComplete, onAbort) {
+    if (isFunction(onComplete)) to.onComplete = onComplete;
+    if (isFunction(onAbort)) to.onAbort = onAbort;
+    this.history.replace(normalizeLocation(to));
   }
 
   go(n) {
@@ -288,17 +290,19 @@ export default class ReactViewRouter {
     this.afterEachGuards.push(guard);
   }
 
-  addRoutes(children, parentRoute) {
+  addRoutes(routes, parentRoute) {
+    if (!routes) return;
+    if (!Array.isArray(routes)) routes = [routes];
+    routes = normalizeRoutes(routes, parentRoute);
+    const children = parentRoute ? parentRoute.children : this.routes;
     if (!children) return;
-    if (!parentRoute) parentRoute = { children: this.routes };
-    if (!parentRoute.children) parentRoute.children = [];
-    if (!Array.isArray(children)) children = [children];
-    children = normalizeRoutes(children, parentRoute);
-    children.forEach(r => {
-      let i = parentRoute.children.findIndex(v => v.path === r.path);
-      if (~i) parentRoute.children.splice(i, 1, r);
-      else parentRoute.children.push(r);
+    routes.forEach(r => {
+      let i = children.findIndex(v => v.path === r.path);
+      if (~i) children.splice(i, 1, r);
+      else children.push(r);
     });
+    if (parentRoute && parentRoute.viewInstance) parentRoute.viewInstance.setState({ routes });
+    else if (this.state.viewRoot) this.state.viewRoot.setState({ routes });
   }
 
 

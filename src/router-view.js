@@ -17,12 +17,12 @@ class RouterView extends React.Component {
       router,
       parentRoute: null,
       currentRoute: null,
-      routes: router ? this.filterRoutes(router.routes) : [],
+      routes: router ? this._filterRoutes(router.routes) : [],
     };
     this.state = state;
 
     this._updateRef = this._updateRef.bind(this);
-    this.filterRoutes = this.filterRoutes.bind(this);
+    this._filterRoutes = this._filterRoutes.bind(this);
   }
 
   _updateRef(ref) {
@@ -32,7 +32,7 @@ class RouterView extends React.Component {
     if (currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({ currentRoute });
   }
 
-  filterRoutes(routes) {
+  _filterRoutes(routes) {
     const { name } = this.props;
     return routes.filter(r => {
       if (r.config) r = r.config;
@@ -81,29 +81,35 @@ class RouterView extends React.Component {
         state.parentRoute = matched.length >= state._routerDepth
           ? matched[state._routerDepth - 1]
           : null;
-        state.routes = state.parentRoute ? this.filterRoutes(state.parentRoute.config.children) : [];
+        state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
       }
     }
 
     if (state._routerRoot && state.router) {
+      state.router.viewRoot = this;
       state.router._handleRouteInterceptor(state.router.location, ok => ok && this.setState(state), true);
     } else this.setState(state);
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return !nextProps.location || (nextProps.location.pathname !== this.props.location.pathname);
+  // shouldComponentUpdate(nextProps, nextState) {
+  //   const nr = nextState.currentRoute;
+  //   const cr = this.state.currentRoute;
+  //   if (nr && cr) return nr.path !== cr.path;
+  //   return !this.state._routerInited || nr !== cr;
+  // }
+
+  push(...routes) {
+    const state = { ...this.state };
+    state.routes.push(...normalizeRoutes(routes, state.parentRoute));
+    this.setState(state);
+    return state.routes;
   }
 
-  push(routes) {
+  splice(idx, len, ...routes) {
     const state = { ...this.state };
-    state.routes.push(...normalizeRoutes(routes));
+    state.routes.splice(idx, len, ...normalizeRoutes(routes, state.parentRoute));
     this.setState(state);
-  }
-
-  splice(index, routes) {
-    const state = { ...this.state };
-    state.routes.splice(index, routes.length, ...normalizeRoutes(routes));
-    this.setState(state);
+    return state.routes;
   }
 
   indexOf(route) {
@@ -118,6 +124,7 @@ class RouterView extends React.Component {
     const index = this.indexOf(route);
     if (~index) routes.splice(index, 1);
     this.setState({ routes });
+    return ~index ? route : undefined;
   }
 
   render() {

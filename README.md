@@ -19,8 +19,10 @@ yarn add react-view-router
 /// router.js
 import ReactViewRouter from 'react-view-router';
 
-const router = new ReactViewRouter({ 
-  mode: 'hash' // or browser|histor|memory|abstract,
+const router = new ReactViewRouter({
+  base: '',     // then base URL of the app. For example, if the entire single page application is served under /app/, then base should use the value "/app/"
+  mode: 'hash', // or browser|histor|memory|abstract, default:hash
+  routes: []    // also can be passed by router.use method
 });
    
 export default router;
@@ -67,7 +69,7 @@ export default function HomeMainIndex() {
     <div>
       <h1>HomeMainIndex</h1>
       <RouterView />
-      <RouterView name="footer">
+      <RouterView name="footer" />
     </div>
   )
 }
@@ -197,6 +199,7 @@ const routes = normalizeRoutes([
 - `props` Pass url params as a prop into route component.
 - `paramsProps` Pass url params as props into route component.
 - `queryProps` Pass url query as props into route component.
+- `beforeEnter`,`beforeLeave`,`beforeUpdate`,`afterEnter`,`afterLeave` the route guards, see:[Per-Route Guard](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 
 ### Route Component Props
 
@@ -232,6 +235,21 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 - `push`、`replace`、`go`、`back`、`forward` [history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
 
+## NOTE
+You sholud config the  `Webpack Configuration` with `alias`:
+```javascript
+{
+  ...
+  resolve: {
+    ...
+    alias: {
+      history: 'history-fix'
+    }
+  },
+  ...
+}
+``` 
+otherwise, wbpack will package both `history` and `history-fix` into the target js file.
 
 ## License
 

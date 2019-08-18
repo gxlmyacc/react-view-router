@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { lazy } from 'react';
 
 const ForwardRefMeth = React.forwardRef(() => null);
 export const REACT_FORWARD_REF_TYPE = ForwardRefMeth.$$typeof;
+
+const LazyMeth = lazy(() => {});
+export const REACT_LAZY_TYPE = LazyMeth.$$typeof;
 
 export class RouteCuards {
   constructor(guards) {
@@ -10,31 +13,29 @@ export class RouteCuards {
     this.afterRouteEnter = [];
     this.beforeRouteLeave = [];
     this.afterRouteLeave = [];
-    Object.keys(guards).forEach(key => this[key] && this[key].push(guards[key]));
+    this.merge(guards || {});
   }
 
   merge(guards) {
+    if (!guards) return;
     Object.keys(guards).forEach(key => {
-      if (!this[key]) return;
-      if (guards[key]) this[key].push(...guards[key]);
+      let guard = this[key];
+      let v = guards[key];
+      if (!guard) return;
+      if (Array.isArray(v)) guard.push(...v);
+      else guard.push(v);
     });
   }
 }
 
 export function useRouteGuards(component, guards = {}) {
   const ret = {
-    $$typeof: ForwardRefMeth.$$typeof,
+    $$typeof: REACT_FORWARD_REF_TYPE,
     render(props, ref) {
       return React.createElement(component, { ...props, ref });
     }
   };
-  Object.defineProperty(ret, '__guards', {
-    enumerable: false,
-    value: new RouteCuards(guards || {}),
-  });
-  Object.defineProperty(ret, '__component', {
-    enumerable: false,
-    value: component,
-  });
+  Object.defineProperty(ret, '__guards', { value: new RouteCuards(guards) });
+  Object.defineProperty(ret, '__component', { value: component });
   return ret;
 }

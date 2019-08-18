@@ -1,9 +1,18 @@
+import { REACT_LAZY_TYPE } from './route-guard';
 
 export class RouteLazy {
-  constructor(importMethod) {
-    this.importMethod = importMethod;
-    this.resolved = false;
-    this.updater = null;
+  constructor(ctor) {
+    this.$$typeof = REACT_LAZY_TYPE;
+    this._ctor = ctor;
+    this._status = -1;
+    this._result = null;
+
+    this.defaultProps = undefined;
+    this.propTypes = undefined;
+
+    Object.defineProperty(this, 'resolved', { writable: true, value: false });
+    Object.defineProperty(this, 'updater', { writable: true, value: null });
+    Object.defineProperty(this, 'toResolve', { value: this.toResolve });
   }
 
   toResolve() {
@@ -13,7 +22,7 @@ export class RouteLazy {
         this.resolved = true;
         resolve(v);
       };
-      let component = this.importMethod();
+      let component = this._ctor();
       if (component instanceof Promise) {
         component.then(c => {
           component = c.__esModule ? c.default : c;

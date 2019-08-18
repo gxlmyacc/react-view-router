@@ -7,21 +7,17 @@ import { REACT_FORWARD_REF_TYPE } from './route-guard';
 function resolveRouteGuards(c, route) {
   if (c && c.__guards) {
     if (route) {
-      if (route.routeGuards) route.routeGuards.merge(c.__guardss);
-      else route.routeGuards = c.__guards;
+      if (route.guards) route.guards.merge(c.__guards);
+      else route.guards = c.__guards;
     }
     c = c.__component;
   }
   return c;
 }
 
-function normalizeRoute(route, parent, index) {
-  if (route instanceof RouteLazy && parent && index > -1) {
-    route.updater = r => (parent.children && (parent.children[index] = r));
-    return route;
-  }
-  let r = { ...route, subpath: route.path };
-  r.path = parent ? `${parent.path}${r.path === '/' ? '' : `/${r.path}`}` : r.path;
+function normalizeRoute(route, parent) {
+  const path = parent ? `${parent.path}${route.path === '/' ? '' : `/${route.path}`}` : route.path;
+  let r = { ...route, subpath: route.path, path };
   if (parent) r.parent = parent;
   if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
   r.exact = r.exact === undefined
@@ -47,19 +43,9 @@ function normalizeRoute(route, parent, index) {
 function normalizeRoutes(routes, parent) {
   if (!routes) routes = [];
   if (routes._normalized) return routes;
-  let ret = routes.map((route, routeIndex) => {
-    if (route instanceof RouteLazy) {
-      route.updater = r => routes[routeIndex] = r;
-      return;
-    }
-    return normalizeRoute(route, parent, routeIndex);
-  });
-  Object.defineProperty(ret, '_normalized', {
-    enumerable: false,
-    configurable: false,
-    value: true
-  });
-  return ret;
+  routes = routes.filter(Boolean).map(route => normalizeRoute(route, parent));
+  Object.defineProperty(routes, '_normalized', { value: true });
+  return routes;
 }
 
 function normalizeRoutePath(path, route) {
