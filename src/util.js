@@ -185,6 +185,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       let to = route.redirect;
       if (isFunction(to)) to = to({ ...extraProps, route });
       to = normalizeLocation(to, route);
+      to.isRedirect = true;
       return React.createElement(Redirect, {
         key: route.key || i,
         exact: route.exact,

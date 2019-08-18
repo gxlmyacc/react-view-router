@@ -193,7 +193,8 @@ const routes = normalizeRoutes([
 - `component` React component.
 - `components` React components that be used for `Named RouterView`.
 - `exact` Whether only matches with `location.pathname` exactly.
-- `redirect` Navigates to new location, can be string or function.
+- `strict` When true, a path that has a trailing slash will only match a location.pathname with a trailing slash. This has no effect when there are additional URL segments in the location.pathname.
+- `redirect` Navigates to new location, can be string, object or function.
 - `children` Nested child routes.
 - `meta` some custom route infos, see: [Route Meta Fields](https://router.vuejs.org/guide/advanced/meta.html).
 - `props` Pass url params as a prop into route component.
@@ -219,12 +220,21 @@ Includes all props from `react-router-dom` and the following props.
 - `currentRoute` current matched route infos:
 ```javascript
 {
-  path: String,
   url: String,
+  // A string that equals the path of the current route, always resolved as an absolute path
+  path: String,
+  // The full resolved URL including query and hash.
+  fullPath: String,
+  // true if the path matches the location.pathname exactly.
   isExart: Boolean,
+  // An Array containing route records for all nested path segments of the current route.
   matched: Array,
+  // An object that contains key/value pairs of dynamic segments and star segments. If there are no params the value will be an empty object.
   params: Object,
-  query: Object
+  // An object that contains key/value pairs of the query string. For example, for a path /foo?user=1, we get currentRoute.query.user == 1. If there is no query the value will be an empty object.
+  query: Object,
+  // The name of the route being redirected from, if there were one
+  redirectedFrom: Object,
 }
 ```
 see: [Route Object Properties](https://router.vuejs.org/api/#route-object-properties)
@@ -232,7 +242,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 ### ReactViewRouter instance Methods
 - `beforeEach` [global Before Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
 - `afterEach` [global After Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
-- `push`、`replace`、`go`、`back`、`forward` [history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
+- `push`、`replace`、`go`、`back`、`forward` `redirect`[history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
 
 ## NOTE

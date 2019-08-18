@@ -212,7 +212,7 @@ export default class ReactViewRouter {
       if (from.componentInstance) to.componentInstance = from.componentInstance;
       if (from.viewInstance) to.viewInstance = from.viewInstance;
     }
-    return last ? {
+    const ret = last ? {
       ...last.match,
       query: to.search ? qs.parseQuery(to.search.substr(1)) : {},
       path: to.pathname,
@@ -237,6 +237,8 @@ export default class ReactViewRouter {
       }),
       meta: last.route.meta || {}
     } : null;
+    if (to.isRedirect) ret.redirectedFrom = from.redirectedFrom || from;
+    return ret;
   }
 
   updateRoute(to) {
@@ -254,6 +256,12 @@ export default class ReactViewRouter {
     if (isFunction(onComplete)) to.onComplete = onComplete;
     if (isFunction(onAbort)) to.onAbort = onAbort;
     this.history.replace(normalizeLocation(to));
+  }
+
+  redirect(to, onComplete, onAbort) {
+    to = normalizeLocation(to);
+    to.isRedirect = true;
+    return this.replace(to, onComplete, onAbort);
   }
 
   go(n) {

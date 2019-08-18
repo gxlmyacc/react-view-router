@@ -4392,7 +4392,7 @@ function () {
         if (from.viewInstance) to.viewInstance = from.viewInstance;
       }
 
-      return last ? _objectSpread({}, last.match, {
+      var ret = last ? _objectSpread({}, last.match, {
         query: to.search ? _qs.default.parseQuery(to.search.substr(1)) : {},
         path: to.pathname,
         fullPath: "".concat(to.path).concat(to.search),
@@ -4417,6 +4417,8 @@ function () {
         }),
         meta: last.route.meta || {}
       }) : null;
+      if (to.isRedirect) ret.redirectedFrom = from.redirectedFrom || from;
+      return ret;
     }
   }, {
     key: "updateRoute",
@@ -4437,6 +4439,13 @@ function () {
       if ((0, _util.isFunction)(onComplete)) to.onComplete = onComplete;
       if ((0, _util.isFunction)(onAbort)) to.onAbort = onAbort;
       this.history.replace((0, _util.normalizeLocation)(to));
+    }
+  }, {
+    key: "redirect",
+    value: function redirect(to, onComplete, onAbort) {
+      to = (0, _util.normalizeLocation)(to);
+      to.isRedirect = true;
+      return this.replace(to, onComplete, onAbort);
     }
   }, {
     key: "go",
@@ -4808,6 +4817,7 @@ function renderRoutes(routes, extraProps, switchProps) {
         route: route
       }));
       to = normalizeLocation(to, route);
+      to.isRedirect = true;
       return _react.default.createElement(_reactRouterDom.Redirect, {
         key: route.key || i,
         exact: route.exact,
