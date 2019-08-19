@@ -7,23 +7,27 @@ const LazyMeth = lazy(() => {});
 export const REACT_LAZY_TYPE = LazyMeth.$$typeof;
 
 export class RouteCuards {
-  constructor(guards) {
-    this.beforeRouteEnter = [];
-    this.beforeRouteUpdate = [];
-    this.afterRouteEnter = [];
-    this.beforeRouteLeave = [];
-    this.afterRouteLeave = [];
-    this.merge(guards || {});
+  constructor(guards, isComponentGuards = false) {
+    this.isComponentGuards = isComponentGuards;
+    this.beforeEnter = [];
+    this.beforeUpdate = [];
+    this.afterEnter = [];
+    this.beforeLeave = [];
+    this.afterLeave = [];
+    this.merge(guards || {}, isComponentGuards);
   }
 
-  merge(guards) {
+  merge(guards, isComponentGuards = true) {
     if (!guards) return;
+    if (guards.isComponentGuards !== undefined) isComponentGuards = guards.isComponentGuards;
     Object.keys(guards).forEach(key => {
-      let guard = this[key];
+      const guardKey =  isComponentGuards ? key.replace('Route', '') : key;
+      let guard = this[guardKey];
       let v = guards[key];
       if (!guard) return;
-      if (Array.isArray(v)) guard.push(...v);
-      else guard.push(v);
+      const pushMeth = isComponentGuards ? guard.unshift : guard.push;
+      if (Array.isArray(v)) pushMeth.call(guard, ...v.filter(Boolean));
+      else if (v) pushMeth.call(guard, v);
     });
   }
 }
@@ -35,7 +39,7 @@ export function useRouteGuards(component, guards = {}) {
       return React.createElement(component, { ...props, ref });
     }
   };
-  Object.defineProperty(ret, '__guards', { value: new RouteCuards(guards) });
+  Object.defineProperty(ret, '__guards', { value: new RouteCuards(guards, true) });
   Object.defineProperty(ret, '__component', { value: component });
   return ret;
 }

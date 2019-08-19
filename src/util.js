@@ -2,7 +2,14 @@ import { matchPath, withRouter, Router, Route, Redirect, Switch } from 'react-ro
 import React from 'react';
 import qs from './qs';
 import { RouteLazy } from './route-lazy';
-import { REACT_FORWARD_REF_TYPE } from './route-guard';
+import { REACT_FORWARD_REF_TYPE, RouteCuards } from './route-guard';
+
+function nextTick(cb, ctx) {
+  if (!cb) return;
+  return new Promise(function (resolve) {
+    setTimeout(() => resolve(ctx ? cb.call(ctx) : cb()), 0);
+  });
+}
 
 function resolveRouteGuards(c, route) {
   if (c && c.__guards) {
@@ -37,6 +44,8 @@ function normalizeRoute(route, parent) {
   if (r.props) r.props = normalizeProps(r.props);
   if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
   if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
+  if (r.guards && !(r.guards instanceof RouteCuards)) r.guards = new RouteCuards(r.guards);
+  Object.defineProperty(r, '_pending', { value: { afterEnterGuards: [] } });
   return r;
 }
 
@@ -169,7 +178,26 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
         if (component.prototype instanceof React.Component
           || component.prototype.componentDidMount !== undefined) ref = options.ref;
       } else if (component.$$typeof === REACT_FORWARD_REF_TYPE) ref = options.ref;
+      else if (route.enableRef) {
+        if (!isFunction(route.enableRef) || route.enableRef(component)) ref = options.ref;
+      }
     }
+    const afterEnterGuards = route._pending.afterEnterGuards || [];
+    const completeCallback = route._pending.completeCallback;
+    const refHandler = el => {
+      completeCallback && completeCallback(el);
+      afterEnterGuards.forEach(v => v.call(el));
+    };
+    route._pending.completeCallback = null;
+    route._pending.afterEnterGuards = [];
+    if (ref) {
+      const oldRef = ref;
+      ref = el => {
+        if (el) refHandler(el);
+        return oldRef(el);
+      };
+    }
+
     const ret = React.createElement(
       component,
       Object.assign(_props, props, extraProps, {
@@ -177,7 +205,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
         ref
       })
     );
-    // console.log('renderComp', route, ret);
+    if (!ref) nextTick(refHandler);
     return ret;
   }
   const ret = routes ? React.createElement(Switch, switchProps, routes.map(function (route, i) {
@@ -208,6 +236,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
 
 
 export {
+  nextTick,
   isPlainObject,
   isFunction,
   isLocation,

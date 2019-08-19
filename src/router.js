@@ -3,7 +3,8 @@ import qs from './qs';
 import {
   normalizeRoutes,
   normalizeLocation, matchRoutes,
-  isFunction, isLocation
+  isFunction, isLocation,
+  nextTick
 } from './util';
 import routeCache from './route-cache';
 import { resolveRouteLazyList } from './route-lazy';
@@ -68,6 +69,7 @@ export default class ReactViewRouter {
 
     Object.keys(this.history).forEach(key => !HISTORY_METHODS.includes(key) && (this[key] = this.history[key]));
     HISTORY_METHODS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
+    this.nextTick = nextTick.bind(this);
 
     this.use(options);
   }
@@ -82,25 +84,25 @@ export default class ReactViewRouter {
     if (stringifyQuery) qs.stringifyQuery = stringifyQuery;
   }
 
-  _getComponentGurads(r, guardName) {
+  _getComponentGurads(r, guardName, bindInstance = true) {
     let ret = [];
     const componentInstance = r.componentInstance;
     if (r.config) r = r.config;
-    if (!r.guards || !r.guards[guardName] || !r.guards[guardName].length) return ret;
-    ret.push(...r.guards[guardName]);
-    if (componentInstance) ret = ret.map(v => v.bind(componentInstance));
-    ret = ret.flat();
+    const guards = r.guards && r.guards[guardName];
+    if (!guards || !guards || !guards.length) return ret;
+    ret.push(...guards);
+    if (bindInstance && componentInstance) ret = ret.map(v => v.bind(componentInstance));
     return ret;
   }
 
   _getRouteComponentGurads(matched, guardName, reverse = false, bindInstance = true) {
     let ret = [];
+    if (reverse) matched = matched.reverse();
     matched.forEach(r => {
-      let guards = this._getComponentGurads(r, guardName);
-      if (bindInstance && r.componentInstance) guards = guards.map(v => v.bind(r.componentInstance));
+      let guards = this._getComponentGurads(r, guardName, bindInstance);
       ret.push(...guards);
     });
-    return reverse ? ret.reverse() : ret;
+    return ret;
   }
 
   _getChangeMatched(route, compare) {
@@ -122,13 +124,17 @@ export default class ReactViewRouter {
     const ret = [];
     if (from) {
       const fm = this._getChangeMatched(from, to);
-      ret.push(...this._getRouteComponentGurads(fm, 'beforeRouteLeave', true));
-      ret.push(...fm.filter(r => r.config.beforeLeave).map(r => r.config.beforeLeave).reverse());
+      ret.push(...this._getRouteComponentGurads(fm, 'beforeLeave', true));
     }
     if (to) {
       const tm = this._getChangeMatched(to, from);
-      ret.push(...this._getRouteComponentGurads(tm, 'beforeRouteEnter'));
-      ret.push(...tm.filter(r => r.config.beforeEnter).map(r => r.config.beforeEnter));
+      ret.push(...this._getRouteComponentGurads(tm, 'beforeEnter'));
+
+      tm.forEach(r => {
+        r.config._pending.afterEnterGuards = this._getComponentGurads(r, 'afterEnter', false).map(v => (function () {
+          return v.call(this, to, from);
+        }));
+      });
     }
     ret.push(...this.beforeEachGuards);
     return ret.flat();
@@ -141,7 +147,7 @@ export default class ReactViewRouter {
       let fr = from.matched[i];
       if (!fr || fr.path !== tr.path) return true;
       if (fr.config.beforeUpdate) guards.push(fr.config.beforeUpdate);
-      guards.push(...this._getComponentGurads(tr, 'beforeRouteUpdate'));
+      guards.push(...this._getComponentGurads(tr, 'beforeUpdate'));
       if (fr.componentInstance) guards = guards.map(v => v.bind(fr.componentInstance));
       ret.push(...guards);
     });
@@ -152,14 +158,11 @@ export default class ReactViewRouter {
     const ret = [];
     if (from) {
       const fm = this._getChangeMatched(from, to);
-      ret.push(...this._getRouteComponentGurads(fm, 'afterRouteLeave', true));
-      ret.push(...fm.filter(r => r.config.afterLeave).map(r => r.config.afterLeave).reverse());
+      ret.push(...this._getRouteComponentGurads(fm, 'afterLeave', true));
     }
-    if (to) {
-      const tm = this._getChangeMatched(to, from);
-      ret.push(...this._getRouteComponentGurads(tm, 'afterRouteEnter'));
-      ret.push(...tm.filter(r => r.config.afterEnter).map(r => r.config.afterEnter));
-    }
+    // if (to) {
+    //   const tm = this._getChangeMatched(to, from);
+    // }
     ret.push(...this.afterEachGuards);
     return ret.flat();
   }
@@ -177,6 +180,12 @@ export default class ReactViewRouter {
       routetInterceptors(this._getBeforeEachGuards(to, from), to, from, ok => {
         if (ok && typeof ok === 'string') ok = { path: ok };
         isContinue = Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
+        const toLast = to.matched.length && to.matched[to.matched.length - 1];
+        if (isFunction(ok) && toLast && !toLast.redirect) {
+          const cb = ok;
+          toLast.config._pending.completeCallback = el => cb(el);
+          ok = true;
+        }
         callback(isContinue);
         if (!isContinue) {
           if (isLocation(ok)) this.replace(ok);
@@ -194,13 +203,6 @@ export default class ReactViewRouter {
       console.error(ex);
       if (!isContinue) callback(isContinue);
     }
-  }
-
-  nextTick(cb, ctx) {
-    if (!cb) return;
-    return new Promise(function (resolve) {
-      setTimeout(() => resolve(ctx ? cb.call(ctx) : cb()), 0);
-    });
   }
 
   createRoute(to) {

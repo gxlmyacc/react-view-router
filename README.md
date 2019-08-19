@@ -20,7 +20,7 @@ yarn add react-view-router
 import ReactViewRouter from 'react-view-router';
 
 const router = new ReactViewRouter({
-  base: '',     // then base URL of the app. For example, if the entire single page application is served under /app/, then base should use the value "/app/"
+  base: '',     // the base URL of the app. For example, if the entire single page application is served under /app/, then base should use the value "/app/"
   mode: 'hash', // or browser|histor|memory|abstract, default:hash
   routes: []    // also can be passed by router.use method
 });
@@ -30,6 +30,7 @@ export default router;
 
 ```javascript
 /// app.js
+import React from 'react';
 import { RouterView } from 'react-view-router';
 import router from './router';
 import routes from './routes';
@@ -48,6 +49,7 @@ function App() {
 
 ```javascript
 /// home/index.js
+import React from 'react';
 import { RouterView } from 'react-view-router';
 
 export default function HomeIndex() {
@@ -62,6 +64,7 @@ export default function HomeIndex() {
 
 ```javascript
 /// home/main/index.js
+import React from 'react';
 import { RouterView } from 'react-view-router';
 
 export default function HomeMainIndex() {
@@ -78,21 +81,34 @@ export default function HomeMainIndex() {
 
 ```javascript
 /// home/home/main/some/index.js
+import React from 'react';
 import { RouterView, useRouteGuards } from 'react-view-router';
 import store from 'store';
 
-function HomeMainSomeIndex() {
-  return (
-    <div>
-      <h1>HomeMainSomeIndex</h1>
-    </div>
-  )
+class HomeMainSomeIndex extends React {
+  constructor(props) {
+    super(props);
+    this.state = { text: 'text1' };
+  }
+
+  refresh = () => {
+    this.setState({ text: 'text1 refreshed' })
+  }
+
+  render() {
+    return (
+      <div>
+        <h1>HomeMainSomeIndex</h1>
+        { text }
+      </div>
+    );
+  }
 }
 
 export default useRouteGuards(HomeMainSomeIndex, {
   beforeRouteEnter(to, from, next) {
     if (!store.logined) next('/login');
-    else next();
+    else next(vm => vm.refresh());
   },
   beforeRouteLeave(to, from, next) {
     // confirm leave prompt
@@ -166,11 +182,13 @@ const routes = normalizeRoutes([
               footer: lazyImport(() => import(/* webpackChunkName: "home" */ './home/main/some/footer.js')),
             }
             // route guards:
-            // beforeEnter(to, from, next) { next(); }
-            // beforeLeave(to, from, next) { next(); }
-            // beforeUpdate(to, from) {}
-            // afterEnter(to, from) {}
-            // afterLeave(to, from) {}
+            guards: {
+              beforeEnter(to, from, next) { next(); }
+              beforeLeave(to, from, next) { next(); }
+              beforeUpdate(to, from) {}
+              afterEnter(to, from) {}
+              afterLeave(to, from) {}
+            }
           }
         ]
       }
@@ -200,7 +218,7 @@ const routes = normalizeRoutes([
 - `props` Pass url params as a prop into route component.
 - `paramsProps` Pass url params as props into route component.
 - `queryProps` Pass url query as props into route component.
-- `beforeEnter`,`beforeLeave`,`beforeUpdate`,`afterEnter`,`afterLeave` the route guards, see:[Per-Route Guard](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
+- `guards` the route guards, see:[Per-Route Guard](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 
 ### Route Component Props
 
@@ -246,7 +264,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
 
 ## NOTE
-You sholud config the  `Webpack Configuration` with `alias`:
+1. You sholud config the  `Webpack Configuration` with `alias`:
 ```javascript
 {
   ...
@@ -259,7 +277,9 @@ You sholud config the  `Webpack Configuration` with `alias`:
   ...
 }
 ``` 
-otherwise, wbpack will package both `history` and `history-fix` into the target js file.
+otherwise, webpack will package both `history` and `history-fix` into the target js file.
+
+2. when route component is `Class Component` (not `Function Component`), the `this` in `afterRouteEnter`, `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards and `afterEnter`,`beforeUpdate`,`beforeLeave`,`afterLeave` in Route Guards will be the component instance;
 
 ## License
 

@@ -3188,14 +3188,17 @@ var RouteCuards =
 /*#__PURE__*/
 function () {
   function RouteCuards(guards) {
+    var isComponentGuards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
     _classCallCheck(this, RouteCuards);
 
-    this.beforeRouteEnter = [];
-    this.beforeRouteUpdate = [];
-    this.afterRouteEnter = [];
-    this.beforeRouteLeave = [];
-    this.afterRouteLeave = [];
-    this.merge(guards || {});
+    this.isComponentGuards = isComponentGuards;
+    this.beforeEnter = [];
+    this.beforeUpdate = [];
+    this.afterEnter = [];
+    this.beforeLeave = [];
+    this.afterLeave = [];
+    this.merge(guards || {}, isComponentGuards);
   }
 
   _createClass(RouteCuards, [{
@@ -3203,12 +3206,16 @@ function () {
     value: function merge(guards) {
       var _this = this;
 
+      var isComponentGuards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       if (!guards) return;
+      if (guards.isComponentGuards !== undefined) isComponentGuards = guards.isComponentGuards;
       Object.keys(guards).forEach(function (key) {
-        var guard = _this[key];
+        var guardKey = isComponentGuards ? key.replace('Route', '') : key;
+        var guard = _this[guardKey];
         var v = guards[key];
         if (!guard) return;
-        if (Array.isArray(v)) guard.push.apply(guard, _toConsumableArray(v));else guard.push(v);
+        var pushMeth = isComponentGuards ? guard.unshift : guard.push;
+        if (Array.isArray(v)) pushMeth.call.apply(pushMeth, [guard].concat(_toConsumableArray(v.filter(Boolean))));else if (v) pushMeth.call(guard, v);
       });
     }
   }]);
@@ -3229,7 +3236,7 @@ function useRouteGuards(component) {
     }
   };
   Object.defineProperty(ret, '__guards', {
-    value: new RouteCuards(guards)
+    value: new RouteCuards(guards, true)
   });
   Object.defineProperty(ret, '__component', {
     value: component
@@ -4135,6 +4142,7 @@ function () {
     HISTORY_METHODS.forEach(function (key) {
       return _this[key] && (_this[key] = _this[key].bind(_this));
     });
+    this.nextTick = _util.nextTick.bind(this);
     this.use(options);
   }
 
@@ -4158,17 +4166,18 @@ function () {
     value: function _getComponentGurads(r, guardName) {
       var _ret;
 
+      var bindInstance = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       var ret = [];
       var componentInstance = r.componentInstance;
       if (r.config) r = r.config;
-      if (!r.guards || !r.guards[guardName] || !r.guards[guardName].length) return ret;
+      var guards = r.guards && r.guards[guardName];
+      if (!guards || !guards || !guards.length) return ret;
 
-      (_ret = ret).push.apply(_ret, _toConsumableArray(r.guards[guardName]));
+      (_ret = ret).push.apply(_ret, _toConsumableArray(guards));
 
-      if (componentInstance) ret = ret.map(function (v) {
+      if (bindInstance && componentInstance) ret = ret.map(function (v) {
         return v.bind(componentInstance);
       });
-      ret = ret.flat();
       return ret;
     }
   }, {
@@ -4179,15 +4188,13 @@ function () {
       var reverse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       var bindInstance = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
       var ret = [];
+      if (reverse) matched = matched.reverse();
       matched.forEach(function (r) {
-        var guards = _this2._getComponentGurads(r, guardName);
+        var guards = _this2._getComponentGurads(r, guardName, bindInstance);
 
-        if (bindInstance && r.componentInstance) guards = guards.map(function (v) {
-          return v.bind(r.componentInstance);
-        });
         ret.push.apply(ret, _toConsumableArray(guards));
       });
-      return reverse ? ret.reverse() : ret;
+      return ret;
     }
   }, {
     key: "_getChangeMatched",
@@ -4210,28 +4217,27 @@ function () {
   }, {
     key: "_getBeforeEachGuards",
     value: function _getBeforeEachGuards(to, from) {
+      var _this3 = this;
+
       var ret = [];
 
       if (from) {
         var fm = this._getChangeMatched(from, to);
 
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteLeave', true)));
-        ret.push.apply(ret, _toConsumableArray(fm.filter(function (r) {
-          return r.config.beforeLeave;
-        }).map(function (r) {
-          return r.config.beforeLeave;
-        }).reverse()));
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeLeave', true)));
       }
 
       if (to) {
         var tm = this._getChangeMatched(to, from);
 
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(tm, 'beforeRouteEnter')));
-        ret.push.apply(ret, _toConsumableArray(tm.filter(function (r) {
-          return r.config.beforeEnter;
-        }).map(function (r) {
-          return r.config.beforeEnter;
-        })));
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(tm, 'beforeEnter')));
+        tm.forEach(function (r) {
+          r.config._pending.afterEnterGuards = _this3._getComponentGurads(r, 'afterEnter', false).map(function (v) {
+            return function () {
+              return v.call(this, to, from);
+            };
+          });
+        });
       }
 
       ret.push.apply(ret, _toConsumableArray(this.beforeEachGuards));
@@ -4240,7 +4246,7 @@ function () {
   }, {
     key: "_getRouteUpdateGuards",
     value: function _getRouteUpdateGuards(to, from) {
-      var _this3 = this;
+      var _this4 = this;
 
       var ret = [];
       to && to.matched.some(function (tr, i) {
@@ -4251,7 +4257,7 @@ function () {
         if (!fr || fr.path !== tr.path) return true;
         if (fr.config.beforeUpdate) guards.push(fr.config.beforeUpdate);
 
-        (_guards = guards).push.apply(_guards, _toConsumableArray(_this3._getComponentGurads(tr, 'beforeRouteUpdate')));
+        (_guards = guards).push.apply(_guards, _toConsumableArray(_this4._getComponentGurads(tr, 'beforeUpdate')));
 
         if (fr.componentInstance) guards = guards.map(function (v) {
           return v.bind(fr.componentInstance);
@@ -4268,24 +4274,11 @@ function () {
       if (from) {
         var fm = this._getChangeMatched(from, to);
 
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'afterRouteLeave', true)));
-        ret.push.apply(ret, _toConsumableArray(fm.filter(function (r) {
-          return r.config.afterLeave;
-        }).map(function (r) {
-          return r.config.afterLeave;
-        }).reverse()));
-      }
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'afterLeave', true)));
+      } // if (to) {
+      //   const tm = this._getChangeMatched(to, from);
+      // }
 
-      if (to) {
-        var tm = this._getChangeMatched(to, from);
-
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(tm, 'afterRouteEnter')));
-        ret.push.apply(ret, _toConsumableArray(tm.filter(function (r) {
-          return r.config.afterEnter;
-        }).map(function (r) {
-          return r.config.afterEnter;
-        })));
-      }
 
       ret.push.apply(ret, _toConsumableArray(this.afterEachGuards));
       return ret.flat();
@@ -4296,7 +4289,7 @@ function () {
       var _handleRouteInterceptor2 = _asyncToGenerator(
       /*#__PURE__*/
       _regenerator.default.mark(function _callee(location, callback) {
-        var _this4 = this;
+        var _this5 = this;
 
         var isInit,
             isContinue,
@@ -4331,19 +4324,31 @@ function () {
                     path: ok
                   };
                   isContinue = Boolean(ok === undefined || ok && !(ok instanceof Error) && !(0, _util.isLocation)(ok));
+                  var toLast = to.matched.length && to.matched[to.matched.length - 1];
+
+                  if ((0, _util.isFunction)(ok) && toLast && !toLast.redirect) {
+                    var cb = ok;
+
+                    toLast.config._pending.completeCallback = function (el) {
+                      return cb(el);
+                    };
+
+                    ok = true;
+                  }
+
                   callback(isContinue);
 
                   if (!isContinue) {
-                    if ((0, _util.isLocation)(ok)) _this4.replace(ok);
+                    if ((0, _util.isLocation)(ok)) _this5.replace(ok);
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
                     return;
                   }
 
-                  _this4.nextTick(function () {
+                  _this5.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok(to);
-                    if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, from), to, from);
+                    if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(_this5._getRouteUpdateGuards(to, from), to, from);
                     if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
-                    routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
+                    routetInterceptors(_this5._getAfterEachGuards(to, from), to, from);
                   });
                 });
                 _context.next = 17;
@@ -4369,16 +4374,6 @@ function () {
 
       return _handleRouteInterceptor;
     }()
-  }, {
-    key: "nextTick",
-    value: function nextTick(cb, ctx) {
-      if (!cb) return;
-      return new Promise(function (resolve) {
-        setTimeout(function () {
-          return resolve(ctx ? cb.call(ctx) : cb());
-        }, 0);
-      });
-    }
   }, {
     key: "createRoute",
     value: function createRoute(to) {
@@ -4540,6 +4535,7 @@ exports.default = ReactViewRouter;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.nextTick = nextTick;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
 exports.isLocation = isLocation;
@@ -4581,6 +4577,15 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function nextTick(cb, ctx) {
+  if (!cb) return;
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      return resolve(ctx ? cb.call(ctx) : cb());
+    }, 0);
+  });
+}
 
 function resolveRouteGuards(c, route) {
   if (c && c.__guards) {
@@ -4627,6 +4632,12 @@ function normalizeRoute(route, parent) {
   if (r.props) r.props = normalizeProps(r.props);
   if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
   if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
+  if (r.guards && !(r.guards instanceof _routeGuard.RouteCuards)) r.guards = new _routeGuard.RouteCuards(r.guards);
+  Object.defineProperty(r, '_pending', {
+    value: {
+      afterEnterGuards: []
+    }
+  });
   return r;
 }
 
@@ -4798,15 +4809,39 @@ function renderRoutes(routes, extraProps, switchProps) {
     if (component) {
       if (component.prototype) {
         if (component.prototype instanceof _react.default.Component || component.prototype.componentDidMount !== undefined) ref = options.ref;
-      } else if (component.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE) ref = options.ref;
+      } else if (component.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE) ref = options.ref;else if (route.enableRef) {
+        if (!isFunction(route.enableRef) || route.enableRef(component)) ref = options.ref;
+      }
+    }
+
+    var afterEnterGuards = route._pending.afterEnterGuards || [];
+    var completeCallback = route._pending.completeCallback;
+
+    var refHandler = function refHandler(el) {
+      completeCallback && completeCallback(el);
+      afterEnterGuards.forEach(function (v) {
+        return v.call(el);
+      });
+    };
+
+    route._pending.completeCallback = null;
+    route._pending.afterEnterGuards = [];
+
+    if (ref) {
+      var oldRef = ref;
+
+      ref = function ref(el) {
+        if (el) refHandler(el);
+        return oldRef(el);
+      };
     }
 
     var ret = _react.default.createElement(component, Object.assign(_props, props, extraProps, {
       route: route,
       ref: ref
-    })); // console.log('renderComp', route, ret);
+    }));
 
-
+    if (!ref) nextTick(refHandler);
     return ret;
   }
 
