@@ -29,7 +29,7 @@ class RouterView extends React.Component {
     let currentRoute = this._refreshCurrentRoute();
     if (currentRoute) currentRoute.componentInstance = ref;
     if (this.props && this.props._updateRef) this.props._updateRef(ref);
-    if (currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({ currentRoute });
+    if (currentRoute && currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({ currentRoute });
   }
 
   _filterRoutes(routes) {

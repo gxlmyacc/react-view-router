@@ -142,16 +142,14 @@ export default class ReactViewRouter {
 
   _getRouteUpdateGuards(to, from) {
     const ret = [];
+    const fm = [];
     to && to.matched.some((tr, i) => {
-      let guards = [];
       let fr = from.matched[i];
       if (!fr || fr.path !== tr.path) return true;
-      if (fr.config.beforeUpdate) guards.push(fr.config.beforeUpdate);
-      guards.push(...this._getComponentGurads(tr, 'beforeUpdate'));
-      if (fr.componentInstance) guards = guards.map(v => v.bind(fr.componentInstance));
-      ret.push(...guards);
+      fm.push(fr);
     });
-    return ret.flat().reverse();
+    ret.push(...this._getRouteComponentGurads(fm, 'beforeUpdate', true));
+    return ret;
   }
 
   _getAfterEachGuards(to, from) {

@@ -27,7 +27,7 @@ export class RouteLazy {
         component.then(c => {
           component = c.__esModule ? c.default : c;
           return _resolve(component);
-        }).catch(function () { return reject(arguments); });
+        }).catch(function () { return reject(...arguments); });
       } else _resolve(component);
     });
   }
@@ -35,15 +35,15 @@ export class RouteLazy {
 
 export async function resolveRouteLazyList(matched) {
   if (!matched) return;
-  const toResolve = function (routeLazy) {
+  const toResolve = async function (routeLazy) {
     if (!routeLazy || !(routeLazy instanceof RouteLazy)) return;
     return routeLazy.toResolve();
   };
   for (let r of matched) {
     const config = r.config;
-    await toResolve(config.component, config);
+    await toResolve(config.component);
     if (config.components) {
-      for (let key of config.components) await toResolve(config.components[key], config);
+      for (let key of Object.keys(config.components)) await toResolve(config.components[key]);
     }
   }
 }

@@ -48,5 +48,6 @@ export function useRouteGuards(component, guards = {}, componentClass) {
   Object.defineProperty(ret, '__guards', { value: new RouteCuards(guards, true) });
   Object.defineProperty(ret, '__component', { value: component });
   Object.defineProperty(ret, '__componentClass', { value: componentClass });
+  Object.defineProperty(ret, '__resolved', { writable: true, value: false });
   return ret;
 }

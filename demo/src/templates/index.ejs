@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title><%= htmlWebpackPlugin.options.title %></title>
+  <script type="text/javascript">
+    window.__STARTTIME__ = Date.now();
+    window.__PARAMS__ = (function (search){
+    var ret = {};
+    search.replace(/^\?/, '').split('&').forEach(function(seg){
+      if (!seg) return;
+      var s = seg.split('=');
+      s[1] = decodeURIComponent(s[1]);
+      ret[s[0]] = s[1] ? s[1] : true;
+    });
+    return ret;
+  })(location.search);
+  window.__URL_HOOK__ = function (url) {
+    if (!window.__PARAMS__ || !url) return url;
+    if (window.__PARAMS__.companyId)
+      url += (~url.indexOf('?') ? '&' : '?') + 'rt_companyId=' + window.__PARAMS__.companyId;
+    if (window.__PARAMS__.locationCode)
+      url += (~url.indexOf('?') ? '&' : '?') + 'rt_areacode=' + window.__PARAMS__.locationCode;
+    return url;
+  };
+  </script>
+  <% for (var index in htmlWebpackPlugin.files.css) { %>
+  <link href="<%=htmlWebpackPlugin.files.css[index] %>" rel="stylesheet">
+  <% } %>
+</head>
+<body>
+  <div id="root" class="app"></div>
+  <% for (var index in htmlWebpackPlugin.files.js) { %>
+  <script type="text/javascript" src="<%=htmlWebpackPlugin.files.js[index] %>"></script>
+  <% } %>
+  <script type="text/javascript">
+    window.__LOADTIME__ = Date.now();
+  </script>
+</body>
+</html>

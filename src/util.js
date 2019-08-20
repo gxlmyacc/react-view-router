@@ -12,11 +12,12 @@ function nextTick(cb, ctx) {
 }
 
 function resolveRouteGuards(c, route) {
-  if (c && c.__guards) {
+  if (c && c.__guards && !c.__resolved) {
     if (route) {
       if (route.guards) route.guards.merge(c.__guards);
       else route.guards = c.__guards;
     }
+    c.__resolved = true;
     // c = c.__component;
   }
   return c;
@@ -151,13 +152,17 @@ function isAcceptRef(v) {
   if (!v) return;
   if (v.prototype) {
     if (v.prototype instanceof React.Component || v.prototype.componentDidMount !== undefined) ret = true;
-  } else if (v.$$typeof === REACT_FORWARD_REF_TYPE) ret = true;
+  } else if (v.$$typeof === REACT_FORWARD_REF_TYPE && (!v.__guards || v.__componentClass)) ret = true;
   return ret;
 }
 
 function mergeFns(...fns) {
   return function (...args) {
-    return fns.reduce((ret, fn) => fn && fn.call(this, ...args));
+    let ret;
+    fns.forEach(fn => {
+      ret = fn && fn.call(this, ...args);
+    });
+    return ret;
   };
 }
 
@@ -166,7 +171,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
   if (switchProps === undefined) switchProps = {};
 
   function getRouteComp(route) {
-    if (options.name) return route.components && route.renderComponent[options.name];
+    if (options.name) return route.components && route.components[options.name];
     return route.component || (route.components && route.components.default);
   }
   function configProps(_props, configs, obj, name) {
@@ -228,7 +233,6 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     route._pending.completeCallback = null;
     route._pending.afterEnterGuards = [];
     if (ref) ref = mergeFns(ref, el => el && refHandler && refHandler(el, component.__componentClass));
-
     const ret = React.createElement(
       component.__component || component,
       Object.assign(_props, props, extraProps, {
