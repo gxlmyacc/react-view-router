@@ -43,7 +43,7 @@ function App() {
       <h1>App</h1>
       <RouterView router={router} />
     </div>
-  )
+  );
 }
 ```
 
@@ -58,7 +58,7 @@ export default function HomeIndex() {
       <h1>HomeIndex</h1>
       <RouterView />
     </div>
-  )
+  );
 }
 ```
 
@@ -74,7 +74,7 @@ export default function HomeMainIndex() {
       <RouterView />
       <RouterView name="footer" />
     </div>
-  )
+  );
 }
 ```
 [Named Views](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
@@ -82,10 +82,10 @@ export default function HomeMainIndex() {
 ```javascript
 /// home/home/main/some/index.js
 import React from 'react';
-import { RouterView, useRouteGuards } from 'react-view-router';
+import { useRouteGuards } from 'react-view-router';
 import store from 'store';
 
-class HomeMainSomeIndex extends React {
+class HomeMainSomeIndex extends React.Component {
   constructor(props) {
     super(props);
     this.state = { text: 'text1' };
@@ -96,6 +96,7 @@ class HomeMainSomeIndex extends React {
   }
 
   render() {
+    let { text } = this.state;
     return (
       <div>
         <h1>HomeMainSomeIndex</h1>
@@ -129,7 +130,7 @@ export default useRouteGuards(HomeMainSomeIndex, {
 
 ```javascript
 /// home/main/some/footer.js
-import { RouterView } from 'react-view-router';
+import React from 'react';
 
 export default function HomeMainSomeFooter() {
   return (
@@ -142,14 +143,29 @@ export default function HomeMainSomeFooter() {
 
 ```javascript
 /// login/index.js
-import { RouterView } from 'react-view-router';
+import React from 'react';
+import store from './store';
+import router from './router';
 
-export default function Login() {
+export default function LoginIndex() {
+  const doLogin = () => {
+    store.logined = true;
+    router.push({
+      path: '/home',
+      query: { aa: 1 }
+    }, () => {
+      console.log('router.push is complete!');
+    }, () => {
+      console.log('router.push is abort!');
+    });
+  };
+
   return (
     <div>
-      <h1>Login</h1>
+      <h1>LoginIndex</h1>
+      <button onClick={doLogin}>Login</button>
     </div>
-  )
+  );
 }
 ```
 
