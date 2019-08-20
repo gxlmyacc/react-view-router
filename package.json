@@ -16,6 +16,11 @@
   "engines": {
     "node": "> 6.9.1"
   },
+  "files": [
+    "dist",
+    "src",
+    "build"
+  ],
   "scripts": {
     "build-dev": "cross-env NODE_ENV=development webpack --progresss  --config build/webpack-dev.config.js",
     "build-prod": "cross-env NODE_ENV=production webpack --progresss  --config build/webpack-prod.config.js",

@@ -3255,6 +3255,10 @@ function useRouteGuards(component) {
   Object.defineProperty(ret, '__componentClass', {
     value: componentClass
   });
+  Object.defineProperty(ret, '__resolved', {
+    writable: true,
+    value: false
+  });
   return ret;
 }
 
@@ -3337,7 +3341,7 @@ function () {
             component = c.__esModule ? c.default : c;
             return _resolve(component);
           }).catch(function () {
-            return reject(arguments);
+            return reject.apply(void 0, arguments);
           });
         } else _resolve(component);
       });
@@ -3356,149 +3360,139 @@ function resolveRouteLazyList(_x) {
 function _resolveRouteLazyList() {
   _resolveRouteLazyList = _asyncToGenerator(
   /*#__PURE__*/
-  _regenerator.default.mark(function _callee(matched) {
-    var toResolve, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, r, config, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, key;
+  _regenerator.default.mark(function _callee2(matched) {
+    var toResolve, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, r, config, _i, _Object$keys, key;
 
-    return _regenerator.default.wrap(function _callee$(_context) {
+    return _regenerator.default.wrap(function _callee2$(_context2) {
       while (1) {
-        switch (_context.prev = _context.next) {
+        switch (_context2.prev = _context2.next) {
           case 0:
             if (matched) {
-              _context.next = 2;
+              _context2.next = 2;
               break;
             }
 
-            return _context.abrupt("return");
+            return _context2.abrupt("return");
 
           case 2:
-            toResolve = function toResolve(routeLazy) {
-              if (!routeLazy || !(routeLazy instanceof RouteLazy)) return;
-              return routeLazy.toResolve();
-            };
+            toResolve =
+            /*#__PURE__*/
+            function () {
+              var _ref = _asyncToGenerator(
+              /*#__PURE__*/
+              _regenerator.default.mark(function _callee(routeLazy) {
+                return _regenerator.default.wrap(function _callee$(_context) {
+                  while (1) {
+                    switch (_context.prev = _context.next) {
+                      case 0:
+                        if (!(!routeLazy || !(routeLazy instanceof RouteLazy))) {
+                          _context.next = 2;
+                          break;
+                        }
+
+                        return _context.abrupt("return");
+
+                      case 2:
+                        return _context.abrupt("return", routeLazy.toResolve());
+
+                      case 3:
+                      case "end":
+                        return _context.stop();
+                    }
+                  }
+                }, _callee);
+              }));
+
+              return function toResolve(_x2) {
+                return _ref.apply(this, arguments);
+              };
+            }();
 
             _iteratorNormalCompletion = true;
             _didIteratorError = false;
             _iteratorError = undefined;
-            _context.prev = 6;
+            _context2.prev = 6;
             _iterator = matched[Symbol.iterator]();
 
           case 8:
             if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-              _context.next = 43;
+              _context2.next = 25;
               break;
             }
 
             r = _step.value;
             config = r.config;
-            _context.next = 13;
-            return toResolve(config.component, config);
+            _context2.next = 13;
+            return toResolve(config.component);
 
           case 13:
             if (!config.components) {
-              _context.next = 40;
+              _context2.next = 22;
               break;
             }
 
-            _iteratorNormalCompletion2 = true;
-            _didIteratorError2 = false;
-            _iteratorError2 = undefined;
-            _context.prev = 17;
-            _iterator2 = config.components[Symbol.iterator]();
+            _i = 0, _Object$keys = Object.keys(config.components);
+
+          case 15:
+            if (!(_i < _Object$keys.length)) {
+              _context2.next = 22;
+              break;
+            }
+
+            key = _Object$keys[_i];
+            _context2.next = 19;
+            return toResolve(config.components[key]);
 
           case 19:
-            if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-              _context.next = 26;
-              break;
-            }
-
-            key = _step2.value;
-            _context.next = 23;
-            return toResolve(config.components[key], config);
-
-          case 23:
-            _iteratorNormalCompletion2 = true;
-            _context.next = 19;
+            _i++;
+            _context2.next = 15;
             break;
 
-          case 26:
-            _context.next = 32;
-            break;
-
-          case 28:
-            _context.prev = 28;
-            _context.t0 = _context["catch"](17);
-            _didIteratorError2 = true;
-            _iteratorError2 = _context.t0;
-
-          case 32:
-            _context.prev = 32;
-            _context.prev = 33;
-
-            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-              _iterator2.return();
-            }
-
-          case 35:
-            _context.prev = 35;
-
-            if (!_didIteratorError2) {
-              _context.next = 38;
-              break;
-            }
-
-            throw _iteratorError2;
-
-          case 38:
-            return _context.finish(35);
-
-          case 39:
-            return _context.finish(32);
-
-          case 40:
+          case 22:
             _iteratorNormalCompletion = true;
-            _context.next = 8;
+            _context2.next = 8;
             break;
 
-          case 43:
-            _context.next = 49;
+          case 25:
+            _context2.next = 31;
             break;
 
-          case 45:
-            _context.prev = 45;
-            _context.t1 = _context["catch"](6);
+          case 27:
+            _context2.prev = 27;
+            _context2.t0 = _context2["catch"](6);
             _didIteratorError = true;
-            _iteratorError = _context.t1;
+            _iteratorError = _context2.t0;
 
-          case 49:
-            _context.prev = 49;
-            _context.prev = 50;
+          case 31:
+            _context2.prev = 31;
+            _context2.prev = 32;
 
             if (!_iteratorNormalCompletion && _iterator.return != null) {
               _iterator.return();
             }
 
-          case 52:
-            _context.prev = 52;
+          case 34:
+            _context2.prev = 34;
 
             if (!_didIteratorError) {
-              _context.next = 55;
+              _context2.next = 37;
               break;
             }
 
             throw _iteratorError;
 
-          case 55:
-            return _context.finish(52);
+          case 37:
+            return _context2.finish(34);
 
-          case 56:
-            return _context.finish(49);
+          case 38:
+            return _context2.finish(31);
 
-          case 57:
+          case 39:
           case "end":
-            return _context.stop();
+            return _context2.stop();
         }
       }
-    }, _callee, null, [[6, 45, 49, 57], [17, 28, 32, 40], [33,, 35, 39], [50,, 52, 56]]);
+    }, _callee2, null, [[6, 27, 31, 39], [32,, 34, 38]]);
   }));
   return _resolveRouteLazyList.apply(this, arguments);
 }
@@ -3611,7 +3605,7 @@ function (_React$Component) {
 
       if (currentRoute) currentRoute.componentInstance = ref;
       if (this.props && this.props._updateRef) this.props._updateRef(ref);
-      if (currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({
+      if (currentRoute && currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({
         currentRoute: currentRoute
       });
     }
@@ -4260,25 +4254,15 @@ function () {
   }, {
     key: "_getRouteUpdateGuards",
     value: function _getRouteUpdateGuards(to, from) {
-      var _this4 = this;
-
       var ret = [];
+      var fm = [];
       to && to.matched.some(function (tr, i) {
-        var _guards;
-
-        var guards = [];
         var fr = from.matched[i];
         if (!fr || fr.path !== tr.path) return true;
-        if (fr.config.beforeUpdate) guards.push(fr.config.beforeUpdate);
-
-        (_guards = guards).push.apply(_guards, _toConsumableArray(_this4._getComponentGurads(tr, 'beforeUpdate')));
-
-        if (fr.componentInstance) guards = guards.map(function (v) {
-          return v.bind(fr.componentInstance);
-        });
-        ret.push.apply(ret, _toConsumableArray(guards));
+        fm.push(fr);
       });
-      return ret.flat().reverse();
+      ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeUpdate', true)));
+      return ret;
     }
   }, {
     key: "_getAfterEachGuards",
@@ -4303,7 +4287,7 @@ function () {
       var _handleRouteInterceptor2 = _asyncToGenerator(
       /*#__PURE__*/
       _regenerator.default.mark(function _callee(location, callback) {
-        var _this5 = this;
+        var _this4 = this;
 
         var isInit,
             isContinue,
@@ -4353,16 +4337,16 @@ function () {
                   callback(isContinue);
 
                   if (!isContinue) {
-                    if ((0, _util.isLocation)(ok)) _this5.replace(ok);
+                    if ((0, _util.isLocation)(ok)) _this4.replace(ok);
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
                     return;
                   }
 
-                  _this5.nextTick(function () {
+                  _this4.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok(to);
-                    if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(_this5._getRouteUpdateGuards(to, from), to, from);
+                    if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, from), to, from);
                     if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
-                    routetInterceptors(_this5._getAfterEachGuards(to, from), to, from);
+                    routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
                   });
                 });
                 _context.next = 17;
@@ -4606,11 +4590,12 @@ function nextTick(cb, ctx) {
 }
 
 function resolveRouteGuards(c, route) {
-  if (c && c.__guards) {
+  if (c && c.__guards && !c.__resolved) {
     if (route) {
       if (route.guards) route.guards.merge(c.__guards);else route.guards = c.__guards;
-    } // c = c.__component;
+    }
 
+    c.__resolved = true; // c = c.__component;
   }
 
   return c;
@@ -4801,7 +4786,7 @@ function isAcceptRef(v) {
 
   if (v.prototype) {
     if (v.prototype instanceof _react.default.Component || v.prototype.componentDidMount !== undefined) ret = true;
-  } else if (v.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE) ret = true;
+  } else if (v.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE && (!v.__guards || v.__componentClass)) ret = true;
 
   return ret;
 }
@@ -4818,9 +4803,11 @@ function mergeFns() {
       args[_key3] = arguments[_key3];
     }
 
-    return fns.reduce(function (ret, fn) {
-      return fn && fn.call.apply(fn, [_this].concat(args));
+    var ret;
+    fns.forEach(function (fn) {
+      ret = fn && fn.call.apply(fn, [_this].concat(args));
     });
+    return ret;
   };
 }
 
@@ -4830,7 +4817,7 @@ function renderRoutes(routes, extraProps, switchProps) {
   if (switchProps === undefined) switchProps = {};
 
   function getRouteComp(route) {
-    if (options.name) return route.components && route.renderComponent[options.name];
+    if (options.name) return route.components && route.components[options.name];
     return route.component || route.components && route.components.default;
   }
 
