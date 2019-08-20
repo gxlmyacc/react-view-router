@@ -263,6 +263,63 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 - `push`、`replace`、`go`、`back`、`forward` `redirect`[history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
 
+### Export Methods
+- `useRouteGuards` route component guards methods:
+```javascript
+/**
+ * route component guards methods
+ * @param {Object} component - route component
+ * @param {Object} guards - guards methods 
+ * @param {Class} [componentClass] - the route component class, it will be useful when component is High-order components
+ * @return {RouteComponentGuards} - the route componet that can be regarded as `React.forwardRef`
+ * /
+function useRouteGuards(component, guards = {}, componentClass) {}
+```
+
+- `lazyImport` route component lazy load method:
+```javascript
+/**
+ * route component lazy load method
+ * @param {Function} importMethod - webpack lazy import method, For example: () => import('@/components/some-component')
+ * @return {RouteLazy} - the result only be used with component or components props in route config
+ * /
+function lazyImport(importMethod) {}
+```
+
+- `normalizeRoutes` normalize route configs:
+```javascript
+/**
+ * normalize route configs
+ * @param {Array} routes - unnormalized route configs
+ * @param {Object} [parent] - if provide, routes will be resolved regarded as parert`s children 
+ * @return {Array} - normalized route configs 
+ * /
+function normalizeRoutes(routes, parent) {}
+```
+- `normalizeLocation` normalize location string or object:
+```javascript
+/**
+ * normalize location string or object
+ * @param {Object|string} to - location that need to normalize
+ * @param {Object} [parent] - if provide, location will be resolved with parert
+ * @return {Object} - normalized location object: { path: string, pathname: string, search: string, query: Object, ...custom props } 
+ * /
+function normalizeLocation(to, parent) {}
+```
+
+- `isLocation` determine whether `v` is a location object
+```javascript
+/**
+ * determine whether `v` is a location object
+ * @param {Object} v - the object to be determined
+ * @return {boolean}
+ * /
+function isLocation(v) {}
+```
+
+- `withRouter` just re-export, see: [withRouter](https://reacttraining.com/react-router/web/api/withRouter)
+- `matchPath` just re-export, see: [matchPath](https://reacttraining.com/react-router/web/api/matchPath)
+
 ## NOTE
 1. You sholud config the  `Webpack Configuration` with `alias`:
 ```javascript
@@ -279,7 +336,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 ``` 
 otherwise, webpack will package both `history` and `history-fix` into the target js file.
 
-2. when route component is `Class Component` (not `Function Component`), the `this` in `afterRouteEnter`, `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards and `afterEnter`,`beforeUpdate`,`beforeLeave`,`afterLeave` in Route Guards will be the component instance;
+2. if route component is `Class Component` (not `Function Component`), then `this` variable in `afterRouteEnter`, `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards and `afterEnter`,`beforeUpdate`,`beforeLeave`,`afterLeave` in Route Guards will be that component instance;
 
 ## License
 

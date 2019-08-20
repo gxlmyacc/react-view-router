@@ -218,6 +218,7 @@ export default class ReactViewRouter {
       ...last.match,
       query: to.search ? qs.parseQuery(to.search.substr(1)) : {},
       path: to.pathname,
+      hash: to.search,
       fullPath: `${to.path}${to.search}`,
       matched: matched.map(({ route }, i) => {
         let ret = {};

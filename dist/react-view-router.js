@@ -3192,12 +3192,16 @@ function () {
 
     _classCallCheck(this, RouteCuards);
 
-    this.isComponentGuards = isComponentGuards;
     this.beforeEnter = [];
     this.beforeUpdate = [];
     this.afterEnter = [];
     this.beforeLeave = [];
     this.afterLeave = [];
+    Object.defineProperty(this, 'isComponentGuards', {
+      writable: true,
+      configurable: true,
+      value: isComponentGuards
+    });
     this.merge(guards || {}, isComponentGuards);
   }
 
@@ -3225,21 +3229,31 @@ function () {
 
 exports.RouteCuards = RouteCuards;
 
+var RouteComponentGuards = function RouteComponentGuards() {
+  _classCallCheck(this, RouteComponentGuards);
+
+  this.$$typeof = REACT_FORWARD_REF_TYPE;
+};
+
 function useRouteGuards(component) {
   var guards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  var ret = {
-    $$typeof: REACT_FORWARD_REF_TYPE,
-    render: function render(props, ref) {
-      return _react.default.createElement(component, _objectSpread({}, props, {
-        ref: ref
-      }));
-    }
+  var componentClass = arguments.length > 2 ? arguments[2] : undefined;
+  var ret = new RouteComponentGuards();
+
+  ret.render = function (props, ref) {
+    return _react.default.createElement(component, _objectSpread({}, props, {
+      ref: ref
+    }));
   };
+
   Object.defineProperty(ret, '__guards', {
     value: new RouteCuards(guards, true)
   });
   Object.defineProperty(ret, '__component', {
     value: component
+  });
+  Object.defineProperty(ret, '__componentClass', {
+    value: componentClass
   });
   return ret;
 }
@@ -4390,6 +4404,7 @@ function () {
       var ret = last ? _objectSpread({}, last.match, {
         query: to.search ? _qs.default.parseQuery(to.search.substr(1)) : {},
         path: to.pathname,
+        hash: to.search,
         fullPath: "".concat(to.path).concat(to.search),
         matched: matched.map(function (_ref2, i) {
           var route = _ref2.route;
@@ -4535,6 +4550,9 @@ exports.default = ReactViewRouter;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.once = once;
+exports.mergeFns = mergeFns;
+exports.isAcceptRef = isAcceptRef;
 exports.nextTick = nextTick;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
@@ -4591,9 +4609,8 @@ function resolveRouteGuards(c, route) {
   if (c && c.__guards) {
     if (route) {
       if (route.guards) route.guards.merge(c.__guards);else route.guards = c.__guards;
-    }
+    } // c = c.__component;
 
-    c = c.__component;
   }
 
   return c;
@@ -4762,6 +4779,51 @@ function normalizeProps(props) {
   return res;
 }
 
+function once(fn, ctx) {
+  var ret;
+  return function () {
+    if (!fn) return ret;
+    var _fn = fn;
+    fn = null;
+
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    ret = _fn.call.apply(_fn, [ctx || this].concat(args));
+    return ret;
+  };
+}
+
+function isAcceptRef(v) {
+  var ret = false;
+  if (!v) return;
+
+  if (v.prototype) {
+    if (v.prototype instanceof _react.default.Component || v.prototype.componentDidMount !== undefined) ret = true;
+  } else if (v.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE) ret = true;
+
+  return ret;
+}
+
+function mergeFns() {
+  for (var _len2 = arguments.length, fns = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+    fns[_key2] = arguments[_key2];
+  }
+
+  return function () {
+    var _this = this;
+
+    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
+    }
+
+    return fns.reduce(function (ret, fn) {
+      return fn && fn.call.apply(fn, [_this].concat(args));
+    });
+  };
+}
+
 function renderRoutes(routes, extraProps, switchProps) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   if (extraProps === undefined) extraProps = {};
@@ -4807,36 +4869,44 @@ function renderRoutes(routes, extraProps, switchProps) {
     var ref = null;
 
     if (component) {
-      if (component.prototype) {
-        if (component.prototype instanceof _react.default.Component || component.prototype.componentDidMount !== undefined) ref = options.ref;
-      } else if (component.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE) ref = options.ref;else if (route.enableRef) {
+      if (isAcceptRef(component)) ref = options.ref;else if (route.enableRef) {
         if (!isFunction(route.enableRef) || route.enableRef(component)) ref = options.ref;
       }
     }
 
     var afterEnterGuards = route._pending.afterEnterGuards || [];
     var completeCallback = route._pending.completeCallback;
+    var refHandler = once(function (el, componentClass) {
+      if (el) {
+        if (componentClass && el._reactInternalFiber) {
+          var refComp = null;
+          var comp = el._reactInternalFiber;
 
-    var refHandler = function refHandler(el) {
-      completeCallback && completeCallback(el);
-      afterEnterGuards.forEach(function (v) {
-        return v.call(el);
-      });
-    };
+          while (comp && !refComp) {
+            if (comp.type === componentClass) {
+              refComp = comp;
+              break;
+            }
 
+            comp = comp.child;
+          }
+
+          if (refComp && refComp.stateNode instanceof componentClass) el = refComp.stateNode;
+        }
+
+        completeCallback && completeCallback(el);
+        afterEnterGuards && afterEnterGuards.forEach(function (v) {
+          return v.call(el);
+        });
+      }
+    });
     route._pending.completeCallback = null;
     route._pending.afterEnterGuards = [];
+    if (ref) ref = mergeFns(ref, function (el) {
+      return el && refHandler && refHandler(el, component.__componentClass);
+    });
 
-    if (ref) {
-      var oldRef = ref;
-
-      ref = function ref(el) {
-        if (el) refHandler(el);
-        return oldRef(el);
-      };
-    }
-
-    var ret = _react.default.createElement(component, Object.assign(_props, props, extraProps, {
+    var ret = _react.default.createElement(component.__component || component, Object.assign(_props, props, extraProps, {
       route: route,
       ref: ref
     }));

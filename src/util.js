@@ -17,7 +17,7 @@ function resolveRouteGuards(c, route) {
       if (route.guards) route.guards.merge(c.__guards);
       else route.guards = c.__guards;
     }
-    c = c.__component;
+    // c = c.__component;
   }
   return c;
 }
@@ -135,6 +135,32 @@ function normalizeProps(props) {
   return res;
 }
 
+function once(fn, ctx) {
+  let ret;
+  return function (...args) {
+    if (!fn) return ret;
+    const _fn = fn;
+    fn = null;
+    ret = _fn.call(ctx || this, ...args);
+    return ret;
+  };
+}
+
+function isAcceptRef(v) {
+  let ret = false;
+  if (!v) return;
+  if (v.prototype) {
+    if (v.prototype instanceof React.Component || v.prototype.componentDidMount !== undefined) ret = true;
+  } else if (v.$$typeof === REACT_FORWARD_REF_TYPE) ret = true;
+  return ret;
+}
+
+function mergeFns(...fns) {
+  return function (...args) {
+    return fns.reduce((ret, fn) => fn && fn.call(this, ...args));
+  };
+}
+
 function renderRoutes(routes, extraProps, switchProps, options = {}) {
   if (extraProps === undefined) extraProps = {};
   if (switchProps === undefined) switchProps = {};
@@ -174,32 +200,37 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     component = resolveRouteGuards(component, route);
     let ref = null;
     if (component) {
-      if (component.prototype) {
-        if (component.prototype instanceof React.Component
-          || component.prototype.componentDidMount !== undefined) ref = options.ref;
-      } else if (component.$$typeof === REACT_FORWARD_REF_TYPE) ref = options.ref;
+      if (isAcceptRef(component)) ref = options.ref;
       else if (route.enableRef) {
         if (!isFunction(route.enableRef) || route.enableRef(component)) ref = options.ref;
       }
     }
     const afterEnterGuards = route._pending.afterEnterGuards || [];
     const completeCallback = route._pending.completeCallback;
-    const refHandler = el => {
-      completeCallback && completeCallback(el);
-      afterEnterGuards.forEach(v => v.call(el));
-    };
+    let refHandler = once((el, componentClass) => {
+      if (el) {
+        if (componentClass && el._reactInternalFiber) {
+          let refComp = null;
+          let comp = el._reactInternalFiber;
+          while (comp && !refComp) {
+            if (comp.type === componentClass) {
+              refComp = comp;
+              break;
+            }
+            comp = comp.child;
+          }
+          if (refComp && refComp.stateNode instanceof componentClass) el = refComp.stateNode;
+        }
+        completeCallback && completeCallback(el);
+        afterEnterGuards && afterEnterGuards.forEach(v => v.call(el));
+      }
+    });
     route._pending.completeCallback = null;
     route._pending.afterEnterGuards = [];
-    if (ref) {
-      const oldRef = ref;
-      ref = el => {
-        if (el) refHandler(el);
-        return oldRef(el);
-      };
-    }
+    if (ref) ref = mergeFns(ref, el => el && refHandler && refHandler(el, component.__componentClass));
 
     const ret = React.createElement(
-      component,
+      component.__component || component,
       Object.assign(_props, props, extraProps, {
         route,
         ref
@@ -236,6 +267,9 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
 
 
 export {
+  once,
+  mergeFns,
+  isAcceptRef,
   nextTick,
   isPlainObject,
   isFunction,

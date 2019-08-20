@@ -8,12 +8,14 @@ export const REACT_LAZY_TYPE = LazyMeth.$$typeof;
 
 export class RouteCuards {
   constructor(guards, isComponentGuards = false) {
-    this.isComponentGuards = isComponentGuards;
     this.beforeEnter = [];
     this.beforeUpdate = [];
     this.afterEnter = [];
     this.beforeLeave = [];
     this.afterLeave = [];
+
+    Object.defineProperty(this, 'isComponentGuards', { writable: true, configurable: true, value: isComponentGuards });
+
     this.merge(guards || {}, isComponentGuards);
   }
 
@@ -32,14 +34,19 @@ export class RouteCuards {
   }
 }
 
-export function useRouteGuards(component, guards = {}) {
-  const ret = {
-    $$typeof: REACT_FORWARD_REF_TYPE,
-    render(props, ref) {
-      return React.createElement(component, { ...props, ref });
-    }
+class RouteComponentGuards {
+  constructor() {
+    this.$$typeof = REACT_FORWARD_REF_TYPE;
+  }
+}
+
+export function useRouteGuards(component, guards = {}, componentClass) {
+  const ret = new RouteComponentGuards();
+  ret.render = function (props, ref) {
+    return React.createElement(component, { ...props, ref });
   };
   Object.defineProperty(ret, '__guards', { value: new RouteCuards(guards, true) });
   Object.defineProperty(ret, '__component', { value: component });
+  Object.defineProperty(ret, '__componentClass', { value: componentClass });
   return ret;
 }
