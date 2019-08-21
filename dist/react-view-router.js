@@ -3613,7 +3613,7 @@ function (_React$Component) {
     key: "_filterRoutes",
     value: function _filterRoutes(routes) {
       var name = this.props.name;
-      return routes.filter(function (r) {
+      return routes && routes.filter(function (r) {
         if (r.config) r = r.config;
         var hasName = name && name !== 'default';
         if (r.redirect) return hasName ? name === r.name : !r.name;
@@ -3650,9 +3650,7 @@ function (_React$Component) {
                 return _context.abrupt("return");
 
               case 2:
-                state = _objectSpread({}, this.state, {
-                  _routerInited: true
-                });
+                state = _objectSpread({}, this.state);
                 props = this.props || {};
 
                 if (!(props.depth === undefined && this._reactInternalFiber)) {
@@ -3701,10 +3699,16 @@ function (_React$Component) {
                 if (state._routerRoot && state.router) {
                   state.router.viewRoot = this;
 
-                  state.router._handleRouteInterceptor(state.router.location, function (ok) {
-                    return ok && _this2.setState(state);
+                  state.router._handleRouteInterceptor(state.router.location, function () {
+                    return _this2.setState(Object.assign(state, {
+                      _routerInited: true
+                    }));
                   }, true);
-                } else this.setState(state);
+                } else {
+                  this.setState(Object.assign(state, {
+                    _routerInited: true
+                  }));
+                }
 
               case 19:
               case "end":
@@ -3786,12 +3790,9 @@ function (_React$Component) {
   }, {
     key: "render",
     value: function render() {
-      var _this3 = this;
-
       var _this$state = this.state,
           routes = _this$state.routes,
           router = _this$state.router,
-          _routerRoot = _this$state._routerRoot,
           _routerInited = _this$state._routerInited; // eslint-disable-next-line
 
       var _ref = this.props || {},
@@ -3802,27 +3803,14 @@ function (_React$Component) {
       var _router$currentRoute = router.currentRoute,
           query = _router$currentRoute.query,
           params = _router$currentRoute.params;
-
-      var _render = function _render() {
-        return (0, _util.renderRoutes)(routes, _objectSpread({}, props, {
-          parent: _this3
-        }), {}, {
-          name: props.name,
-          query: query,
-          params: params,
-          ref: _this3._updateRef
-        });
-      };
-
-      var ret = null;
-
-      if (_routerRoot) {
-        ret = _react.default.createElement(_reactRouterDom.Router, {
-          history: router
-        }, _render());
-      } else ret = _render();
-
-      return ret;
+      return (0, _util.renderRoutes)(routes, _objectSpread({}, props, {
+        parent: this
+      }), {}, {
+        name: props.name,
+        query: query,
+        params: params,
+        ref: this._updateRef
+      });
     }
   }]);
 
@@ -3830,9 +3818,17 @@ function (_React$Component) {
 }(_react.default.Component);
 
 var _default = _react.default.forwardRef(function (props, ref) {
-  return _react.default.createElement(RouterView, _objectSpread({}, props, {
+  var ret = _react.default.createElement(RouterView, _objectSpread({}, props, {
     _updateRef: ref
   }));
+
+  if (props.router) {
+    ret = _react.default.createElement(_reactRouterDom.Router, {
+      history: props.router
+    }, ret);
+  }
+
+  return ret;
 });
 
 exports.default = _default;
@@ -3901,13 +3897,13 @@ function _routetInterceptors() {
   _routetInterceptors = _asyncToGenerator(
   /*#__PURE__*/
   _regenerator.default.mark(function _callee4(interceptors, to, from, next) {
-    var routetInterceptor, _routetInterceptor, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, interceptor;
+    var isBlock, routetInterceptor, _routetInterceptor, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, interceptor;
 
     return _regenerator.default.wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
-            _routetInterceptor = function _ref5() {
+            _routetInterceptor = function _ref6() {
               _routetInterceptor = _asyncToGenerator(
               /*#__PURE__*/
               _regenerator.default.mark(function _callee3(interceptor, index, to, from, next) {
@@ -3916,78 +3912,70 @@ function _routetInterceptors() {
                     switch (_context3.prev = _context3.next) {
                       case 0:
                         if (interceptor) {
-                          _context3.next = 4;
+                          _context3.next = 2;
                           break;
                         }
 
-                        _context3.next = 3;
-                        return next();
+                        return _context3.abrupt("return", next());
 
-                      case 3:
-                        return _context3.abrupt("return", _context3.sent);
-
-                      case 4:
-                        _context3.next = 6;
+                      case 2:
+                        _context3.next = 4;
                         return interceptor(to, from,
                         /*#__PURE__*/
                         function () {
                           var _ref3 = _asyncToGenerator(
                           /*#__PURE__*/
                           _regenerator.default.mark(function _callee2(f1) {
+                            var nextInterceptor;
                             return _regenerator.default.wrap(function _callee2$(_context2) {
                               while (1) {
                                 switch (_context2.prev = _context2.next) {
                                   case 0:
-                                    if (!(f1 !== undefined && f1 !== true && typeof f1 !== 'function')) {
-                                      _context2.next = 4;
+                                    nextInterceptor = interceptors[++index];
+
+                                    if (!(isBlock(f1) || !nextInterceptor)) {
+                                      _context2.next = 3;
                                       break;
                                     }
 
-                                    _context2.next = 3;
-                                    return next(f1);
+                                    return _context2.abrupt("return", next(f1));
 
                                   case 3:
-                                    return _context2.abrupt("return", _context2.sent);
-
-                                  case 4:
                                     if (typeof f1 === 'boolean') f1 = undefined;
-                                    interceptor = interceptors[++index];
+                                    _context2.prev = 4;
 
-                                    if (!interceptor) {
-                                      _context2.next = 12;
+                                    if (!nextInterceptor) {
+                                      _context2.next = 11;
                                       break;
                                     }
 
-                                    _context2.next = 9;
-                                    return routetInterceptor(interceptor, index, to, from, function (f2) {
-                                      return next(function (res) {
-                                        return (0, _util.isFunction)(f2) && f2(res) || (0, _util.isFunction)(f1) && f1(res);
-                                      });
-                                    });
+                                    _context2.next = 8;
+                                    return routetInterceptor(nextInterceptor, index, to, from, next);
 
-                                  case 9:
+                                  case 8:
                                     _context2.t0 = _context2.sent;
-                                    _context2.next = 15;
+                                    _context2.next = 12;
                                     break;
 
-                                  case 12:
-                                    _context2.next = 14;
-                                    return next(function (res) {
+                                  case 11:
+                                    _context2.t0 = next(function (res) {
                                       return (0, _util.isFunction)(f1) && f1(res);
                                     });
 
-                                  case 14:
-                                    _context2.t0 = _context2.sent;
-
-                                  case 15:
+                                  case 12:
                                     return _context2.abrupt("return", _context2.t0);
 
-                                  case 16:
+                                  case 15:
+                                    _context2.prev = 15;
+                                    _context2.t1 = _context2["catch"](4);
+                                    next(_context2.t1);
+
+                                  case 18:
                                   case "end":
                                     return _context2.stop();
                                 }
                               }
-                            }, _callee2);
+                            }, _callee2, null, [[4, 15]]);
                           }));
 
                           return function (_x12) {
@@ -3995,10 +3983,10 @@ function _routetInterceptors() {
                           };
                         }());
 
-                      case 6:
+                      case 4:
                         return _context3.abrupt("return", _context3.sent);
 
-                      case 7:
+                      case 5:
                       case "end":
                         return _context3.stop();
                     }
@@ -4008,35 +3996,35 @@ function _routetInterceptors() {
               return _routetInterceptor.apply(this, arguments);
             };
 
-            routetInterceptor = function _ref4(_x7, _x8, _x9, _x10, _x11) {
+            routetInterceptor = function _ref5(_x7, _x8, _x9, _x10, _x11) {
               return _routetInterceptor.apply(this, arguments);
             };
 
+            isBlock = function _ref4(v) {
+              return v === false || typeof v === 'string' || (0, _util.isLocation)(v) || v instanceof Error;
+            };
+
             if (!next) {
-              _context4.next = 6;
+              _context4.next = 7;
               break;
             }
 
-            _context4.next = 5;
-            return routetInterceptor(interceptors[0], 0, to, from, function (f) {
-              return (0, _util.isFunction)(f) ? next(function (res) {
-                return f && f(res);
-              }) : next(f);
-            });
-
-          case 5:
-            return _context4.abrupt("return", _context4.sent);
+            _context4.next = 6;
+            return routetInterceptor(interceptors[0], 0, to, from, next);
 
           case 6:
+            return _context4.abrupt("return", _context4.sent);
+
+          case 7:
             _iteratorNormalCompletion = true;
             _didIteratorError = false;
             _iteratorError = undefined;
-            _context4.prev = 9;
+            _context4.prev = 10;
             _iterator = interceptors[Symbol.iterator]();
 
-          case 11:
+          case 12:
             if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-              _context4.next = 20;
+              _context4.next = 21;
               break;
             }
 
@@ -4044,58 +4032,58 @@ function _routetInterceptors() {
             _context4.t0 = interceptor;
 
             if (!_context4.t0) {
-              _context4.next = 17;
+              _context4.next = 18;
               break;
             }
 
-            _context4.next = 17;
+            _context4.next = 18;
             return interceptor(to, from);
 
-          case 17:
+          case 18:
             _iteratorNormalCompletion = true;
-            _context4.next = 11;
+            _context4.next = 12;
             break;
 
-          case 20:
-            _context4.next = 26;
+          case 21:
+            _context4.next = 27;
             break;
 
-          case 22:
-            _context4.prev = 22;
-            _context4.t1 = _context4["catch"](9);
+          case 23:
+            _context4.prev = 23;
+            _context4.t1 = _context4["catch"](10);
             _didIteratorError = true;
             _iteratorError = _context4.t1;
 
-          case 26:
-            _context4.prev = 26;
+          case 27:
             _context4.prev = 27;
+            _context4.prev = 28;
 
             if (!_iteratorNormalCompletion && _iterator.return != null) {
               _iterator.return();
             }
 
-          case 29:
-            _context4.prev = 29;
+          case 30:
+            _context4.prev = 30;
 
             if (!_didIteratorError) {
-              _context4.next = 32;
+              _context4.next = 33;
               break;
             }
 
             throw _iteratorError;
 
-          case 32:
-            return _context4.finish(29);
-
           case 33:
-            return _context4.finish(26);
+            return _context4.finish(30);
 
           case 34:
+            return _context4.finish(27);
+
+          case 35:
           case "end":
             return _context4.stop();
         }
       }
-    }, _callee4, null, [[9, 22, 26, 34], [27,, 29, 33]]);
+    }, _callee4, null, [[10, 23, 27, 35], [28,, 30, 34]]);
   }));
   return _routetInterceptors.apply(this, arguments);
 }
@@ -4138,6 +4126,7 @@ function () {
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
+    this.listenerInstalled = false;
     this.history.listen(function (location) {
       return _this.updateRoute(location);
     });
@@ -4227,7 +4216,7 @@ function () {
     value: function _getBeforeEachGuards(to, from) {
       var _this3 = this;
 
-      var ret = [];
+      var ret = _toConsumableArray(this.beforeEachGuards);
 
       if (from) {
         var fm = this._getChangeMatched(from, to);
@@ -4238,7 +4227,28 @@ function () {
       if (to) {
         var tm = this._getChangeMatched(to, from);
 
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(tm, 'beforeEnter')));
+        tm.forEach(function (r) {
+          var guards = _this3._getComponentGurads(r, 'beforeEnter', false);
+
+          guards = guards.map(function (v) {
+            return function (to, from, next) {
+              return v(to, from, function (cb) {
+                if ((0, _util.isFunction)(cb)) {
+                  var _cb = cb;
+
+                  r.config._pending.completeCallback = function (el) {
+                    return _cb(el);
+                  };
+
+                  cb = undefined;
+                }
+
+                return next(cb);
+              });
+            };
+          });
+          ret.push.apply(ret, _toConsumableArray(guards));
+        });
         tm.forEach(function (r) {
           r.config._pending.afterEnterGuards = _this3._getComponentGurads(r, 'afterEnter', false).map(function (v) {
             return function () {
@@ -4248,7 +4258,6 @@ function () {
         });
       }
 
-      ret.push.apply(ret, _toConsumableArray(this.beforeEachGuards));
       return ret.flat();
     }
   }, {
@@ -4322,22 +4331,22 @@ function () {
                     path: ok
                   };
                   isContinue = Boolean(ok === undefined || ok && !(ok instanceof Error) && !(0, _util.isLocation)(ok));
-                  var toLast = to.matched.length && to.matched[to.matched.length - 1];
+                  var toLast = to.matched[to.matched.length - 1];
 
-                  if ((0, _util.isFunction)(ok) && toLast && !toLast.redirect) {
-                    var cb = ok;
-
-                    toLast.config._pending.completeCallback = function (el) {
-                      return cb(el);
-                    };
-
-                    ok = true;
+                  if (isContinue && toLast && toLast.redirect) {
+                    ok = (0, _util.resolveRedirect)(toLast.redirect, toLast);
+                    isContinue = false;
                   }
 
                   callback(isContinue);
 
                   if (!isContinue) {
-                    if ((0, _util.isLocation)(ok)) _this4.replace(ok);
+                    if ((0, _util.isLocation)(ok)) {
+                      if (to.onAbort) ok.onAbort = to.onAbort;
+                      if (to.onComplete) ok.onComplete = to.onComplete;
+                      return _this4.redirect(ok);
+                    }
+
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
                     return;
                   }
@@ -4374,10 +4383,10 @@ function () {
     }()
   }, {
     key: "createRoute",
-    value: function createRoute(to) {
+    value: function createRoute(to, from) {
       var matched = (0, _util.matchRoutes)(this.routes, to);
       var last = matched.length ? matched[matched.length - 1] : null;
-      var from = this.currentRoute;
+      if (!from) from = this.currentRoute;
 
       function copyInstance(to, from) {
         if (!from) return;
@@ -4385,11 +4394,15 @@ function () {
         if (from.viewInstance) to.viewInstance = from.viewInstance;
       }
 
+      var search = to.search,
+          path = to.path,
+          onAbort = to.onAbort,
+          onComplete = to.onComplete;
       var ret = last ? _objectSpread({}, last.match, {
-        query: to.search ? _qs.default.parseQuery(to.search.substr(1)) : {},
-        path: to.pathname,
-        hash: to.search,
-        fullPath: "".concat(to.path).concat(to.search),
+        query: search ? _qs.default.parseQuery(to.search.substr(1)) : {},
+        path: path,
+        hash: search,
+        fullPath: "".concat(path).concat(search),
         matched: matched.map(function (_ref2, i) {
           var route = _ref2.route;
           var ret = {};
@@ -4409,9 +4422,17 @@ function () {
 
           return ret;
         }),
-        meta: last.route.meta || {}
+        meta: last.route.meta || {},
+        onAbort: onAbort,
+        onComplete: onComplete
       }) : null;
-      if (to.isRedirect) ret.redirectedFrom = from.redirectedFrom || from;
+
+      if (to.isRedirect && from) {
+        ret.redirectedFrom = from.redirectedFrom || from;
+        if (!ret.onAbort && from.onAbort) ret.onAbort = from.onAbort;
+        if (!ret.onComplete && from.onComplete) ret.onComplete = from.onComplete;
+      }
+
       return ret;
     }
   }, {
@@ -4423,15 +4444,15 @@ function () {
   }, {
     key: "push",
     value: function push(to, onComplete, onAbort) {
-      if ((0, _util.isFunction)(onComplete)) to.onComplete = onComplete;
-      if ((0, _util.isFunction)(onAbort)) to.onAbort = onAbort;
+      if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
+      if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
       this.history.push((0, _util.normalizeLocation)(to));
     }
   }, {
     key: "replace",
     value: function replace(to, onComplete, onAbort) {
-      if ((0, _util.isFunction)(onComplete)) to.onComplete = onComplete;
-      if ((0, _util.isFunction)(onAbort)) to.onAbort = onAbort;
+      if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
+      if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
       this.history.replace((0, _util.normalizeLocation)(to));
     }
   }, {
@@ -4541,6 +4562,7 @@ exports.nextTick = nextTick;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
 exports.isLocation = isLocation;
+exports.resolveRedirect = resolveRedirect;
 exports.normalizeRoute = normalizeRoute;
 exports.normalizeRoutes = normalizeRoutes;
 exports.normalizeRoutePath = normalizeRoutePath;
@@ -4573,6 +4595,14 @@ var _routeLazy = __webpack_require__(/*! ./route-lazy */ "./src/route-lazy.js");
 var _routeGuard = __webpack_require__(/*! ./route-guard */ "./src/route-guard.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
@@ -4657,6 +4687,7 @@ function normalizeRoutes(routes, parent) {
 
 function normalizeRoutePath(path, route) {
   if (!path || path[0] === '/' || !route) return path || '';
+  if (route.config) route = route.config;
   var parent = route.parent;
 
   while (parent && path[0] !== '/') {
@@ -4719,12 +4750,22 @@ function matchRoutes(routes, location, branch, parent) {
   return branch;
 }
 
-function normalizeLocation(to, parent) {
+function normalizeLocation(to, route) {
   if (!to) return to;
-  if (typeof to === 'string') to = {
-    pathname: to
-  };
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, parent);
+
+  if (typeof to === 'string') {
+    var _to$split = to.split('?'),
+        _to$split2 = _slicedToArray(_to$split, 2),
+        pathname = _to$split2[0],
+        search = _to$split2[1];
+
+    to = {
+      pathname: pathname,
+      search: search ? "?".concat(search) : ''
+    };
+  }
+
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
   to.search = to.search || (to.query ? _qs.default.stringifyQuery(to.query) : '');
   return to;
 }
@@ -4811,6 +4852,13 @@ function mergeFns() {
   };
 }
 
+function resolveRedirect(to, route) {
+  if (isFunction(to)) to = to(route);
+  to = normalizeLocation(to, route);
+  to.isRedirect = true;
+  return to;
+}
+
 function renderRoutes(routes, extraProps, switchProps) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   if (extraProps === undefined) extraProps = {};
@@ -4865,6 +4913,7 @@ function renderRoutes(routes, extraProps, switchProps) {
     var completeCallback = route._pending.completeCallback;
     var refHandler = once(function (el, componentClass) {
       if (el) {
+        // if (isFunction(componentClass)) componentClass = componentClass(el, route);
         if (componentClass && el._reactInternalFiber) {
           var refComp = null;
           var comp = el._reactInternalFiber;
@@ -4904,18 +4953,12 @@ function renderRoutes(routes, extraProps, switchProps) {
 
   var ret = routes ? _react.default.createElement(_reactRouterDom.Switch, switchProps, routes.map(function (route, i) {
     if (route.redirect) {
-      var to = route.redirect;
-      if (isFunction(to)) to = to(_objectSpread({}, extraProps, {
-        route: route
-      }));
-      to = normalizeLocation(to, route);
-      to.isRedirect = true;
       return _react.default.createElement(_reactRouterDom.Redirect, {
         key: route.key || i,
         exact: route.exact,
         strict: route.strict,
         from: route.path,
-        to: to
+        to: resolveRedirect(route.redirect, route)
       });
     }
 
