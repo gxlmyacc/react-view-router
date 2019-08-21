@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 [![NPM downloads](https://img.shields.io/npm/dm/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 
-> Route configuration component for `react-router-dom`. write route config like vue-router in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
+> Route configuration component for `react-router-dom`. Write routing configuration like [vue-router](https://router.vuejs.org/guide/#javascript) in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
 
 ## Installation
 
@@ -307,10 +307,10 @@ function lazyImport(importMethod) {}
 /**
  * normalize route configs
  * @param {Array} routes - unnormalized route configs
- * @param {Object} [parent] - if provide, routes will be resolved regarded as parert`s children 
+ * @param {Object} [route] - if provide, routes will be resolved regarded as route.parert`s children 
  * @return {Array} - normalized route configs 
  * /
-function normalizeRoutes(routes, parent) {}
+function normalizeRoutes(routes, route) {}
 ```
 - `normalizeLocation` normalize location string or object:
 ```javascript
