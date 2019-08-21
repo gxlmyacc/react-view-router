@@ -307,20 +307,20 @@ function lazyImport(importMethod) {}
 /**
  * normalize route configs
  * @param {Array} routes - unnormalized route configs
- * @param {Object} [route] - if provide, routes will be resolved regarded as route.parert`s children 
+ * @param {Object} [parent] - if provide, routes will be resolved regarded as parert`s children 
  * @return {Array} - normalized route configs 
  * /
-function normalizeRoutes(routes, route) {}
+function normalizeRoutes(routes, parent) {}
 ```
 - `normalizeLocation` normalize location string or object:
 ```javascript
 /**
  * normalize location string or object
  * @param {Object|string} to - location that need to normalize
- * @param {Object} [parent] - if provide, location will be resolved with parert
+ * @param {Object} [route] - if provide, location will be resolved with route.parert
  * @return {Object} - normalized location object: { path: string, pathname: string, search: string, query: Object, ...custom props } 
  * /
-function normalizeLocation(to, parent) {}
+function normalizeLocation(to, route) {}
 ```
 
 - `isLocation` determine whether `v` is a location object
