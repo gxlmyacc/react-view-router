@@ -60,6 +60,7 @@ function normalizeRoutes(routes, parent) {
 
 function normalizeRoutePath(path, route) {
   if (!path || path[0] === '/' || !route) return path || '';
+  if (route.config) route = route.config;
   let parent = route.parent;
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
@@ -99,10 +100,13 @@ function matchRoutes(routes, location, branch, parent) {
   return branch;
 }
 
-function normalizeLocation(to, parent) {
+function normalizeLocation(to, route) {
   if (!to) return to;
-  if (typeof to === 'string') to = { pathname: to };
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, parent);
+  if (typeof to === 'string') {
+    const [pathname, search] = to.split('?');
+    to = { pathname, search: search ? `?${search}` : '' };
+  }
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
   to.search = to.search || (to.query ? qs.stringifyQuery(to.query) : '');
   return to;
 }
@@ -166,6 +170,13 @@ function mergeFns(...fns) {
   };
 }
 
+function resolveRedirect(to, route) {
+  if (isFunction(to)) to = to(route);
+  to = normalizeLocation(to, route);
+  to.isRedirect = true;
+  return to;
+}
+
 function renderRoutes(routes, extraProps, switchProps, options = {}) {
   if (extraProps === undefined) extraProps = {};
   if (switchProps === undefined) switchProps = {};
@@ -214,6 +225,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     const completeCallback = route._pending.completeCallback;
     let refHandler = once((el, componentClass) => {
       if (el) {
+        // if (isFunction(componentClass)) componentClass = componentClass(el, route);
         if (componentClass && el._reactInternalFiber) {
           let refComp = null;
           let comp = el._reactInternalFiber;
@@ -245,16 +257,12 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
   }
   const ret = routes ? React.createElement(Switch, switchProps, routes.map(function (route, i) {
     if (route.redirect) {
-      let to = route.redirect;
-      if (isFunction(to)) to = to({ ...extraProps, route });
-      to = normalizeLocation(to, route);
-      to.isRedirect = true;
       return React.createElement(Redirect, {
         key: route.key || i,
         exact: route.exact,
         strict: route.strict,
         from: route.path,
-        to,
+        to: resolveRedirect(route.redirect, route)
       });
     }
     const component = getRouteComp(route);
@@ -279,6 +287,7 @@ export {
   isFunction,
   isLocation,
   withRouter,
+  resolveRedirect,
   normalizeRoute,
   normalizeRoutes,
   normalizeRoutePath,

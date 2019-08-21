@@ -1,6 +1,6 @@
 import { normalizeRoutes, lazyImport } from 'react-view-router';
-import Home from '../home';
-import Login from '../login';
+import Home from 'component/home';
+import Login from 'component/login';
 
 const routes = normalizeRoutes([
   { path: '/', redirect: '/home' },
@@ -14,7 +14,7 @@ const routes = normalizeRoutes([
       {
         path: 'main',
         // lazy load
-        component: lazyImport(() => import(/* webpackChunkName: "home" */ '../home/main')),
+        component: lazyImport(() => import(/* webpackChunkName: "home" */ 'component/home/main')),
         // route meta infos
         meta: { needLogin: true },
         children: [
@@ -22,8 +22,8 @@ const routes = normalizeRoutes([
           {
             path: 'some',
             components: {
-              default: lazyImport(() => import(/* webpackChunkName: "home" */ '../home/main/some')),
-              footer: lazyImport(() => import(/* webpackChunkName: "home" */ '../home/main/some/footer')),
+              default: lazyImport(() => import(/* webpackChunkName: "home" */ 'component/home/main/some')),
+              footer: lazyImport(() => import(/* webpackChunkName: "home" */ 'component/home/main/some/footer')),
             },
             // route guards:
             guards: {
@@ -36,7 +36,7 @@ const routes = normalizeRoutes([
           },
           {
             path: 'other',
-            component: lazyImport(() => import(/* webpackChunkName: "home" */ '../home/main/other')),
+            component: lazyImport(() => import(/* webpackChunkName: "home" */ 'component/home/main/other')),
           }
         ]
       }

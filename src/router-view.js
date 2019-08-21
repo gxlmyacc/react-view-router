@@ -34,7 +34,7 @@ class RouterView extends React.Component {
 
   _filterRoutes(routes) {
     const { name } = this.props;
-    return routes.filter(r => {
+    return routes && routes.filter(r => {
       if (r.config) r = r.config;
       const hasName = name && name !== 'default';
       if (r.redirect) return hasName ? name === r.name : !r.name;
@@ -56,7 +56,7 @@ class RouterView extends React.Component {
 
   async componentDidMount() {
     if (this.state._routerInited) return;
-    const state = { ...this.state, _routerInited: true };
+    const state = { ...this.state };
     const props = this.props || {};
     if (props.depth === undefined && this._reactInternalFiber) {
       let parent = this._reactInternalFiber.return;
@@ -87,8 +87,14 @@ class RouterView extends React.Component {
 
     if (state._routerRoot && state.router) {
       state.router.viewRoot = this;
-      state.router._handleRouteInterceptor(state.router.location, ok => ok && this.setState(state), true);
-    } else this.setState(state);
+      state.router._handleRouteInterceptor(
+        state.router.location,
+        () => this.setState(Object.assign(state, { _routerInited: true })),
+        true
+      );
+    } else {
+      this.setState(Object.assign(state, { _routerInited: true }));
+    }
   }
 
   // shouldComponentUpdate(nextProps, nextState) {
@@ -128,29 +134,31 @@ class RouterView extends React.Component {
   }
 
   render() {
-    const { routes, router, _routerRoot, _routerInited } = this.state;
+    const { routes, router, _routerInited } = this.state;
     // eslint-disable-next-line
     const { _updateRef, ...props } = this.props || {};
     if (!_routerInited) return props.fallback || null;
     const { query, params } = router.currentRoute;
 
-    const _render = () => renderRoutes(routes,
+    return renderRoutes(routes,
       {
         ...props,
         parent: this,
       },
       { },
       { name: props.name, query, params, ref: this._updateRef });
-    let ret = null;
-    if (_routerRoot) {
-      ret = React.createElement(Router, { history: router }, _render());
-    } else ret = _render();
-
-    return ret;
   }
 }
 
-export default React.forwardRef((props, ref) => React.createElement(RouterView, {
-  ...props,
-  _updateRef: ref
-}));
+export default React.forwardRef((props, ref) => {
+  let ret = React.createElement(RouterView, {
+    ...props,
+    _updateRef: ref
+  });
+  if (props.router) {
+    ret = React.createElement(Router, {
+      history: props.router,
+    }, ret);
+  }
+  return ret;
+});

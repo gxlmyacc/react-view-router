@@ -1,9 +1,9 @@
 import ReactDOM from 'react-dom';
 import React from 'react';
 import router from 'router';
-import routes from './pages';
+import App from 'component/app';
 
-import App from './app';
+import routes from './pages';
 
 module.exports = function (param) {
   router.use({ routes });

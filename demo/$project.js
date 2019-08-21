@@ -63,6 +63,7 @@ const project = {
       config: '#{src}scripts/config',
       libs: '#{src}scripts/libs',
       router: '#{src}views/router',
+      component: '#{src}views/component',
       styles: '#{src}styles',
       images: '#{src}images',
       fonts: '#{src}fonts',

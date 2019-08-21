@@ -1,35 +1,37 @@
 import { createHashHistory, createBrowserHistory, createMemoryHistory } from 'history-fix';
 import qs from './qs';
 import {
-  normalizeRoutes,
-  normalizeLocation, matchRoutes,
-  isFunction, isLocation,
-  nextTick
+  normalizeRoutes, normalizeLocation, resolveRedirect,
+  matchRoutes,  isFunction, isLocation, nextTick, once
 } from './util';
 import routeCache from './route-cache';
 import { resolveRouteLazyList } from './route-lazy';
 
 export async function routetInterceptors(interceptors, to, from, next) {
+  function isBlock(v) {
+    return v === false || typeof v === 'string' || isLocation(v) || v instanceof Error;
+  }
   async function routetInterceptor(interceptor, index, to, from, next) {
-    if (!interceptor) return await next();
+    if (!interceptor) return next();
     return await interceptor(to, from, async f1 => {
-      if (f1 !== undefined && f1 !== true && typeof f1 !== 'function') return await next(f1);
+      let nextInterceptor = interceptors[++index];
+      if (isBlock(f1) || !nextInterceptor) return next(f1);
       if (typeof f1 === 'boolean') f1 = undefined;
-      interceptor = interceptors[++index];
-      return interceptor
-        ? await routetInterceptor(
-          interceptor,
-          index,
-          to,
-          from,
-          f2 => next(res => (isFunction(f2) && f2(res)) || (isFunction(f1) && f1(res)))
-        )
-        : await next(res => isFunction(f1) && f1(res));
+      try {
+        return nextInterceptor
+          ? await routetInterceptor(
+            nextInterceptor,
+            index,
+            to,
+            from,
+            next
+          )
+          : next(res => isFunction(f1) && f1(res));
+      } catch (ex) { next(ex); }
     });
   }
   if (next) {
-    return await routetInterceptor(interceptors[0], 0, to, from,
-      f => (isFunction(f) ? next(res => f && f(res)) : next(f)));
+    return await routetInterceptor(interceptors[0], 0, to, from, next);
   }
 
   for (let interceptor of interceptors) {
@@ -64,6 +66,7 @@ export default class ReactViewRouter {
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
+    this.listenerInstalled = false;
     this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
 
@@ -121,14 +124,27 @@ export default class ReactViewRouter {
   }
 
   _getBeforeEachGuards(to, from) {
-    const ret = [];
+    const ret = [...this.beforeEachGuards];
     if (from) {
       const fm = this._getChangeMatched(from, to);
       ret.push(...this._getRouteComponentGurads(fm, 'beforeLeave', true));
     }
     if (to) {
       const tm = this._getChangeMatched(to, from);
-      ret.push(...this._getRouteComponentGurads(tm, 'beforeEnter'));
+      tm.forEach(r => {
+        let guards = this._getComponentGurads(r, 'beforeEnter', false);
+        guards = guards.map(v => (function (to, from, next) {
+          return v(to, from, cb => {
+            if (isFunction(cb)) {
+              const _cb = cb;
+              r.config._pending.completeCallback = el => _cb(el);
+              cb = undefined;
+            }
+            return next(cb);
+          });
+        }));
+        ret.push(...guards);
+      });
 
       tm.forEach(r => {
         r.config._pending.afterEnterGuards = this._getComponentGurads(r, 'afterEnter', false).map(v => (function () {
@@ -136,7 +152,6 @@ export default class ReactViewRouter {
         }));
       });
     }
-    ret.push(...this.beforeEachGuards);
     return ret.flat();
   }
 
@@ -178,18 +193,25 @@ export default class ReactViewRouter {
       routetInterceptors(this._getBeforeEachGuards(to, from), to, from, ok => {
         if (ok && typeof ok === 'string') ok = { path: ok };
         isContinue = Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
-        const toLast = to.matched.length && to.matched[to.matched.length - 1];
-        if (isFunction(ok) && toLast && !toLast.redirect) {
-          const cb = ok;
-          toLast.config._pending.completeCallback = el => cb(el);
-          ok = true;
+
+        const toLast = to.matched[to.matched.length - 1];
+        if (isContinue && toLast && toLast.redirect) {
+          ok = resolveRedirect(toLast.redirect, toLast);
+          isContinue = false;
         }
+
         callback(isContinue);
+
         if (!isContinue) {
-          if (isLocation(ok)) this.replace(ok);
+          if (isLocation(ok)) {
+            if (to.onAbort) ok.onAbort = to.onAbort;
+            if (to.onComplete) ok.onComplete = to.onComplete;
+            return this.redirect(ok);
+          }
           if (to && isFunction(to.onAbort)) to.onAbort(ok);
           return;
         }
+
         this.nextTick(() => {
           if (isFunction(ok)) ok(to);
           if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(this._getRouteUpdateGuards(to, from), to, from);
@@ -203,21 +225,22 @@ export default class ReactViewRouter {
     }
   }
 
-  createRoute(to) {
+  createRoute(to, from) {
     const matched = matchRoutes(this.routes, to);
     const last = matched.length ? matched[matched.length - 1] : null;
-    const from = this.currentRoute;
+    if (!from) from = this.currentRoute;
     function copyInstance(to, from) {
       if (!from) return;
       if (from.componentInstance) to.componentInstance = from.componentInstance;
       if (from.viewInstance) to.viewInstance = from.viewInstance;
     }
+    const { search, path, onAbort, onComplete } = to;
     const ret = last ? {
       ...last.match,
-      query: to.search ? qs.parseQuery(to.search.substr(1)) : {},
-      path: to.pathname,
-      hash: to.search,
-      fullPath: `${to.path}${to.search}`,
+      query: search ? qs.parseQuery(to.search.substr(1)) : {},
+      path,
+      hash: search,
+      fullPath: `${path}${search}`,
       matched: matched.map(({ route }, i) => {
         let ret = {};
         Object.keys(route).forEach(key => [
@@ -236,9 +259,15 @@ export default class ReactViewRouter {
         }
         return ret;
       }),
-      meta: last.route.meta || {}
+      meta: last.route.meta || {},
+      onAbort,
+      onComplete
     } : null;
-    if (to.isRedirect) ret.redirectedFrom = from.redirectedFrom || from;
+    if (to.isRedirect && from) {
+      ret.redirectedFrom = from.redirectedFrom || from;
+      if (!ret.onAbort && from.onAbort) ret.onAbort = from.onAbort;
+      if (!ret.onComplete && from.onComplete) ret.onComplete = from.onComplete;
+    }
     return ret;
   }
 
@@ -248,14 +277,14 @@ export default class ReactViewRouter {
   }
 
   push(to, onComplete, onAbort) {
-    if (isFunction(onComplete)) to.onComplete = onComplete;
-    if (isFunction(onAbort)) to.onAbort = onAbort;
+    if (isFunction(onComplete)) to.onComplete = once(onComplete);
+    if (isFunction(onAbort)) to.onAbort = once(onAbort);
     this.history.push(normalizeLocation(to));
   }
 
   replace(to, onComplete, onAbort) {
-    if (isFunction(onComplete)) to.onComplete = onComplete;
-    if (isFunction(onAbort)) to.onAbort = onAbort;
+    if (isFunction(onComplete)) to.onComplete = once(onComplete);
+    if (isFunction(onAbort)) to.onAbort = once(onAbort);
     this.history.replace(normalizeLocation(to));
   }
 
