@@ -49,10 +49,13 @@ router.beforeEach((to, from, next) => {
 });
 
 function App() {
+
+  const filter = routes => routes.filter(r => !r.meta.hide);
+  
   return (
     <div>
       <h1>App</h1>
-      <RouterView router={router} />
+      <RouterView router={router} filter={filter} />
     </div>
   );
 }

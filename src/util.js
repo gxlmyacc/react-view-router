@@ -42,6 +42,7 @@ function normalizeRoute(route, parent) {
       }
     });
   }
+  if (!r.meta) r.meta = {};
   if (r.props) r.props = normalizeProps(r.props);
   if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
   if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
