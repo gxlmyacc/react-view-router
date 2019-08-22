@@ -3611,14 +3611,18 @@ function (_React$Component) {
     }
   }, {
     key: "_filterRoutes",
-    value: function _filterRoutes(routes) {
-      var name = this.props.name;
-      return routes && routes.filter(function (r) {
+    value: function _filterRoutes(routes, state) {
+      var _this$props = this.props,
+          name = _this$props.name,
+          filter = _this$props.filter;
+      var ret = routes && routes.filter(function (r) {
         if (r.config) r = r.config;
         var hasName = name && name !== 'default';
         if (r.redirect) return hasName ? name === r.name : !r.name;
         return hasName ? r.components && r.components[name] : r.component || r.components && r.components.default;
       });
+      if (filter) ret = filter(ret);
+      return ret;
     }
   }, {
     key: "_refreshCurrentRoute",
@@ -3809,6 +3813,7 @@ function (_React$Component) {
         name: props.name,
         query: query,
         params: params,
+        router: router,
         ref: this._updateRef
       });
     }
@@ -4334,7 +4339,7 @@ function () {
                   var toLast = to.matched[to.matched.length - 1];
 
                   if (isContinue && toLast && toLast.redirect) {
-                    ok = (0, _util.resolveRedirect)(toLast.redirect, toLast);
+                    ok = (0, _util.resolveRedirect)(toLast.redirect, toLast, to);
                     isContinue = false;
                   }
 
@@ -4395,13 +4400,13 @@ function () {
       }
 
       var search = to.search,
+          query = to.query,
           path = to.path,
           onAbort = to.onAbort,
           onComplete = to.onComplete;
       var ret = last ? _objectSpread({}, last.match, {
-        query: search ? _qs.default.parseQuery(to.search.substr(1)) : {},
+        query: query || (search ? _qs.default.parseQuery(to.search.substr(1)) : {}),
         path: path,
-        hash: search,
         fullPath: "".concat(path).concat(search),
         matched: matched.map(function (_ref2, i) {
           var route = _ref2.route;
@@ -4852,8 +4857,8 @@ function mergeFns() {
   };
 }
 
-function resolveRedirect(to, route) {
-  if (isFunction(to)) to = to(route);
+function resolveRedirect(to, route, from) {
+  if (isFunction(to)) to = to.call(route, from);
   to = normalizeLocation(to, route);
   to.isRedirect = true;
   return to;
@@ -4951,6 +4956,7 @@ function renderRoutes(routes, extraProps, switchProps) {
     return ret;
   }
 
+  var currentRoute = options.router && options.router.currentRoute;
   var ret = routes ? _react.default.createElement(_reactRouterDom.Switch, switchProps, routes.map(function (route, i) {
     if (route.redirect) {
       return _react.default.createElement(_reactRouterDom.Redirect, {
@@ -4958,7 +4964,7 @@ function renderRoutes(routes, extraProps, switchProps) {
         exact: route.exact,
         strict: route.strict,
         from: route.path,
-        to: resolveRedirect(route.redirect, route)
+        to: resolveRedirect(route.redirect, route, currentRoute)
       });
     }
 

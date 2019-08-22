@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 [![NPM downloads](https://img.shields.io/npm/dm/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 
-> Route configuration component for `react-router-dom`. Write routing configuration like [vue-router](https://router.vuejs.org/guide/#javascript) in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
+> Route configuration component for `react-router-dom`. `react-view-router` is just `react-router-dom@5` wrapper that can write routing configuration like [vue-router](https://router.vuejs.org/guide/#javascript) in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
 
 ## Installation
 
@@ -36,6 +36,17 @@ import router from './router';
 import routes from './routes';
 
 router.use({ routes });
+
+router.beforeEach((to, from, next) => {
+  if (to) {
+    console.log(
+      '%croute changed',
+      'background-color:#ccc;color:green;font-weight:bold;font-size:14px;',
+      to.url, to.query, to.meta, to.redirectedFrom
+    );
+    return next();
+  }
+});
 
 function App() {
   return (
@@ -246,6 +257,7 @@ Includes all props from `react-router-dom` and the following props.
 ### RouterView Props
 
 - `name` Use for `Named Views`, see [vue-router instructions](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
+- `filter` is a function: `function (routes: Array) { return [] }` that use for filter routes
 
 ### RouterLink Component
 - `RouterLink` is `NavLink` component that in `react-router-dom`, just re-exported.
@@ -289,7 +301,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
  * @param {Class} [componentClass] - the route component class, it will be useful when component is High-order components
  * @return {RouteComponentGuards} - the route componet that can be regarded as `React.forwardRef`
  * /
-function useRouteGuards(component, guards = {}, componentClass) {}
+function useRouteGuards(component, guards = {}, componentClass?) {}
 ```
 
 - `lazyImport` route component lazy load method:
@@ -310,7 +322,7 @@ function lazyImport(importMethod) {}
  * @param {Object} [parent] - if provide, routes will be resolved regarded as parert`s children 
  * @return {Array} - normalized route configs 
  * /
-function normalizeRoutes(routes, parent) {}
+function normalizeRoutes(routes, parent?) {}
 ```
 - `normalizeLocation` normalize location string or object:
 ```javascript
@@ -320,7 +332,7 @@ function normalizeRoutes(routes, parent) {}
  * @param {Object} [route] - if provide, location will be resolved with route.parert
  * @return {Object} - normalized location object: { path: string, pathname: string, search: string, query: Object, ...custom props } 
  * /
-function normalizeLocation(to, route) {}
+function normalizeLocation(to, route?) {}
 ```
 
 - `isLocation` determine whether `v` is a location object

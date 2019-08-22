@@ -196,7 +196,7 @@ export default class ReactViewRouter {
 
         const toLast = to.matched[to.matched.length - 1];
         if (isContinue && toLast && toLast.redirect) {
-          ok = resolveRedirect(toLast.redirect, toLast);
+          ok = resolveRedirect(toLast.redirect, toLast, to);
           isContinue = false;
         }
 
@@ -234,12 +234,11 @@ export default class ReactViewRouter {
       if (from.componentInstance) to.componentInstance = from.componentInstance;
       if (from.viewInstance) to.viewInstance = from.viewInstance;
     }
-    const { search, path, onAbort, onComplete } = to;
+    const { search, query, path, onAbort, onComplete } = to;
     const ret = last ? {
       ...last.match,
-      query: search ? qs.parseQuery(to.search.substr(1)) : {},
+      query: query || (search ? qs.parseQuery(to.search.substr(1)) : {}),
       path,
-      hash: search,
       fullPath: `${path}${search}`,
       matched: matched.map(({ route }, i) => {
         let ret = {};

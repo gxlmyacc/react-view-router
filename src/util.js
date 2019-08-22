@@ -170,8 +170,8 @@ function mergeFns(...fns) {
   };
 }
 
-function resolveRedirect(to, route) {
-  if (isFunction(to)) to = to(route);
+function resolveRedirect(to, route, from) {
+  if (isFunction(to)) to = to.call(route, from);
   to = normalizeLocation(to, route);
   to.isRedirect = true;
   return to;
@@ -255,6 +255,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     if (!ref) nextTick(refHandler);
     return ret;
   }
+  const currentRoute = options.router && options.router.currentRoute;
   const ret = routes ? React.createElement(Switch, switchProps, routes.map(function (route, i) {
     if (route.redirect) {
       return React.createElement(Redirect, {
@@ -262,7 +263,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
         exact: route.exact,
         strict: route.strict,
         from: route.path,
-        to: resolveRedirect(route.redirect, route)
+        to: resolveRedirect(route.redirect, route, currentRoute)
       });
     }
     const component = getRouteComp(route);
