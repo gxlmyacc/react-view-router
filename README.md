@@ -298,7 +298,7 @@ Includes all props from `react-router-dom` and the following props.
       // the original route config
       config,
       // the component instance that matched this route config if found.
-      componentInstance: React.Compoent,
+      componentInstance: React.Component,
       // the RouterView instance that matched this route config if found.
       viewInstance: RouterView
     }
