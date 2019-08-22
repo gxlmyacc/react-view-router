@@ -2,25 +2,13 @@ import { matchPath, withRouter, Router, Route, Redirect, Switch } from 'react-ro
 import React from 'react';
 import qs from './qs';
 import { RouteLazy } from './route-lazy';
-import { REACT_FORWARD_REF_TYPE, RouteCuards } from './route-guard';
+import { REACT_FORWARD_REF_TYPE } from './route-guard';
 
 function nextTick(cb, ctx) {
   if (!cb) return;
   return new Promise(function (resolve) {
     setTimeout(() => resolve(ctx ? cb.call(ctx) : cb()), 0);
   });
-}
-
-function resolveRouteGuards(c, route) {
-  if (c && c.__guards && !c.__resolved) {
-    if (route) {
-      if (route.guards) route.guards.merge(c.__guards);
-      else route.guards = c.__guards;
-    }
-    c.__resolved = true;
-    // c = c.__component;
-  }
-  return c;
 }
 
 function normalizeRoute(route, parent) {
@@ -31,23 +19,20 @@ function normalizeRoute(route, parent) {
   r.exact = r.exact === undefined
     ? Boolean(!r.children || !r.children.length)
     : r.exact;
-  if (r.component instanceof RouteLazy) {
-    r.component.updater = c => r.component = resolveRouteGuards(c, r);
+  if (!r.components) r.components = {};
+  if (r.component) {
+    r.components.default = r.component;
+    delete r.component;
   }
-  if (r.components) {
-    Object.keys(r.components).forEach(key => {
-      let comp = r.components[key];
-      if (comp instanceof RouteLazy) {
-        comp.updater = c => r.components[key] = resolveRouteGuards(c, r);
-      }
-    });
-  }
+  Object.keys(r.components).forEach(key => {
+    let comp = r.components[key];
+    if (comp instanceof RouteLazy) comp.updater = c => r.components[key] = c;
+  });
   if (!r.meta) r.meta = {};
   if (r.props) r.props = normalizeProps(r.props);
   if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
   if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
-  if (r.guards && !(r.guards instanceof RouteCuards)) r.guards = new RouteCuards(r.guards);
-  Object.defineProperty(r, '_pending', { value: { afterEnterGuards: [] } });
+  Object.defineProperty(r, '_pending', { value: { afterEnterGuards: {}, completeCallbacks: {} } });
   return r;
 }
 
@@ -153,11 +138,14 @@ function once(fn, ctx) {
 }
 
 function isAcceptRef(v) {
+  if (!v) return false;
+  if (v.$$typeof === REACT_FORWARD_REF_TYPE && v.__componentClass) return true;
+  while (v.__component) v = v.__component;
+
   let ret = false;
-  if (!v) return;
   if (v.prototype) {
     if (v.prototype instanceof React.Component || v.prototype.componentDidMount !== undefined) ret = true;
-  } else if (v.$$typeof === REACT_FORWARD_REF_TYPE && (!v.__guards || v.__componentClass)) ret = true;
+  } else if (v.$$typeof === REACT_FORWARD_REF_TYPE && !v.__guards) ret = true;
   return ret;
 }
 
@@ -178,14 +166,14 @@ function resolveRedirect(to, route, from) {
   return to;
 }
 
+function warn(...args) {
+  console.warn(...args);
+}
+
 function renderRoutes(routes, extraProps, switchProps, options = {}) {
   if (extraProps === undefined) extraProps = {};
   if (switchProps === undefined) switchProps = {};
 
-  function getRouteComp(route) {
-    if (options.name) return route.components && route.components[options.name];
-    return route.component || (route.components && route.components.default);
-  }
   function configProps(_props, configs, obj, name) {
     if (!obj) return;
     if (name && configs[name] !== undefined) configs = configs[name];
@@ -214,7 +202,6 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
     if (route.render) return route.render(Object.assign(_props, props, extraProps, { route }));
-    component = resolveRouteGuards(component, route);
     let ref = null;
     if (component) {
       if (isAcceptRef(component)) ref = options.ref;
@@ -222,12 +209,13 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
         if (!isFunction(route.enableRef) || route.enableRef(component)) ref = options.ref;
       }
     }
-    const afterEnterGuards = route._pending.afterEnterGuards || [];
-    const completeCallback = route._pending.completeCallback;
+    const _pending = route._pending;
+    const afterEnterGuards = _pending.afterEnterGuards[options.name] || [];
+    const completeCallback = _pending.completeCallbacks[options.name];
     let refHandler = once((el, componentClass) => {
-      if (el) {
+      if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
-        if (componentClass && el._reactInternalFiber) {
+        if (componentClass && el && el._reactInternalFiber) {
           let refComp = null;
           let comp = el._reactInternalFiber;
           while (comp && !refComp) {
@@ -238,16 +226,18 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
             comp = comp.child;
           }
           if (refComp && refComp.stateNode instanceof componentClass) el = refComp.stateNode;
+          else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
         completeCallback && completeCallback(el);
         afterEnterGuards && afterEnterGuards.forEach(v => v.call(el));
       }
     });
-    route._pending.completeCallback = null;
-    route._pending.afterEnterGuards = [];
+    _pending.completeCallbacks[options.name] = null;
+    _pending.afterEnterGuards[options.name] = [];
     if (ref) ref = mergeFns(ref, el => el && refHandler && refHandler(el, component.__componentClass));
+    while (component.__component) component = component.__component;
     const ret = React.createElement(
-      component.__component || component,
+      component,
       Object.assign(_props, props, extraProps, {
         route,
         ref
@@ -267,13 +257,12 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
         to: resolveRedirect(route.redirect, route, currentRoute)
       });
     }
-    const component = getRouteComp(route);
     return React.createElement(Route, {
       key: route.key || i,
       path: route.path,
       exact: route.exact,
       strict: route.strict,
-      render: props => renderComp(route, component, props, options)
+      render: props => renderComp(route, route.components[options.name || 'default'], props, options)
     });
   })) : null;
   return ret;
@@ -281,6 +270,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
 
 
 export {
+  warn,
   once,
   mergeFns,
   isAcceptRef,
@@ -297,6 +287,5 @@ export {
   normalizeProps,
   matchPath,
   matchRoutes,
-  renderRoutes,
-  resolveRouteGuards
+  renderRoutes
 };

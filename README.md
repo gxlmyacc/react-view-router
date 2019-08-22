@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 [![NPM downloads](https://img.shields.io/npm/dm/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 
-> Route configuration component for `react-router-dom`. `react-view-router` is just `react-router-dom@5` wrapper that can write routing configuration like [vue-router](https://router.vuejs.org/guide/#javascript) in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
+> Route configuration component for `react-router-dom`. `react-view-router` is just a `react-router-dom@5` wrapper that can write routing configuration like [vue-router](https://router.vuejs.org/guide/#javascript) in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
 
 ## Installation
 
@@ -298,7 +298,10 @@ Includes all props from `react-router-dom` and the following props.
       // the original route config
       config,
       // the component instance that matched this route config if found.
-      componentInstance: React.Component,
+      componentInstances: {
+        default: React.Component,
+        /* others: React.Component */
+      }
       // the RouterView instance that matched this route config if found.
       viewInstance: RouterView
     }
@@ -398,7 +401,7 @@ function isLocation(v) {}
 ``` 
 otherwise, webpack will package both `history` and `history-fix` into the target js file.
 
-2. if route component is `Class Component` (not `Function Component`), then `this` variable in `afterRouteEnter`, `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards and `afterEnter`,`beforeUpdate`,`beforeLeave`,`afterLeave` in Route Guards will be that component instance;
+2. if route component is `Class Component` (not `Function Component`), then `this` variable in `afterRouteEnter`, `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards will be that component instance;
 
 ## License
 

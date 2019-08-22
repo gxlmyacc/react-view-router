@@ -36,6 +36,7 @@ export default useRouteGuards(
   // route guards
   {
     beforeRouteEnter(to, from, next) {
+      console.log('HomeMainSomeIndex beforeRouteEnter', to, from);
       if (!store.logined) next('/login');
       else next(vm => {
         console.log('HomeMainSomeIndex beforeRouteEnter next', vm, to, from);

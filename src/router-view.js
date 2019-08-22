@@ -25,9 +25,17 @@ class RouterView extends React.Component {
     this._filterRoutes = this._filterRoutes.bind(this);
   }
 
+  get name() {
+    const { name } = this.props;
+    return name || 'default';
+  }
+
   _updateRef(ref) {
     let currentRoute = this._refreshCurrentRoute();
-    if (currentRoute) currentRoute.componentInstance = ref;
+
+    if (currentRoute) {
+      currentRoute.componentInstances[this.name] = ref;
+    }
     if (this.props && this.props._updateRef) this.props._updateRef(ref);
     if (currentRoute && currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({ currentRoute });
   }
@@ -148,7 +156,7 @@ class RouterView extends React.Component {
         parent: this,
       },
       { },
-      { name: props.name, query, params, router, ref: this._updateRef });
+      { name: this.name, query, params, router, ref: this._updateRef });
   }
 }
 

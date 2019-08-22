@@ -3148,7 +3148,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.useRouteGuards = useRouteGuards;
-exports.RouteCuards = exports.REACT_LAZY_TYPE = exports.REACT_FORWARD_REF_TYPE = void 0;
+exports.REACT_LAZY_TYPE = exports.REACT_FORWARD_REF_TYPE = void 0;
 
 var _react = _interopRequireWildcard(__webpack_require__(/*! react */ "react"));
 
@@ -3160,19 +3160,7 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
-
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
-
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
-
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 var ForwardRefMeth = _react.default.forwardRef(function () {
   return null;
@@ -3183,51 +3171,6 @@ exports.REACT_FORWARD_REF_TYPE = REACT_FORWARD_REF_TYPE;
 var LazyMeth = (0, _react.lazy)(function () {});
 var REACT_LAZY_TYPE = LazyMeth.$$typeof;
 exports.REACT_LAZY_TYPE = REACT_LAZY_TYPE;
-
-var RouteCuards =
-/*#__PURE__*/
-function () {
-  function RouteCuards(guards) {
-    var isComponentGuards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-    _classCallCheck(this, RouteCuards);
-
-    this.beforeEnter = [];
-    this.beforeUpdate = [];
-    this.afterEnter = [];
-    this.beforeLeave = [];
-    this.afterLeave = [];
-    Object.defineProperty(this, 'isComponentGuards', {
-      writable: true,
-      configurable: true,
-      value: isComponentGuards
-    });
-    this.merge(guards || {}, isComponentGuards);
-  }
-
-  _createClass(RouteCuards, [{
-    key: "merge",
-    value: function merge(guards) {
-      var _this = this;
-
-      var isComponentGuards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-      if (!guards) return;
-      if (guards.isComponentGuards !== undefined) isComponentGuards = guards.isComponentGuards;
-      Object.keys(guards).forEach(function (key) {
-        var guardKey = isComponentGuards ? key.replace('Route', '') : key;
-        var guard = _this[guardKey];
-        var v = guards[key];
-        if (!guard) return;
-        var pushMeth = isComponentGuards ? guard.unshift : guard.push;
-        if (Array.isArray(v)) pushMeth.call.apply(pushMeth, [guard].concat(_toConsumableArray(v.filter(Boolean))));else if (v) pushMeth.call(guard, v);
-      });
-    }
-  }]);
-
-  return RouteCuards;
-}();
-
-exports.RouteCuards = RouteCuards;
 
 var RouteComponentGuards = function RouteComponentGuards() {
   _classCallCheck(this, RouteComponentGuards);
@@ -3247,7 +3190,7 @@ function useRouteGuards(component) {
   };
 
   Object.defineProperty(ret, '__guards', {
-    value: new RouteCuards(guards, true)
+    value: guards
   });
   Object.defineProperty(ret, '__component', {
     value: component
@@ -3603,7 +3546,10 @@ function (_React$Component) {
     value: function _updateRef(ref) {
       var currentRoute = this._refreshCurrentRoute();
 
-      if (currentRoute) currentRoute.componentInstance = ref;
+      if (currentRoute) {
+        currentRoute.componentInstances[this.name] = ref;
+      }
+
       if (this.props && this.props._updateRef) this.props._updateRef(ref);
       if (currentRoute && currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({
         currentRoute: currentRoute
@@ -3810,12 +3756,18 @@ function (_React$Component) {
       return (0, _util.renderRoutes)(routes, _objectSpread({}, props, {
         parent: this
       }), {}, {
-        name: props.name,
+        name: this.name,
         query: query,
         params: params,
         router: router,
         ref: this._updateRef
       });
+    }
+  }, {
+    key: "name",
+    get: function get() {
+      var name = this.props.name;
+      return name || 'default';
     }
   }]);
 
@@ -4166,21 +4118,35 @@ function () {
   }, {
     key: "_getComponentGurads",
     value: function _getComponentGurads(r, guardName) {
-      var _ret;
-
       var bindInstance = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       var ret = [];
-      var componentInstance = r.componentInstance;
+      var componentInstances = r.componentInstances; // route config
+
+      var routeGuardName = guardName.replace('Route', '');
       if (r.config) r = r.config;
-      var guards = r.guards && r.guards[guardName];
-      if (!guards || !guards || !guards.length) return ret;
+      var guards = r.guards && r.guards[routeGuardName];
+      if (guards) ret.push(guards); // route component
 
-      (_ret = ret).push.apply(_ret, _toConsumableArray(guards));
+      Object.keys(r.components).forEach(function (key) {
+        var g = [];
+        var c = r.components[key];
+        if (!c) return;
+        var cg = c.__guards && c.__guards[guardName];
+        if (!cg) return;
+        g.push(cg);
+        var ci = componentInstances[key];
 
-      if (bindInstance && componentInstance) ret = ret.map(function (v) {
-        return v.bind(componentInstance);
+        if (bindInstance) {
+          if ((0, _util.isFunction)(bindInstance)) g = g.map(function (v) {
+            return bindInstance(v, key, ci, r);
+          }).filter(Boolean);else if (ci) g = g.map(function (v) {
+            return v.bind(ci);
+          });
+        }
+
+        ret.push.apply(ret, _toConsumableArray(g));
       });
-      return ret;
+      return ret.flat();
     }
   }, {
     key: "_getRouteComponentGurads",
@@ -4226,22 +4192,20 @@ function () {
       if (from) {
         var fm = this._getChangeMatched(from, to);
 
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeLeave', true)));
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteLeave', true)));
       }
 
       if (to) {
         var tm = this._getChangeMatched(to, from);
 
         tm.forEach(function (r) {
-          var guards = _this3._getComponentGurads(r, 'beforeEnter', false);
-
-          guards = guards.map(function (v) {
+          var guards = _this3._getComponentGurads(r, 'beforeRouteEnter', function (fn, name) {
             return function (to, from, next) {
-              return v(to, from, function (cb) {
+              return fn(to, from, function (cb) {
                 if ((0, _util.isFunction)(cb)) {
                   var _cb = cb;
 
-                  r.config._pending.completeCallback = function (el) {
+                  r.config._pending.completeCallbacks[name] = function (el) {
                     return _cb(el);
                   };
 
@@ -4252,14 +4216,26 @@ function () {
               });
             };
           });
+
           ret.push.apply(ret, _toConsumableArray(guards));
         });
         tm.forEach(function (r) {
-          r.config._pending.afterEnterGuards = _this3._getComponentGurads(r, 'afterEnter', false).map(function (v) {
-            return function () {
-              return v.call(this, to, from);
-            };
+          var compGuards = {};
+
+          var allGuards = _this3._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
+            if (!compGuards[name]) compGuards[name] = [];
+            compGuards[name].push(function () {
+              return fn.call(this, to, from);
+            });
+            return null;
           });
+
+          Object.keys(compGuards).forEach(function (name) {
+            var _compGuards$name;
+
+            return (_compGuards$name = compGuards[name]).push.apply(_compGuards$name, _toConsumableArray(allGuards));
+          });
+          r.config._pending.afterEnterGuards = compGuards;
         });
       }
 
@@ -4275,7 +4251,7 @@ function () {
         if (!fr || fr.path !== tr.path) return true;
         fm.push(fr);
       });
-      ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeUpdate', true)));
+      ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteUpdate', true)));
       return ret;
     }
   }, {
@@ -4286,7 +4262,7 @@ function () {
       if (from) {
         var fm = this._getChangeMatched(from, to);
 
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'afterLeave', true)));
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'afterRouteLeave', true)));
       } // if (to) {
       //   const tm = this._getChangeMatched(to, from);
       // }
@@ -4395,7 +4371,7 @@ function () {
 
       function copyInstance(to, from) {
         if (!from) return;
-        if (from.componentInstance) to.componentInstance = from.componentInstance;
+        if (from.componentInstances) to.componentInstances = from.componentInstances;
         if (from.viewInstance) to.viewInstance = from.viewInstance;
       }
 
@@ -4410,7 +4386,9 @@ function () {
         fullPath: "".concat(path).concat(search),
         matched: matched.map(function (_ref2, i) {
           var route = _ref2.route;
-          var ret = {};
+          var ret = {
+            componentInstances: {}
+          };
           Object.keys(route).forEach(function (key) {
             return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = route[key]);
           });
@@ -4560,6 +4538,7 @@ exports.default = ReactViewRouter;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.warn = warn;
 exports.once = once;
 exports.mergeFns = mergeFns;
 exports.isAcceptRef = isAcceptRef;
@@ -4575,7 +4554,6 @@ exports.normalizeLocation = normalizeLocation;
 exports.normalizeProps = normalizeProps;
 exports.matchRoutes = matchRoutes;
 exports.renderRoutes = renderRoutes;
-exports.resolveRouteGuards = resolveRouteGuards;
 Object.defineProperty(exports, "matchPath", {
   enumerable: true,
   get: function get() {
@@ -4624,18 +4602,6 @@ function nextTick(cb, ctx) {
   });
 }
 
-function resolveRouteGuards(c, route) {
-  if (c && c.__guards && !c.__resolved) {
-    if (route) {
-      if (route.guards) route.guards.merge(c.__guards);else route.guards = c.__guards;
-    }
-
-    c.__resolved = true; // c = c.__component;
-  }
-
-  return c;
-}
-
 function normalizeRoute(route, parent) {
   var path = parent ? "".concat(parent.path).concat(route.path === '/' ? '' : "/".concat(route.path)) : route.path;
 
@@ -4647,32 +4613,27 @@ function normalizeRoute(route, parent) {
   if (parent) r.parent = parent;
   if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
   r.exact = r.exact === undefined ? Boolean(!r.children || !r.children.length) : r.exact;
+  if (!r.components) r.components = {};
 
-  if (r.component instanceof _routeLazy.RouteLazy) {
-    r.component.updater = function (c) {
-      return r.component = resolveRouteGuards(c, r);
+  if (r.component) {
+    r.components.default = r.component;
+    delete r.component;
+  }
+
+  Object.keys(r.components).forEach(function (key) {
+    var comp = r.components[key];
+    if (comp instanceof _routeLazy.RouteLazy) comp.updater = function (c) {
+      return r.components[key] = c;
     };
-  }
-
-  if (r.components) {
-    Object.keys(r.components).forEach(function (key) {
-      var comp = r.components[key];
-
-      if (comp instanceof _routeLazy.RouteLazy) {
-        comp.updater = function (c) {
-          return r.components[key] = resolveRouteGuards(c, r);
-        };
-      }
-    });
-  }
-
+  });
+  if (!r.meta) r.meta = {};
   if (r.props) r.props = normalizeProps(r.props);
   if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
   if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
-  if (r.guards && !(r.guards instanceof _routeGuard.RouteCuards)) r.guards = new _routeGuard.RouteCuards(r.guards);
   Object.defineProperty(r, '_pending', {
     value: {
-      afterEnterGuards: []
+      afterEnterGuards: {},
+      completeCallbacks: {}
     }
   });
   return r;
@@ -4827,12 +4788,18 @@ function once(fn, ctx) {
 }
 
 function isAcceptRef(v) {
+  if (!v) return false;
+  if (v.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE && v.__componentClass) return true;
+
+  while (v.__component) {
+    v = v.__component;
+  }
+
   var ret = false;
-  if (!v) return;
 
   if (v.prototype) {
     if (v.prototype instanceof _react.default.Component || v.prototype.componentDidMount !== undefined) ret = true;
-  } else if (v.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE && (!v.__guards || v.__componentClass)) ret = true;
+  } else if (v.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE && !v.__guards) ret = true;
 
   return ret;
 }
@@ -4864,15 +4831,16 @@ function resolveRedirect(to, route, from) {
   return to;
 }
 
+function warn() {
+  var _console;
+
+  (_console = console).warn.apply(_console, arguments);
+}
+
 function renderRoutes(routes, extraProps, switchProps) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   if (extraProps === undefined) extraProps = {};
   if (switchProps === undefined) switchProps = {};
-
-  function getRouteComp(route) {
-    if (options.name) return route.components && route.components[options.name];
-    return route.component || route.components && route.components.default;
-  }
 
   function configProps(_props, configs, obj, name) {
     if (!obj) return;
@@ -4905,7 +4873,6 @@ function renderRoutes(routes, extraProps, switchProps) {
     if (route.render) return route.render(Object.assign(_props, props, extraProps, {
       route: route
     }));
-    component = resolveRouteGuards(component, route);
     var ref = null;
 
     if (component) {
@@ -4914,12 +4881,13 @@ function renderRoutes(routes, extraProps, switchProps) {
       }
     }
 
-    var afterEnterGuards = route._pending.afterEnterGuards || [];
-    var completeCallback = route._pending.completeCallback;
+    var _pending = route._pending;
+    var afterEnterGuards = _pending.afterEnterGuards[options.name] || [];
+    var completeCallback = _pending.completeCallbacks[options.name];
     var refHandler = once(function (el, componentClass) {
-      if (el) {
+      if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
-        if (componentClass && el._reactInternalFiber) {
+        if (componentClass && el && el._reactInternalFiber) {
           var refComp = null;
           var comp = el._reactInternalFiber;
 
@@ -4932,7 +4900,7 @@ function renderRoutes(routes, extraProps, switchProps) {
             comp = comp.child;
           }
 
-          if (refComp && refComp.stateNode instanceof componentClass) el = refComp.stateNode;
+          if (refComp && refComp.stateNode instanceof componentClass) el = refComp.stateNode;else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
 
         completeCallback && completeCallback(el);
@@ -4941,13 +4909,17 @@ function renderRoutes(routes, extraProps, switchProps) {
         });
       }
     });
-    route._pending.completeCallback = null;
-    route._pending.afterEnterGuards = [];
+    _pending.completeCallbacks[options.name] = null;
+    _pending.afterEnterGuards[options.name] = [];
     if (ref) ref = mergeFns(ref, function (el) {
       return el && refHandler && refHandler(el, component.__componentClass);
     });
 
-    var ret = _react.default.createElement(component.__component || component, Object.assign(_props, props, extraProps, {
+    while (component.__component) {
+      component = component.__component;
+    }
+
+    var ret = _react.default.createElement(component, Object.assign(_props, props, extraProps, {
       route: route,
       ref: ref
     }));
@@ -4968,14 +4940,13 @@ function renderRoutes(routes, extraProps, switchProps) {
       });
     }
 
-    var component = getRouteComp(route);
     return _react.default.createElement(_reactRouterDom.Route, {
       key: route.key || i,
       path: route.path,
       exact: route.exact,
       strict: route.strict,
       render: function render(props) {
-        return renderComp(route, component, props, options);
+        return renderComp(route, route.components[options.name || 'default'], props, options);
       }
     });
   })) : null;

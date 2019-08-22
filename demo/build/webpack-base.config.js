@@ -39,8 +39,8 @@ module.exports = function (options) {
   const assetsDir = path.resolve(porjectDir, project.assets.dir);
   // let srcLibDir = path.resolve(srcDir, project.src.libs);
   const distDir = path.resolve(porjectDir, project.dist.dir);
-  const distLibsDir = path.resolve(distDir, project.dist.libs);
-  const distAssetsDir = path.resolve(distDir, project.dist.assets);
+  // const distLibsDir = path.resolve(distDir, project.dist.libs);
+  // const distAssetsDir = path.resolve(distDir, project.dist.assets);
 
   const rootDir = options.root || process.cwd();
   const nodeModPath = path.resolve(rootDir, './node_modules');

@@ -89,13 +89,31 @@ export default class ReactViewRouter {
 
   _getComponentGurads(r, guardName, bindInstance = true) {
     let ret = [];
-    const componentInstance = r.componentInstance;
+    const componentInstances = r.componentInstances;
+    // route config
+    const routeGuardName = guardName.replace('Route', '');
     if (r.config) r = r.config;
-    const guards = r.guards && r.guards[guardName];
-    if (!guards || !guards || !guards.length) return ret;
-    ret.push(...guards);
-    if (bindInstance && componentInstance) ret = ret.map(v => v.bind(componentInstance));
-    return ret;
+    const guards = r.guards && r.guards[routeGuardName];
+    if (guards) ret.push(guards);
+
+    // route component
+    Object.keys(r.components).forEach(key => {
+      let g = [];
+      const c = r.components[key];
+      if (!c) return;
+      const cg = c.__guards && c.__guards[guardName];
+      if (!cg) return;
+      g.push(cg);
+
+      const ci = componentInstances[key];
+      if (bindInstance) {
+        if (isFunction(bindInstance)) g = g.map(v => bindInstance(v, key, ci, r)).filter(Boolean);
+        else if (ci) g = g.map(v => v.bind(ci));
+      }
+      ret.push(...g);
+    });
+
+    return ret.flat();
   }
 
   _getRouteComponentGurads(matched, guardName, reverse = false, bindInstance = true) {
@@ -127,29 +145,43 @@ export default class ReactViewRouter {
     const ret = [...this.beforeEachGuards];
     if (from) {
       const fm = this._getChangeMatched(from, to);
-      ret.push(...this._getRouteComponentGurads(fm, 'beforeLeave', true));
+      ret.push(...this._getRouteComponentGurads(fm, 'beforeRouteLeave', true));
     }
     if (to) {
       const tm = this._getChangeMatched(to, from);
       tm.forEach(r => {
-        let guards = this._getComponentGurads(r, 'beforeEnter', false);
-        guards = guards.map(v => (function (to, from, next) {
-          return v(to, from, cb => {
-            if (isFunction(cb)) {
-              const _cb = cb;
-              r.config._pending.completeCallback = el => _cb(el);
-              cb = undefined;
-            }
-            return next(cb);
-          });
-        }));
+        let guards = this._getComponentGurads(
+          r,
+          'beforeRouteEnter',
+          (fn, name) => (function (to, from, next) {
+            return fn(to, from, cb => {
+              if (isFunction(cb)) {
+                const _cb = cb;
+                r.config._pending.completeCallbacks[name] = el => _cb(el);
+                cb = undefined;
+              }
+              return next(cb);
+            });
+          })
+        );
         ret.push(...guards);
       });
 
       tm.forEach(r => {
-        r.config._pending.afterEnterGuards = this._getComponentGurads(r, 'afterEnter', false).map(v => (function () {
-          return v.call(this, to, from);
-        }));
+        const compGuards = {};
+        const allGuards = this._getComponentGurads(
+          r,
+          'afterRouteEnter',
+          (fn, name) => {
+            if (!compGuards[name]) compGuards[name] = [];
+            compGuards[name].push(function () {
+              return fn.call(this, to, from);
+            });
+            return null;
+          }
+        );
+        Object.keys(compGuards).forEach(name => compGuards[name].push(...allGuards));
+        r.config._pending.afterEnterGuards = compGuards;
       });
     }
     return ret.flat();
@@ -163,7 +195,7 @@ export default class ReactViewRouter {
       if (!fr || fr.path !== tr.path) return true;
       fm.push(fr);
     });
-    ret.push(...this._getRouteComponentGurads(fm, 'beforeUpdate', true));
+    ret.push(...this._getRouteComponentGurads(fm, 'beforeRouteUpdate', true));
     return ret;
   }
 
@@ -171,7 +203,7 @@ export default class ReactViewRouter {
     const ret = [];
     if (from) {
       const fm = this._getChangeMatched(from, to);
-      ret.push(...this._getRouteComponentGurads(fm, 'afterLeave', true));
+      ret.push(...this._getRouteComponentGurads(fm, 'afterRouteLeave', true));
     }
     // if (to) {
     //   const tm = this._getChangeMatched(to, from);
@@ -231,7 +263,7 @@ export default class ReactViewRouter {
     if (!from) from = this.currentRoute;
     function copyInstance(to, from) {
       if (!from) return;
-      if (from.componentInstance) to.componentInstance = from.componentInstance;
+      if (from.componentInstances) to.componentInstances = from.componentInstances;
       if (from.viewInstance) to.viewInstance = from.viewInstance;
     }
     const { search, query, path, onAbort, onComplete } = to;
@@ -241,7 +273,7 @@ export default class ReactViewRouter {
       path,
       fullPath: `${path}${search}`,
       matched: matched.map(({ route }, i) => {
-        let ret = {};
+        let ret = { componentInstances: {} };
         Object.keys(route).forEach(key => [
           'path', 'name', 'subpath', 'meta', 'redirect', 'alias'
         ].includes(key) && (ret[key] = route[key]));
