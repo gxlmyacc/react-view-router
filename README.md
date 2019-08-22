@@ -283,13 +283,38 @@ Includes all props from `react-router-dom` and the following props.
   // true if the path matches the location.pathname exactly.
   isExart: Boolean,
   // An Array containing route records for all nested path segments of the current route.
-  matched: Array,
+  matched: [
+    route1,
+    // route2:
+    {
+      // the path from route config
+      path: String,
+      // the subpath from route config
+      subpath: String,
+      // the meta from route config
+      meta: Object,
+      // the redirect from route config
+      redirect: String|Object|Function,
+      // the original route config
+      config,
+      // the component instance that matched this route config if found.
+      componentInstance: React.Compoent,
+      // the RouterView instance that matched this route config if found.
+      viewInstance: RouterView
+    }
+    ..., 
+    routeN
+  ],
   // An object that contains key/value pairs of dynamic segments and star segments. If there are no params the value will be an empty object.
   params: Object,
   // An object that contains key/value pairs of the query string. For example, for a path /foo?user=1, we get currentRoute.query.user == 1. If there is no query the value will be an empty object.
   query: Object,
   // The name of the route being redirected from, if there were one
   redirectedFrom: Object,
+  // The route abort function that passed by `router.push`, `router.replace`, `router.redirect`
+  onAbort: Function,
+  // The route complete function that passed by `router.push`, `router.replace`, `router.redirect`
+  onComplete: Function,
 }
 ```
 see: [Route Object Properties](https://router.vuejs.org/api/#route-object-properties)
