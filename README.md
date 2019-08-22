@@ -51,7 +51,7 @@ router.beforeEach((to, from, next) => {
 function App() {
 
   const filter = routes => routes.filter(r => !r.meta.hide);
-  
+
   return (
     <div>
       <h1>App</h1>
@@ -261,6 +261,12 @@ Includes all props from `react-router-dom` and the following props.
 
 - `name` Use for `Named Views`, see [vue-router instructions](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
 - `filter` is a function: `function (routes: Array) { return [] }` that use for filter routes
+
+### RouterView Instance Methods
+- `RouterView.push(routes: Array): Array` add routes to RouterView instance, like `Array.push`;
+- `RouterView.splice(start[, deleteCount[, item1[, item2[, ...]]]]): Array` delete routes in RouterView instance, like `Array.splice`;
+- `RouterView.indexOf(route: String|Object): Number` check `route` is in RouterView, like `Array.indexOf`
+- `RouterView.remove(route: String|Object): Object` remove `route` from RouterView, return `removed route` or `undefined`
 
 ### RouterLink Component
 - `RouterLink` is `NavLink` component that in `react-router-dom`, just re-exported.
