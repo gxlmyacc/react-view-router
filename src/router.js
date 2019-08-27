@@ -102,7 +102,7 @@ export default class ReactViewRouter {
       let g = [];
       const c = r.components[key];
       if (!c) return;
-      const cc = c.__component ? getGuardsComponent(c) : c;
+      const cc = c.__component ? getGuardsComponent(c, true) : c;
       const cg = c.__guards && c.__guards[guardName];
       if (cc && cc.prototype && cc.prototype[guardName]) g.push(cc.prototype[guardName]);
       if (cg) g.push(cg);

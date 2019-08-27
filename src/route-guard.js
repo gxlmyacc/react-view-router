@@ -12,7 +12,8 @@ class RouteComponentGuards {
   }
 }
 
-export function getGuardsComponent(v) {
+export function getGuardsComponent(v, useComponentClass = false) {
+  if (useComponentClass && v.__componentClass) return v.__componentClass;
   while (v.__component) v = v.__component;
   return v;
 }
