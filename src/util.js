@@ -2,7 +2,7 @@ import { matchPath, withRouter, Router, Route, Redirect, Switch } from 'react-ro
 import React from 'react';
 import qs from './qs';
 import { RouteLazy } from './route-lazy';
-import { REACT_FORWARD_REF_TYPE } from './route-guard';
+import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 
 function nextTick(cb, ctx) {
   if (!cb) return;
@@ -11,11 +11,11 @@ function nextTick(cb, ctx) {
   });
 }
 
-function normalizeRoute(route, parent) {
+function normalizeRoute(route, parent, depth) {
   const path = parent ? `${parent.path}${route.path === '/' ? '' : `/${route.path}`}` : route.path;
-  let r = { ...route, subpath: route.path, path };
+  let r = { ...route, subpath: route.path, path, depth };
   if (parent) r.parent = parent;
-  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
+  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1);
   r.exact = r.exact === undefined
     ? Boolean(!r.children || !r.children.length)
     : r.exact;
@@ -36,10 +36,10 @@ function normalizeRoute(route, parent) {
   return r;
 }
 
-function normalizeRoutes(routes, parent) {
+function normalizeRoutes(routes, parent, depth) {
   if (!routes) routes = [];
   if (routes._normalized) return routes;
-  routes = routes.filter(Boolean).map(route => normalizeRoute(route, parent));
+  routes = routes.map(route => normalizeRoute(route, parent, depth)).filter(Boolean);
   Object.defineProperty(routes, '_normalized', { value: true });
   return routes;
 }
@@ -137,10 +137,11 @@ function once(fn, ctx) {
   };
 }
 
+
 function isAcceptRef(v) {
   if (!v) return false;
   if (v.$$typeof === REACT_FORWARD_REF_TYPE && v.__componentClass) return true;
-  while (v.__component) v = v.__component;
+  if (v.__component) v = getGuardsComponent(v);
 
   let ret = false;
   if (v.prototype) {
@@ -171,6 +172,8 @@ function warn(...args) {
 }
 
 function renderRoutes(routes, extraProps, switchProps, options = {}) {
+  if (!routes) return null;
+
   if (extraProps === undefined) extraProps = {};
   if (switchProps === undefined) switchProps = {};
 
@@ -235,7 +238,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     _pending.completeCallbacks[options.name] = null;
     _pending.afterEnterGuards[options.name] = [];
     if (ref) ref = mergeFns(ref, el => el && refHandler && refHandler(el, component.__componentClass));
-    while (component.__component) component = component.__component;
+    if (component.__component) component = getGuardsComponent(component);
     const ret = React.createElement(
       component,
       Object.assign(_props, props, extraProps, {
@@ -246,8 +249,9 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     if (!ref) nextTick(refHandler);
     return ret;
   }
+
   const currentRoute = options.router && options.router.currentRoute;
-  const ret = routes ? React.createElement(Switch, switchProps, routes.map(function (route, i) {
+  let children = routes.map(function (route, i) {
     if (route.redirect) {
       return React.createElement(Redirect, {
         key: route.key || i,
@@ -264,7 +268,9 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       strict: route.strict,
       render: props => renderComp(route, route.components[options.name || 'default'], props, options)
     });
-  })) : null;
+  });
+  if (options.routesContainer) children = options.routesContainer(children);
+  const ret = React.createElement(Switch, switchProps, children);
   return ret;
 }
 

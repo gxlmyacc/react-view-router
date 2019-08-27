@@ -26,13 +26,11 @@ const routes = normalizeRoutes([
               footer: lazyImport(() => import(/* webpackChunkName: "home" */ 'component/home/main/some/footer')),
             },
             // route guards:
-            guards: {
-              beforeEnter(to, from, next) { next(); },
-              beforeLeave(to, from, next) { next(); },
-              beforeUpdate(to, from) {},
-              afterEnter(to, from) {},
-              afterLeave(to, from) {},
-            }
+            beforeEnter(to, from, next) { next(); },
+            beforeLeave(to, from, next) { next(); },
+            beforeUpdate(to, from) {},
+            afterEnter(to, from) {},
+            afterLeave(to, from) {},
           },
           {
             path: 'other',

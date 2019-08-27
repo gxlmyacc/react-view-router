@@ -31,13 +31,16 @@ class RouterView extends React.Component {
   }
 
   _updateRef(ref) {
-    let currentRoute = this._refreshCurrentRoute();
+    let newRoute = this._refreshCurrentRoute();
+    let oldRoute = this.state.currentRoute;
 
-    if (currentRoute) {
-      currentRoute.componentInstances[this.name] = ref;
+    if (newRoute) {
+      newRoute.componentInstances[this.name] = ref;
     }
     if (this.props && this.props._updateRef) this.props._updateRef(ref);
-    if (currentRoute && currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({ currentRoute });
+    if (!oldRoute
+      || (newRoute && newRoute.fullPath !== oldRoute.fullPath)
+    ) this.setState({ currentRoute: newRoute });
   }
 
   _filterRoutes(routes, state) {
@@ -146,7 +149,7 @@ class RouterView extends React.Component {
   render() {
     const { routes, router, _routerInited } = this.state;
     // eslint-disable-next-line
-    const { _updateRef, ...props } = this.props || {};
+    const { _updateRef, routesContainer, ...props } = this.props || {};
     if (!_routerInited) return props.fallback || null;
     const { query, params } = router.currentRoute;
 
@@ -156,7 +159,7 @@ class RouterView extends React.Component {
         parent: this,
       },
       { },
-      { name: this.name, query, params, router, ref: this._updateRef });
+      { name: this.name, query, params, router, routesContainer, ref: this._updateRef });
   }
 }
 

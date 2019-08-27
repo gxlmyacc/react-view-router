@@ -6,6 +6,7 @@ import {
 } from './util';
 import routeCache from './route-cache';
 import { resolveRouteLazyList } from './route-lazy';
+import { getGuardsComponent } from './route-guard';
 
 export async function routetInterceptors(interceptors, to, from, next) {
   function isBlock(v) {
@@ -93,7 +94,7 @@ export default class ReactViewRouter {
     // route config
     const routeGuardName = guardName.replace('Route', '');
     if (r.config) r = r.config;
-    const guards = r.guards && r.guards[routeGuardName];
+    const guards = r[routeGuardName];
     if (guards) ret.push(guards);
 
     // route component
@@ -101,9 +102,10 @@ export default class ReactViewRouter {
       let g = [];
       const c = r.components[key];
       if (!c) return;
+      const cc = c.__component ? getGuardsComponent(c) : c;
       const cg = c.__guards && c.__guards[guardName];
-      if (!cg) return;
-      g.push(cg);
+      if (cc && cc.prototype && cc.prototype[guardName]) g.push(cc.prototype[guardName]);
+      if (cg) g.push(cg);
 
       const ci = componentInstances[key];
       if (bindInstance) {

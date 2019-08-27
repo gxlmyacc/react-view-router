@@ -12,6 +12,11 @@ class RouteComponentGuards {
   }
 }
 
+export function getGuardsComponent(v) {
+  while (v.__component) v = v.__component;
+  return v;
+}
+
 export function useRouteGuards(component, guards = {}, componentClass) {
   const ret = new RouteComponentGuards();
   ret.render = function (props, ref) {
