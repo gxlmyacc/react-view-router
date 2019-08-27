@@ -3180,6 +3180,9 @@ var RouteComponentGuards = function RouteComponentGuards() {
 };
 
 function getGuardsComponent(v) {
+  var useComponentClass = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+  if (useComponentClass && v.__componentClass) return v.__componentClass;
+
   while (v.__component) {
     v = v.__component;
   }
@@ -4146,7 +4149,7 @@ function () {
         var g = [];
         var c = r.components[key];
         if (!c) return;
-        var cc = c.__component ? (0, _routeGuard.getGuardsComponent)(c) : c;
+        var cc = c.__component ? (0, _routeGuard.getGuardsComponent)(c, true) : c;
         var cg = c.__guards && c.__guards[guardName];
         if (cc && cc.prototype && cc.prototype[guardName]) g.push(cc.prototype[guardName]);
         if (cg) g.push(cg);
