@@ -3147,6 +3147,7 @@ exports.default = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.getGuardsComponent = getGuardsComponent;
 exports.useRouteGuards = useRouteGuards;
 exports.REACT_LAZY_TYPE = exports.REACT_FORWARD_REF_TYPE = void 0;
 
@@ -3177,6 +3178,14 @@ var RouteComponentGuards = function RouteComponentGuards() {
 
   this.$$typeof = REACT_FORWARD_REF_TYPE;
 };
+
+function getGuardsComponent(v) {
+  while (v.__component) {
+    v = v.__component;
+  }
+
+  return v;
+}
 
 function useRouteGuards(component) {
   var guards = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -3544,15 +3553,17 @@ function (_React$Component) {
   _createClass(RouterView, [{
     key: "_updateRef",
     value: function _updateRef(ref) {
-      var currentRoute = this._refreshCurrentRoute();
+      var newRoute = this._refreshCurrentRoute();
 
-      if (currentRoute) {
-        currentRoute.componentInstances[this.name] = ref;
+      var oldRoute = this.state.currentRoute;
+
+      if (newRoute) {
+        newRoute.componentInstances[this.name] = ref;
       }
 
       if (this.props && this.props._updateRef) this.props._updateRef(ref);
-      if (currentRoute && currentRoute.fullPath !== this.state.currentRoute.fullPath) this.setState({
-        currentRoute: currentRoute
+      if (!oldRoute || newRoute && newRoute.fullPath !== oldRoute.fullPath) this.setState({
+        currentRoute: newRoute
       });
     }
   }, {
@@ -3747,7 +3758,8 @@ function (_React$Component) {
 
       var _ref = this.props || {},
           _updateRef = _ref._updateRef,
-          props = _objectWithoutProperties(_ref, ["_updateRef"]);
+          routesContainer = _ref.routesContainer,
+          props = _objectWithoutProperties(_ref, ["_updateRef", "routesContainer"]);
 
       if (!_routerInited) return props.fallback || null;
       var _router$currentRoute = router.currentRoute,
@@ -3760,6 +3772,7 @@ function (_React$Component) {
         query: query,
         params: params,
         router: router,
+        routesContainer: routesContainer,
         ref: this._updateRef
       });
     }
@@ -3819,6 +3832,8 @@ var _util = __webpack_require__(/*! ./util */ "./src/util.js");
 var _routeCache = _interopRequireDefault(__webpack_require__(/*! ./route-cache */ "./src/route-cache.js"));
 
 var _routeLazy = __webpack_require__(/*! ./route-lazy */ "./src/route-lazy.js");
+
+var _routeGuard = __webpack_require__(/*! ./route-guard */ "./src/route-guard.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -4124,16 +4139,17 @@ function () {
 
       var routeGuardName = guardName.replace('Route', '');
       if (r.config) r = r.config;
-      var guards = r.guards && r.guards[routeGuardName];
+      var guards = r[routeGuardName];
       if (guards) ret.push(guards); // route component
 
       Object.keys(r.components).forEach(function (key) {
         var g = [];
         var c = r.components[key];
         if (!c) return;
+        var cc = c.__component ? (0, _routeGuard.getGuardsComponent)(c) : c;
         var cg = c.__guards && c.__guards[guardName];
-        if (!cg) return;
-        g.push(cg);
+        if (cc && cc.prototype && cc.prototype[guardName]) g.push(cc.prototype[guardName]);
+        if (cg) g.push(cg);
         var ci = componentInstances[key];
 
         if (bindInstance) {
@@ -4602,16 +4618,17 @@ function nextTick(cb, ctx) {
   });
 }
 
-function normalizeRoute(route, parent) {
+function normalizeRoute(route, parent, depth) {
   var path = parent ? "".concat(parent.path).concat(route.path === '/' ? '' : "/".concat(route.path)) : route.path;
 
   var r = _objectSpread({}, route, {
     subpath: route.path,
-    path: path
+    path: path,
+    depth: depth
   });
 
   if (parent) r.parent = parent;
-  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r);
+  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1);
   r.exact = r.exact === undefined ? Boolean(!r.children || !r.children.length) : r.exact;
   if (!r.components) r.components = {};
 
@@ -4639,12 +4656,12 @@ function normalizeRoute(route, parent) {
   return r;
 }
 
-function normalizeRoutes(routes, parent) {
+function normalizeRoutes(routes, parent, depth) {
   if (!routes) routes = [];
   if (routes._normalized) return routes;
-  routes = routes.filter(Boolean).map(function (route) {
-    return normalizeRoute(route, parent);
-  });
+  routes = routes.map(function (route) {
+    return normalizeRoute(route, parent, depth);
+  }).filter(Boolean);
   Object.defineProperty(routes, '_normalized', {
     value: true
   });
@@ -4790,11 +4807,7 @@ function once(fn, ctx) {
 function isAcceptRef(v) {
   if (!v) return false;
   if (v.$$typeof === _routeGuard.REACT_FORWARD_REF_TYPE && v.__componentClass) return true;
-
-  while (v.__component) {
-    v = v.__component;
-  }
-
+  if (v.__component) v = (0, _routeGuard.getGuardsComponent)(v);
   var ret = false;
 
   if (v.prototype) {
@@ -4839,6 +4852,7 @@ function warn() {
 
 function renderRoutes(routes, extraProps, switchProps) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+  if (!routes) return null;
   if (extraProps === undefined) extraProps = {};
   if (switchProps === undefined) switchProps = {};
 
@@ -4914,10 +4928,7 @@ function renderRoutes(routes, extraProps, switchProps) {
     if (ref) ref = mergeFns(ref, function (el) {
       return el && refHandler && refHandler(el, component.__componentClass);
     });
-
-    while (component.__component) {
-      component = component.__component;
-    }
+    if (component.__component) component = (0, _routeGuard.getGuardsComponent)(component);
 
     var ret = _react.default.createElement(component, Object.assign(_props, props, extraProps, {
       route: route,
@@ -4929,7 +4940,7 @@ function renderRoutes(routes, extraProps, switchProps) {
   }
 
   var currentRoute = options.router && options.router.currentRoute;
-  var ret = routes ? _react.default.createElement(_reactRouterDom.Switch, switchProps, routes.map(function (route, i) {
+  var children = routes.map(function (route, i) {
     if (route.redirect) {
       return _react.default.createElement(_reactRouterDom.Redirect, {
         key: route.key || i,
@@ -4949,7 +4960,11 @@ function renderRoutes(routes, extraProps, switchProps) {
         return renderComp(route, route.components[options.name || 'default'], props, options);
       }
     });
-  })) : null;
+  });
+  if (options.routesContainer) children = options.routesContainer(children);
+
+  var ret = _react.default.createElement(_reactRouterDom.Switch, switchProps, children);
+
   return ret;
 }
 
