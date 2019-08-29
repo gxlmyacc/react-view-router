@@ -11,11 +11,12 @@ function nextTick(cb, ctx) {
   });
 }
 
-function normalizeRoute(route, parent, depth) {
-  const path = parent ? `${parent.path}${route.path === '/' ? '' : `/${route.path}`}` : route.path;
+function normalizeRoute(route, parent, depth, force) {
+  let path = parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path;
+  if (path.length > 1 && path.endsWith('/')) path = path.substr(0, path.length - 1);
   let r = { ...route, subpath: route.path, path, depth };
   if (parent) r.parent = parent;
-  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1);
+  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1, force);
   r.exact = r.exact === undefined
     ? Boolean(!r.children || !r.children.length)
     : r.exact;
@@ -29,9 +30,10 @@ function normalizeRoute(route, parent, depth) {
     if (comp instanceof RouteLazy) {
       comp.updater = c => {
         if (c.__children) {
-          let children = c.__children;
+          let children = c.__children || [];
           if (isFunction(children)) children = children(r) || [];
           r.children = normalizeRoutes(children, r, depth + 1);
+          r.exact = !r.children.length;
         }
         return r.components[key] = c;
       };
@@ -45,10 +47,10 @@ function normalizeRoute(route, parent, depth) {
   return r;
 }
 
-function normalizeRoutes(routes, parent, depth) {
+function normalizeRoutes(routes, parent, depth, force = false) {
   if (!routes) routes = [];
-  if (routes._normalized) return routes;
-  routes = routes.map(route => normalizeRoute(route, parent, depth)).filter(Boolean);
+  if (!force && routes._normalized) return routes;
+  routes = routes.map(route => normalizeRoute(route, parent, depth, force)).filter(Boolean);
   Object.defineProperty(routes, '_normalized', { value: true });
   return routes;
 }

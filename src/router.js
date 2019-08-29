@@ -68,7 +68,7 @@ export default class ReactViewRouter {
     }
 
     this.mode = options.mode;
-    this.basename = options.basename;
+    this.basename = options.basename || '';
     this.routes = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
@@ -226,17 +226,17 @@ export default class ReactViewRouter {
     if (!location) return callback(true);
     let isContinue = false;
     try {
-      const to = this.createRoute(location);
+      let to = this.createRoute(location);
       const from = isInit ? null : this.currentRoute;
 
-      await resolveRouteLazyList(to.matched);
+      if (await resolveRouteLazyList(to.matched)) to = this.createRoute(location);
 
       routetInterceptors(this._getBeforeEachGuards(to, from), to, from, ok => {
         if (ok && typeof ok === 'string') ok = { path: ok };
         isContinue = Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
 
         const toLast = to.matched[to.matched.length - 1];
-        if (isContinue && toLast && toLast.exact && toLast.redirect) {
+        if (isContinue && toLast && toLast.config.exact && toLast.redirect) {
           ok = resolveRedirect(toLast.redirect, toLast, to);
           isContinue = false;
         }
@@ -276,9 +276,8 @@ export default class ReactViewRouter {
       if (from.viewInstance) to.viewInstance = from.viewInstance;
     }
     const { search, query, path, onAbort, onComplete } = to;
-    const ret = last ? {
+    const ret = Object.assign({}, last.match, {
       basename: this.basename,
-      ...last.match,
       query: query || (search ? qs.parseQuery(to.search.substr(1)) : {}),
       path,
       fullPath: `${path}${search}`,
@@ -300,10 +299,10 @@ export default class ReactViewRouter {
         }
         return ret;
       }),
-      meta: last.route.meta || {},
+      meta: (last && last.route.meta) || {},
       onAbort,
       onComplete
-    } : null;
+    });
     if (to.isRedirect && from) {
       ret.redirectedFrom = from.redirectedFrom || from;
       if (!ret.onAbort && from.onAbort) ret.onAbort = from.onAbort;

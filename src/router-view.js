@@ -59,7 +59,7 @@ class RouterView extends React.Component {
 
   _refreshCurrentRoute(state) {
     if (!state) state = this.state;
-    const matched = state.router.currentRoute.matched;
+    const matched = (state.router.currentRoute && state.router.currentRoute.matched) || [];
     const ret = matched.length > state._routerDepth
       ? matched[state._routerDepth]
       : null;
@@ -73,7 +73,7 @@ class RouterView extends React.Component {
     const props = this.props || {};
     if (props.depth === undefined && this._reactInternalFiber) {
       let parent = this._reactInternalFiber.return;
-      while (parent) {
+      while (parent && parent.type !== Router) {
         const memoizedState = parent.memoizedState;
         const memoizedProps = parent.memoizedProps;
         if (memoizedState && memoizedState._routerView) {
@@ -92,7 +92,7 @@ class RouterView extends React.Component {
     }
 
     if (!state.routes.length) {
-      const matched = state.router.currentRoute.matched;
+      const matched = (state.router.currentRoute && state.router.currentRoute.matched) || [];
       state.currentRoute = this._refreshCurrentRoute(state);
       if (state._routerDepth) {
         // state.router.updateRoute();
@@ -106,7 +106,7 @@ class RouterView extends React.Component {
     if (state._routerRoot && state.router) {
       state.router.viewRoot = this;
       state.router._handleRouteInterceptor(
-        state.router.location,
+        state.router.history.location,
         () => this.setState(Object.assign(state, { _routerInited: true })),
         true
       );

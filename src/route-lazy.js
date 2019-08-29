@@ -34,18 +34,21 @@ export class RouteLazy {
 }
 
 export async function resolveRouteLazyList(matched) {
-  if (!matched) return;
+  let changed = false;
+  if (!matched) return changed;
   const toResolve = async function (routeLazy, route) {
     if (!routeLazy || !(routeLazy instanceof RouteLazy)) return;
+    changed = true;
     return routeLazy.toResolve(route);
   };
   for (let r of matched) {
     const config = r.config;
     await toResolve(config.component, config);
     if (config.components) {
-      for (let key of Object.keys(config.components)) await toResolve(config.components[key]);
+      for (let key of Object.keys(config.components)) await toResolve(config.components[key], config);
     }
   }
+  return changed;
 }
 
 export function lazyImport(importMethod) {
