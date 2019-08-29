@@ -26,7 +26,16 @@ function normalizeRoute(route, parent, depth) {
   }
   Object.keys(r.components).forEach(key => {
     let comp = r.components[key];
-    if (comp instanceof RouteLazy) comp.updater = c => r.components[key] = c;
+    if (comp instanceof RouteLazy) {
+      comp.updater = c => {
+        if (c.__children) {
+          let children = c.__children;
+          if (isFunction(children)) children = children(r) || [];
+          r.children = normalizeRoutes(children, r, depth + 1);
+        }
+        return r.components[key] = c;
+      };
+    }
   });
   if (!r.meta) r.meta = {};
   if (r.props) r.props = normalizeProps(r.props);
@@ -55,9 +64,9 @@ function normalizeRoutePath(path, route) {
   return path;
 }
 
-function matchRoutes(routes, location, branch, parent) {
+function matchRoutes(routes, to, branch, parent) {
   if (branch === undefined) branch = [];
-  location = normalizeLocation(location);
+  to = normalizeLocation(to);
 
   if (isFunction(routes)) {
     routes = normalizeRoutes(routes({
@@ -71,15 +80,15 @@ function matchRoutes(routes, location, branch, parent) {
 
   for (let route of routes) {
     let match = route.path
-      ? matchPath(location.path, route)
+      ? matchPath(to.path, route)
       : branch.length
         ? branch[branch.length - 1].match // use parent match
-        : Router.computeRootMatch(location.path); // use default "root" match
+        : Router.computeRootMatch(to.path); // use default "root" match
 
     if (match) {
       branch.push({ route,  match });
 
-      if (route.children) matchRoutes(route.children, location, branch, route);
+      if (route.children) matchRoutes(route.children, to, branch, route);
     }
     if (match) break;
   }
@@ -201,6 +210,9 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
   function renderComp(route, component, props, options) {
     if (!component) return null;
     const _props = {};
+    if (route.defaultProps) {
+      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
+    }
     if (route.props) configProps(_props, route.props, options.params, options.name);
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);

@@ -18,14 +18,23 @@ export function getGuardsComponent(v, useComponentClass = false) {
   return v;
 }
 
-export function useRouteGuards(component, guards = {}, componentClass) {
+export function useRouteGuards(component, guards = {}, componentClass, children) {
   const ret = new RouteComponentGuards();
   ret.render = function (props, ref) {
     return React.createElement(component, { ...props, ref });
   };
   Object.defineProperty(ret, '__guards', { value: guards });
   Object.defineProperty(ret, '__component', { value: component });
-  Object.defineProperty(ret, '__componentClass', { value: componentClass });
-  Object.defineProperty(ret, '__resolved', { writable: true, value: false });
+
+  if (guards.componentClass) componentClass = guards.componentClass;
+  if (guards.children) children = guards.children;
+
+  if (Array.isArray(componentClass)) {
+    children = componentClass;
+    componentClass = null;
+  }
+
+  if (componentClass) Object.defineProperty(ret, '__componentClass', { value: componentClass });
+  if (children) Object.defineProperty(ret, '__children', { value: children });
   return ret;
 }

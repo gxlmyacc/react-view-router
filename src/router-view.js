@@ -75,6 +75,7 @@ class RouterView extends React.Component {
       let parent = this._reactInternalFiber.return;
       while (parent) {
         const memoizedState = parent.memoizedState;
+        const memoizedProps = parent.memoizedProps;
         if (memoizedState && memoizedState._routerView) {
           state._routerRoot = false;
           state._routerParent = memoizedState._routerView;
@@ -82,6 +83,10 @@ class RouterView extends React.Component {
           state._routerDepth = memoizedState._routerDepth + 1;
           break;
         }
+        if (!state.router
+            && parent.type === Router
+            && memoizedProps
+            && memoizedProps.history) state.router = memoizedProps.history;
         parent = parent.return;
       }
     }
@@ -159,7 +164,13 @@ class RouterView extends React.Component {
         parent: this,
       },
       { },
-      { name: this.name, query, params, router, routesContainer, ref: this._updateRef });
+      {
+        name: this.name,
+        query,
+        params,
+        routesContainer,
+        ref: this._updateRef
+      });
   }
 }
 

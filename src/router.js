@@ -48,16 +48,23 @@ export default class ReactViewRouter {
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
     if (options.base) options.basename = options.base;
-    switch (options.mode) {
-      case 'browser':
-      case 'history':
-        this.history = createBrowserHistory(options);
-        break;
-      case 'memory':
-      case 'abstract':
-        this.history = createMemoryHistory(options);
-        break;
-      default: this.history = createHashHistory(options);
+    if (options.history) {
+      if (options.history instanceof ReactViewRouter) {
+        this.history = options.history.history;
+        this.mode = options.history.mode;
+      } else this.history = options.history;
+    } else {
+      switch (options.mode) {
+        case 'browser':
+        case 'history':
+          this.history = createBrowserHistory(options);
+          break;
+        case 'memory':
+        case 'abstract':
+          this.history = createMemoryHistory(options);
+          break;
+        default: this.history = createHashHistory(options);
+      }
     }
 
     this.mode = options.mode;
@@ -67,8 +74,8 @@ export default class ReactViewRouter {
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
-    this.listenerInstalled = false;
-    this.history.listen(location => this.updateRoute(location));
+
+    this._unlisten = this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
 
     Object.keys(this.history).forEach(key => !HISTORY_METHODS.includes(key) && (this[key] = this.history[key]));
@@ -222,14 +229,14 @@ export default class ReactViewRouter {
       const to = this.createRoute(location);
       const from = isInit ? null : this.currentRoute;
 
-      await resolveRouteLazyList(to && to.matched);
+      await resolveRouteLazyList(to.matched);
 
       routetInterceptors(this._getBeforeEachGuards(to, from), to, from, ok => {
         if (ok && typeof ok === 'string') ok = { path: ok };
         isContinue = Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
 
         const toLast = to.matched[to.matched.length - 1];
-        if (isContinue && toLast && toLast.redirect) {
+        if (isContinue && toLast && toLast.exact && toLast.redirect) {
           ok = resolveRedirect(toLast.redirect, toLast, to);
           isContinue = false;
         }
@@ -270,6 +277,7 @@ export default class ReactViewRouter {
     }
     const { search, query, path, onAbort, onComplete } = to;
     const ret = last ? {
+      basename: this.basename,
       ...last.match,
       query: query || (search ? qs.parseQuery(to.search.substr(1)) : {}),
       path,

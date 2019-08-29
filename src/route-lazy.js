@@ -15,14 +15,14 @@ export class RouteLazy {
     Object.defineProperty(this, 'toResolve', { value: this.toResolve });
   }
 
-  toResolve() {
+  toResolve(...args) {
     return new Promise((resolve, reject) => {
       let _resolve = v => {
         if (this.updater) v = this.updater(v) || v;
         this.resolved = true;
         resolve(v);
       };
-      let component = this._ctor();
+      let component = this._ctor(...args);
       if (component instanceof Promise) {
         component.then(c => {
           component = c.__esModule ? c.default : c;
@@ -35,13 +35,13 @@ export class RouteLazy {
 
 export async function resolveRouteLazyList(matched) {
   if (!matched) return;
-  const toResolve = async function (routeLazy) {
+  const toResolve = async function (routeLazy, route) {
     if (!routeLazy || !(routeLazy instanceof RouteLazy)) return;
-    return routeLazy.toResolve();
+    return routeLazy.toResolve(route);
   };
   for (let r of matched) {
     const config = r.config;
-    await toResolve(config.component);
+    await toResolve(config.component, config);
     if (config.components) {
       for (let key of Object.keys(config.components)) await toResolve(config.components[key]);
     }
