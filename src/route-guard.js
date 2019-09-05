@@ -7,9 +7,11 @@ const LazyMeth = lazy(() => {});
 export const REACT_LAZY_TYPE = LazyMeth.$$typeof;
 
 class RouteComponentGuards {
+
   constructor() {
     this.$$typeof = REACT_FORWARD_REF_TYPE;
   }
+
 }
 
 export function getGuardsComponent(v, useComponentClass = false) {

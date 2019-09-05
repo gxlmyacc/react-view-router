@@ -43,6 +43,7 @@ export async function routetInterceptors(interceptors, to, from, next) {
 const HISTORY_METHODS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
 
 export default class ReactViewRouter {
+
   constructor(options = {}) {
     if (!options.mode) options.mode = 'hash';
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
@@ -278,7 +279,7 @@ export default class ReactViewRouter {
       if (from.viewInstance) to.viewInstance = from.viewInstance;
     }
     const { search, query, path, onAbort, onComplete } = to;
-    const ret = Object.assign({}, last.match, {
+    const ret = Object.assign({}, last ? last.match : null, {
       basename: this.basename,
       query: query || (search ? qs.parseQuery(to.search.substr(1)) : {}),
       path,
@@ -393,4 +394,5 @@ export default class ReactViewRouter {
   stringifyQuery(obj) {
     return qs.stringifyQuery(obj);
   }
+
 }

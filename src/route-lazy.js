@@ -1,6 +1,7 @@
 import { REACT_LAZY_TYPE } from './route-guard';
 
 export class RouteLazy {
+
   constructor(ctor) {
     this.$$typeof = REACT_LAZY_TYPE;
     this._ctor = ctor;
@@ -31,6 +32,7 @@ export class RouteLazy {
       } else _resolve(component);
     });
   }
+
 }
 
 export async function resolveRouteLazyList(matched) {

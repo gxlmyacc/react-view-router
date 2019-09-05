@@ -625,7 +625,7 @@ function () {
           path = to.path,
           onAbort = to.onAbort,
           onComplete = to.onComplete;
-      var ret = Object.assign({}, last.match, {
+      var ret = Object.assign({}, last ? last.match : null, {
         basename: this.basename,
         query: query || (search ? _qs.default.parseQuery(to.search.substr(1)) : {}),
         path: path,

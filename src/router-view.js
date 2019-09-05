@@ -3,6 +3,7 @@ import { Router } from 'react-router-dom';
 import { renderRoutes, normalizeRoutes } from './util';
 
 class RouterView extends React.Component {
+
   constructor(props) {
     super(props);
     const router = props && props.router;
@@ -172,6 +173,7 @@ class RouterView extends React.Component {
         ref: this._updateRef
       });
   }
+
 }
 
 export default React.forwardRef((props, ref) => {

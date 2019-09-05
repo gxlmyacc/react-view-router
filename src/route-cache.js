@@ -1,4 +1,5 @@
 class RouterCache {
+
   constructor() {
     this.cached = {};
     this.seed = 0;
@@ -16,6 +17,7 @@ class RouterCache {
     delete this.cached[seed];
     return ret;
   }
+
 }
 const routeCache = new RouterCache();
 
