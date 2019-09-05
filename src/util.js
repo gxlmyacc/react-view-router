@@ -289,8 +289,19 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
   return ret;
 }
 
+function flatten(array) {
+  let flattend = [];
+  (function flat(array) {
+    array.forEach(function (el) {
+      if (Array.isArray(el)) flat(el);
+      else flattend.push(el);
+    });
+  })(array);
+  return flattend;
+}
 
 export {
+  flatten,
   warn,
   once,
   mergeFns,

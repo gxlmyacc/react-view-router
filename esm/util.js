@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.flatten = flatten;
 exports.warn = warn;
 exports.once = once;
 exports.mergeFns = mergeFns;
@@ -463,4 +464,16 @@ function renderRoutes(routes, extraProps, switchProps) {
   var ret = _react.default.createElement(_reactRouterDom.Switch, switchProps, children);
 
   return ret;
+}
+
+function flatten(array) {
+  var flattend = [];
+
+  (function flat(array) {
+    array.forEach(function (el) {
+      if (Array.isArray(el)) flat(el);else flattend.push(el);
+    });
+  })(array);
+
+  return flattend;
 }

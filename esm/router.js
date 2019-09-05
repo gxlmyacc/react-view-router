@@ -383,7 +383,7 @@ function () {
 
         ret.push.apply(ret, _toConsumableArray(g));
       });
-      return ret.flat();
+      return (0, _util.flatten)(ret);
     }
   }, {
     key: "_getRouteComponentGurads",
@@ -476,7 +476,7 @@ function () {
         });
       }
 
-      return ret.flat();
+      return (0, _util.flatten)(ret);
     }
   }, {
     key: "_getRouteUpdateGuards",
@@ -506,7 +506,7 @@ function () {
 
 
       ret.push.apply(ret, _toConsumableArray(this.afterEachGuards));
-      return ret.flat();
+      return (0, _util.flatten)(ret);
     }
   }, {
     key: "_handleRouteInterceptor",

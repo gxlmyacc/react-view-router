@@ -1,6 +1,7 @@
 import { createHashHistory, createBrowserHistory, createMemoryHistory } from 'history-fix';
 import qs from './qs';
 import {
+  flatten,
   normalizeRoutes, normalizeLocation, resolveRedirect,
   matchRoutes,  isFunction, isLocation, nextTick, once
 } from './util';
@@ -125,7 +126,7 @@ export default class ReactViewRouter {
       ret.push(...g);
     });
 
-    return ret.flat();
+    return flatten(ret);
   }
 
   _getRouteComponentGurads(matched, guardName, reverse = false, bindInstance = true) {
@@ -196,7 +197,7 @@ export default class ReactViewRouter {
         r.config._pending.afterEnterGuards = compGuards;
       });
     }
-    return ret.flat();
+    return flatten(ret);
   }
 
   _getRouteUpdateGuards(to, from) {
@@ -221,7 +222,7 @@ export default class ReactViewRouter {
     //   const tm = this._getChangeMatched(to, from);
     // }
     ret.push(...this.afterEachGuards);
-    return ret.flat();
+    return flatten(ret);
   }
 
   async _handleRouteInterceptor(location, callback, isInit = false) {
