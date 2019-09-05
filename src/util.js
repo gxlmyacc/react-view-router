@@ -173,6 +173,7 @@ function mergeFns(...fns) {
 
 function resolveRedirect(to, route, from) {
   if (isFunction(to)) to = to.call(route, from);
+  if (!to) return '';
   to = normalizeLocation(to, route);
   to.isRedirect = true;
   return to;
@@ -282,7 +283,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       strict: route.strict,
       render: props => renderComp(route, route.components[options.name || 'default'], props, options)
     });
-  });
+  }).filter(Boolean);
   if (options.routesContainer) children = options.routesContainer(children);
   const ret = React.createElement(Switch, switchProps, children);
   return ret;

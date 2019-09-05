@@ -85,7 +85,7 @@ export default class ReactViewRouter {
     this.use(options);
   }
 
-  use({ routes, parseQuery, stringifyQuery }) {
+  use({ routes, parseQuery, stringifyQuery, install }) {
     if (routes) {
       this.routes = routes ? normalizeRoutes(routes) : [];
       this.updateRoute(this.history.location);
@@ -93,6 +93,8 @@ export default class ReactViewRouter {
 
     if (parseQuery) qs.parseQuery = parseQuery;
     if (stringifyQuery) qs.stringifyQuery = stringifyQuery;
+
+    if (install) this.install = install.bind(this);
   }
 
   _getComponentGurads(r, guardName, bindInstance = true) {
@@ -238,7 +240,7 @@ export default class ReactViewRouter {
         const toLast = to.matched[to.matched.length - 1];
         if (isContinue && toLast && toLast.config.exact && toLast.redirect) {
           ok = resolveRedirect(toLast.redirect, toLast, to);
-          isContinue = false;
+          if (ok) isContinue = false;
         }
 
         callback(isContinue);

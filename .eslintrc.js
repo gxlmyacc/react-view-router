@@ -56,7 +56,7 @@ module.exports = {
     // 如果一个类方法没有使用this，那么必须将该方法转换为静态函数
     'class-methods-use-this': 0,
     // 数组和对象键值对最后一个逗号，never参数：不能带末尾的逗号, always参数：必须带末尾的逗号，always-multiline：多行模式必须带逗号，单行模式不能带逗号
-    'comma-dangle': [2, { arrays: 'ignore', exports: 'never', functions: 'ignore', imports: 'never', objects: 'ignore' }],
+    'comma-dangle': [0, { arrays: 'ignore', exports: 'never', functions: 'ignore', imports: 'never', objects: 'ignore' }],
     // 要求 return 语句要么总是指定返回的值，要么不指定
     'consistent-return': 0,
     // 强制所有控制语句使用一致的括号风格
@@ -161,6 +161,7 @@ module.exports = {
     "one-var-declaration-per-line": [2, 'initializations'],
     // 强制操作符使用一致的换行符
     "operator-linebreak": [2, 'before', { overrides: { ':': 'before', '?': 'before' } }],
+    "padded-blocks": [2, { blocks: 'never', switches: 'never', classes: 'always' }],
     // 要求使用箭头函数作为回调
     'prefer-arrow-callback': 0,
     // 要求使用 const 声明那些声明后不再被修改的变量
@@ -177,23 +178,6 @@ module.exports = {
     'radix': [2, 'as-needed'],
     // 强制分号之前和之后使用一致的空格
     // 'semi-spacing': [0, { after: true, before: false }],
-    // html中组件名使用PascalCase格式
-    'vue/component-name-in-template-casing': 0,
-    // html中闭合标签要换行
-    'vue/html-closing-bracket-newline': 0,
-    // 强制html元素使用自闭合
-    'vue/html-self-closing': 0,
-    // 多行html元素要换行
-    'vue/multiline-html-element-content-newline': 0,
-    // 强制一行属性的最大数量
-    'vue/max-attributes-per-line': 0,
-    'vue/no-v-html': 0,
-    // 禁止在计算属性中对data中数据做修改
-    'vue/no-side-effects-in-computed-properties': 0,
-    // 有内容的html标签要换行
-    'vue/singleline-html-element-content-newline': 0,
-    // 强制prop一定要定义默认值
-    'vue/require-default-prop': 0,
     // 将立即调用函数表达式用括号括起来
     'wrap-iife': [2, 'inside']
   }

@@ -1,6 +1,7 @@
 *.ejs
 *.min.js
-workbench-common-menu/
 node_modules/
 dist/
 temp/
+demo/
+demo*/
