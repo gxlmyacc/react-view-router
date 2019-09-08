@@ -1,6 +1,6 @@
 import { matchPath, withRouter, Router, Route, Redirect, Switch } from 'react-router-dom';
 import React from 'react';
-import qs from './qs';
+import config from './config';
 import { RouteLazy } from './route-lazy';
 import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 
@@ -104,7 +104,7 @@ function normalizeLocation(to, route) {
     to = { pathname, search: search ? `?${search}` : '' };
   }
   to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
-  to.search = to.search || (to.query ? qs.stringifyQuery(to.query) : '');
+  to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
   return to;
 }
 
@@ -210,16 +210,20 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       });
     }
   }
-  function renderComp(route, component, props, options) {
+  function renderComp(route, component, routeProps, options) {
     if (!component) return null;
     const _props = {};
     if (route.defaultProps) {
-      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
+      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(routeProps) : route.defaultProps);
     }
     if (route.props) configProps(_props, route.props, options.params, options.name);
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
-    if (route.render) return route.render(Object.assign(_props, props, extraProps, { route }));
+    if (route.render) return route.render(Object.assign(_props,
+      config.inheritProps ? routeProps : null,
+      extraProps,
+      config.inheritProps ? { route } : null));
+
     let ref = null;
     if (component) {
       if (isAcceptRef(component)) ref = options.ref;
@@ -256,10 +260,11 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     if (component.__component) component = getGuardsComponent(component);
     const ret = React.createElement(
       component,
-      Object.assign(_props, props, extraProps, {
-        route,
-        ref
-      })
+      Object.assign(_props,
+        config.inheritProps ? routeProps : null,
+        extraProps,
+        config.inheritProps ? { route } : null,
+        { ref })
     );
     if (!ref) nextTick(refHandler);
     return ret;

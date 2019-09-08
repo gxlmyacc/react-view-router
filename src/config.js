@@ -75,6 +75,12 @@ export default {
   _parseQuery,
   _stringifyQuery,
 
-  parseQuery: _parseQuery,
-  stringifyQuery: _stringifyQuery
+  inheritProps: true,
+
+  get parseQuery() {
+    return this._parseQuery;
+  },
+  get stringifyQuery() {
+    return this._stringifyQuery;
+  }
 };

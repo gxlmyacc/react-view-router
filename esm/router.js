@@ -44,7 +44,7 @@ require("core-js/modules/es6.object.keys");
 
 var _historyFix = require("history-fix");
 
-var _qs = _interopRequireDefault(require("./qs"));
+var _config = _interopRequireDefault(require("./config"));
 
 var _util = require("./util");
 
@@ -318,6 +318,7 @@ function () {
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
+    this.routeChangeListener = [];
     this._unlisten = this.history.listen(function (location) {
       return _this.updateRoute(location);
     });
@@ -340,6 +341,7 @@ function () {
       var routes = _ref.routes,
           parseQuery = _ref.parseQuery,
           stringifyQuery = _ref.stringifyQuery,
+          inheritProps = _ref.inheritProps,
           install = _ref.install;
 
       if (routes) {
@@ -347,8 +349,9 @@ function () {
         this.updateRoute(this.history.location);
       }
 
-      if (parseQuery) _qs.default.parseQuery = parseQuery;
-      if (stringifyQuery) _qs.default.stringifyQuery = stringifyQuery;
+      if (inheritProps !== undefined) _config.default.inheritProps = inheritProps;
+      if (parseQuery) _config.default.parseQuery = parseQuery;
+      if (stringifyQuery) _config.default.stringifyQuery = stringifyQuery;
       if (install) this.install = install.bind(this);
     }
   }, {
@@ -627,7 +630,7 @@ function () {
           onComplete = to.onComplete;
       var ret = Object.assign({}, last ? last.match : null, {
         basename: this.basename,
-        query: query || (search ? _qs.default.parseQuery(to.search.substr(1)) : {}),
+        query: query || (search ? _config.default.parseQuery(to.search.substr(1)) : {}),
         path: path,
         fullPath: "".concat(path).concat(search),
         matched: matched.map(function (_ref2, i) {
@@ -667,8 +670,13 @@ function () {
   }, {
     key: "updateRoute",
     value: function updateRoute(to) {
+      var _this5 = this;
+
       if (!to) to = this.history.location;
       this.currentRoute = this.createRoute(to);
+      this.routeChangeListener.forEach(function (handler) {
+        return handler(_this5.currentRoute, _this5);
+      });
     }
   }, {
     key: "push",
@@ -753,14 +761,23 @@ function () {
       });
     }
   }, {
+    key: "onRouteChange",
+    value: function onRouteChange(handler) {
+      if (this.routeChangeListener.indexOf(handler) < 0) this.routeChangeListener.push(handler);
+      return function () {
+        var idx = this.routeChangeListener.indexOf(handler);
+        if (~idx) this.routeChangeListener.splice(idx, 1);
+      };
+    }
+  }, {
     key: "parseQuery",
     value: function parseQuery(query) {
-      return _qs.default.parseQuery(query);
+      return _config.default.parseQuery(query);
     }
   }, {
     key: "stringifyQuery",
     value: function stringifyQuery(obj) {
-      return _qs.default.stringifyQuery(obj);
+      return _config.default.stringifyQuery(obj);
     }
   }]);
 

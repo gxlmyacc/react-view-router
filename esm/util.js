@@ -67,7 +67,7 @@ var _reactRouterDom = require("react-router-dom");
 
 var _react = _interopRequireDefault(require("react"));
 
-var _qs = _interopRequireDefault(require("./qs"));
+var _config = _interopRequireDefault(require("./config"));
 
 var _routeLazy = require("./route-lazy");
 
@@ -241,7 +241,7 @@ function normalizeLocation(to, route) {
   }
 
   to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
-  to.search = to.search || (to.query ? _qs.default.stringifyQuery(to.query) : '');
+  to.search = to.search || (to.query ? _config.default.stringifyQuery(to.query) : '');
   return to;
 }
 
@@ -371,20 +371,20 @@ function renderRoutes(routes, extraProps, switchProps) {
     }
   }
 
-  function renderComp(route, component, props, options) {
+  function renderComp(route, component, routeProps, options) {
     if (!component) return null;
     var _props = {};
 
     if (route.defaultProps) {
-      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
+      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(routeProps) : route.defaultProps);
     }
 
     if (route.props) configProps(_props, route.props, options.params, options.name);
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
-    if (route.render) return route.render(Object.assign(_props, props, extraProps, {
+    if (route.render) return route.render(Object.assign(_props, _config.default.inheritProps ? routeProps : null, extraProps, _config.default.inheritProps ? {
       route: route
-    }));
+    } : null));
     var ref = null;
 
     if (component) {
@@ -428,8 +428,9 @@ function renderRoutes(routes, extraProps, switchProps) {
     });
     if (component.__component) component = (0, _routeGuard.getGuardsComponent)(component);
 
-    var ret = _react.default.createElement(component, Object.assign(_props, props, extraProps, {
-      route: route,
+    var ret = _react.default.createElement(component, Object.assign(_props, _config.default.inheritProps ? routeProps : null, extraProps, _config.default.inheritProps ? {
+      route: route
+    } : null, {
       ref: ref
     }));
 

@@ -43,6 +43,8 @@ var _reactRouterDom = require("react-router-dom");
 
 var _util = require("./util");
 
+var _config = _interopRequireDefault(require("./config"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -320,21 +322,21 @@ function (_React$Component) {
     value: function render() {
       var _this$state = this.state,
           routes = _this$state.routes,
-          router = _this$state.router,
           _routerInited = _this$state._routerInited; // eslint-disable-next-line
 
       var _ref = this.props || {},
           _updateRef = _ref._updateRef,
           routesContainer = _ref.routesContainer,
-          props = _objectWithoutProperties(_ref, ["_updateRef", "routesContainer"]);
+          router = _ref.router,
+          props = _objectWithoutProperties(_ref, ["_updateRef", "routesContainer", "router"]);
 
       if (!_routerInited) return props.fallback || null;
-      var _router$currentRoute = router.currentRoute,
-          query = _router$currentRoute.query,
-          params = _router$currentRoute.params;
-      return (0, _util.renderRoutes)(routes, _objectSpread({}, props, {
+      var _this$state$router$cu = this.state.router.currentRoute,
+          query = _this$state$router$cu.query,
+          params = _this$state$router$cu.params;
+      return (0, _util.renderRoutes)(routes, _config.default.inheritProps ? _objectSpread({}, props, {
         parent: this
-      }), {}, {
+      }) : props, {}, {
         name: this.name,
         query: query,
         params: params,

@@ -1,5 +1,5 @@
 import { createHashHistory, createBrowserHistory, createMemoryHistory } from 'history-fix';
-import qs from './qs';
+import config from './config';
 import {
   flatten,
   normalizeRoutes, normalizeLocation, resolveRedirect,
@@ -76,6 +76,7 @@ export default class ReactViewRouter {
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
+    this.routeChangeListener = [];
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
@@ -87,14 +88,16 @@ export default class ReactViewRouter {
     this.use(options);
   }
 
-  use({ routes, parseQuery, stringifyQuery, install }) {
+  use({ routes, parseQuery, stringifyQuery, inheritProps, install }) {
     if (routes) {
       this.routes = routes ? normalizeRoutes(routes) : [];
       this.updateRoute(this.history.location);
     }
 
-    if (parseQuery) qs.parseQuery = parseQuery;
-    if (stringifyQuery) qs.stringifyQuery = stringifyQuery;
+    if (inheritProps !== undefined) config.inheritProps = inheritProps;
+
+    if (parseQuery) config.parseQuery = parseQuery;
+    if (stringifyQuery) config.stringifyQuery = stringifyQuery;
 
     if (install) this.install = install.bind(this);
   }
@@ -282,7 +285,7 @@ export default class ReactViewRouter {
     const { search, query, path, onAbort, onComplete } = to;
     const ret = Object.assign({}, last ? last.match : null, {
       basename: this.basename,
-      query: query || (search ? qs.parseQuery(to.search.substr(1)) : {}),
+      query: query || (search ? config.parseQuery(to.search.substr(1)) : {}),
       path,
       fullPath: `${path}${search}`,
       matched: matched.map(({ route }, i) => {
@@ -318,6 +321,7 @@ export default class ReactViewRouter {
   updateRoute(to) {
     if (!to) to = this.history.location;
     this.currentRoute = this.createRoute(to);
+    this.routeChangeListener.forEach(handler => handler(this.currentRoute, this));
   }
 
   push(to, onComplete, onAbort) {
@@ -387,13 +391,20 @@ export default class ReactViewRouter {
     else if (this.state.viewRoot) this.state.viewRoot.setState({ routes });
   }
 
+  onRouteChange(handler) {
+    if (this.routeChangeListener.indexOf(handler) < 0) this.routeChangeListener.push(handler);
+    return function () {
+      const idx = this.routeChangeListener.indexOf(handler);
+      if (~idx) this.routeChangeListener.splice(idx, 1);
+    };
+  }
 
   parseQuery(query) {
-    return qs.parseQuery(query);
+    return config.parseQuery(query);
   }
 
   stringifyQuery(obj) {
-    return qs.stringifyQuery(obj);
+    return config.stringifyQuery(obj);
   }
 
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
 import { renderRoutes, normalizeRoutes } from './util';
+import config from './config';
 
 class RouterView extends React.Component {
 
@@ -153,17 +154,13 @@ class RouterView extends React.Component {
   }
 
   render() {
-    const { routes, router, _routerInited } = this.state;
+    const { routes, _routerInited } = this.state;
     // eslint-disable-next-line
-    const { _updateRef, routesContainer, ...props } = this.props || {};
+    const { _updateRef, routesContainer, router, ...props } = this.props || {};
     if (!_routerInited) return props.fallback || null;
-    const { query, params } = router.currentRoute;
+    const { query, params } = this.state.router.currentRoute;
 
-    return renderRoutes(routes,
-      {
-        ...props,
-        parent: this,
-      },
+    return renderRoutes(routes, config.inheritProps ? { ...props, parent: this, } : props,
       { },
       {
         name: this.name,
