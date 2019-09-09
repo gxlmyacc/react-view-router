@@ -122,7 +122,7 @@ function normalizeRoute(route, parent, depth, force) {
     var comp = r.components[key];
 
     if (comp instanceof _routeLazy.RouteLazy) {
-      comp.updater = function (c) {
+      comp.updaters.push(function (c) {
         if (c.__children) {
           var children = c.__children || [];
           if (isFunction(children)) children = children(r) || [];
@@ -131,7 +131,7 @@ function normalizeRoute(route, parent, depth, force) {
         }
 
         return r.components[key] = c;
-      };
+      });
     }
   });
   if (!r.meta) r.meta = {};

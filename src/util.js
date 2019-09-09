@@ -11,9 +11,18 @@ function nextTick(cb, ctx) {
   });
 }
 
+function normalizePath(path) {
+  const paths = path.split('/');
+  if (paths.length > 2 && !paths[paths.length - 1]) paths.splice(paths.length - 1, 1);
+  for (let i = paths.length - 1; i > -1; i--) {
+    if (paths[i + 1] === '..') paths.splice(i, 2);
+    else if (paths[i] === '.') paths.splice(i, 1);
+  }
+  return paths.join('/');
+}
+
 function normalizeRoute(route, parent, depth, force) {
-  let path = parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path;
-  if (path.length > 1 && path.endsWith('/')) path = path.substr(0, path.length - 1);
+  let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
   let r = { ...route, subpath: route.path, path, depth };
   if (parent) r.parent = parent;
   if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1, force);
@@ -28,7 +37,7 @@ function normalizeRoute(route, parent, depth, force) {
   Object.keys(r.components).forEach(key => {
     let comp = r.components[key];
     if (comp instanceof RouteLazy) {
-      comp.updater = c => {
+      comp.updaters.push(c => {
         if (c.__children) {
           let children = c.__children || [];
           if (isFunction(children)) children = children(r) || [];
@@ -36,7 +45,7 @@ function normalizeRoute(route, parent, depth, force) {
           r.exact = !r.children.length;
         }
         return r.components[key] = c;
-      };
+      });
     }
   });
   if (!r.meta) r.meta = {};
@@ -63,7 +72,7 @@ function normalizeRoutePath(path, route) {
     path = `${parent.path}/${path}`;
     parent = route.parent;
   }
-  return path;
+  return normalizePath(path);
 }
 
 function matchRoutes(routes, to, branch, parent) {
@@ -317,6 +326,7 @@ export {
   isLocation,
   withRouter,
   resolveRedirect,
+  normalizePath,
   normalizeRoute,
   normalizeRoutes,
   normalizeRoutePath,

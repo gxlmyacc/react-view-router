@@ -51,9 +51,9 @@ function () {
       writable: true,
       value: false
     });
-    Object.defineProperty(this, 'updater', {
+    Object.defineProperty(this, 'updaters', {
       writable: true,
-      value: null
+      value: []
     });
     Object.defineProperty(this, 'toResolve', {
       value: this.toResolve
@@ -71,7 +71,10 @@ function () {
 
       return new Promise(function (resolve, reject) {
         var _resolve = function _resolve(v) {
-          if (_this.updater) v = _this.updater(v) || v;
+          _this.updaters.forEach(function (updater) {
+            return v = updater(v) || v;
+          });
+
           _this.resolved = true;
           resolve(v);
         };

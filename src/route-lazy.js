@@ -12,18 +12,21 @@ export class RouteLazy {
     this.propTypes = undefined;
 
     Object.defineProperty(this, 'resolved', { writable: true, value: false });
-    Object.defineProperty(this, 'updater', { writable: true, value: null });
+    Object.defineProperty(this, 'updaters', { writable: true, value: [] });
     Object.defineProperty(this, 'toResolve', { value: this.toResolve });
   }
 
   toResolve(...args) {
     return new Promise((resolve, reject) => {
       let _resolve = v => {
-        if (this.updater) v = this.updater(v) || v;
+        this.updaters.forEach(updater => v = updater(v) || v);
         this.resolved = true;
         resolve(v);
       };
       let component = this._ctor(...args);
+
+      if (!component) throw new Error('component should not null!');
+
       if (component instanceof Promise) {
         component.then(c => {
           component = c.__esModule ? c.default : c;
