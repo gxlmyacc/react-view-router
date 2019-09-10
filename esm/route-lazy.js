@@ -81,6 +81,8 @@ function () {
 
         var component = _this._ctor.apply(_this, args);
 
+        if (!component) throw new Error('component should not null!');
+
         if (component instanceof Promise) {
           component.then(function (c) {
             component = c.__esModule ? c.default : c;
@@ -98,14 +100,14 @@ function () {
 
 exports.RouteLazy = RouteLazy;
 
-function resolveRouteLazyList(_x) {
+function resolveRouteLazyList(_x, _x2) {
   return _resolveRouteLazyList.apply(this, arguments);
 }
 
 function _resolveRouteLazyList() {
   _resolveRouteLazyList = _asyncToGenerator(
   /*#__PURE__*/
-  regeneratorRuntime.mark(function _callee2(matched) {
+  regeneratorRuntime.mark(function _callee2(matched, onResoving) {
     var changed, toResolve, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, r, config, _i, _Object$keys, key;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -141,17 +143,28 @@ function _resolveRouteLazyList() {
 
                       case 2:
                         changed = true;
-                        return _context.abrupt("return", routeLazy.toResolve(route));
+                        onResoving && onResoving(true);
+                        _context.prev = 4;
+                        _context.next = 7;
+                        return routeLazy.toResolve(route);
 
-                      case 4:
+                      case 7:
+                        return _context.abrupt("return", _context.sent);
+
+                      case 8:
+                        _context.prev = 8;
+                        onResoving && onResoving(false);
+                        return _context.finish(8);
+
+                      case 11:
                       case "end":
                         return _context.stop();
                     }
                   }
-                }, _callee);
+                }, _callee, null, [[4,, 8, 11]]);
               }));
 
-              return function toResolve(_x2, _x3) {
+              return function toResolve(_x3, _x4) {
                 return _ref.apply(this, arguments);
               };
             }();

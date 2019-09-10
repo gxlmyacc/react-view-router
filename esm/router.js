@@ -405,6 +405,18 @@ function () {
       return ret;
     }
   }, {
+    key: "_getSameMatched",
+    value: function _getSameMatched(route, compare) {
+      var ret = [];
+      if (!compare) return [];
+      route && route.matched.some(function (tr, i) {
+        var fr = compare.matched[i];
+        if (tr.path !== fr.path) return true;
+        ret.push(tr);
+      });
+      return ret;
+    }
+  }, {
     key: "_getChangeMatched",
     value: function _getChangeMatched(route, compare) {
       var ret = [];
@@ -523,6 +535,7 @@ function () {
             isContinue,
             to,
             from,
+            fallbackView,
             _args = arguments;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -543,18 +556,26 @@ function () {
                 _context.prev = 5;
                 to = this.createRoute(location);
                 from = isInit ? null : this.currentRoute;
-                _context.next = 10;
-                return (0, _routeLazy.resolveRouteLazyList)(to.matched);
 
-              case 10:
+                this._getSameMatched(from, to).reverse().some(function (m) {
+                  if (m.viewInstance && m.viewInstance.props.fallback) fallbackView = m.viewInstance;
+                  return fallbackView;
+                });
+
+                _context.next = 11;
+                return (0, _routeLazy.resolveRouteLazyList)(to.matched, function (resolving) {
+                  fallbackView && fallbackView._updateResolving(resolving);
+                });
+
+              case 11:
                 if (!_context.sent) {
-                  _context.next = 12;
+                  _context.next = 13;
                   break;
                 }
 
                 to = this.createRoute(location);
 
-              case 12:
+              case 13:
                 routetInterceptors(this._getBeforeEachGuards(to, from), to, from, function (ok) {
                   if (ok && typeof ok === 'string') ok = {
                     path: ok
@@ -573,12 +594,14 @@ function () {
                     if ((0, _util.isLocation)(ok)) {
                       if (to.onAbort) ok.onAbort = to.onAbort;
                       if (to.onComplete) ok.onComplete = to.onComplete;
-                      return _this4.redirect(ok);
+                      return _this4.redirect(ok, null, null, to.onInit || (isInit ? callback : null));
                     }
 
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
                     return;
                   }
+
+                  if (to.onInit) to.onInit(to);
 
                   _this4.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok(to);
@@ -587,21 +610,21 @@ function () {
                     routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
                   });
                 });
-                _context.next = 19;
+                _context.next = 20;
                 break;
 
-              case 15:
-                _context.prev = 15;
+              case 16:
+                _context.prev = 16;
                 _context.t0 = _context["catch"](5);
                 console.error(_context.t0);
                 if (!isContinue) callback(isContinue);
 
-              case 19:
+              case 20:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[5, 15]]);
+        }, _callee, this, [[5, 16]]);
       }));
 
       function _handleRouteInterceptor(_x5, _x6) {
@@ -610,6 +633,15 @@ function () {
 
       return _handleRouteInterceptor;
     }()
+  }, {
+    key: "_replace",
+    value: function _replace(to, onComplete, onAbort, onInit) {
+      if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
+      if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
+      to = (0, _util.normalizeLocation)(to);
+      if (onInit) to.onInit = onInit;
+      this.history.replace(to);
+    }
   }, {
     key: "createRoute",
     value: function createRoute(to, from) {
@@ -663,6 +695,7 @@ function () {
         ret.redirectedFrom = from.redirectedFrom || from;
         if (!ret.onAbort && from.onAbort) ret.onAbort = from.onAbort;
         if (!ret.onComplete && from.onComplete) ret.onComplete = from.onComplete;
+        if (!ret.onInit && to.onInit) ret.onInit = to.onInit;
       }
 
       return ret;
@@ -688,16 +721,14 @@ function () {
   }, {
     key: "replace",
     value: function replace(to, onComplete, onAbort) {
-      if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
-      if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
-      this.history.replace((0, _util.normalizeLocation)(to));
+      return this._replace(to, onComplete, onAbort);
     }
   }, {
     key: "redirect",
-    value: function redirect(to, onComplete, onAbort) {
+    value: function redirect(to, onComplete, onAbort, onInit) {
       to = (0, _util.normalizeLocation)(to);
       to.isRedirect = true;
-      return this.replace(to, onComplete, onAbort);
+      return this._replace(to, onComplete, onAbort, onInit);
     }
   }, {
     key: "go",

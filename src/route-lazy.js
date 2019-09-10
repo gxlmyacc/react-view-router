@@ -38,6 +38,20 @@ export class RouteLazy {
 
 }
 
+export function hasRouteLazy(matched) {
+  if (!matched) return false;
+  for (let r of matched) {
+    const config = r.config;
+    if (config.components instanceof RouteLazy) return true;
+    if (config.components) {
+      for (let key of Object.keys(config.components)) {
+        if (config.components[key] instanceof RouteLazy) return true;
+      }
+    }
+  }
+  return false;
+}
+
 export async function resolveRouteLazyList(matched) {
   let changed = false;
   if (!matched) return changed;

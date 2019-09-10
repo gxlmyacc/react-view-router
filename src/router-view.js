@@ -1,6 +1,6 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { renderRoutes, normalizeRoutes } from './util';
+import { renderRoutes, normalizeRoutes, isFunction } from './util';
 import config from './config';
 
 class RouterView extends React.Component {
@@ -8,13 +8,14 @@ class RouterView extends React.Component {
   constructor(props) {
     super(props);
     const router = props && props.router;
-    const depth = Number(props && props.depth) || 0;
+    const depth = (props && props.depth) ? Number(props.depth) : 0;
     const state = {
       _routerView: this,
       _routerRoot: true,
       _routerParent: null,
       _routerDepth: depth,
       _routerInited: false,
+      _routerResolving: false,
 
       router,
       parentRoute: null,
@@ -40,9 +41,7 @@ class RouterView extends React.Component {
       newRoute.componentInstances[this.name] = ref;
     }
     if (this.props && this.props._updateRef) this.props._updateRef(ref);
-    if (!oldRoute
-      || (newRoute && newRoute.fullPath !== oldRoute.fullPath)
-    ) this.setState({ currentRoute: newRoute });
+    if (oldRoute !== newRoute) this.setState({ currentRoute: newRoute });
   }
 
   _filterRoutes(routes, state) {
@@ -67,6 +66,23 @@ class RouterView extends React.Component {
       : null;
     if (ret) ret.viewInstance = this;
     return ret;
+  }
+
+  _updateResolving(resolving) {
+    this.setState({ _routerResolving: Boolean(resolving) });
+  }
+
+  _resolveFallback() {
+    let fallback = this.props.fallback;
+    if (isFunction(fallback)) {
+      fallback = fallback({
+        parentRoute: this.state.parentRoute,
+        inited: this.state._routerInited,
+        resolving: this.state._routerResolving,
+        depth: this.state._routerDepth
+      });
+    }
+    return fallback || null;
   }
 
   async componentDidMount() {
@@ -109,7 +125,7 @@ class RouterView extends React.Component {
       state.router.viewRoot = this;
       state.router._handleRouteInterceptor(
         state.router.history.location,
-        () => this.setState(Object.assign(state, { _routerInited: true })),
+        ok => ok && this.setState(Object.assign(state, { _routerInited: true })),
         true
       );
     } else {
@@ -154,13 +170,13 @@ class RouterView extends React.Component {
   }
 
   render() {
-    const { routes, _routerInited } = this.state;
+    const { routes, _routerResolving, _routerInited } = this.state;
     // eslint-disable-next-line
     const { _updateRef, routesContainer, router, ...props } = this.props || {};
-    if (!_routerInited) return props.fallback || null;
+    if (!_routerInited) return this._resolveFallback();
     const { query, params } = this.state.router.currentRoute;
 
-    return renderRoutes(routes, config.inheritProps ? { ...props, parent: this, } : props,
+    let ret = renderRoutes(routes, config.inheritProps ? { ...props, parent: this, } : props,
       { },
       {
         name: this.name,
@@ -169,6 +185,10 @@ class RouterView extends React.Component {
         routesContainer,
         ref: this._updateRef
       });
+    if (_routerResolving) {
+      ret = React.createElement(React.Fragment, {}, ret, this._resolveFallback());
+    }
+    return ret;
   }
 
 }

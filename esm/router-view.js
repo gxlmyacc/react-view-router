@@ -99,13 +99,14 @@ function (_React$Component) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(RouterView).call(this, props));
     var router = props && props.router;
-    var depth = Number(props && props.depth) || 0;
+    var depth = props && props.depth ? Number(props.depth) : 0;
     var state = {
       _routerView: _assertThisInitialized(_this),
       _routerRoot: true,
       _routerParent: null,
       _routerDepth: depth,
       _routerInited: false,
+      _routerResolving: false,
       router: router,
       parentRoute: null,
       currentRoute: null,
@@ -129,7 +130,7 @@ function (_React$Component) {
       }
 
       if (this.props && this.props._updateRef) this.props._updateRef(ref);
-      if (!oldRoute || newRoute && newRoute.fullPath !== oldRoute.fullPath) this.setState({
+      if (oldRoute !== newRoute) this.setState({
         currentRoute: newRoute
       });
     }
@@ -156,6 +157,29 @@ function (_React$Component) {
       var ret = matched.length > state._routerDepth ? matched[state._routerDepth] : null;
       if (ret) ret.viewInstance = this;
       return ret;
+    }
+  }, {
+    key: "_updateResolving",
+    value: function _updateResolving(resolving) {
+      this.setState({
+        _routerResolving: Boolean(resolving)
+      });
+    }
+  }, {
+    key: "_resolveFallback",
+    value: function _resolveFallback() {
+      var fallback = this.props.fallback;
+
+      if ((0, _util.isFunction)(fallback)) {
+        fallback = fallback({
+          parentRoute: this.state.parentRoute,
+          inited: this.state._routerInited,
+          resolving: this.state._routerResolving,
+          depth: this.state._routerDepth
+        });
+      }
+
+      return fallback;
     }
   }, {
     key: "componentDidMount",
@@ -229,8 +253,8 @@ function (_React$Component) {
                 if (state._routerRoot && state.router) {
                   state.router.viewRoot = this;
 
-                  state.router._handleRouteInterceptor(state.router.history.location, function () {
-                    return _this2.setState(Object.assign(state, {
+                  state.router._handleRouteInterceptor(state.router.history.location, function (ok) {
+                    return ok && _this2.setState(Object.assign(state, {
                       _routerInited: true
                     }));
                   }, true);
@@ -322,6 +346,7 @@ function (_React$Component) {
     value: function render() {
       var _this$state = this.state,
           routes = _this$state.routes,
+          _routerResolving = _this$state._routerResolving,
           _routerInited = _this$state._routerInited; // eslint-disable-next-line
 
       var _ref = this.props || {},
@@ -330,11 +355,11 @@ function (_React$Component) {
           router = _ref.router,
           props = _objectWithoutProperties(_ref, ["_updateRef", "routesContainer", "router"]);
 
-      if (!_routerInited) return props.fallback || null;
+      if (!_routerInited) return this._resolveFallback();
       var _this$state$router$cu = this.state.router.currentRoute,
           query = _this$state$router$cu.query,
           params = _this$state$router$cu.params;
-      return (0, _util.renderRoutes)(routes, _config.default.inheritProps ? _objectSpread({}, props, {
+      var ret = (0, _util.renderRoutes)(routes, _config.default.inheritProps ? _objectSpread({}, props, {
         parent: this
       }) : props, {}, {
         name: this.name,
@@ -343,6 +368,12 @@ function (_React$Component) {
         routesContainer: routesContainer,
         ref: this._updateRef
       });
+
+      if (_routerResolving) {
+        ret = _react.default.createElement(_react.default.Fragment, {}, ret, this._resolveFallback());
+      }
+
+      return ret;
     }
   }, {
     key: "name",

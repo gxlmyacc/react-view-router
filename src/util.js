@@ -1,4 +1,4 @@
-import { matchPath, withRouter, Router, Route, Redirect, Switch } from 'react-router-dom';
+import { matchPath, withRouter, Router, Route, /* Redirect, */ Switch } from 'react-router-dom';
 import React from 'react';
 import config from './config';
 import { RouteLazy } from './route-lazy';
@@ -59,7 +59,7 @@ function normalizeRoute(route, parent, depth, force) {
 function normalizeRoutes(routes, parent, depth, force = false) {
   if (!routes) routes = [];
   if (!force && routes._normalized) return routes;
-  routes = routes.map(route => normalizeRoute(route, parent, depth, force)).filter(Boolean);
+  routes = routes.map(route => normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
   Object.defineProperty(routes, '_normalized', { value: true });
   return routes;
 }
@@ -279,16 +279,17 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     return ret;
   }
 
-  const currentRoute = options.router && options.router.currentRoute;
+  // const currentRoute = options.router && options.router.currentRoute;
   let children = routes.map(function (route, i) {
     if (route.redirect) {
-      return React.createElement(Redirect, {
-        key: route.key || i,
-        exact: route.exact,
-        strict: route.strict,
-        from: route.path,
-        to: resolveRedirect(route.redirect, route, currentRoute)
-      });
+      return;
+      // return React.createElement(Redirect, {
+      //   key: route.key || i,
+      //   exact: route.exact,
+      //   strict: route.strict,
+      //   from: route.path,
+      //   to: resolveRedirect(route.redirect, route, currentRoute)
+      // });
     }
     return React.createElement(Route, {
       key: route.key || i,

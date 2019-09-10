@@ -13,6 +13,7 @@ exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
 exports.isLocation = isLocation;
 exports.resolveRedirect = resolveRedirect;
+exports.normalizePath = normalizePath;
 exports.normalizeRoute = normalizeRoute;
 exports.normalizeRoutes = normalizeRoutes;
 exports.normalizeRoutePath = normalizeRoutePath;
@@ -41,8 +42,6 @@ require("core-js/modules/es6.regexp.to-string");
 
 require("core-js/modules/es6.regexp.search");
 
-require("core-js/modules/es6.regexp.split");
-
 require("core-js/modules/es6.regexp.match");
 
 require("core-js/modules/es7.symbol.async-iterator");
@@ -55,9 +54,9 @@ require("core-js/modules/es6.array.iterator");
 
 require("core-js/modules/es6.object.keys");
 
-require("core-js/modules/es6.string.ends-with");
-
 require("core-js/modules/es6.regexp.replace");
+
+require("core-js/modules/es6.regexp.split");
 
 require("core-js/modules/es6.promise");
 
@@ -98,9 +97,19 @@ function nextTick(cb, ctx) {
   });
 }
 
+function normalizePath(path) {
+  var paths = path.split('/');
+  if (paths.length > 2 && !paths[paths.length - 1]) paths.splice(paths.length - 1, 1);
+
+  for (var i = paths.length - 1; i > -1; i--) {
+    if (paths[i + 1] === '..') paths.splice(i, 2);else if (paths[i] === '.') paths.splice(i, 1);
+  }
+
+  return paths.join('/');
+}
+
 function normalizeRoute(route, parent, depth, force) {
-  var path = parent ? "".concat(parent.path, "/").concat(route.path.replace(/^(\/)/, '')) : route.path;
-  if (path.length > 1 && path.endsWith('/')) path = path.substr(0, path.length - 1);
+  var path = normalizePath(parent ? "".concat(parent.path, "/").concat(route.path.replace(/^(\/)/, '')) : route.path);
 
   var r = _objectSpread({}, route, {
     subpath: route.path,
@@ -152,7 +161,7 @@ function normalizeRoutes(routes, parent, depth) {
   if (!routes) routes = [];
   if (!force && routes._normalized) return routes;
   routes = routes.map(function (route) {
-    return normalizeRoute(route, parent, depth, force);
+    return normalizeRoute(route, parent, depth || 0, force);
   }).filter(Boolean);
   Object.defineProperty(routes, '_normalized', {
     value: true
@@ -170,7 +179,7 @@ function normalizeRoutePath(path, route) {
     parent = route.parent;
   }
 
-  return path;
+  return normalizePath(path);
 }
 
 function matchRoutes(routes, to, branch, parent) {
@@ -436,18 +445,18 @@ function renderRoutes(routes, extraProps, switchProps) {
 
     if (!ref) nextTick(refHandler);
     return ret;
-  }
+  } // const currentRoute = options.router && options.router.currentRoute;
 
-  var currentRoute = options.router && options.router.currentRoute;
+
   var children = routes.map(function (route, i) {
     if (route.redirect) {
-      return _react.default.createElement(_reactRouterDom.Redirect, {
-        key: route.key || i,
-        exact: route.exact,
-        strict: route.strict,
-        from: route.path,
-        to: resolveRedirect(route.redirect, route, currentRoute)
-      });
+      return; // return React.createElement(Redirect, {
+      //   key: route.key || i,
+      //   exact: route.exact,
+      //   strict: route.strict,
+      //   from: route.path,
+      //   to: resolveRedirect(route.redirect, route, currentRoute)
+      // });
     }
 
     return _react.default.createElement(_reactRouterDom.Route, {
