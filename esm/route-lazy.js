@@ -3,9 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.hasRouteLazy = hasRouteLazy;
 exports.resolveRouteLazyList = resolveRouteLazyList;
 exports.lazyImport = lazyImport;
 exports.RouteLazy = void 0;
+
+require("regenerator-runtime/runtime");
 
 require("core-js/modules/es6.array.iterator");
 
@@ -16,8 +19,6 @@ require("core-js/modules/es7.symbol.async-iterator");
 require("core-js/modules/es6.symbol");
 
 require("core-js/modules/web.dom.iterable");
-
-require("regenerator-runtime/runtime");
 
 require("core-js/modules/es6.promise");
 
@@ -100,15 +101,52 @@ function () {
 
 exports.RouteLazy = RouteLazy;
 
-function resolveRouteLazyList(_x, _x2) {
+function hasRouteLazy(matched) {
+  if (!matched) return false;
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = matched[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var r = _step.value;
+      var config = r.config;
+      if (config.components instanceof RouteLazy) return true;
+
+      if (config.components) {
+        for (var _i = 0, _Object$keys = Object.keys(config.components); _i < _Object$keys.length; _i++) {
+          var key = _Object$keys[_i];
+          if (config.components[key] instanceof RouteLazy) return true;
+        }
+      }
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return != null) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return false;
+}
+
+function resolveRouteLazyList(_x) {
   return _resolveRouteLazyList.apply(this, arguments);
 }
 
 function _resolveRouteLazyList() {
   _resolveRouteLazyList = _asyncToGenerator(
   /*#__PURE__*/
-  regeneratorRuntime.mark(function _callee2(matched, onResoving) {
-    var changed, toResolve, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, r, config, _i, _Object$keys, key;
+  regeneratorRuntime.mark(function _callee2(matched) {
+    var changed, toResolve, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, r, config, _i2, _Object$keys2, key;
 
     return regeneratorRuntime.wrap(function _callee2$(_context2) {
       while (1) {
@@ -143,45 +181,34 @@ function _resolveRouteLazyList() {
 
                       case 2:
                         changed = true;
-                        onResoving && onResoving(true);
-                        _context.prev = 4;
-                        _context.next = 7;
-                        return routeLazy.toResolve(route);
+                        return _context.abrupt("return", routeLazy.toResolve(route));
 
-                      case 7:
-                        return _context.abrupt("return", _context.sent);
-
-                      case 8:
-                        _context.prev = 8;
-                        onResoving && onResoving(false);
-                        return _context.finish(8);
-
-                      case 11:
+                      case 4:
                       case "end":
                         return _context.stop();
                     }
                   }
-                }, _callee, null, [[4,, 8, 11]]);
+                }, _callee);
               }));
 
-              return function toResolve(_x3, _x4) {
+              return function toResolve(_x2, _x3) {
                 return _ref.apply(this, arguments);
               };
             }();
 
-            _iteratorNormalCompletion = true;
-            _didIteratorError = false;
-            _iteratorError = undefined;
+            _iteratorNormalCompletion2 = true;
+            _didIteratorError2 = false;
+            _iteratorError2 = undefined;
             _context2.prev = 7;
-            _iterator = matched[Symbol.iterator]();
+            _iterator2 = matched[Symbol.iterator]();
 
           case 9:
-            if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
+            if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
               _context2.next = 26;
               break;
             }
 
-            r = _step.value;
+            r = _step2.value;
             config = r.config;
             _context2.next = 14;
             return toResolve(config.component, config);
@@ -192,25 +219,25 @@ function _resolveRouteLazyList() {
               break;
             }
 
-            _i = 0, _Object$keys = Object.keys(config.components);
+            _i2 = 0, _Object$keys2 = Object.keys(config.components);
 
           case 16:
-            if (!(_i < _Object$keys.length)) {
+            if (!(_i2 < _Object$keys2.length)) {
               _context2.next = 23;
               break;
             }
 
-            key = _Object$keys[_i];
+            key = _Object$keys2[_i2];
             _context2.next = 20;
             return toResolve(config.components[key], config);
 
           case 20:
-            _i++;
+            _i2++;
             _context2.next = 16;
             break;
 
           case 23:
-            _iteratorNormalCompletion = true;
+            _iteratorNormalCompletion2 = true;
             _context2.next = 9;
             break;
 
@@ -221,26 +248,26 @@ function _resolveRouteLazyList() {
           case 28:
             _context2.prev = 28;
             _context2.t0 = _context2["catch"](7);
-            _didIteratorError = true;
-            _iteratorError = _context2.t0;
+            _didIteratorError2 = true;
+            _iteratorError2 = _context2.t0;
 
           case 32:
             _context2.prev = 32;
             _context2.prev = 33;
 
-            if (!_iteratorNormalCompletion && _iterator.return != null) {
-              _iterator.return();
+            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
+              _iterator2.return();
             }
 
           case 35:
             _context2.prev = 35;
 
-            if (!_didIteratorError) {
+            if (!_didIteratorError2) {
               _context2.next = 38;
               break;
             }
 
-            throw _iteratorError;
+            throw _iteratorError2;
 
           case 38:
             return _context2.finish(35);

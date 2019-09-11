@@ -557,25 +557,34 @@ function () {
                 to = this.createRoute(location);
                 from = isInit ? null : this.currentRoute;
 
-                this._getSameMatched(from, to).reverse().some(function (m) {
-                  if (m.viewInstance && m.viewInstance.props.fallback) fallbackView = m.viewInstance;
-                  return fallbackView;
-                });
+                if ((0, _routeLazy.hasRouteLazy)(to.matched)) {
+                  this._getSameMatched(from, to).reverse().some(function (m) {
+                    if (m.viewInstance && m.viewInstance.props.fallback) fallbackView = m.viewInstance;
+                    return fallbackView;
+                  });
+                }
 
-                _context.next = 11;
-                return (0, _routeLazy.resolveRouteLazyList)(to.matched, function (resolving) {
-                  fallbackView && fallbackView._updateResolving(resolving);
-                });
+                fallbackView && fallbackView._updateResolving(true);
+                _context.prev = 10;
+                _context.next = 13;
+                return (0, _routeLazy.resolveRouteLazyList)(to.matched);
 
-              case 11:
+              case 13:
                 if (!_context.sent) {
-                  _context.next = 13;
+                  _context.next = 15;
                   break;
                 }
 
                 to = this.createRoute(location);
 
-              case 13:
+              case 15:
+                _context.prev = 15;
+                fallbackView && setTimeout(function () {
+                  return fallbackView._updateResolving(false);
+                }, 0);
+                return _context.finish(15);
+
+              case 18:
                 routetInterceptors(this._getBeforeEachGuards(to, from), to, from, function (ok) {
                   if (ok && typeof ok === 'string') ok = {
                     path: ok
@@ -610,21 +619,21 @@ function () {
                     routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
                   });
                 });
-                _context.next = 20;
+                _context.next = 25;
                 break;
 
-              case 16:
-                _context.prev = 16;
+              case 21:
+                _context.prev = 21;
                 _context.t0 = _context["catch"](5);
                 console.error(_context.t0);
                 if (!isContinue) callback(isContinue);
 
-              case 20:
+              case 25:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[5, 16]]);
+        }, _callee, this, [[5, 21], [10,, 15, 18]]);
       }));
 
       function _handleRouteInterceptor(_x5, _x6) {
@@ -636,9 +645,9 @@ function () {
   }, {
     key: "_replace",
     value: function _replace(to, onComplete, onAbort, onInit) {
+      to = (0, _util.normalizeLocation)(to);
       if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
       if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
-      to = (0, _util.normalizeLocation)(to);
       if (onInit) to.onInit = onInit;
       this.history.replace(to);
     }
@@ -714,9 +723,10 @@ function () {
   }, {
     key: "push",
     value: function push(to, onComplete, onAbort) {
+      to = (0, _util.normalizeLocation)(to);
       if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
       if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
-      this.history.push((0, _util.normalizeLocation)(to));
+      this.history.push(to);
     }
   }, {
     key: "replace",

@@ -300,9 +300,9 @@ export default class ReactViewRouter {
   }
 
   _replace(to, onComplete, onAbort, onInit) {
+    to = normalizeLocation(to);
     if (isFunction(onComplete)) to.onComplete = once(onComplete);
     if (isFunction(onAbort)) to.onAbort = once(onAbort);
-    to = normalizeLocation(to);
     if (onInit) to.onInit = onInit;
     this.history.replace(to);
   }
@@ -360,9 +360,10 @@ export default class ReactViewRouter {
   }
 
   push(to, onComplete, onAbort) {
+    to = normalizeLocation(to);
     if (isFunction(onComplete)) to.onComplete = once(onComplete);
     if (isFunction(onAbort)) to.onAbort = once(onAbort);
-    this.history.push(normalizeLocation(to));
+    this.history.push(to);
   }
 
   replace(to, onComplete, onAbort) {

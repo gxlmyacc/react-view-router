@@ -173,13 +173,14 @@ function (_React$Component) {
       if ((0, _util.isFunction)(fallback)) {
         fallback = fallback({
           parentRoute: this.state.parentRoute,
+          currentRoute: this.state.currentRoute,
           inited: this.state._routerInited,
           resolving: this.state._routerResolving,
           depth: this.state._routerDepth
         });
       }
 
-      return fallback;
+      return fallback || null;
     }
   }, {
     key: "componentDidMount",
@@ -277,13 +278,39 @@ function (_React$Component) {
       }
 
       return componentDidMount;
-    }() // shouldComponentUpdate(nextProps, nextState) {
-    //   const nr = nextState.currentRoute;
-    //   const cr = this.state.currentRoute;
-    //   if (nr && cr) return nr.path !== cr.path;
-    //   return !this.state._routerInited || nr !== cr;
-    // }
+    }()
+  }, {
+    key: "isRouteChanged",
+    value: function isRouteChanged(prev, next) {
+      if (prev && next) return prev.path !== next.path;
+      if ((!prev || !next) && prev !== next) return true;
+      return false;
+    }
+  }, {
+    key: "isRoutesChanged",
+    value: function isRoutesChanged(prevs, nexts) {
+      var _this3 = this;
 
+      if (!prevs || !nexts) return true;
+      if (prevs.length !== nexts.length) return true;
+      var changed = false;
+      prevs.some(function (prev, i) {
+        changed = _this3.isRouteChanged(prev, nexts[i]);
+        return changed;
+      });
+      return changed;
+    }
+  }, {
+    key: "shouldComponentUpdate",
+    value: function shouldComponentUpdate(nextProps, nextState) {
+      if (this.state._routerResolving !== nextState._routerResolving) return true;
+      if (this.state._routerInited !== nextState._routerInited) return true;
+      if (this.state._routerDepth !== nextState._routerDepth) return true;
+      if (this.state.router !== nextState.router) return true;
+      if (this.isRoutesChanged(this.state.routes, nextState.routes)) return true;
+      if (this.isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
+      return false;
+    }
   }, {
     key: "push",
     value: function push() {
