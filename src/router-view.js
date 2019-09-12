@@ -127,7 +127,8 @@ class RouterView extends React.Component {
       state.router._handleRouteInterceptor(
         state.router.history.location,
         ok => ok && this.setState(Object.assign(state, { _routerInited: true })),
-        true
+        true,
+        this
       );
     } else {
       this.setState(Object.assign(state, { _routerInited: true }));

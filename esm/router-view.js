@@ -258,7 +258,7 @@ function (_React$Component) {
                     return ok && _this2.setState(Object.assign(state, {
                       _routerInited: true
                     }));
-                  }, true);
+                  }, true, this);
                 } else {
                   this.setState(Object.assign(state, {
                     _routerInited: true
@@ -307,8 +307,8 @@ function (_React$Component) {
       if (this.state._routerInited !== nextState._routerInited) return true;
       if (this.state._routerDepth !== nextState._routerDepth) return true;
       if (this.state.router !== nextState.router) return true;
-      if (this.isRoutesChanged(this.state.routes, nextState.routes)) return true;
       if (this.isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
+      if (this.isRoutesChanged(this.state.routes, nextState.routes)) return true;
       return false;
     }
   }, {

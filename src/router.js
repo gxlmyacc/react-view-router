@@ -239,7 +239,7 @@ export default class ReactViewRouter {
     return flatten(ret);
   }
 
-  async _handleRouteInterceptor(location, callback, isInit = false) {
+  async _handleRouteInterceptor(location, callback, isInit = false, defaultFallbackView) {
     if (typeof location === 'string') location = routeCache.flush(location);
     if (!location) return callback(true);
     let isContinue = false;
@@ -247,7 +247,7 @@ export default class ReactViewRouter {
       let to = this.createRoute(location);
       const from = isInit ? null : this.currentRoute;
 
-      let fallbackView;
+      let fallbackView = defaultFallbackView;
       if (hasRouteLazy(to.matched)) {
         this._getSameMatched(from, to).reverse().some(m => {
           if (m.viewInstance && m.viewInstance.props.fallback) fallbackView = m.viewInstance;
@@ -439,6 +439,30 @@ export default class ReactViewRouter {
 
   stringifyQuery(obj) {
     return config.stringifyQuery(obj);
+  }
+
+  install(ReactVueLike, { App }) {
+    if (!App.inherits) App.inherits = {};
+    App.inherits.$router = this;
+    App.inherits.$route = ReactVueLike.observable(this.currentRoute || {});
+
+    config.inheritProps = false;
+
+    let app;
+    ReactVueLike.config.inheritMergeStrategies.$route = function (parent, child, vm) {
+      if (vm._isVueLikeRoot) {
+        vm.$set(vm, '$route', parent);
+        app = vm;
+      } else {
+        vm.$computed(vm, '$route', function () {
+          return this.$root ? this.$root.$route : null;
+        });
+      }
+    };
+    this.onRouteChange(newVal => {
+      if (app) app.$route = ReactVueLike.observable(newVal, {}, { deep: false });
+      else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, { deep: false }));
+    });
   }
 
 }

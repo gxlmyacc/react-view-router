@@ -11,6 +11,11 @@ function nextTick(cb, ctx) {
   });
 }
 
+function innumerable(obj, key, value, options = { configurable: true, writable: true }) {
+  Object.defineProperty(obj, key, Object.assign({ value }, options));
+  return obj;
+}
+
 function normalizePath(path) {
   const paths = path.split('/');
   if (paths.length > 2 && !paths[paths.length - 1]) paths.splice(paths.length - 1, 1);
@@ -24,7 +29,7 @@ function normalizePath(path) {
 function normalizeRoute(route, parent, depth, force) {
   let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
   let r = { ...route, subpath: route.path, path, depth };
-  if (parent) r.parent = parent;
+  if (parent) innumerable(r, 'parent', parent);
   if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1, force);
   r.exact = r.exact === undefined
     ? Boolean(!r.children || !r.children.length)
@@ -49,10 +54,10 @@ function normalizeRoute(route, parent, depth, force) {
     }
   });
   if (!r.meta) r.meta = {};
-  if (r.props) r.props = normalizeProps(r.props);
-  if (r.paramsProps) r.paramsProps = normalizeProps(r.paramsProps);
-  if (r.queryProps) r.queryProps = normalizeProps(r.queryProps);
-  Object.defineProperty(r, '_pending', { value: { afterEnterGuards: {}, completeCallbacks: {} } });
+  if (r.props) innumerable(r, 'props', normalizeProps(r.props));
+  if (r.paramsProps) innumerable(r, 'paramsProps', normalizeProps(r.paramsProps));
+  if (r.queryProps) innumerable(r, 'queryProps', normalizeProps(r.queryProps));
+  innumerable(r, '_pending', { afterEnterGuards: {}, completeCallbacks: {} });
   return r;
 }
 
@@ -335,5 +340,6 @@ export {
   normalizeProps,
   matchPath,
   matchRoutes,
-  renderRoutes
+  renderRoutes,
+  innumerable
 };

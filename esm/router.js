@@ -88,7 +88,7 @@ function _routetInterceptors() {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
-            _routetInterceptor = function _ref6() {
+            _routetInterceptor = function _ref7() {
               _routetInterceptor = _asyncToGenerator(
               /*#__PURE__*/
               regeneratorRuntime.mark(function _callee3(interceptor, index, to, from, next) {
@@ -108,7 +108,7 @@ function _routetInterceptors() {
                         return interceptor(to, from,
                         /*#__PURE__*/
                         function () {
-                          var _ref3 = _asyncToGenerator(
+                          var _ref4 = _asyncToGenerator(
                           /*#__PURE__*/
                           regeneratorRuntime.mark(function _callee2(f1) {
                             var nextInterceptor;
@@ -164,7 +164,7 @@ function _routetInterceptors() {
                           }));
 
                           return function (_x12) {
-                            return _ref3.apply(this, arguments);
+                            return _ref4.apply(this, arguments);
                           };
                         }());
 
@@ -181,11 +181,11 @@ function _routetInterceptors() {
               return _routetInterceptor.apply(this, arguments);
             };
 
-            routetInterceptor = function _ref5(_x7, _x8, _x9, _x10, _x11) {
+            routetInterceptor = function _ref6(_x7, _x8, _x9, _x10, _x11) {
               return _routetInterceptor.apply(this, arguments);
             };
 
-            isBlock = function _ref4(v) {
+            isBlock = function _ref5(v) {
               return v === false || typeof v === 'string' || (0, _util.isLocation)(v) || v instanceof Error;
             };
 
@@ -532,6 +532,7 @@ function () {
         var _this4 = this;
 
         var isInit,
+            defaultFallbackView,
             isContinue,
             to,
             from,
@@ -542,20 +543,22 @@ function () {
             switch (_context.prev = _context.next) {
               case 0:
                 isInit = _args.length > 2 && _args[2] !== undefined ? _args[2] : false;
+                defaultFallbackView = _args.length > 3 ? _args[3] : undefined;
                 if (typeof location === 'string') location = _routeCache.default.flush(location);
 
                 if (location) {
-                  _context.next = 4;
+                  _context.next = 5;
                   break;
                 }
 
                 return _context.abrupt("return", callback(true));
 
-              case 4:
+              case 5:
                 isContinue = false;
-                _context.prev = 5;
+                _context.prev = 6;
                 to = this.createRoute(location);
                 from = isInit ? null : this.currentRoute;
+                fallbackView = defaultFallbackView;
 
                 if ((0, _routeLazy.hasRouteLazy)(to.matched)) {
                   this._getSameMatched(from, to).reverse().some(function (m) {
@@ -565,26 +568,26 @@ function () {
                 }
 
                 fallbackView && fallbackView._updateResolving(true);
-                _context.prev = 10;
-                _context.next = 13;
+                _context.prev = 12;
+                _context.next = 15;
                 return (0, _routeLazy.resolveRouteLazyList)(to.matched);
 
-              case 13:
+              case 15:
                 if (!_context.sent) {
-                  _context.next = 15;
+                  _context.next = 17;
                   break;
                 }
 
                 to = this.createRoute(location);
 
-              case 15:
-                _context.prev = 15;
+              case 17:
+                _context.prev = 17;
                 fallbackView && setTimeout(function () {
                   return fallbackView._updateResolving(false);
                 }, 0);
-                return _context.finish(15);
+                return _context.finish(17);
 
-              case 18:
+              case 20:
                 routetInterceptors(this._getBeforeEachGuards(to, from), to, from, function (ok) {
                   if (ok && typeof ok === 'string') ok = {
                     path: ok
@@ -619,21 +622,21 @@ function () {
                     routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
                   });
                 });
-                _context.next = 25;
+                _context.next = 27;
                 break;
 
-              case 21:
-                _context.prev = 21;
-                _context.t0 = _context["catch"](5);
+              case 23:
+                _context.prev = 23;
+                _context.t0 = _context["catch"](6);
                 console.error(_context.t0);
                 if (!isContinue) callback(isContinue);
 
-              case 25:
+              case 27:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, this, [[5, 21], [10,, 15, 18]]);
+        }, _callee, this, [[6, 23], [12,, 17, 20]]);
       }));
 
       function _handleRouteInterceptor(_x5, _x6) {
@@ -819,6 +822,35 @@ function () {
     key: "stringifyQuery",
     value: function stringifyQuery(obj) {
       return _config.default.stringifyQuery(obj);
+    }
+  }, {
+    key: "install",
+    value: function install(ReactVueLike, _ref3) {
+      var App = _ref3.App;
+      if (!App.inherits) App.inherits = {};
+      App.inherits.$router = this;
+      App.inherits.$route = ReactVueLike.observable(this.currentRoute || {});
+      _config.default.inheritProps = false;
+      var app;
+
+      ReactVueLike.config.inheritMergeStrategies.$route = function (parent, child, vm) {
+        if (vm._isVueLikeRoot) {
+          vm.$set(vm, '$route', parent);
+          app = vm;
+        } else {
+          vm.$computed(vm, '$route', function () {
+            return this.$root ? this.$root.$route : null;
+          });
+        }
+      };
+
+      this.onRouteChange(function (newVal) {
+        if (app) app.$route = ReactVueLike.observable(newVal, {}, {
+          deep: false
+        });else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, {
+          deep: false
+        }));
+      });
     }
   }]);
 
