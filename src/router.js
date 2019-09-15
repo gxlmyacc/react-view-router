@@ -459,10 +459,10 @@ export default class ReactViewRouter {
         });
       }
     };
-    this.onRouteChange(newVal => {
+    this.onRouteChange(ReactVueLike.action(newVal => {
       if (app) app.$route = ReactVueLike.observable(newVal, {}, { deep: false });
       else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, { deep: false }));
-    });
+    }));
   }
 
 }

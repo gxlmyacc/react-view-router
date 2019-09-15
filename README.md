@@ -55,7 +55,11 @@ function App() {
   return (
     <div>
       <h1>App</h1>
-      <RouterView router={router} filter={filter} />
+      <RouterView 
+        router={router} 
+        filter={filter} 
+        fallback={<div>loading</div>}
+      />
     </div>
   );
 }
@@ -243,9 +247,10 @@ const routes = normalizeRoutes([
 - `redirect` Navigates to new location, can be string, object or function.
 - `children` Nested child routes.
 - `meta` some custom route infos, see: [Route Meta Fields](https://router.vuejs.org/guide/advanced/meta.html).
-- `props` Pass url params as a prop into route component.
-- `paramsProps` Pass url params as props into route component.
-- `queryProps` Pass url query as props into route component.
+- `defaultProps` object `{ aa: 1, bb: '2', cc: true }`, give some props into route component.
+- `props` boolean or object `{ aa: Number, bb: String, cc: Boolean }`, Pass url params as a prop into route component.
+- `paramsProps` boolean or object `{ aa: Number, bb: String, cc: Boolean }`, Pass url params as props into route component.
+- `queryProps` boolean or object `{ aa: Number, bb: String, cc: Boolean }`, Pass url query as props into route component.
 - `guards` the route guards, see:[Per-Route Guard](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 
 ### Route Component Props
@@ -259,6 +264,7 @@ Includes all props from `react-router-dom` and the following props.
 
 - `name` Use for `Named Views`, see [vue-router instructions](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
 - `filter` is a function: `function (routes: Array) { return [] }` that use for filter routes
+- `fallback` can be a function `function ({ parentRoute, currentRoute, inited, resolving, depth }) { return <div /> }`, or `React Component Element` like this: `<Loading>loading</Loading>` 
 
 ### RouterView Instance Methods
 - `RouterView.push(routes: Array): Array` add routes to RouterView instance, like `Array.push`;
@@ -325,6 +331,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 - `afterEach` [global After Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 - `push`、`replace`、`go`、`back`、`forward` `redirect`[history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
+- `install` `ReactVueLike` plugin install methods. see: [ReactVueLike](https://www.npmjs.com/package/react-vue-like)
 
 ### Export Methods
 - `useRouteGuards` route component guards methods:
@@ -335,7 +342,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
  * @param {Object} guards - guards methods 
  * @param {Class} [componentClass] - the route component class, it will be useful when component is High-order components
  * @return {RouteComponentGuards} - the route componet that can be regarded as `React.forwardRef`
- * /
+ **/
 function useRouteGuards(component, guards = {}, componentClass?) {}
 ```
 
@@ -345,7 +352,7 @@ function useRouteGuards(component, guards = {}, componentClass?) {}
  * route component lazy load method
  * @param {Function} importMethod - webpack lazy import method, For example: () => import('@/components/some-component')
  * @return {RouteLazy} - the result only be used with component or components props in route config
- * /
+ **/
 function lazyImport(importMethod) {}
 ```
 
@@ -356,7 +363,7 @@ function lazyImport(importMethod) {}
  * @param {Array} routes - unnormalized route configs
  * @param {Object} [parent] - if provide, routes will be resolved regarded as parert`s children 
  * @return {Array} - normalized route configs 
- * /
+ **/
 function normalizeRoutes(routes, parent?) {}
 ```
 - `normalizeLocation` normalize location string or object:
@@ -366,7 +373,7 @@ function normalizeRoutes(routes, parent?) {}
  * @param {Object|string} to - location that need to normalize
  * @param {Object} [route] - if provide, location will be resolved with route.parert
  * @return {Object} - normalized location object: { path: string, pathname: string, search: string, query: Object, ...custom props } 
- * /
+ **/
 function normalizeLocation(to, route?) {}
 ```
 
@@ -376,7 +383,7 @@ function normalizeLocation(to, route?) {}
  * determine whether `v` is a location object
  * @param {Object} v - the object to be determined
  * @return {boolean}
- * /
+ **/
 function isLocation(v) {}
 ```
 

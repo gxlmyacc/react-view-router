@@ -844,13 +844,13 @@ function () {
         }
       };
 
-      this.onRouteChange(function (newVal) {
+      this.onRouteChange(ReactVueLike.action(function (newVal) {
         if (app) app.$route = ReactVueLike.observable(newVal, {}, {
           deep: false
         });else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, {
           deep: false
         }));
-      });
+      }));
     }
   }]);
 
