@@ -20,13 +20,13 @@ require("core-js/modules/es6.symbol");
 
 require("core-js/modules/es6.array.find-index");
 
-require("core-js/modules/es6.string.includes");
-
-require("core-js/modules/es6.regexp.match");
-
 require("core-js/modules/es6.object.assign");
 
 require("core-js/modules/es6.regexp.search");
+
+require("core-js/modules/es6.string.includes");
+
+require("core-js/modules/es6.regexp.match");
 
 require("regenerator-runtime/runtime");
 
@@ -118,7 +118,7 @@ function _routetInterceptors() {
                                   case 0:
                                     nextInterceptor = interceptors[++index];
 
-                                    if (!(isBlock(f1) || !nextInterceptor)) {
+                                    if (!(isBlock(f1, interceptor) || !nextInterceptor)) {
                                       _context2.next = 3;
                                       break;
                                     }
@@ -185,8 +185,11 @@ function _routetInterceptors() {
               return _routetInterceptor.apply(this, arguments);
             };
 
-            isBlock = function _ref5(v) {
-              return v === false || typeof v === 'string' || (0, _util.isLocation)(v) || v instanceof Error;
+            isBlock = function _ref5(v, interceptor) {
+              var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
+
+              if (_isLocation && interceptor && interceptor.route) v = (0, _util.normalizeLocation)(v, interceptor.route);
+              return v === false || _isLocation || v instanceof Error;
             };
 
             if (!next) {
@@ -385,6 +388,9 @@ function () {
         }
 
         ret.push.apply(ret, _toConsumableArray(g));
+      });
+      ret.forEach(function (v) {
+        return v.route = r;
       });
       return (0, _util.flatten)(ret);
     }
@@ -588,6 +594,16 @@ function () {
                 return _context.finish(17);
 
               case 20:
+                // const toLast = to.matched[to.matched.length - 1];
+                // if (toLast && toLast.config.exact && toLast.redirect) {
+                //   let newTo = resolveRedirect(toLast.redirect, toLast, to);
+                //   if (newTo) {
+                //     callback(false);
+                //     if (newTo.onAbort) newTo.onAbort = to.onAbort;
+                //     if (newTo.onComplete) newTo.onComplete = to.onComplete;
+                //     return this.redirect(newTo, null, null, to.onInit || (isInit ? callback : null));
+                //   }
+                // }
                 routetInterceptors(this._getBeforeEachGuards(to, from), to, from, function (ok) {
                   if (ok && typeof ok === 'string') ok = {
                     path: ok
@@ -606,7 +622,7 @@ function () {
                     if ((0, _util.isLocation)(ok)) {
                       if (to.onAbort) ok.onAbort = to.onAbort;
                       if (to.onComplete) ok.onComplete = to.onComplete;
-                      return _this4.redirect(ok, null, null, to.onInit || (isInit ? callback : null));
+                      return _this4.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
                     }
 
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
@@ -655,10 +671,8 @@ function () {
       this.history.replace(to);
     }
   }, {
-    key: "createRoute",
-    value: function createRoute(to, from) {
-      var matched = (0, _util.matchRoutes)(this.routes, to);
-      var last = matched.length ? matched[matched.length - 1] : null;
+    key: "getMatched",
+    value: function getMatched(to, from, parent) {
       if (!from) from = this.currentRoute;
 
       function copyInstance(to, from) {
@@ -667,38 +681,70 @@ function () {
         if (from.viewInstance) to.viewInstance = from.viewInstance;
       }
 
+      var matched = (0, _util.matchRoutes)(this.routes, to, parent);
+      return matched.map(function (_ref2, i) {
+        var route = _ref2.route,
+            match = _ref2.match;
+        var ret = {
+          componentInstances: {}
+        };
+        Object.keys(route).forEach(function (key) {
+          return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = route[key]);
+        });
+        ret.config = route;
+        ret.url = match.url;
+        ret.params = match.params;
+
+        if (from) {
+          var fr = from.matched[i];
+          if (!i) copyInstance(ret, fr);else {
+            var pfr = from.matched[i - 1];
+            var ptr = matched[i - 1];
+            if (pfr && ptr && pfr.path === ptr.route.path) copyInstance(ret, fr);
+          }
+        }
+
+        return ret;
+      });
+    }
+  }, {
+    key: "getMatchedComponents",
+    value: function getMatchedComponents(to, from, parent) {
+      return this.getMatched(to, from, parent).map(function (r) {
+        return r.componentInstances.default;
+      }).filter(Boolean);
+    }
+  }, {
+    key: "getMatchedViews",
+    value: function getMatchedViews(to, from, parent) {
+      return this.getMatched(to, from, parent).map(function (r) {
+        return r.viewInstance;
+      }).filter(Boolean);
+    }
+  }, {
+    key: "createRoute",
+    value: function createRoute(to, from) {
+      if (!from) from = this.currentRoute;
+      var matched = this.getMatched(to, from);
+      var last = matched.length ? matched[matched.length - 1] : {
+        url: '',
+        params: {},
+        meta: {}
+      };
       var search = to.search,
           query = to.query,
           path = to.path,
           onAbort = to.onAbort,
           onComplete = to.onComplete;
-      var ret = Object.assign({}, last ? last.match : null, {
+      var ret = Object.assign({
+        url: last.url,
         basename: this.basename,
-        query: query || (search ? _config.default.parseQuery(to.search.substr(1)) : {}),
         path: path,
         fullPath: "".concat(path).concat(search),
-        matched: matched.map(function (_ref2, i) {
-          var route = _ref2.route;
-          var ret = {
-            componentInstances: {}
-          };
-          Object.keys(route).forEach(function (key) {
-            return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = route[key]);
-          });
-          ret.config = route;
-
-          if (from) {
-            var fr = from.matched[i];
-            if (!i) copyInstance(ret, fr);else {
-              var pfr = from.matched[i - 1];
-              var ptr = matched[i - 1];
-              if (pfr && ptr && pfr.path === ptr.route.path) copyInstance(ret, fr);
-            }
-          }
-
-          return ret;
-        }),
-        meta: last && last.route.meta || {},
+        query: query || (search ? _config.default.parseQuery(to.search.substr(1)) : {}),
+        params: last.params || {},
+        matched: matched,
+        meta: last.meta || {},
         onAbort: onAbort,
         onComplete: onComplete
       });

@@ -10,14 +10,16 @@ import { resolveRouteLazyList, hasRouteLazy } from './route-lazy';
 import { getGuardsComponent } from './route-guard';
 
 export async function routetInterceptors(interceptors, to, from, next) {
-  function isBlock(v) {
-    return v === false || typeof v === 'string' || isLocation(v) || v instanceof Error;
+  function isBlock(v, interceptor) {
+    let _isLocation = typeof v === 'string' || isLocation(v);
+    if (_isLocation && interceptor && interceptor.route) v = normalizeLocation(v, interceptor.route);
+    return v === false || _isLocation || v instanceof Error;
   }
   async function routetInterceptor(interceptor, index, to, from, next) {
     if (!interceptor) return next();
     return await interceptor(to, from, async f1 => {
       let nextInterceptor = interceptors[++index];
-      if (isBlock(f1) || !nextInterceptor) return next(f1);
+      if (isBlock(f1, interceptor) || !nextInterceptor) return next(f1);
       if (typeof f1 === 'boolean') f1 = undefined;
       try {
         return nextInterceptor
@@ -128,6 +130,8 @@ export default class ReactViewRouter {
       }
       ret.push(...g);
     });
+
+    ret.forEach(v => v.route = r);
 
     return flatten(ret);
   }
@@ -262,6 +266,17 @@ export default class ReactViewRouter {
         fallbackView && setTimeout(() => fallbackView._updateResolving(false), 0);
       }
 
+      // const toLast = to.matched[to.matched.length - 1];
+      // if (toLast && toLast.config.exact && toLast.redirect) {
+      //   let newTo = resolveRedirect(toLast.redirect, toLast, to);
+      //   if (newTo) {
+      //     callback(false);
+      //     if (newTo.onAbort) newTo.onAbort = to.onAbort;
+      //     if (newTo.onComplete) newTo.onComplete = to.onComplete;
+      //     return this.redirect(newTo, null, null, to.onInit || (isInit ? callback : null));
+      //   }
+      // }
+
       routetInterceptors(this._getBeforeEachGuards(to, from), to, from, ok => {
         if (ok && typeof ok === 'string') ok = { path: ok };
         isContinue = Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
@@ -278,7 +293,7 @@ export default class ReactViewRouter {
           if (isLocation(ok)) {
             if (to.onAbort) ok.onAbort = to.onAbort;
             if (to.onComplete) ok.onComplete = to.onComplete;
-            return this.redirect(ok, null, null, to.onInit || (isInit ? callback : null));
+            return this.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
           }
           if (to && isFunction(to.onAbort)) to.onAbort(ok);
           return;
@@ -307,40 +322,59 @@ export default class ReactViewRouter {
     this.history.replace(to);
   }
 
-  createRoute(to, from) {
-    const matched = matchRoutes(this.routes, to);
-    const last = matched.length ? matched[matched.length - 1] : null;
+  getMatched(to, from, parent) {
     if (!from) from = this.currentRoute;
     function copyInstance(to, from) {
       if (!from) return;
       if (from.componentInstances) to.componentInstances = from.componentInstances;
       if (from.viewInstance) to.viewInstance = from.viewInstance;
     }
+    let matched = matchRoutes(this.routes, to, parent);
+    return matched.map(({ route, match }, i) => {
+      let ret = { componentInstances: {} };
+      Object.keys(route).forEach(key => [
+        'path', 'name', 'subpath', 'meta', 'redirect', 'alias'
+      ].includes(key) && (ret[key] = route[key]));
+      ret.config = route;
+      ret.url = match.url;
+      ret.params = match.params;
+
+      if (from) {
+        const fr = from.matched[i];
+        if (!i) copyInstance(ret, fr);
+        else {
+          const pfr = from.matched[i - 1];
+          const ptr = matched[i - 1];
+          if (pfr && ptr && pfr.path === ptr.route.path) copyInstance(ret, fr);
+        }
+      }
+      return ret;
+    });
+  }
+
+  getMatchedComponents(to, from, parent) {
+    return this.getMatched(to, from, parent).map(r => r.componentInstances.default).filter(Boolean);
+  }
+
+  getMatchedViews(to, from, parent) {
+    return this.getMatched(to, from, parent).map(r => r.viewInstance).filter(Boolean);
+  }
+
+  createRoute(to, from) {
+    if (!from) from = this.currentRoute;
+    const matched = this.getMatched(to, from);
+    const last = matched.length ? matched[matched.length - 1] : { url: '', params: {}, meta: {} };
+
     const { search, query, path, onAbort, onComplete } = to;
-    const ret = Object.assign({}, last ? last.match : null, {
+    const ret = Object.assign({
+      url: last.url,
       basename: this.basename,
-      query: query || (search ? config.parseQuery(to.search.substr(1)) : {}),
       path,
       fullPath: `${path}${search}`,
-      matched: matched.map(({ route }, i) => {
-        let ret = { componentInstances: {} };
-        Object.keys(route).forEach(key => [
-          'path', 'name', 'subpath', 'meta', 'redirect', 'alias'
-        ].includes(key) && (ret[key] = route[key]));
-        ret.config = route;
-
-        if (from) {
-          const fr = from.matched[i];
-          if (!i) copyInstance(ret, fr);
-          else {
-            const pfr = from.matched[i - 1];
-            const ptr = matched[i - 1];
-            if (pfr && ptr && pfr.path === ptr.route.path) copyInstance(ret, fr);
-          }
-        }
-        return ret;
-      }),
-      meta: (last && last.route.meta) || {},
+      query: query || (search ? config.parseQuery(to.search.substr(1)) : {}),
+      params: last.params || {},
+      matched,
+      meta: last.meta || {},
       onAbort,
       onComplete
     });

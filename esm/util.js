@@ -192,7 +192,7 @@ function normalizeRoutePath(path, route) {
   return normalizePath(path);
 }
 
-function matchRoutes(routes, to, branch, parent) {
+function matchRoutes(routes, to, parent, branch) {
   if (branch === undefined) branch = [];
   to = normalizeLocation(to);
 
@@ -221,7 +221,7 @@ function matchRoutes(routes, to, branch, parent) {
           route: route,
           match: match
         });
-        if (route.children) matchRoutes(route.children, to, branch, route);
+        if (route.children) matchRoutes(route.children, to, route, branch);
       }
 
       if (match) break;
@@ -371,7 +371,7 @@ function renderRoutes(routes, extraProps, switchProps) {
   function configProps(_props, configs, obj, name) {
     if (!obj) return;
     if (name && configs[name] !== undefined) configs = configs[name];
-    if (configs === true) _props = obj ? _objectSpread({}, obj) : {};else if (isPlainObject(configs)) {
+    if (configs === true) Object.assign(_props, obj);else if (isPlainObject(configs)) {
       Object.keys(configs).forEach(function (key) {
         var prop = configs[key];
         var type = prop.type;
