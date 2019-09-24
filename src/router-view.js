@@ -194,7 +194,7 @@ class RouterView extends React.Component {
   render() {
     const { routes, _routerResolving, _routerInited } = this.state;
     // eslint-disable-next-line
-    const { _updateRef, routesContainer, router, ...props } = this.props || {};
+    const { _updateRef, container, router, ...props } = this.props || {};
     if (!_routerInited) return this._resolveFallback();
     const { query, params } = this.state.router.currentRoute;
 
@@ -204,12 +204,11 @@ class RouterView extends React.Component {
         name: this.name,
         query,
         params,
-        routesContainer,
+        container,
         ref: this._updateRef
       });
-    if (_routerResolving) {
-      ret = React.createElement(React.Fragment, {}, ret, this._resolveFallback());
-    }
+    if (_routerResolving) ret = React.createElement(React.Fragment, {}, ret, this._resolveFallback());
+    else if (!ret) ret = this._resolveFallback();
     return ret;
   }
 

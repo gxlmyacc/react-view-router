@@ -890,7 +890,7 @@ function () {
         }
       };
 
-      this.onRouteChange(ReactVueLike.action(function (newVal) {
+      this.onRouteChange(ReactVueLike.action('[react-view-router]onRouteChange', function (newVal) {
         if (app) app.$route = ReactVueLike.observable(newVal, {}, {
           deep: false
         });else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, {

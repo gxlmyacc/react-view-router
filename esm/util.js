@@ -259,6 +259,9 @@ function normalizeLocation(to, route) {
     };
   }
 
+  if (to.query) Object.keys(to.query).forEach(function (key) {
+    return to.query[key] === undefined && delete to.query[key];
+  });
   to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
   to.search = to.search || (to.query ? _config.default.stringifyQuery(to.query) : '');
   return to;

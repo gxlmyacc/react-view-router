@@ -395,11 +395,7 @@ function (_React$Component) {
         routesContainer: routesContainer,
         ref: this._updateRef
       });
-
-      if (_routerResolving) {
-        ret = _react.default.createElement(_react.default.Fragment, {}, ret, this._resolveFallback());
-      }
-
+      if (_routerResolving) ret = _react.default.createElement(_react.default.Fragment, {}, ret, this._resolveFallback());else if (!ret) ret = this._resolveFallback();
       return ret;
     }
   }, {

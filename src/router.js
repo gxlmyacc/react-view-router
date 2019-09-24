@@ -79,6 +79,7 @@ export default class ReactViewRouter {
     this.currentRoute = null;
     this.viewRoot = null;
     this.routeChangeListener = [];
+    this.routeingListener = [];
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
@@ -175,7 +176,7 @@ export default class ReactViewRouter {
   _getBeforeEachGuards(to, from) {
     const ret = [...this.beforeEachGuards];
     if (from) {
-      const fm = this._getChangeMatched(from, to);
+      const fm = this._getChangeMatched(from, to).filter(r => Object.keys(r.componentInstances).some(v => v));
       ret.push(...this._getRouteComponentGurads(fm, 'beforeRouteLeave', true));
     }
     if (to) {
@@ -233,7 +234,7 @@ export default class ReactViewRouter {
   _getAfterEachGuards(to, from) {
     const ret = [];
     if (from) {
-      const fm = this._getChangeMatched(from, to);
+      const fm = this._getChangeMatched(from, to).filter(r => Object.keys(r.componentInstances).some(v => v));
       ret.push(...this._getRouteComponentGurads(fm, 'afterRouteLeave', true));
     }
     // if (to) {
@@ -243,17 +244,26 @@ export default class ReactViewRouter {
     return flatten(ret);
   }
 
-  async _handleRouteInterceptor(location, callback, isInit = false, defaultFallbackView) {
+  async _handleRouteInterceptor(...args) {
+    this.routeingListener.forEach(handler => handler(true));
+    try {
+      return await this._internalHandleRouteInterceptor(...args);
+    } finally {
+      this.routeingListener.forEach(handler => handler(false));
+    }
+  }
+
+  async _internalHandleRouteInterceptor(location, callback, isInit = false, defaultFallbackView) {
     if (typeof location === 'string') location = routeCache.flush(location);
     if (!location) return callback(true);
     let isContinue = false;
     try {
       let to = this.createRoute(location);
-      const from = isInit ? null : this.currentRoute;
+      const from = isInit ? null : to.redirectedFrom || this.currentRoute;
 
       let fallbackView = defaultFallbackView;
       if (hasRouteLazy(to.matched)) {
-        this._getSameMatched(from, to).reverse().some(m => {
+        this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(m => {
           if (m.viewInstance && m.viewInstance.props.fallback) fallbackView = m.viewInstance;
           return fallbackView;
         });
@@ -361,7 +371,7 @@ export default class ReactViewRouter {
   }
 
   createRoute(to, from) {
-    if (!from) from = this.currentRoute;
+    if (!from) from = to.redirectedFrom || this.currentRoute;
     const matched = this.getMatched(to, from);
     const last = matched.length ? matched[matched.length - 1] : { url: '', params: {}, meta: {} };
 
@@ -379,7 +389,7 @@ export default class ReactViewRouter {
       onComplete
     });
     if (to.isRedirect && from) {
-      ret.redirectedFrom = from.redirectedFrom || from;
+      ret.redirectedFrom = from;
       if (!ret.onAbort && from.onAbort) ret.onAbort = from.onAbort;
       if (!ret.onComplete && from.onComplete) ret.onComplete = from.onComplete;
       if (!ret.onInit && to.onInit) ret.onInit = to.onInit;
@@ -404,9 +414,10 @@ export default class ReactViewRouter {
     return this._replace(to, onComplete, onAbort);
   }
 
-  redirect(to, onComplete, onAbort, onInit) {
+  redirect(to, onComplete, onAbort, onInit, from) {
     to = normalizeLocation(to);
     to.isRedirect = true;
+    to.redirectedFrom = from || this.currentRoute;
     return this._replace(to, onComplete, onAbort, onInit);
   }
 
@@ -459,6 +470,14 @@ export default class ReactViewRouter {
     else if (this.state.viewRoot) this.state.viewRoot.setState({ routes });
   }
 
+  onRouteing(handler) {
+    if (this.routeingListener.indexOf(handler) < 0) this.routeingListener.push(handler);
+    return function () {
+      const idx = this.routeingListener.indexOf(handler);
+      if (~idx) this.routeingListener.splice(idx, 1);
+    };
+  }
+
   onRouteChange(handler) {
     if (this.routeChangeListener.indexOf(handler) < 0) this.routeChangeListener.push(handler);
     return function () {
@@ -493,7 +512,7 @@ export default class ReactViewRouter {
         });
       }
     };
-    this.onRouteChange(ReactVueLike.action(newVal => {
+    this.onRouteChange(ReactVueLike.action('[react-view-router]onRouteChange', newVal => {
       if (app) app.$route = ReactVueLike.observable(newVal, {}, { deep: false });
       else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, { deep: false }));
     }));

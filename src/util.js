@@ -117,6 +117,8 @@ function normalizeLocation(to, route) {
     const [pathname, search] = to.split('?');
     to = { pathname, search: search ? `?${search}` : '' };
   }
+  if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
+
   to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
   to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
   return to;
@@ -304,7 +306,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       render: props => renderComp(route, route.components[options.name || 'default'], props, options)
     });
   }).filter(Boolean);
-  if (options.routesContainer) children = options.routesContainer(children);
+  if (options.container) children = options.container(children);
   const ret = React.createElement(Switch, switchProps, children);
   return ret;
 }
