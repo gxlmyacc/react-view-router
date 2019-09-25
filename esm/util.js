@@ -482,7 +482,7 @@ function renderRoutes(routes, extraProps, switchProps) {
       }
     });
   }).filter(Boolean);
-  if (options.routesContainer) children = options.routesContainer(children);
+  if (options.container) children = options.container(children);
 
   var ret = _react.default.createElement(_reactRouterDom.Switch, switchProps, children);
 

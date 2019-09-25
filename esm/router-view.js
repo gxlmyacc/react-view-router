@@ -378,9 +378,9 @@ function (_React$Component) {
 
       var _ref = this.props || {},
           _updateRef = _ref._updateRef,
-          routesContainer = _ref.routesContainer,
+          container = _ref.container,
           router = _ref.router,
-          props = _objectWithoutProperties(_ref, ["_updateRef", "routesContainer", "router"]);
+          props = _objectWithoutProperties(_ref, ["_updateRef", "container", "router"]);
 
       if (!_routerInited) return this._resolveFallback();
       var _this$state$router$cu = this.state.router.currentRoute,
@@ -392,7 +392,7 @@ function (_React$Component) {
         name: this.name,
         query: query,
         params: params,
-        routesContainer: routesContainer,
+        container: container,
         ref: this._updateRef
       });
       if (_routerResolving) ret = _react.default.createElement(_react.default.Fragment, {}, ret, this._resolveFallback());else if (!ret) ret = this._resolveFallback();
