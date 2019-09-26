@@ -4,31 +4,21 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.hasRouteLazy = hasRouteLazy;
-exports.resolveRouteLazyList = resolveRouteLazyList;
+exports.hasMatchedRouteLazy = hasMatchedRouteLazy;
 exports.lazyImport = lazyImport;
 exports.RouteLazy = void 0;
 
-require("regenerator-runtime/runtime");
+require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.array.iterator");
 
 require("core-js/modules/es6.object.keys");
-
-require("core-js/modules/es7.symbol.async-iterator");
-
-require("core-js/modules/es6.symbol");
-
-require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.promise");
 
 require("core-js/modules/es6.object.to-string");
 
 var _routeGuard = require("./route-guard");
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -101,191 +91,24 @@ function () {
 
 exports.RouteLazy = RouteLazy;
 
-function hasRouteLazy(matched) {
-  if (!matched) return false;
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+function hasRouteLazy(route) {
+  var config = route.config || route;
+  if (config.components instanceof RouteLazy) return true;
 
-  try {
-    for (var _iterator = matched[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var r = _step.value;
-      var config = r.config;
-      if (config.components instanceof RouteLazy) return true;
-
-      if (config.components) {
-        for (var _i = 0, _Object$keys = Object.keys(config.components); _i < _Object$keys.length; _i++) {
-          var key = _Object$keys[_i];
-          if (config.components[key] instanceof RouteLazy) return true;
-        }
-      }
-    }
-  } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator.return != null) {
-        _iterator.return();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
+  if (config.components) {
+    for (var _i = 0, _Object$keys = Object.keys(config.components); _i < _Object$keys.length; _i++) {
+      var key = _Object$keys[_i];
+      if (config.components[key] instanceof RouteLazy) return true;
     }
   }
 
   return false;
 }
 
-function resolveRouteLazyList(_x) {
-  return _resolveRouteLazyList.apply(this, arguments);
-}
-
-function _resolveRouteLazyList() {
-  _resolveRouteLazyList = _asyncToGenerator(
-  /*#__PURE__*/
-  regeneratorRuntime.mark(function _callee2(matched) {
-    var changed, toResolve, _iteratorNormalCompletion2, _didIteratorError2, _iteratorError2, _iterator2, _step2, r, config, _i2, _Object$keys2, key;
-
-    return regeneratorRuntime.wrap(function _callee2$(_context2) {
-      while (1) {
-        switch (_context2.prev = _context2.next) {
-          case 0:
-            changed = false;
-
-            if (matched) {
-              _context2.next = 3;
-              break;
-            }
-
-            return _context2.abrupt("return", changed);
-
-          case 3:
-            toResolve =
-            /*#__PURE__*/
-            function () {
-              var _ref = _asyncToGenerator(
-              /*#__PURE__*/
-              regeneratorRuntime.mark(function _callee(routeLazy, route) {
-                return regeneratorRuntime.wrap(function _callee$(_context) {
-                  while (1) {
-                    switch (_context.prev = _context.next) {
-                      case 0:
-                        if (!(!routeLazy || !(routeLazy instanceof RouteLazy))) {
-                          _context.next = 2;
-                          break;
-                        }
-
-                        return _context.abrupt("return");
-
-                      case 2:
-                        changed = true;
-                        return _context.abrupt("return", routeLazy.toResolve(route));
-
-                      case 4:
-                      case "end":
-                        return _context.stop();
-                    }
-                  }
-                }, _callee);
-              }));
-
-              return function toResolve(_x2, _x3) {
-                return _ref.apply(this, arguments);
-              };
-            }();
-
-            _iteratorNormalCompletion2 = true;
-            _didIteratorError2 = false;
-            _iteratorError2 = undefined;
-            _context2.prev = 7;
-            _iterator2 = matched[Symbol.iterator]();
-
-          case 9:
-            if (_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done) {
-              _context2.next = 26;
-              break;
-            }
-
-            r = _step2.value;
-            config = r.config;
-            _context2.next = 14;
-            return toResolve(config.component, config);
-
-          case 14:
-            if (!config.components) {
-              _context2.next = 23;
-              break;
-            }
-
-            _i2 = 0, _Object$keys2 = Object.keys(config.components);
-
-          case 16:
-            if (!(_i2 < _Object$keys2.length)) {
-              _context2.next = 23;
-              break;
-            }
-
-            key = _Object$keys2[_i2];
-            _context2.next = 20;
-            return toResolve(config.components[key], config);
-
-          case 20:
-            _i2++;
-            _context2.next = 16;
-            break;
-
-          case 23:
-            _iteratorNormalCompletion2 = true;
-            _context2.next = 9;
-            break;
-
-          case 26:
-            _context2.next = 32;
-            break;
-
-          case 28:
-            _context2.prev = 28;
-            _context2.t0 = _context2["catch"](7);
-            _didIteratorError2 = true;
-            _iteratorError2 = _context2.t0;
-
-          case 32:
-            _context2.prev = 32;
-            _context2.prev = 33;
-
-            if (!_iteratorNormalCompletion2 && _iterator2.return != null) {
-              _iterator2.return();
-            }
-
-          case 35:
-            _context2.prev = 35;
-
-            if (!_didIteratorError2) {
-              _context2.next = 38;
-              break;
-            }
-
-            throw _iteratorError2;
-
-          case 38:
-            return _context2.finish(35);
-
-          case 39:
-            return _context2.finish(32);
-
-          case 40:
-            return _context2.abrupt("return", changed);
-
-          case 41:
-          case "end":
-            return _context2.stop();
-        }
-      }
-    }, _callee2, null, [[7, 28, 32, 40], [33,, 35, 39]]);
-  }));
-  return _resolveRouteLazyList.apply(this, arguments);
+function hasMatchedRouteLazy(matched) {
+  return matched && matched.some(function (r) {
+    return hasRouteLazy(r);
+  });
 }
 
 function lazyImport(importMethod) {

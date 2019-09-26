@@ -38,36 +38,19 @@ export class RouteLazy {
 
 }
 
-export function hasRouteLazy(matched) {
-  if (!matched) return false;
-  for (let r of matched) {
-    const config = r.config;
-    if (config.components instanceof RouteLazy) return true;
-    if (config.components) {
-      for (let key of Object.keys(config.components)) {
-        if (config.components[key] instanceof RouteLazy) return true;
-      }
+export function hasRouteLazy(route) {
+  const config = route.config || route;
+  if (config.components instanceof RouteLazy) return true;
+  if (config.components) {
+    for (let key of Object.keys(config.components)) {
+      if (config.components[key] instanceof RouteLazy) return true;
     }
   }
   return false;
 }
 
-export async function resolveRouteLazyList(matched) {
-  let changed = false;
-  if (!matched) return changed;
-  const toResolve = async function (routeLazy, route) {
-    if (!routeLazy || !(routeLazy instanceof RouteLazy)) return;
-    changed = true;
-    return routeLazy.toResolve(route);
-  };
-  for (let r of matched) {
-    const config = r.config;
-    await toResolve(config.component, config);
-    if (config.components) {
-      for (let key of Object.keys(config.components)) await toResolve(config.components[key], config);
-    }
-  }
-  return changed;
+export function hasMatchedRouteLazy(matched) {
+  return matched && matched.some(r => hasRouteLazy(r));
 }
 
 export function lazyImport(importMethod) {

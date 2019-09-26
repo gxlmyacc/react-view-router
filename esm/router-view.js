@@ -258,7 +258,7 @@ function (_React$Component) {
                     return ok && _this2.setState(Object.assign(state, {
                       _routerInited: true
                     }));
-                  }, true, this);
+                  }, true);
                 } else {
                   this.setState(Object.assign(state, {
                     _routerInited: true
