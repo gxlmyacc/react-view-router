@@ -80,6 +80,11 @@ function normalizeRoutePath(path, route) {
   return normalizePath(path);
 }
 
+function resloveIndex(index, routes) {
+  index = isFunction(index) ? index() : index;
+  return routes.find(r => r.subpath === index);
+}
+
 function matchRoutes(routes, to, parent, branch) {
   if (branch === undefined) branch = [];
   to = normalizeLocation(to);
@@ -101,6 +106,11 @@ function matchRoutes(routes, to, parent, branch) {
         ? branch[branch.length - 1].match // use parent match
         : Router.computeRootMatch(to.path); // use default "root" match
 
+    if (match && route.index) {
+      route = resloveIndex(route.index, routes);
+      if (!route) continue;
+    }
+
     if (match) {
       branch.push({ route,  match });
 
@@ -118,9 +128,11 @@ function normalizeLocation(to, route) {
     to = { pathname, search: search ? `?${search}` : '' };
   }
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
+  else if (to.search) to.query = config.parseQuery(to.search.substr(1));
 
   to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
   to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
+  if (!to.query) to.query = {};
   return to;
 }
 
@@ -191,6 +203,7 @@ function resolveRedirect(to, route, from) {
   if (isFunction(to)) to = to.call(route, from);
   if (!to) return '';
   to = normalizeLocation(to, route);
+  from && Object.assign(to.query, from.query);
   to.isRedirect = true;
   return to;
 }
@@ -288,22 +301,17 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
 
   // const currentRoute = options.router && options.router.currentRoute;
   let children = routes.map(function (route, i) {
-    if (route.redirect) {
-      return;
-      // return React.createElement(Redirect, {
-      //   key: route.key || i,
-      //   exact: route.exact,
-      //   strict: route.strict,
-      //   from: route.path,
-      //   to: resolveRedirect(route.redirect, route, currentRoute)
-      // });
-    }
+    let renderRoute = route;
+    if (route.redirect) return;
+    if (route.index) renderRoute = resloveIndex(route.index, routes);
+    if (!renderRoute) return;
+
     return React.createElement(Route, {
       key: route.key || i,
       path: route.path,
       exact: route.exact,
       strict: route.strict,
-      render: props => renderComp(route, route.components[options.name || 'default'], props, options)
+      render: props => renderComp(renderRoute, renderRoute.components[options.name || 'default'], props, options)
     });
   }).filter(Boolean);
   if (options.container) children = options.container(children);

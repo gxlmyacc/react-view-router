@@ -185,6 +185,7 @@ export default class ReactViewRouter {
           return interceptors[index];
         };
         lazyResovle.lazy = true;
+        lazyResovle.route = r;
         ret.push(lazyResovle);
       } else ret.push(...toResovle(c, key));
     });
@@ -210,7 +211,7 @@ export default class ReactViewRouter {
       if (tr.path !== fr.path) return true;
       ret.push(tr);
     });
-    return ret;
+    return ret.filter(r => !r.redirect);
   }
 
   _getChangeMatched(route, compare) {
@@ -225,7 +226,7 @@ export default class ReactViewRouter {
       }
       ret.push(tr);
     });
-    return ret;
+    return ret.filter(r => !r.redirect);
   }
 
   _getBeforeEachGuards(to, from) {
@@ -318,6 +319,8 @@ export default class ReactViewRouter {
       let to = this.createRoute(location);
       const from = isInit ? null : to.redirectedFrom || this.currentRoute;
 
+      if (to && from && to.fullPath === from.fullPath) return callback(true);
+
       // const toLast = to.matched[to.matched.length - 1];
       // if (toLast && toLast.config.exact && toLast.redirect) {
       //   let newTo = resolveRedirect(toLast.redirect, toLast, to);
@@ -333,8 +336,8 @@ export default class ReactViewRouter {
       if (hasMatchedRouteLazy(to.matched)) {
         fallbackView = this.viewRoot;
         this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(m => {
-          if (m.viewInstance && m.viewInstance.props.fallback) fallbackView = m.viewInstance;
-          return fallbackView;
+          if (!m.viewInstance || !m.viewInstance.props.fallback) return;
+          return fallbackView = m.viewInstance;
         });
       }
 

@@ -17,21 +17,24 @@ export class RouteLazy {
   }
 
   toResolve(...args) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+      if (this.resolved) return resolve(this._result);
+
       let _resolve = v => {
+        v = (v && v.__esModule) ? v.default : v;
         this.updaters.forEach(updater => v = updater(v) || v);
+        this._result = v;
         this.resolved = true;
         resolve(v);
       };
-      let component = this._ctor(...args);
+      let component = this._ctor instanceof Promise
+        ? await this._ctor
+        : this._ctor(...args);
 
       if (!component) throw new Error('component should not null!');
 
       if (component instanceof Promise) {
-        component.then(c => {
-          component = c.__esModule ? c.default : c;
-          return _resolve(component);
-        }).catch(function () { return reject(...arguments); });
+        component.then(_resolve).catch(function () { return reject(...arguments); });
       } else _resolve(component);
     });
   }

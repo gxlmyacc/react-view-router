@@ -201,6 +201,8 @@ const routes = normalizeRoutes([
     children: [
       // path redirect
       { path: '/', redirect: 'main' },
+      // or path index
+      // { path: '/', index: 'main' },
       {
         path: 'main',
         // lazy load
@@ -245,6 +247,7 @@ const routes = normalizeRoutes([
 - `exact` Whether only matches with `location.pathname` exactly.
 - `strict` When true, a path that has a trailing slash will only match a location.pathname with a trailing slash. This has no effect when there are additional URL segments in the location.pathname.
 - `redirect` Navigates to new location, can be string, object or function.
+- `index` index route name, can be string or function.
 - `children` Nested child routes.
 - `meta` some custom route infos, see: [Route Meta Fields](https://router.vuejs.org/guide/advanced/meta.html).
 - `defaultProps` object `{ aa: 1, bb: '2', cc: true }`, give some props into route component.

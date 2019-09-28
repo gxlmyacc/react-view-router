@@ -476,6 +476,7 @@ function () {
           }();
 
           lazyResovle.lazy = true;
+          lazyResovle.route = r;
           ret.push(lazyResovle);
         } else ret.push.apply(ret, _toConsumableArray(toResovle(c, key)));
       });
@@ -507,7 +508,9 @@ function () {
         if (tr.path !== fr.path) return true;
         ret.push(tr);
       });
-      return ret;
+      return ret.filter(function (r) {
+        return !r.redirect;
+      });
     }
   }, {
     key: "_getChangeMatched",
@@ -525,7 +528,9 @@ function () {
 
         ret.push(tr);
       });
-      return ret;
+      return ret.filter(function (r) {
+        return !r.redirect;
+      });
     }
   }, {
     key: "_getBeforeEachGuards",
@@ -568,11 +573,7 @@ function () {
 
           ret.push.apply(ret, _toConsumableArray(guards));
         });
-        tm.filter(function (r) {
-          return Object.keys(r.componentInstances).some(function (key) {
-            return r.componentInstances[key];
-          });
-        }).forEach(function (r) {
+        tm.forEach(function (r) {
           var compGuards = {};
 
           var allGuards = _this3._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
@@ -699,79 +700,81 @@ function () {
 
               case 4:
                 isContinue = false;
+                _context3.prev = 5;
+                to = this.createRoute(location);
+                from = isInit ? null : to.redirectedFrom || this.currentRoute;
 
-                try {
-                  to = this.createRoute(location);
-                  from = isInit ? null : to.redirectedFrom || this.currentRoute; // const toLast = to.matched[to.matched.length - 1];
-                  // if (toLast && toLast.config.exact && toLast.redirect) {
-                  //   let newTo = resolveRedirect(toLast.redirect, toLast, to);
-                  //   if (newTo) {
-                  //     callback(false);
-                  //     if (newTo.onAbort) newTo.onAbort = to.onAbort;
-                  //     if (newTo.onComplete) newTo.onComplete = to.onComplete;
-                  //     return this.redirect(newTo, null, null, to.onInit || (isInit ? callback : null));
-                  //   }
-                  // }
-
-                  if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
-                    fallbackView = this.viewRoot;
-
-                    this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(function (m) {
-                      if (m.viewInstance && m.viewInstance.props.fallback) fallbackView = m.viewInstance;
-                      return fallbackView;
-                    });
-                  }
-
-                  fallbackView && fallbackView._updateResolving(true);
-                  routetInterceptors(this._getBeforeEachGuards(to, from), to, from, function (ok) {
-                    nexting = null;
-                    fallbackView && setTimeout(function () {
-                      return fallbackView._updateResolving(false);
-                    }, 0);
-                    if (ok && typeof ok === 'string') ok = {
-                      path: ok
-                    };
-                    isContinue = Boolean(ok === undefined || ok && !(ok instanceof Error) && !(0, _util.isLocation)(ok));
-                    var toLast = to.matched[to.matched.length - 1];
-
-                    if (isContinue && toLast && toLast.config.exact && toLast.redirect) {
-                      ok = (0, _util.resolveRedirect)(toLast.redirect, toLast, to);
-                      if (ok) isContinue = false;
-                    }
-
-                    callback(isContinue);
-
-                    if (!isContinue) {
-                      if ((0, _util.isLocation)(ok)) {
-                        if (to.onAbort) ok.onAbort = to.onAbort;
-                        if (to.onComplete) ok.onComplete = to.onComplete;
-                        return _this4.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
-                      }
-
-                      if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
-                      return;
-                    }
-
-                    if (to.onInit) to.onInit(to);
-
-                    _this4.nextTick(function () {
-                      if ((0, _util.isFunction)(ok)) ok(to);
-                      if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, from), to, from);
-                      if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
-                      routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
-                    });
-                  });
-                } catch (ex) {
-                  console.error(ex);
-                  if (!isContinue) callback(isContinue);
+                if (!(to && from && to.fullPath === from.fullPath)) {
+                  _context3.next = 10;
+                  break;
                 }
 
-              case 6:
+                return _context3.abrupt("return", callback(true));
+
+              case 10:
+                if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
+                  fallbackView = this.viewRoot;
+
+                  this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(function (m) {
+                    if (!m.viewInstance || !m.viewInstance.props.fallback) return;
+                    return fallbackView = m.viewInstance;
+                  });
+                }
+
+                fallbackView && fallbackView._updateResolving(true);
+                routetInterceptors(this._getBeforeEachGuards(to, from), to, from, function (ok) {
+                  nexting = null;
+                  fallbackView && setTimeout(function () {
+                    return fallbackView._updateResolving(false);
+                  }, 0);
+                  if (ok && typeof ok === 'string') ok = {
+                    path: ok
+                  };
+                  isContinue = Boolean(ok === undefined || ok && !(ok instanceof Error) && !(0, _util.isLocation)(ok));
+                  var toLast = to.matched[to.matched.length - 1];
+
+                  if (isContinue && toLast && toLast.config.exact && toLast.redirect) {
+                    ok = (0, _util.resolveRedirect)(toLast.redirect, toLast, to);
+                    if (ok) isContinue = false;
+                  }
+
+                  callback(isContinue);
+
+                  if (!isContinue) {
+                    if ((0, _util.isLocation)(ok)) {
+                      if (to.onAbort) ok.onAbort = to.onAbort;
+                      if (to.onComplete) ok.onComplete = to.onComplete;
+                      return _this4.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+                    }
+
+                    if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
+                    return;
+                  }
+
+                  if (to.onInit) to.onInit(to);
+
+                  _this4.nextTick(function () {
+                    if ((0, _util.isFunction)(ok)) ok(to);
+                    if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, from), to, from);
+                    if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
+                    routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
+                  });
+                });
+                _context3.next = 19;
+                break;
+
+              case 15:
+                _context3.prev = 15;
+                _context3.t0 = _context3["catch"](5);
+                console.error(_context3.t0);
+                if (!isContinue) callback(isContinue);
+
+              case 19:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee3, this, [[5, 15]]);
       }));
 
       function _internalHandleRouteInterceptor(_x7, _x8) {
@@ -818,16 +821,7 @@ function () {
           var fr = from.matched[i];
           var tr = matched[i];
           if (fr && tr && fr.path === tr.route.path) copyInstance(ret, fr);
-        } // if (from) {
-        //   const fr = from.matched[i];
-        //   if (!i) copyInstance(ret, fr);
-        //   else {
-        //     const pfr = from.matched[i - 1];
-        //     const ptr = matched[i - 1];
-        //     if (pfr && ptr && pfr.path === ptr.route.path) copyInstance(ret, fr);
-        //   }
-        // }
-
+        }
 
         return ret;
       });

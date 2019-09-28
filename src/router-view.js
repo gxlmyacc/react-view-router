@@ -49,7 +49,7 @@ class RouterView extends React.Component {
     let ret = routes && routes.filter(r => {
       if (r.config) r = r.config;
       const hasName = name && name !== 'default';
-      if (r.redirect) return hasName ? name === r.name : !r.name;
+      if (r.redirect || r.index) return hasName ? name === r.name : !r.name;
       return hasName
         ? (r.components && r.components[name])
         : r.component || (r.components && r.components.default);
@@ -156,7 +156,7 @@ class RouterView extends React.Component {
     if (this.state._routerInited !== nextState._routerInited) return true;
     if (this.state._routerDepth !== nextState._routerDepth) return true;
     if (this.state.router !== nextState.router) return true;
-    if (this.isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
+    if (this.isRouteChanged(this.state.parentRoute, nextState.parentRoute)) return true;
     if (this.isRoutesChanged(this.state.routes, nextState.routes)) return true;
     return false;
   }
