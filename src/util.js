@@ -212,6 +212,16 @@ function warn(...args) {
   console.warn(...args);
 }
 
+async function afterInterceptors(interceptors, ...args) {
+  for (let i = 0; i < interceptors.length; i++) {
+    let interceptor = interceptors[i];
+    while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, i);
+    if (!interceptor) return;
+
+    interceptor && await interceptor.call(this, ...args);
+  }
+}
+
 function renderRoutes(routes, extraProps, switchProps, options = {}) {
   if (!routes) return null;
 
@@ -280,7 +290,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
           else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
         completeCallback && completeCallback(el);
-        afterEnterGuards && afterEnterGuards.forEach(v => v.call(el));
+        afterEnterGuards && afterInterceptors.call(el, afterEnterGuards);
       }
     });
     _pending.completeCallbacks[options.name] = null;
@@ -351,5 +361,6 @@ export {
   matchPath,
   matchRoutes,
   renderRoutes,
-  innumerable
+  innumerable,
+  afterInterceptors,
 };
