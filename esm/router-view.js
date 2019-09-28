@@ -121,17 +121,11 @@ function (_React$Component) {
   _createClass(RouterView, [{
     key: "_updateRef",
     value: function _updateRef(ref) {
-      var newRoute = this._refreshCurrentRoute();
-
-      var oldRoute = this.state.currentRoute;
-
-      if (newRoute) {
-        newRoute.componentInstances[this.name] = ref;
-      }
-
+      var currentRoute = this.state.currentRoute;
+      if (currentRoute) currentRoute.componentInstances[this.name] = ref;
       if (this.props && this.props._updateRef) this.props._updateRef(ref);
-      if (oldRoute !== newRoute) this.setState({
-        currentRoute: newRoute
+      this.setState({
+        currentRoute: currentRoute
       });
     }
   }, {
@@ -143,20 +137,33 @@ function (_React$Component) {
       var ret = routes && routes.filter(function (r) {
         if (r.config) r = r.config;
         var hasName = name && name !== 'default';
-        if (r.redirect) return hasName ? name === r.name : !r.name;
+        if (r.redirect || r.index) return hasName ? name === r.name : !r.name;
         return hasName ? r.components && r.components[name] : r.component || r.components && r.components.default;
       });
       if (filter) ret = filter(ret);
       return ret;
     }
   }, {
+    key: "_getRouteMatch",
+    value: function _getRouteMatch(state) {
+      var depth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+      if (!state) state = this.state;
+      var matched = state.router.currentRoute && state.router.currentRoute.matched || [];
+      return matched.length > depth ? matched[depth] : null;
+    }
+  }, {
     key: "_refreshCurrentRoute",
     value: function _refreshCurrentRoute(state) {
       if (!state) state = this.state;
-      var matched = state.router.currentRoute && state.router.currentRoute.matched || [];
-      var ret = matched.length > state._routerDepth ? matched[state._routerDepth] : null;
-      if (ret) ret.viewInstance = this;
-      return ret;
+
+      var currentRoute = this._getRouteMatch(state, state._routerDepth);
+
+      if (!currentRoute || currentRoute.redirect) currentRoute = null;
+      if (currentRoute) currentRoute.viewInstances[this.name] = this;
+      if (this.state && this.state._routerInited) this.setState({
+        currentRoute: currentRoute
+      });
+      return currentRoute;
     }
   }, {
     key: "_updateResolving",
@@ -190,7 +197,7 @@ function (_React$Component) {
       regeneratorRuntime.mark(function _callee() {
         var _this2 = this;
 
-        var state, props, parent, memoizedState, memoizedProps, matched;
+        var state, parent, memoizedState;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -204,26 +211,46 @@ function (_React$Component) {
 
               case 2:
                 state = _objectSpread({}, this.state);
-                props = this.props || {};
 
-                if (!(props.depth === undefined && this._reactInternalFiber)) {
-                  _context.next = 19;
+                if (!(state._routerRoot && state.router)) {
+                  _context.next = 7;
                   break;
                 }
 
+                state.router.viewRoot = this;
+
+                state.router._handleRouteInterceptor(state.router.history.location, function (ok) {
+                  if (!ok) return;
+                  state.currentRoute = _this2._refreshCurrentRoute();
+
+                  _this2.setState(Object.assign(state, {
+                    _routerInited: true
+                  }));
+                }, true);
+
+                return _context.abrupt("return");
+
+              case 7:
+                if (this._reactInternalFiber) {
+                  _context.next = 9;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 9:
                 parent = this._reactInternalFiber.return;
 
-              case 6:
-                if (!(parent && parent.type !== _reactRouterDom.Router)) {
-                  _context.next = 19;
+              case 10:
+                if (!parent) {
+                  _context.next = 21;
                   break;
                 }
 
-                memoizedState = parent.memoizedState;
-                memoizedProps = parent.memoizedProps;
+                memoizedState = parent.memoizedState; // const memoizedProps = parent.memoizedProps;
 
                 if (!(memoizedState && memoizedState._routerView)) {
-                  _context.next = 15;
+                  _context.next = 18;
                   break;
                 }
 
@@ -231,41 +258,25 @@ function (_React$Component) {
                 state._routerParent = memoizedState._routerView;
                 if (!state.router) state.router = memoizedState.router;
                 state._routerDepth = memoizedState._routerDepth + 1;
-                return _context.abrupt("break", 19);
+                return _context.abrupt("break", 21);
 
-              case 15:
-                if (!state.router && parent.type === _reactRouterDom.Router && memoizedProps && memoizedProps.history) state.router = memoizedProps.history;
+              case 18:
                 parent = parent.return;
-                _context.next = 6;
+                _context.next = 10;
                 break;
 
-              case 19:
-                if (!state.routes.length) {
-                  matched = state.router.currentRoute && state.router.currentRoute.matched || [];
-                  state.currentRoute = this._refreshCurrentRoute(state);
-
-                  if (state._routerDepth) {
-                    // state.router.updateRoute();
-                    state.parentRoute = matched.length >= state._routerDepth ? matched[state._routerDepth - 1] : null;
-                    state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
-                  }
-                }
-
-                if (state._routerRoot && state.router) {
-                  state.router.viewRoot = this;
-
-                  state.router._handleRouteInterceptor(state.router.history.location, function (ok) {
-                    return ok && _this2.setState(Object.assign(state, {
-                      _routerInited: true
-                    }));
-                  }, true);
-                } else {
-                  this.setState(Object.assign(state, {
-                    _routerInited: true
-                  }));
-                }
-
               case 21:
+                if (state._routerDepth) {
+                  state.currentRoute = this._refreshCurrentRoute(state);
+                  state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
+                  state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
+                } else console.error('[RouterView] cannot find root RouterView instance!', this);
+
+                this.setState(Object.assign(state, {
+                  _routerInited: true
+                }));
+
+              case 23:
               case "end":
                 return _context.stop();
             }
@@ -303,11 +314,12 @@ function (_React$Component) {
   }, {
     key: "shouldComponentUpdate",
     value: function shouldComponentUpdate(nextProps, nextState) {
+      if (this.props.name !== nextProps.name) return true;
       if (this.state._routerResolving !== nextState._routerResolving) return true;
       if (this.state._routerInited !== nextState._routerInited) return true;
       if (this.state._routerDepth !== nextState._routerDepth) return true;
       if (this.state.router !== nextState.router) return true;
-      if (this.isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
+      if (this.isRouteChanged(this.state.parentRoute, nextState.parentRoute)) return true;
       if (this.isRoutesChanged(this.state.routes, nextState.routes)) return true;
       return false;
     }
@@ -371,38 +383,41 @@ function (_React$Component) {
   }, {
     key: "render",
     value: function render() {
-      var _this$state = this.state,
-          routes = _this$state.routes,
-          _routerResolving = _this$state._routerResolving,
-          _routerInited = _this$state._routerInited; // eslint-disable-next-line
+      if (!this.state._routerInited) return this._resolveFallback();
+      var currentRoute = this.state.currentRoute;
+      var ret = null;
 
-      var _ref = this.props || {},
-          _updateRef = _ref._updateRef,
-          container = _ref.container,
-          router = _ref.router,
-          props = _objectWithoutProperties(_ref, ["_updateRef", "container", "router"]);
+      if (currentRoute) {
+        var routes = this.state.routes; // eslint-disable-next-line
 
-      if (!_routerInited) return this._resolveFallback();
-      var _this$state$router$cu = this.state.router.currentRoute,
-          query = _this$state$router$cu.query,
-          params = _this$state$router$cu.params;
-      var ret = (0, _util.renderRoutes)(routes, _config.default.inheritProps ? _objectSpread({}, props, {
-        parent: this
-      }) : props, {}, {
-        name: this.name,
-        query: query,
-        params: params,
-        container: container,
-        ref: this._updateRef
-      });
-      if (_routerResolving) ret = _react.default.createElement(_react.default.Fragment, {}, ret, this._resolveFallback());else if (!ret) ret = this._resolveFallback();
+        var _ref = this.props || {},
+            _updateRef = _ref._updateRef,
+            container = _ref.container,
+            router = _ref.router,
+            children = _ref.children,
+            props = _objectWithoutProperties(_ref, ["_updateRef", "container", "router", "children"]);
+
+        var _this$state$router$cu = this.state.router.currentRoute,
+            query = _this$state$router$cu.query,
+            params = _this$state$router$cu.params;
+        ret = (0, _util.renderRoutes)(routes, _config.default.inheritProps ? _objectSpread({}, props, {
+          parent: this
+        }) : props, {}, {
+          name: this.name,
+          query: query,
+          params: params,
+          container: container,
+          ref: this._updateRef
+        });
+      }
+
+      if (this.state._routerResolving && ret) ret = _react.default.createElement(_react.default.Fragment, {}, ret, this._resolveFallback());else if (!ret) ret = this._resolveFallback();
       return ret;
     }
   }, {
     key: "name",
     get: function get() {
-      var name = this.props.name;
-      return name || 'default';
+      return this.props.name || 'default';
     }
   }]);
 

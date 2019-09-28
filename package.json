@@ -29,8 +29,8 @@
     "prepare": "npm run build"
   },
   "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gxlmyacc/react-view-router/tree/1.x"
+    "type": "https",
+    "url": "https://github.com/gxlmyacc/react-view-router/tree/1.x"
   },
   "author": "gxlmyacc",
   "dependencies": {

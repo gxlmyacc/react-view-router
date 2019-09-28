@@ -22,6 +22,7 @@ exports.normalizeProps = normalizeProps;
 exports.matchRoutes = matchRoutes;
 exports.renderRoutes = renderRoutes;
 exports.innumerable = innumerable;
+exports.afterInterceptors = afterInterceptors;
 Object.defineProperty(exports, "matchPath", {
   enumerable: true,
   get: function get() {
@@ -35,6 +36,8 @@ Object.defineProperty(exports, "withRouter", {
   }
 });
 
+require("regenerator-runtime/runtime");
+
 require("core-js/modules/es7.object.get-own-property-descriptors");
 
 require("core-js/modules/es6.regexp.to-string");
@@ -46,6 +49,8 @@ require("core-js/modules/es6.regexp.match");
 require("core-js/modules/es7.symbol.async-iterator");
 
 require("core-js/modules/es6.symbol");
+
+require("core-js/modules/es6.array.find");
 
 require("core-js/modules/web.dom.iterable");
 
@@ -75,11 +80,15 @@ var _routeGuard = require("./route-guard");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -192,6 +201,13 @@ function normalizeRoutePath(path, route) {
   return normalizePath(path);
 }
 
+function resloveIndex(index, routes) {
+  index = isFunction(index) ? index() : index;
+  return routes.find(function (r) {
+    return r.subpath === index;
+  });
+}
+
 function matchRoutes(routes, to, parent, branch) {
   if (branch === undefined) branch = [];
   to = normalizeLocation(to);
@@ -215,6 +231,11 @@ function matchRoutes(routes, to, parent, branch) {
       var route = _step.value;
       var match = route.path ? (0, _reactRouterDom.matchPath)(to.path, route) : branch.length ? branch[branch.length - 1].match // use parent match
       : _reactRouterDom.Router.computeRootMatch(to.path); // use default "root" match
+
+      if (match && route.index) {
+        route = resloveIndex(route.index, routes);
+        if (!route) continue;
+      }
 
       if (match) {
         branch.push({
@@ -261,9 +282,10 @@ function normalizeLocation(to, route) {
 
   if (to.query) Object.keys(to.query).forEach(function (key) {
     return to.query[key] === undefined && delete to.query[key];
-  });
+  });else if (to.search) to.query = _config.default.parseQuery(to.search.substr(1));
   to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
   to.search = to.search || (to.query ? _config.default.stringifyQuery(to.query) : '');
+  if (!to.query) to.query = {};
   return to;
 }
 
@@ -355,6 +377,7 @@ function resolveRedirect(to, route, from) {
   if (isFunction(to)) to = to.call(route, from);
   if (!to) return '';
   to = normalizeLocation(to, route);
+  from && Object.assign(to.query, from.query);
   to.isRedirect = true;
   return to;
 }
@@ -363,6 +386,88 @@ function warn() {
   var _console;
 
   (_console = console).warn.apply(_console, arguments);
+}
+
+function afterInterceptors(_x) {
+  return _afterInterceptors.apply(this, arguments);
+}
+
+function _afterInterceptors() {
+  _afterInterceptors = _asyncToGenerator(
+  /*#__PURE__*/
+  regeneratorRuntime.mark(function _callee(interceptors) {
+    var _len4,
+        args,
+        _key4,
+        i,
+        _interceptor,
+        interceptor,
+        _args = arguments;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            for (_len4 = _args.length, args = new Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+              args[_key4 - 1] = _args[_key4];
+            }
+
+            i = 0;
+
+          case 2:
+            if (!(i < interceptors.length)) {
+              _context.next = 19;
+              break;
+            }
+
+            interceptor = interceptors[i];
+
+          case 4:
+            if (!(interceptor && interceptor.lazy)) {
+              _context.next = 10;
+              break;
+            }
+
+            _context.next = 7;
+            return interceptor(interceptors, i);
+
+          case 7:
+            interceptor = _context.sent;
+            _context.next = 4;
+            break;
+
+          case 10:
+            if (interceptor) {
+              _context.next = 12;
+              break;
+            }
+
+            return _context.abrupt("return");
+
+          case 12:
+            _context.t0 = interceptor;
+
+            if (!_context.t0) {
+              _context.next = 16;
+              break;
+            }
+
+            _context.next = 16;
+            return (_interceptor = interceptor).call.apply(_interceptor, [this].concat(args));
+
+          case 16:
+            i++;
+            _context.next = 2;
+            break;
+
+          case 19:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+  return _afterInterceptors.apply(this, arguments);
 }
 
 function renderRoutes(routes, extraProps, switchProps) {
@@ -438,9 +543,7 @@ function renderRoutes(routes, extraProps, switchProps) {
         }
 
         completeCallback && completeCallback(el);
-        afterEnterGuards && afterEnterGuards.forEach(function (v) {
-          return v.call(el);
-        });
+        afterEnterGuards && afterInterceptors.call(el, afterEnterGuards);
       }
     });
     _pending.completeCallbacks[options.name] = null;
@@ -462,23 +565,17 @@ function renderRoutes(routes, extraProps, switchProps) {
 
 
   var children = routes.map(function (route, i) {
-    if (route.redirect) {
-      return; // return React.createElement(Redirect, {
-      //   key: route.key || i,
-      //   exact: route.exact,
-      //   strict: route.strict,
-      //   from: route.path,
-      //   to: resolveRedirect(route.redirect, route, currentRoute)
-      // });
-    }
-
+    var renderRoute = route;
+    if (route.redirect) return;
+    if (route.index) renderRoute = resloveIndex(route.index, routes);
+    if (!renderRoute) return;
     return _react.default.createElement(_reactRouterDom.Route, {
       key: route.key || i,
       path: route.path,
       exact: route.exact,
       strict: route.strict,
       render: function render(props) {
-        return renderComp(route, route.components[options.name || 'default'], props, options);
+        return renderComp(renderRoute, renderRoute.components[options.name || 'default'], props, options);
       }
     });
   }).filter(Boolean);
