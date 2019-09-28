@@ -143,7 +143,7 @@ function (_React$Component) {
       var ret = routes && routes.filter(function (r) {
         if (r.config) r = r.config;
         var hasName = name && name !== 'default';
-        if (r.redirect) return hasName ? name === r.name : !r.name;
+        if (r.redirect || r.index) return hasName ? name === r.name : !r.name;
         return hasName ? r.components && r.components[name] : r.component || r.components && r.components.default;
       });
       if (filter) ret = filter(ret);
@@ -307,7 +307,7 @@ function (_React$Component) {
       if (this.state._routerInited !== nextState._routerInited) return true;
       if (this.state._routerDepth !== nextState._routerDepth) return true;
       if (this.state.router !== nextState.router) return true;
-      if (this.isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
+      if (this.isRouteChanged(this.state.parentRoute, nextState.parentRoute)) return true;
       if (this.isRoutesChanged(this.state.routes, nextState.routes)) return true;
       return false;
     }
@@ -386,9 +386,7 @@ function (_React$Component) {
       var _this$state$router$cu = this.state.router.currentRoute,
           query = _this$state$router$cu.query,
           params = _this$state$router$cu.params;
-      var ret = (0, _util.renderRoutes)(routes, _config.default.inheritProps ? _objectSpread({}, props, {
-        parent: this
-      }) : props, {}, {
+      var ret = renderRoute(routes, props, {
         name: this.name,
         query: query,
         params: params,

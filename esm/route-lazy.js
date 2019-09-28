@@ -8,6 +8,10 @@ exports.hasMatchedRouteLazy = hasMatchedRouteLazy;
 exports.lazyImport = lazyImport;
 exports.RouteLazy = void 0;
 
+require("core-js/modules/es7.object.get-own-property-descriptors");
+
+require("core-js/modules/es6.symbol");
+
 require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.array.iterator");
@@ -20,7 +24,17 @@ require("core-js/modules/es6.promise");
 
 require("core-js/modules/es6.object.to-string");
 
+var _react = _interopRequireDefault(require("react"));
+
 var _routeGuard = require("./route-guard");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
@@ -44,6 +58,7 @@ function () {
     this._result = null;
     this.defaultProps = undefined;
     this.propTypes = undefined;
+    this.render = this.render.bind(this);
     Object.defineProperty(this, 'resolved', {
       writable: true,
       value: false
@@ -98,40 +113,53 @@ function () {
                     resolve(v);
                   };
 
-                  if (!(_this._ctor instanceof Promise)) {
-                    _context.next = 9;
+                  if (!(_this._ctor.prototype instanceof _react.default.Component)) {
+                    _context.next = 7;
                     break;
                   }
 
-                  _context.next = 6;
-                  return _this._ctor;
-
-                case 6:
-                  _context.t0 = _context.sent;
-                  _context.next = 10;
+                  _context.t0 = _this._ctor;
+                  _context.next = 15;
                   break;
 
-                case 9:
-                  _context.t0 = _this._ctor.apply(_this, args);
+                case 7:
+                  if (!(_this._ctor instanceof Promise)) {
+                    _context.next = 13;
+                    break;
+                  }
+
+                  _context.next = 10;
+                  return _this._ctor;
 
                 case 10:
+                  _context.t1 = _context.sent;
+                  _context.next = 14;
+                  break;
+
+                case 13:
+                  _context.t1 = _this._ctor.apply(_this, args);
+
+                case 14:
+                  _context.t0 = _context.t1;
+
+                case 15:
                   component = _context.t0;
 
                   if (component) {
-                    _context.next = 13;
+                    _context.next = 18;
                     break;
                   }
 
                   throw new Error('component should not null!');
 
-                case 13:
+                case 18:
                   if (component instanceof Promise) {
                     component.then(_resolve).catch(function () {
                       return reject.apply(void 0, arguments);
                     });
                   } else _resolve(component);
 
-                case 14:
+                case 19:
                 case "end":
                   return _context.stop();
               }
@@ -143,6 +171,14 @@ function () {
           return _ref.apply(this, arguments);
         };
       }());
+    }
+  }, {
+    key: "render",
+    value: function render(props, ref) {
+      if (!this.resolved || !this._result) return null;
+      return _react.default.createElement(this._result, _objectSpread({}, props, {
+        ref: ref
+      }));
     }
   }]);
 

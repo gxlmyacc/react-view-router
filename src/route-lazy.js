@@ -1,3 +1,4 @@
+import React from 'react';
 import { REACT_LAZY_TYPE } from './route-guard';
 
 export class RouteLazy {
@@ -10,6 +11,7 @@ export class RouteLazy {
 
     this.defaultProps = undefined;
     this.propTypes = undefined;
+    this.render = this.render.bind(this);
 
     Object.defineProperty(this, 'resolved', { writable: true, value: false });
     Object.defineProperty(this, 'updaters', { writable: true, value: [] });
@@ -27,9 +29,11 @@ export class RouteLazy {
         this.resolved = true;
         resolve(v);
       };
-      let component = this._ctor instanceof Promise
-        ? await this._ctor
-        : this._ctor(...args);
+      let component = this._ctor.prototype instanceof React.Component
+        ? this._ctor
+        : this._ctor instanceof Promise
+          ? await this._ctor
+          : this._ctor(...args);
 
       if (!component) throw new Error('component should not null!');
 
@@ -37,6 +41,11 @@ export class RouteLazy {
         component.then(_resolve).catch(function () { return reject(...arguments); });
       } else _resolve(component);
     });
+  }
+
+  render(props, ref) {
+    if (!this.resolved || !this._result) return null;
+    return React.createElement(this._result, { ...props, ref });
   }
 
 }

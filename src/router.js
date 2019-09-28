@@ -3,7 +3,8 @@ import config from './config';
 import {
   flatten,
   normalizeRoutes, normalizeLocation, resolveRedirect,
-  matchRoutes, isFunction, isLocation, nextTick, once
+  matchRoutes, isFunction, isLocation, nextTick, once,
+  afterInterceptors
 } from './util';
 import routeCache from './route-cache';
 import { RouteLazy, hasMatchedRouteLazy } from './route-lazy';
@@ -43,17 +44,8 @@ async function routetInterceptors(interceptors, to, from, next) {
     });
     return await interceptor(to, from, nextWrapper);
   }
-  if (next) {
-    return await routetInterceptor(interceptors[0], 0, to, from, next);
-  }
-
-  for (let i = 0; i < interceptors.length; i++) {
-    let interceptor = interceptors[i];
-    while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, i);
-    if (!interceptor) return;
-
-    interceptor && await interceptor(to, from);
-  }
+  if (next) await routetInterceptor(interceptors[0], 0, to, from, next);
+  else afterInterceptors(interceptors, to, from);
 }
 
 const HISTORY_METHODS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
@@ -214,7 +206,7 @@ export default class ReactViewRouter {
     return ret.filter(r => !r.redirect);
   }
 
-  _getChangeMatched(route, compare) {
+  _getChangeMatched(route, compare, count) {
     const ret = [];
     if (!compare) return [...route.matched];
     let start = false;
@@ -225,11 +217,12 @@ export default class ReactViewRouter {
         if (!start) return;
       }
       ret.push(tr);
+      return count !== undefined && ret.length === count;
     });
     return ret.filter(r => !r.redirect);
   }
 
-  _getBeforeEachGuards(to, from) {
+  _getBeforeEachGuards(to, from, current) {
     const ret = [...this.beforeEachGuards];
     if (from) {
       const fm = this._getChangeMatched(from, to)
@@ -237,7 +230,7 @@ export default class ReactViewRouter {
       ret.push(...this._getRouteComponentGurads(fm, 'beforeRouteLeave', true));
     }
     if (to) {
-      const tm = this._getChangeMatched(to, from);
+      let tm = this._getChangeMatched(to, from);
       tm.forEach(r => {
         let guards = this._getComponentGurads(
           r,
@@ -256,6 +249,7 @@ export default class ReactViewRouter {
         ret.push(...guards);
       });
 
+      if (from !== current) tm = this._getChangeMatched(to, current);
       tm.forEach(r => {
         const compGuards = {};
         const allGuards = this._getComponentGurads(
@@ -264,7 +258,7 @@ export default class ReactViewRouter {
           (fn, name) => {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
-              return fn.call(this, to, from);
+              return fn.call(this, to, current);
             });
             return null;
           }
@@ -284,7 +278,7 @@ export default class ReactViewRouter {
       if (!fr || fr.path !== tr.path) return true;
       fm.push(fr);
     });
-    ret.push(...this._getRouteComponentGurads(fm, 'beforeRouteUpdate', true));
+    ret.push(...this._getRouteComponentGurads(fm.filter(r => !r.redirect), 'beforeRouteUpdate', true));
     return ret;
   }
 
@@ -295,9 +289,6 @@ export default class ReactViewRouter {
         .some(key => r.componentInstances[key]));
       ret.push(...this._getRouteComponentGurads(fm, 'afterRouteLeave', true));
     }
-    // if (to) {
-    //   const tm = this._getChangeMatched(to, from);
-    // }
     ret.push(...this.afterEachGuards);
     return flatten(ret);
   }
@@ -316,33 +307,23 @@ export default class ReactViewRouter {
     if (!location) return callback(true);
     let isContinue = false;
     try {
-      let to = this.createRoute(location);
+      const to = this.createRoute(location);
       const from = isInit ? null : to.redirectedFrom || this.currentRoute;
+      const current = this.currentRoute;
 
       if (to && from && to.fullPath === from.fullPath) return callback(true);
-
-      // const toLast = to.matched[to.matched.length - 1];
-      // if (toLast && toLast.config.exact && toLast.redirect) {
-      //   let newTo = resolveRedirect(toLast.redirect, toLast, to);
-      //   if (newTo) {
-      //     callback(false);
-      //     if (newTo.onAbort) newTo.onAbort = to.onAbort;
-      //     if (newTo.onComplete) newTo.onComplete = to.onComplete;
-      //     return this.redirect(newTo, null, null, to.onInit || (isInit ? callback : null));
-      //   }
-      // }
 
       let fallbackView;
       if (hasMatchedRouteLazy(to.matched)) {
         fallbackView = this.viewRoot;
         this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(m => {
-          if (!m.viewInstance || !m.viewInstance.props.fallback) return;
-          return fallbackView = m.viewInstance;
+          if (!m.viewInstances.default || !m.viewInstances.default.props.fallback) return;
+          return fallbackView = m.viewInstances.default;
         });
       }
 
       fallbackView && fallbackView._updateResolving(true);
-      routetInterceptors(this._getBeforeEachGuards(to, from), to, from, ok => {
+      routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, ok => {
         nexting = null;
         fallbackView && setTimeout(() => fallbackView._updateResolving(false), 0);
 
@@ -371,9 +352,9 @@ export default class ReactViewRouter {
 
         this.nextTick(() => {
           if (isFunction(ok)) ok(to);
-          if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(this._getRouteUpdateGuards(to, from), to, from);
+          if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
           if (to && isFunction(to.onComplete)) to.onComplete();
-          routetInterceptors(this._getAfterEachGuards(to, from), to, from);
+          routetInterceptors(this._getAfterEachGuards(to, current), to, current);
         });
       });
     } catch (ex) {
@@ -395,11 +376,11 @@ export default class ReactViewRouter {
     function copyInstance(to, from) {
       if (!from) return;
       if (from.componentInstances) to.componentInstances = from.componentInstances;
-      if (from.viewInstance) to.viewInstance = from.viewInstance;
+      if (from.viewInstances) to.viewInstances = from.viewInstances;
     }
     let matched = matchRoutes(this.routes, to, parent);
     return matched.map(({ route, match }, i) => {
-      let ret = { componentInstances: {} };
+      let ret = { componentInstances: {}, viewInstances: {} };
       Object.keys(route).forEach(key => [
         'path', 'name', 'subpath', 'meta', 'redirect', 'alias'
       ].includes(key) && (ret[key] = route[key]));
@@ -421,7 +402,7 @@ export default class ReactViewRouter {
   }
 
   getMatchedViews(to, from, parent) {
-    return this.getMatched(to, from, parent).map(r => r.viewInstance).filter(Boolean);
+    return this.getMatched(to, from, parent).map(r => r.viewInstances.default).filter(Boolean);
   }
 
   createRoute(to, from) {
@@ -453,7 +434,14 @@ export default class ReactViewRouter {
 
   updateRoute(to) {
     if (!to) to = this.history.location;
-    this.currentRoute = this.createRoute(to);
+    const current = this.currentRoute;
+    this.currentRoute = this.createRoute(to, current);
+
+    let tm = current && this._getChangeMatched(current, this.currentRoute, 1)[0];
+    if (tm) {
+      Object.keys(tm.viewInstances).forEach(key => tm.viewInstances[key]._refreshCurrentRoute());
+    } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute();
+
     this._callEvent('onRouteChange', this.currentRoute, this);
   }
 
@@ -509,7 +497,7 @@ export default class ReactViewRouter {
     this.afterEachGuards.push(guard);
   }
 
-  addRoutes(routes, parentRoute) {
+  addRoutes(routes, parentRoute, name = 'default') {
     if (!routes) return;
     if (!Array.isArray(routes)) routes = [routes];
     routes = normalizeRoutes(routes, parentRoute);
@@ -520,7 +508,7 @@ export default class ReactViewRouter {
       if (~i) children.splice(i, 1, r);
       else children.push(r);
     });
-    if (parentRoute && parentRoute.viewInstance) parentRoute.viewInstance.setState({ routes });
+    if (parentRoute && parentRoute.viewInstances[name]) parentRoute.viewInstances[name].setState({ routes });
     else if (this.state.viewRoot) this.state.viewRoot.setState({ routes });
   }
 

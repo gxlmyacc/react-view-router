@@ -1,8 +1,8 @@
-import { matchPath, withRouter, Router, Route, /* Redirect, */ Switch } from 'react-router-dom';
 import React from 'react';
 import config from './config';
 import { RouteLazy } from './route-lazy';
 import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
+import matchPath, { computeRootMatch } from './match-path';
 
 function nextTick(cb, ctx) {
   if (!cb) return;
@@ -104,7 +104,7 @@ function matchRoutes(routes, to, parent, branch) {
       ? matchPath(to.path, route)
       : branch.length
         ? branch[branch.length - 1].match // use parent match
-        : Router.computeRootMatch(to.path); // use default "root" match
+        : computeRootMatch(to.path); // use default "root" match
 
     if (match && route.index) {
       route = resloveIndex(route.index, routes);
@@ -212,11 +212,20 @@ function warn(...args) {
   console.warn(...args);
 }
 
-function renderRoutes(routes, extraProps, switchProps, options = {}) {
-  if (!routes) return null;
+async function afterInterceptors(interceptors, ...args) {
+  for (let i = 0; i < interceptors.length; i++) {
+    let interceptor = interceptors[i];
+    while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, i);
+    if (!interceptor) return;
 
-  if (extraProps === undefined) extraProps = {};
-  if (switchProps === undefined) switchProps = {};
+    interceptor && await interceptor.call(this, ...args);
+  }
+}
+
+function renderRoute(route, routes, props, children, options = {}) {
+  if (props === undefined) props = {};
+  if (!route) return null;
+  if (route.config) route = route.config;
 
   function configProps(_props, configs, obj, name) {
     if (!obj) return;
@@ -239,19 +248,17 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       });
     }
   }
-  function renderComp(route, component, routeProps, options) {
+  function createComp(route, props, children, options) {
+    let component = route.components[options.name || 'default'];
     if (!component) return null;
+
     const _props = {};
     if (route.defaultProps) {
-      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(routeProps) : route.defaultProps);
+      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
     }
     if (route.props) configProps(_props, route.props, options.params, options.name);
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
-    if (route.render) return route.render(Object.assign(_props,
-      config.inheritProps ? routeProps : null,
-      extraProps,
-      config.inheritProps ? { route } : null));
 
     let ref = null;
     if (component) {
@@ -280,7 +287,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
           else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
         completeCallback && completeCallback(el);
-        afterEnterGuards && afterEnterGuards.forEach(v => v.call(el));
+        afterEnterGuards && afterInterceptors.call(el, afterEnterGuards);
       }
     });
     _pending.completeCallbacks[options.name] = null;
@@ -289,34 +296,26 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     if (component.__component) component = getGuardsComponent(component);
     const ret = React.createElement(
       component,
-      Object.assign(_props,
-        config.inheritProps ? routeProps : null,
-        extraProps,
+      Object.assign(
+        _props,
+        config.inheritProps ? props : null,
         config.inheritProps ? { route } : null,
-        { ref })
+        { ref }
+      ),
+      ...(Array.isArray(children) ? children : [children])
     );
     if (!ref) nextTick(refHandler);
     return ret;
   }
 
-  // const currentRoute = options.router && options.router.currentRoute;
-  let children = routes.map(function (route, i) {
-    let renderRoute = route;
-    if (route.redirect) return;
-    if (route.index) renderRoute = resloveIndex(route.index, routes);
-    if (!renderRoute) return;
+  let renderRoute = route;
+  if (route.redirect) return null;
+  if (route.index) renderRoute = resloveIndex(route.index, routes);
+  if (!renderRoute) return null;
 
-    return React.createElement(Route, {
-      key: route.key || i,
-      path: route.path,
-      exact: route.exact,
-      strict: route.strict,
-      render: props => renderComp(renderRoute, renderRoute.components[options.name || 'default'], props, options)
-    });
-  }).filter(Boolean);
-  if (options.container) children = options.container(children);
-  const ret = React.createElement(Switch, switchProps, children);
-  return ret;
+  let result = createComp(renderRoute, props, children, options);
+  if (options.container) result = options.container(result);
+  return result;
 }
 
 function flatten(array) {
@@ -340,7 +339,6 @@ export {
   isPlainObject,
   isFunction,
   isLocation,
-  withRouter,
   resolveRedirect,
   normalizePath,
   normalizeRoute,
@@ -350,6 +348,7 @@ export {
   normalizeProps,
   matchPath,
   matchRoutes,
-  renderRoutes,
-  innumerable
+  renderRoute,
+  innumerable,
+  afterInterceptors,
 };
