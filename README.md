@@ -1,9 +1,13 @@
-# `react-view-router`
+# react-view-router@1.x
 
 [![NPM version](https://img.shields.io/npm/v/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 [![NPM downloads](https://img.shields.io/npm/dm/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 
 > Route configuration component for `react-router-dom`. `react-view-router` is just a `react-router-dom@5` wrapper that can write routing configuration like [vue-router](https://router.vuejs.org/guide/#javascript) in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
+
+> Unlike 2.x, `react-view-router@1.x` depend on the [react-router/react-router-dom](https://github.com/ReactTraining/react-router) Library
+
+> see [react-view-router@2.x](https://github.com/gxlmyacc/react-view-router/tree/2.x)
 
 ## Installation
 
