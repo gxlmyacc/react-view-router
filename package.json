@@ -30,7 +30,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gxlmyacc/react-view-router.git"
+    "url": "git+https://github.com/gxlmyacc/react-view-router/tree/2.x"
   },
   "author": "gxlmyacc",
   "dependencies": {
