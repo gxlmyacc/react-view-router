@@ -279,9 +279,6 @@ Includes all props from `react-router-dom` and the following props.
 - `RouterView.indexOf(route: String|Object): Number` check `route` is in RouterView, like `Array.indexOf`
 - `RouterView.remove(route: String|Object): Object` remove `route` from RouterView, return `removed route` or `undefined`
 
-### RouterLink Component
-- `RouterLink` is `NavLink` component that in `react-router-dom`, just re-exported.
-
 ### ReactViewRouter Props
 - `currentRoute` current matched route infos:
 ```javascript
@@ -332,6 +329,10 @@ Includes all props from `react-router-dom` and the following props.
 }
 ```
 see: [Route Object Properties](https://router.vuejs.org/api/#route-object-properties)
+
+
+### ReactViewRouter instance Props
+- `RouterLink` a `NavLink` component like `route-link` in `vue-router`.
 
 ### ReactViewRouter instance Methods
 - `beforeEach` [global Before Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
