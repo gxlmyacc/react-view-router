@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.computeRootMatch = computeRootMatch;
 exports.default = void 0;
 
 require("core-js/modules/es6.string.iterator");
@@ -112,6 +113,15 @@ function matchPath(pathname) {
       }, {})
     };
   }, null);
+}
+
+function computeRootMatch(pathname) {
+  return {
+    path: '/',
+    url: '/',
+    params: {},
+    isExact: pathname === '/'
+  };
 }
 
 var _default = matchPath;

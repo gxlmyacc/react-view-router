@@ -53,6 +53,8 @@ var _routeLazy = require("./route-lazy");
 
 var _routeGuard = require("./route-guard");
 
+var _routerLink = _interopRequireDefault(require("./router-link"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
@@ -84,7 +86,7 @@ function _routetInterceptors() {
   _routetInterceptors = _asyncToGenerator(
   /*#__PURE__*/
   regeneratorRuntime.mark(function _callee6(interceptors, to, from, next) {
-    var isBlock, routetInterceptor, _routetInterceptor, i, interceptor;
+    var isBlock, routetInterceptor, _routetInterceptor;
 
     return regeneratorRuntime.wrap(function _callee6$(_context6) {
       while (1) {
@@ -212,7 +214,7 @@ function _routetInterceptors() {
             };
 
             if (!next) {
-              _context6.next = 7;
+              _context6.next = 8;
               break;
             }
 
@@ -220,58 +222,13 @@ function _routetInterceptors() {
             return routetInterceptor(interceptors[0], 0, to, from, next);
 
           case 6:
-            return _context6.abrupt("return", _context6.sent);
-
-          case 7:
-            i = 0;
+            _context6.next = 9;
+            break;
 
           case 8:
-            if (!(i < interceptors.length)) {
-              _context6.next = 25;
-              break;
-            }
+            (0, _util.afterInterceptors)(interceptors, to, from);
 
-            interceptor = interceptors[i];
-
-          case 10:
-            if (!(interceptor && interceptor.lazy)) {
-              _context6.next = 16;
-              break;
-            }
-
-            _context6.next = 13;
-            return interceptor(interceptors, i);
-
-          case 13:
-            interceptor = _context6.sent;
-            _context6.next = 10;
-            break;
-
-          case 16:
-            if (interceptor) {
-              _context6.next = 18;
-              break;
-            }
-
-            return _context6.abrupt("return");
-
-          case 18:
-            _context6.t0 = interceptor;
-
-            if (!_context6.t0) {
-              _context6.next = 22;
-              break;
-            }
-
-            _context6.next = 22;
-            return interceptor(to, from);
-
-          case 22:
-            i++;
-            _context6.next = 8;
-            break;
-
-          case 25:
+          case 9:
           case "end":
             return _context6.stop();
         }
@@ -322,11 +279,11 @@ function () {
     this.mode = options.mode;
     this.basename = options.basename || '';
     this.routes = [];
+    this.plugins = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
-    this.plugins = [];
     this._unlisten = this.history.listen(function (location) {
       return _this.updateRoute(location);
     });
@@ -389,7 +346,7 @@ function () {
         }).filter(function (v) {
           return v !== undefined;
         });
-        return ret.length === 1 ? ret[0] : ret;
+        return ret;
       } catch (ex) {
         if (plugin && plugin.name && ex && ex.message) ex.message = "[".concat(plugin.name, ":").concat(event, "]").concat(ex.message);
         throw ex;
@@ -514,7 +471,7 @@ function () {
     }
   }, {
     key: "_getChangeMatched",
-    value: function _getChangeMatched(route, compare) {
+    value: function _getChangeMatched(route, compare, count) {
       var ret = [];
       if (!compare) return _toConsumableArray(route.matched);
       var start = false;
@@ -527,6 +484,7 @@ function () {
         }
 
         ret.push(tr);
+        return count !== undefined && ret.length === count;
       });
       return ret.filter(function (r) {
         return !r.redirect;
@@ -534,7 +492,7 @@ function () {
     }
   }, {
     key: "_getBeforeEachGuards",
-    value: function _getBeforeEachGuards(to, from) {
+    value: function _getBeforeEachGuards(to, from, current) {
       var _this3 = this;
 
       var ret = _toConsumableArray(this.beforeEachGuards);
@@ -573,13 +531,14 @@ function () {
 
           ret.push.apply(ret, _toConsumableArray(guards));
         });
+        if (from !== current) tm = this._getChangeMatched(to, current);
         tm.forEach(function (r) {
           var compGuards = {};
 
           var allGuards = _this3._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
-              return fn.call(this, to, from);
+              return fn.call(this, to, current);
             });
             return null;
           });
@@ -605,7 +564,9 @@ function () {
         if (!fr || fr.path !== tr.path) return true;
         fm.push(fr);
       });
-      ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteUpdate', true)));
+      ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm.filter(function (r) {
+        return !r.redirect;
+      }), 'beforeRouteUpdate', true)));
       return ret;
     }
   }, {
@@ -621,10 +582,7 @@ function () {
         });
 
         ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'afterRouteLeave', true)));
-      } // if (to) {
-      //   const tm = this._getChangeMatched(to, from);
-      // }
-
+      }
 
       ret.push.apply(ret, _toConsumableArray(this.afterEachGuards));
       return (0, _util.flatten)(ret);
@@ -682,6 +640,7 @@ function () {
             isContinue,
             to,
             from,
+            current,
             fallbackView,
             _args3 = arguments;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
@@ -703,26 +662,27 @@ function () {
                 _context3.prev = 5;
                 to = this.createRoute(location);
                 from = isInit ? null : to.redirectedFrom || this.currentRoute;
+                current = this.currentRoute;
 
                 if (!(to && from && to.fullPath === from.fullPath)) {
-                  _context3.next = 10;
+                  _context3.next = 11;
                   break;
                 }
 
                 return _context3.abrupt("return", callback(true));
 
-              case 10:
+              case 11:
                 if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
                   fallbackView = this.viewRoot;
 
                   this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(function (m) {
-                    if (!m.viewInstance || !m.viewInstance.props.fallback) return;
-                    return fallbackView = m.viewInstance;
+                    if (!m.viewInstances.default || !m.viewInstances.default.props.fallback) return;
+                    return fallbackView = m.viewInstances.default;
                   });
                 }
 
                 fallbackView && fallbackView._updateResolving(true);
-                routetInterceptors(this._getBeforeEachGuards(to, from), to, from, function (ok) {
+                routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, function (ok) {
                   nexting = null;
                   fallbackView && setTimeout(function () {
                     return fallbackView._updateResolving(false);
@@ -755,26 +715,26 @@ function () {
 
                   _this4.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok(to);
-                    if (!isInit && from.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, from), to, from);
+                    if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, current), to, current);
                     if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
-                    routetInterceptors(_this4._getAfterEachGuards(to, from), to, from);
+                    routetInterceptors(_this4._getAfterEachGuards(to, current), to, current);
                   });
                 });
-                _context3.next = 19;
+                _context3.next = 20;
                 break;
 
-              case 15:
-                _context3.prev = 15;
+              case 16:
+                _context3.prev = 16;
                 _context3.t0 = _context3["catch"](5);
                 console.error(_context3.t0);
                 if (!isContinue) callback(isContinue);
 
-              case 19:
+              case 20:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[5, 15]]);
+        }, _callee3, this, [[5, 16]]);
       }));
 
       function _internalHandleRouteInterceptor(_x7, _x8) {
@@ -800,7 +760,7 @@ function () {
       function copyInstance(to, from) {
         if (!from) return;
         if (from.componentInstances) to.componentInstances = from.componentInstances;
-        if (from.viewInstance) to.viewInstance = from.viewInstance;
+        if (from.viewInstances) to.viewInstances = from.viewInstances;
       }
 
       var matched = (0, _util.matchRoutes)(this.routes, to, parent);
@@ -808,7 +768,8 @@ function () {
         var route = _ref3.route,
             match = _ref3.match;
         var ret = {
-          componentInstances: {}
+          componentInstances: {},
+          viewInstances: {}
         };
         Object.keys(route).forEach(function (key) {
           return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = route[key]);
@@ -837,7 +798,7 @@ function () {
     key: "getMatchedViews",
     value: function getMatchedViews(to, from, parent) {
       return this.getMatched(to, from, parent).map(function (r) {
-        return r.viewInstance;
+        return r.viewInstances.default;
       }).filter(Boolean);
     }
   }, {
@@ -881,7 +842,16 @@ function () {
     key: "updateRoute",
     value: function updateRoute(to) {
       if (!to) to = this.history.location;
-      this.currentRoute = this.createRoute(to);
+      var current = this.currentRoute;
+      this.currentRoute = this.createRoute(to, current);
+
+      var tm = current && this._getChangeMatched(current, this.currentRoute, 1)[0];
+
+      if (tm) {
+        Object.keys(tm.viewInstances).forEach(function (key) {
+          return tm.viewInstances[key]._refreshCurrentRoute();
+        });
+      } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute();
 
       this._callEvent('onRouteChange', this.currentRoute, this);
     }
@@ -950,6 +920,7 @@ function () {
   }, {
     key: "addRoutes",
     value: function addRoutes(routes, parentRoute) {
+      var name = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'default';
       if (!routes) return;
       if (!Array.isArray(routes)) routes = [routes];
       routes = (0, _util.normalizeRoutes)(routes, parentRoute);
@@ -961,7 +932,7 @@ function () {
         });
         if (~i) children.splice(i, 1, r);else children.push(r);
       });
-      if (parentRoute && parentRoute.viewInstance) parentRoute.viewInstance.setState({
+      if (parentRoute && parentRoute.viewInstances[name]) parentRoute.viewInstances[name].setState({
         routes: routes
       });else if (this.state.viewRoot) this.state.viewRoot.setState({
         routes: routes
@@ -1009,6 +980,13 @@ function () {
           }));
         })
       });
+    }
+  }, {
+    key: "RouterLink",
+    get: function get() {
+      if (this._RouterLink) return this._RouterLink;
+      (0, _util.innumerable)(this, '_RouterLink', (0, _routerLink.default)(this));
+      return this._RouterLink;
     }
   }]);
 

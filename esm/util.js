@@ -1,8 +1,11 @@
 "use strict";
 
+require("core-js/modules/es6.weak-map");
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.camelize = camelize;
 exports.flatten = flatten;
 exports.warn = warn;
 exports.once = once;
@@ -12,6 +15,8 @@ exports.nextTick = nextTick;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
 exports.isLocation = isLocation;
+exports.isRouteChanged = isRouteChanged;
+exports.isRoutesChanged = isRoutesChanged;
 exports.resolveRedirect = resolveRedirect;
 exports.normalizePath = normalizePath;
 exports.normalizeRoute = normalizeRoute;
@@ -20,20 +25,22 @@ exports.normalizeRoutePath = normalizeRoutePath;
 exports.normalizeLocation = normalizeLocation;
 exports.normalizeProps = normalizeProps;
 exports.matchRoutes = matchRoutes;
-exports.renderRoutes = renderRoutes;
+exports.renderRoute = renderRoute;
 exports.innumerable = innumerable;
+exports.afterInterceptors = afterInterceptors;
+exports.getParentRouterView = getParentRouterView;
 Object.defineProperty(exports, "matchPath", {
   enumerable: true,
   get: function get() {
-    return _reactRouterDom.matchPath;
+    return _matchPath.default;
   }
 });
-Object.defineProperty(exports, "withRouter", {
-  enumerable: true,
-  get: function get() {
-    return _reactRouterDom.withRouter;
-  }
-});
+
+require("core-js/modules/es6.string.iterator");
+
+require("core-js/modules/es6.array.from");
+
+require("regenerator-runtime/runtime");
 
 require("core-js/modules/es7.object.get-own-property-descriptors");
 
@@ -46,6 +53,8 @@ require("core-js/modules/es6.regexp.match");
 require("core-js/modules/es7.symbol.async-iterator");
 
 require("core-js/modules/es6.symbol");
+
+require("core-js/modules/es6.array.find");
 
 require("core-js/modules/web.dom.iterable");
 
@@ -63,8 +72,6 @@ require("core-js/modules/es6.promise");
 
 require("core-js/modules/es6.object.to-string");
 
-var _reactRouterDom = require("react-router-dom");
-
 var _react = _interopRequireDefault(require("react"));
 
 var _config = _interopRequireDefault(require("./config"));
@@ -73,13 +80,31 @@ var _routeLazy = require("./route-lazy");
 
 var _routeGuard = require("./route-guard");
 
+var _matchPath = _interopRequireWildcard(require("./match-path"));
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+
+function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
@@ -179,10 +204,10 @@ function normalizeRoutes(routes, parent, depth) {
   return routes;
 }
 
-function normalizeRoutePath(path, route) {
+function normalizeRoutePath(path, route, append) {
   if (!path || path[0] === '/' || !route) return path || '';
   if (route.config) route = route.config;
-  var parent = route.parent;
+  var parent = append ? route : route.parent;
 
   while (parent && path[0] !== '/') {
     path = "".concat(parent.path, "/").concat(path);
@@ -190,6 +215,13 @@ function normalizeRoutePath(path, route) {
   }
 
   return normalizePath(path);
+}
+
+function resloveIndex(index, routes) {
+  index = isFunction(index) ? index() : index;
+  return routes.find(function (r) {
+    return r.subpath === index;
+  });
 }
 
 function matchRoutes(routes, to, parent, branch) {
@@ -213,8 +245,13 @@ function matchRoutes(routes, to, parent, branch) {
   try {
     for (var _iterator = routes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var route = _step.value;
-      var match = route.path ? (0, _reactRouterDom.matchPath)(to.path, route) : branch.length ? branch[branch.length - 1].match // use parent match
-      : _reactRouterDom.Router.computeRootMatch(to.path); // use default "root" match
+      var match = route.path ? (0, _matchPath.default)(to.path, route) : branch.length ? branch[branch.length - 1].match // use parent match
+      : (0, _matchPath.computeRootMatch)(to.path); // use default "root" match
+
+      if (match && route.index) {
+        route = resloveIndex(route.index, routes);
+        if (!route) continue;
+      }
 
       if (match) {
         branch.push({
@@ -244,7 +281,7 @@ function matchRoutes(routes, to, parent, branch) {
   return branch;
 }
 
-function normalizeLocation(to, route) {
+function normalizeLocation(to, route, append) {
   if (!to) return to;
 
   if (typeof to === 'string') {
@@ -261,9 +298,10 @@ function normalizeLocation(to, route) {
 
   if (to.query) Object.keys(to.query).forEach(function (key) {
     return to.query[key] === undefined && delete to.query[key];
-  });
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
+  });else if (to.search) to.query = _config.default.parseQuery(to.search.substr(1));
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, append);
   to.search = to.search || (to.query ? _config.default.stringifyQuery(to.query) : '');
+  if (!to.query) to.query = {};
   return to;
 }
 
@@ -355,6 +393,7 @@ function resolveRedirect(to, route, from) {
   if (isFunction(to)) to = to.call(route, from);
   if (!to) return '';
   to = normalizeLocation(to, route);
+  from && Object.assign(to.query, from.query);
   to.isRedirect = true;
   return to;
 }
@@ -365,11 +404,93 @@ function warn() {
   (_console = console).warn.apply(_console, arguments);
 }
 
-function renderRoutes(routes, extraProps, switchProps) {
-  var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-  if (!routes) return null;
-  if (extraProps === undefined) extraProps = {};
-  if (switchProps === undefined) switchProps = {};
+function afterInterceptors(_x) {
+  return _afterInterceptors.apply(this, arguments);
+}
+
+function _afterInterceptors() {
+  _afterInterceptors = _asyncToGenerator(
+  /*#__PURE__*/
+  regeneratorRuntime.mark(function _callee(interceptors) {
+    var _len4,
+        args,
+        _key4,
+        i,
+        _interceptor,
+        interceptor,
+        _args = arguments;
+
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            for (_len4 = _args.length, args = new Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+              args[_key4 - 1] = _args[_key4];
+            }
+
+            i = 0;
+
+          case 2:
+            if (!(i < interceptors.length)) {
+              _context.next = 19;
+              break;
+            }
+
+            interceptor = interceptors[i];
+
+          case 4:
+            if (!(interceptor && interceptor.lazy)) {
+              _context.next = 10;
+              break;
+            }
+
+            _context.next = 7;
+            return interceptor(interceptors, i);
+
+          case 7:
+            interceptor = _context.sent;
+            _context.next = 4;
+            break;
+
+          case 10:
+            if (interceptor) {
+              _context.next = 12;
+              break;
+            }
+
+            return _context.abrupt("return");
+
+          case 12:
+            _context.t0 = interceptor;
+
+            if (!_context.t0) {
+              _context.next = 16;
+              break;
+            }
+
+            _context.next = 16;
+            return (_interceptor = interceptor).call.apply(_interceptor, [this].concat(args));
+
+          case 16:
+            i++;
+            _context.next = 2;
+            break;
+
+          case 19:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+  return _afterInterceptors.apply(this, arguments);
+}
+
+function renderRoute(route, routes, props, children) {
+  var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
+  if (props === undefined) props = {};
+  if (!route) return null;
+  if (route.config) route = route.config;
 
   function configProps(_props, configs, obj, name) {
     if (!obj) return;
@@ -393,20 +514,18 @@ function renderRoutes(routes, extraProps, switchProps) {
     }
   }
 
-  function renderComp(route, component, routeProps, options) {
+  function createComp(route, props, children, options) {
+    var component = route.components[options.name || 'default'];
     if (!component) return null;
     var _props = {};
 
     if (route.defaultProps) {
-      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(routeProps) : route.defaultProps);
+      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
     }
 
     if (route.props) configProps(_props, route.props, options.params, options.name);
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
-    if (route.render) return route.render(Object.assign(_props, _config.default.inheritProps ? routeProps : null, extraProps, _config.default.inheritProps ? {
-      route: route
-    } : null));
     var ref = null;
 
     if (component) {
@@ -438,9 +557,7 @@ function renderRoutes(routes, extraProps, switchProps) {
         }
 
         completeCallback && completeCallback(el);
-        afterEnterGuards && afterEnterGuards.forEach(function (v) {
-          return v.call(el);
-        });
+        afterEnterGuards && afterInterceptors.call(el, afterEnterGuards);
       }
     });
     _pending.completeCallbacks[options.name] = null;
@@ -450,43 +567,23 @@ function renderRoutes(routes, extraProps, switchProps) {
     });
     if (component.__component) component = (0, _routeGuard.getGuardsComponent)(component);
 
-    var ret = _react.default.createElement(component, Object.assign(_props, _config.default.inheritProps ? routeProps : null, extraProps, _config.default.inheritProps ? {
+    var ret = _react.default.createElement.apply(_react.default, [component, Object.assign(_props, _config.default.inheritProps ? props : null, _config.default.inheritProps ? {
       route: route
     } : null, {
       ref: ref
-    }));
+    })].concat(_toConsumableArray(Array.isArray(children) ? children : [children])));
 
     if (!ref) nextTick(refHandler);
     return ret;
-  } // const currentRoute = options.router && options.router.currentRoute;
+  }
 
-
-  var children = routes.map(function (route, i) {
-    if (route.redirect) {
-      return; // return React.createElement(Redirect, {
-      //   key: route.key || i,
-      //   exact: route.exact,
-      //   strict: route.strict,
-      //   from: route.path,
-      //   to: resolveRedirect(route.redirect, route, currentRoute)
-      // });
-    }
-
-    return _react.default.createElement(_reactRouterDom.Route, {
-      key: route.key || i,
-      path: route.path,
-      exact: route.exact,
-      strict: route.strict,
-      render: function render(props) {
-        return renderComp(route, route.components[options.name || 'default'], props, options);
-      }
-    });
-  }).filter(Boolean);
-  if (options.container) children = options.container(children);
-
-  var ret = _react.default.createElement(_reactRouterDom.Switch, switchProps, children);
-
-  return ret;
+  var renderRoute = route;
+  if (route.redirect) return null;
+  if (route.index) renderRoute = resloveIndex(route.index, routes);
+  if (!renderRoute) return null;
+  var result = createComp(renderRoute, props, children, options);
+  if (options.container) result = options.container(result);
+  return result;
 }
 
 function flatten(array) {
@@ -499,4 +596,40 @@ function flatten(array) {
   })(array);
 
   return flattend;
+}
+
+function camelize(str) {
+  var ret = str.replace(/[-|:](\w)/g, function (_, c) {
+    return c ? c.toUpperCase() : '';
+  });
+  if (/^[A-Z]/.test(ret)) ret = ret.charAt(0).toLowerCase() + ret.substr(1);
+  return ret;
+}
+
+function isRouteChanged(prev, next) {
+  if (prev && next) return prev.path !== next.path;
+  if ((!prev || !next) && prev !== next) return true;
+  return false;
+}
+
+function isRoutesChanged(prevs, nexts) {
+  if (!prevs || !nexts) return true;
+  if (prevs.length !== nexts.length) return true;
+  var changed = false;
+  prevs.some(function (prev, i) {
+    changed = isRouteChanged(prev, nexts[i]);
+    return changed;
+  });
+  return changed;
+}
+
+function getParentRouterView(ctx) {
+  var parent = ctx._reactInternalFiber.return;
+
+  while (parent) {
+    var memoizedState = parent.memoizedState; // const memoizedProps = parent.memoizedProps;
+
+    if (memoizedState && memoizedState._routerView) return parent.stateNode;
+    parent = parent.return;
+  }
 }
