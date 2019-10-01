@@ -69,10 +69,10 @@ function normalizeRoutes(routes, parent, depth, force = false) {
   return routes;
 }
 
-function normalizeRoutePath(path, route) {
+function normalizeRoutePath(path, route, append) {
   if (!path || path[0] === '/' || !route) return path || '';
   if (route.config) route = route.config;
-  let parent = route.parent;
+  let parent = append ? route : route.parent;
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
     parent = route.parent;
@@ -121,7 +121,7 @@ function matchRoutes(routes, to, parent, branch) {
   return branch;
 }
 
-function normalizeLocation(to, route) {
+function normalizeLocation(to, route, append) {
   if (!to) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
@@ -130,7 +130,7 @@ function normalizeLocation(to, route) {
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search.substr(1));
 
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, append);
   to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
   if (!to.query) to.query = {};
   return to;
@@ -329,7 +329,41 @@ function flatten(array) {
   return flattend;
 }
 
+function camelize(str) {
+  let ret = str.replace(/[-|:](\w)/g, function (_, c) { return c ? c.toUpperCase() : ''; });
+  if (/^[A-Z]/.test(ret)) ret = ret.charAt(0).toLowerCase() + ret.substr(1);
+  return ret;
+}
+
+function isRouteChanged(prev, next) {
+  if (prev && next) return prev.path !== next.path;
+  if ((!prev || !next) && prev !== next) return true;
+  return false;
+}
+
+function isRoutesChanged(prevs, nexts) {
+  if (!prevs || !nexts) return true;
+  if (prevs.length !== nexts.length) return true;
+  let changed = false;
+  prevs.some((prev, i) => {
+    changed = isRouteChanged(prev, nexts[i]);
+    return changed;
+  });
+  return changed;
+}
+
+function getParentRouterView(ctx) {
+  let parent = ctx._reactInternalFiber.return;
+  while (parent) {
+    const memoizedState = parent.memoizedState;
+    // const memoizedProps = parent.memoizedProps;
+    if (memoizedState && memoizedState._routerView) return parent.stateNode;
+    parent = parent.return;
+  }
+}
+
 export {
+  camelize,
   flatten,
   warn,
   once,
@@ -339,6 +373,8 @@ export {
   isPlainObject,
   isFunction,
   isLocation,
+  isRouteChanged,
+  isRoutesChanged,
   resolveRedirect,
   normalizePath,
   normalizeRoute,
@@ -351,4 +387,5 @@ export {
   renderRoute,
   innumerable,
   afterInterceptors,
+  getParentRouterView
 };

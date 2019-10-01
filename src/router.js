@@ -4,11 +4,13 @@ import {
   flatten,
   normalizeRoutes, normalizeLocation, resolveRedirect,
   matchRoutes, isFunction, isLocation, nextTick, once,
-  afterInterceptors
+  afterInterceptors,
+  innumerable
 } from './util';
 import routeCache from './route-cache';
 import { RouteLazy, hasMatchedRouteLazy } from './route-lazy';
 import { getGuardsComponent } from './route-guard';
+import RouterLink from './router-link';
 
 let ReactVueLike;
 let nexting = null;
@@ -79,11 +81,11 @@ export default class ReactViewRouter {
     this.mode = options.mode;
     this.basename = options.basename || '';
     this.routes = [];
+    this.plugins = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
-    this.plugins = [];
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
@@ -117,6 +119,12 @@ export default class ReactViewRouter {
     };
   }
 
+  get RouterLink() {
+    if (this._RouterLink) return this._RouterLink;
+    innumerable(this, '_RouterLink', RouterLink(this));
+    return this._RouterLink;
+  }
+
   _callEvent(event, ...args) {
     let plugin;
     try {
@@ -124,7 +132,7 @@ export default class ReactViewRouter {
         plugin = p;
         return p[event] && p[event].call(p, ...args);
       }).filter(v => v !== undefined);
-      return ret.length === 1 ? ret[0] : ret;
+      return ret;
     } catch (ex) {
       if (plugin && plugin.name && ex && ex.message) ex.message = `[${plugin.name}:${event}]${ex.message}`;
       throw ex;

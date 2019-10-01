@@ -1,5 +1,9 @@
 import React from 'react';
-import { renderRoute, normalizeRoutes, isFunction } from './util';
+import {
+  renderRoute, normalizeRoutes, isFunction,
+  isRouteChanged, isRoutesChanged,
+  getParentRouterView,
+} from './util';
 
 class RouterView extends React.Component {
 
@@ -105,18 +109,12 @@ class RouterView extends React.Component {
 
     if (!this._reactInternalFiber) return;
 
-    let parent = this._reactInternalFiber.return;
-    while (parent) {
-      const memoizedState = parent.memoizedState;
-      // const memoizedProps = parent.memoizedProps;
-      if (memoizedState && memoizedState._routerView) {
-        state._routerRoot = false;
-        state._routerParent = memoizedState._routerView;
-        if (!state.router) state.router = memoizedState.router;
-        state._routerDepth = memoizedState._routerDepth + 1;
-        break;
-      }
-      parent = parent.return;
+    let parent = getParentRouterView(this);
+    if (parent) {
+      state._routerRoot = false;
+      state._routerParent = parent.state._routerView;
+      if (!state.router) state.router = parent.state.router;
+      state._routerDepth = parent.state._routerDepth + 1;
     }
 
     if (state._routerDepth) {
@@ -128,31 +126,14 @@ class RouterView extends React.Component {
     this.setState(Object.assign(state, { _routerInited: true }));
   }
 
-  isRouteChanged(prev, next) {
-    if (prev && next) return prev.path !== next.path;
-    if ((!prev || !next) && prev !== next) return true;
-    return false;
-  }
-
-  isRoutesChanged(prevs, nexts) {
-    if (!prevs || !nexts) return true;
-    if (prevs.length !== nexts.length) return true;
-    let changed = false;
-    prevs.some((prev, i) => {
-      changed = this.isRouteChanged(prev, nexts[i]);
-      return changed;
-    });
-    return changed;
-  }
-
   shouldComponentUpdate(nextProps, nextState) {
     if (this.props.name !== nextProps.name) return true;
     if (this.state._routerResolving !== nextState._routerResolving) return true;
     if (this.state._routerInited !== nextState._routerInited) return true;
     if (this.state._routerDepth !== nextState._routerDepth) return true;
     if (this.state.router !== nextState.router) return true;
-    if (this.isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
-    if (this.isRoutesChanged(this.state.routes, nextState.routes)) return true;
+    if (isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
+    if (isRoutesChanged(this.state.routes, nextState.routes)) return true;
     return false;
   }
 
