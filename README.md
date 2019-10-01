@@ -12,9 +12,9 @@
 ## Installation
 
 ```bash
-npm install react-view-router --save
+npm install react-view-router@1 --save
 # or
-yarn add react-view-router
+yarn add react-view-router@1
 ```
 
 ## Basic Usage
