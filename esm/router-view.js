@@ -197,7 +197,7 @@ function (_React$Component) {
       regeneratorRuntime.mark(function _callee() {
         var _this2 = this;
 
-        var state, parent, memoizedState;
+        var state, parent;
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -239,33 +239,15 @@ function (_React$Component) {
                 return _context.abrupt("return");
 
               case 9:
-                parent = this._reactInternalFiber.return;
+                parent = (0, _util.getParentRouterView)(this);
 
-              case 10:
-                if (!parent) {
-                  _context.next = 21;
-                  break;
+                if (parent) {
+                  state._routerRoot = false;
+                  state._routerParent = parent.state._routerView;
+                  if (!state.router) state.router = parent.state.router;
+                  state._routerDepth = parent.state._routerDepth + 1;
                 }
 
-                memoizedState = parent.memoizedState; // const memoizedProps = parent.memoizedProps;
-
-                if (!(memoizedState && memoizedState._routerView)) {
-                  _context.next = 18;
-                  break;
-                }
-
-                state._routerRoot = false;
-                state._routerParent = memoizedState._routerView;
-                if (!state.router) state.router = memoizedState.router;
-                state._routerDepth = memoizedState._routerDepth + 1;
-                return _context.abrupt("break", 21);
-
-              case 18:
-                parent = parent.return;
-                _context.next = 10;
-                break;
-
-              case 21:
                 if (state._routerDepth) {
                   state.currentRoute = this._refreshCurrentRoute(state);
                   state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
@@ -276,7 +258,7 @@ function (_React$Component) {
                   _routerInited: true
                 }));
 
-              case 23:
+              case 13:
               case "end":
                 return _context.stop();
             }
@@ -291,27 +273,6 @@ function (_React$Component) {
       return componentDidMount;
     }()
   }, {
-    key: "isRouteChanged",
-    value: function isRouteChanged(prev, next) {
-      if (prev && next) return prev.path !== next.path;
-      if ((!prev || !next) && prev !== next) return true;
-      return false;
-    }
-  }, {
-    key: "isRoutesChanged",
-    value: function isRoutesChanged(prevs, nexts) {
-      var _this3 = this;
-
-      if (!prevs || !nexts) return true;
-      if (prevs.length !== nexts.length) return true;
-      var changed = false;
-      prevs.some(function (prev, i) {
-        changed = _this3.isRouteChanged(prev, nexts[i]);
-        return changed;
-      });
-      return changed;
-    }
-  }, {
     key: "shouldComponentUpdate",
     value: function shouldComponentUpdate(nextProps, nextState) {
       if (this.props.name !== nextProps.name) return true;
@@ -319,8 +280,8 @@ function (_React$Component) {
       if (this.state._routerInited !== nextState._routerInited) return true;
       if (this.state._routerDepth !== nextState._routerDepth) return true;
       if (this.state.router !== nextState.router) return true;
-      if (this.isRouteChanged(this.state.parentRoute, nextState.parentRoute)) return true;
-      if (this.isRoutesChanged(this.state.routes, nextState.routes)) return true;
+      if ((0, _util.isRouteChanged)(this.state.parentRoute, nextState.parentRoute)) return true;
+      if ((0, _util.isRoutesChanged)(this.state.routes, nextState.routes)) return true;
       return false;
     }
   }, {

@@ -53,6 +53,8 @@ var _routeLazy = require("./route-lazy");
 
 var _routeGuard = require("./route-guard");
 
+var _routerLink = _interopRequireDefault(require("./router-link"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
@@ -277,11 +279,11 @@ function () {
     this.mode = options.mode;
     this.basename = options.basename || '';
     this.routes = [];
+    this.plugins = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
-    this.plugins = [];
     this._unlisten = this.history.listen(function (location) {
       return _this.updateRoute(location);
     });
@@ -344,7 +346,7 @@ function () {
         }).filter(function (v) {
           return v !== undefined;
         });
-        return ret.length === 1 ? ret[0] : ret;
+        return ret;
       } catch (ex) {
         if (plugin && plugin.name && ex && ex.message) ex.message = "[".concat(plugin.name, ":").concat(event, "]").concat(ex.message);
         throw ex;
@@ -978,6 +980,13 @@ function () {
           }));
         })
       });
+    }
+  }, {
+    key: "RouterLink",
+    get: function get() {
+      if (this._RouterLink) return this._RouterLink;
+      (0, _util.innumerable)(this, '_RouterLink', (0, _routerLink.default)(this));
+      return this._RouterLink;
     }
   }]);
 

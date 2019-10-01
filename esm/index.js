@@ -12,18 +12,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var _exportNames = {
-  RouterLink: true,
   RouterView: true,
   useRouteGuards: true,
   REACT_FORWARD_REF_TYPE: true,
   lazyImport: true
 };
-Object.defineProperty(exports, "RouterLink", {
-  enumerable: true,
-  get: function get() {
-    return _reactRouterDom.NavLink;
-  }
-});
 Object.defineProperty(exports, "RouterView", {
   enumerable: true,
   get: function get() {
@@ -51,8 +44,6 @@ Object.defineProperty(exports, "lazyImport", {
 exports.default = void 0;
 
 var _router = _interopRequireDefault(require("./router"));
-
-var _reactRouterDom = require("react-router-dom");
 
 var _routerView = _interopRequireDefault(require("./router-view"));
 

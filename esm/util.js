@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.camelize = camelize;
 exports.flatten = flatten;
 exports.warn = warn;
 exports.once = once;
@@ -12,6 +13,8 @@ exports.nextTick = nextTick;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
 exports.isLocation = isLocation;
+exports.isRouteChanged = isRouteChanged;
+exports.isRoutesChanged = isRoutesChanged;
 exports.resolveRedirect = resolveRedirect;
 exports.normalizePath = normalizePath;
 exports.normalizeRoute = normalizeRoute;
@@ -23,6 +26,7 @@ exports.matchRoutes = matchRoutes;
 exports.renderRoutes = renderRoutes;
 exports.innumerable = innumerable;
 exports.afterInterceptors = afterInterceptors;
+exports.getParentRouterView = getParentRouterView;
 Object.defineProperty(exports, "matchPath", {
   enumerable: true,
   get: function get() {
@@ -188,10 +192,10 @@ function normalizeRoutes(routes, parent, depth) {
   return routes;
 }
 
-function normalizeRoutePath(path, route) {
+function normalizeRoutePath(path, route, append) {
   if (!path || path[0] === '/' || !route) return path || '';
   if (route.config) route = route.config;
-  var parent = route.parent;
+  var parent = append ? route : route.parent;
 
   while (parent && path[0] !== '/') {
     path = "".concat(parent.path, "/").concat(path);
@@ -265,7 +269,7 @@ function matchRoutes(routes, to, parent, branch) {
   return branch;
 }
 
-function normalizeLocation(to, route) {
+function normalizeLocation(to, route, append) {
   if (!to) return to;
 
   if (typeof to === 'string') {
@@ -283,7 +287,7 @@ function normalizeLocation(to, route) {
   if (to.query) Object.keys(to.query).forEach(function (key) {
     return to.query[key] === undefined && delete to.query[key];
   });else if (to.search) to.query = _config.default.parseQuery(to.search.substr(1));
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, append);
   to.search = to.search || (to.query ? _config.default.stringifyQuery(to.query) : '');
   if (!to.query) to.query = {};
   return to;
@@ -596,4 +600,40 @@ function flatten(array) {
   })(array);
 
   return flattend;
+}
+
+function camelize(str) {
+  var ret = str.replace(/[-|:](\w)/g, function (_, c) {
+    return c ? c.toUpperCase() : '';
+  });
+  if (/^[A-Z]/.test(ret)) ret = ret.charAt(0).toLowerCase() + ret.substr(1);
+  return ret;
+}
+
+function isRouteChanged(prev, next) {
+  if (prev && next) return prev.path !== next.path;
+  if ((!prev || !next) && prev !== next) return true;
+  return false;
+}
+
+function isRoutesChanged(prevs, nexts) {
+  if (!prevs || !nexts) return true;
+  if (prevs.length !== nexts.length) return true;
+  var changed = false;
+  prevs.some(function (prev, i) {
+    changed = isRouteChanged(prev, nexts[i]);
+    return changed;
+  });
+  return changed;
+}
+
+function getParentRouterView(ctx) {
+  var parent = ctx._reactInternalFiber.return;
+
+  while (parent) {
+    var memoizedState = parent.memoizedState; // const memoizedProps = parent.memoizedProps;
+
+    if (memoizedState && memoizedState._routerView) return parent.stateNode;
+    parent = parent.return;
+  }
 }
