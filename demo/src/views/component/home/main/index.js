@@ -1,10 +1,17 @@
 import React from 'react';
 import { RouterView, useRouteGuards } from 'react-view-router';
+import router from 'router';
 
 function HomeMainIndex() {
+  const RouterLink = router.RouterLink;
   return (
     <div>
       <h1>HomeMainIndex</h1>
+      <div className="nav">
+        <RouterLink to="some" append>some</RouterLink>
+        &nbsp;
+        <RouterLink to="other" append>other</RouterLink>
+      </div>
       <RouterView />
       <RouterView name="footer" />
     </div>
