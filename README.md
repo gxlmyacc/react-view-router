@@ -260,13 +260,6 @@ const routes = normalizeRoutes([
 - `queryProps` boolean or object `{ aa: Number, bb: String, cc: Boolean }`, Pass url query as props into route component.
 - `guards` the route guards, see:[Per-Route Guard](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 
-### Route Component Props
-
-Includes all props from `react-router-dom` and the following props.
-
-- `route` current route infos.
-- `parent` the RouterView instance.
-
 ### RouterView Props
 
 - `name` Use for `Named Views`, see [vue-router instructions](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
@@ -329,6 +322,9 @@ Includes all props from `react-router-dom` and the following props.
 }
 ```
 see: [Route Object Properties](https://router.vuejs.org/api/#route-object-properties)
+
+### ReactViewRouter instance Props
+- `RouterLink` a `NavLink` component like `route-link` in `vue-router`.
 
 ### ReactViewRouter instance Methods
 - `beforeEach` [global Before Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
