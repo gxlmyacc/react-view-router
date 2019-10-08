@@ -39,9 +39,7 @@
     "react": "^16.9.0"
   },
   "peerDependencies": {
-    "core-js": ">=2",
     "history-fix": ">=1",
-    "mini-create-react-context": ">= 0.3",
     "prop-types": ">=15",
     "react": ">=16",
     "react-is": ">=16",
