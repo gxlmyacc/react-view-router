@@ -125,7 +125,7 @@ function normalizeLocation(to, route, append) {
   if (!to) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
-    to = { pathname, search: search ? `?${search}` : '' };
+    to = { pathname, search: search ? `?${search}` : '', origin: to };
   }
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search.substr(1));
@@ -362,6 +362,10 @@ function getParentRouterView(ctx) {
   }
 }
 
+function isAbsoluteUrl(to) {
+  return typeof to === 'string' && /^https?:\/\/.+/.test(to);
+}
+
 export {
   camelize,
   flatten,
@@ -375,6 +379,7 @@ export {
   isLocation,
   isRouteChanged,
   isRoutesChanged,
+  isAbsoluteUrl,
   resolveRedirect,
   normalizePath,
   normalizeRoute,

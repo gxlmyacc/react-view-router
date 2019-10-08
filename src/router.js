@@ -1,7 +1,7 @@
 import { createHashHistory, createBrowserHistory, createMemoryHistory } from 'history-fix';
 import config from './config';
 import {
-  flatten,
+  flatten, isAbsoluteUrl,
   normalizeRoutes, normalizeLocation, resolveRedirect,
   matchRoutes, isFunction, isLocation, nextTick, once,
   afterInterceptors,
@@ -376,7 +376,9 @@ export default class ReactViewRouter {
     if (isFunction(onComplete)) to.onComplete = once(onComplete);
     if (isFunction(onAbort)) to.onAbort = once(onAbort);
     if (onInit) to.onInit = onInit;
-    nexting ? nexting(to) : this.history.replace(to);
+    if (nexting) return nexting(to);
+    if (to.origin && isAbsoluteUrl(to.origin)) location.replace(to.origin);
+    else this.history.replace(to);
   }
 
   getMatched(to, from, parent) {
@@ -457,7 +459,9 @@ export default class ReactViewRouter {
     to = normalizeLocation(to);
     if (isFunction(onComplete)) to.onComplete = once(onComplete);
     if (isFunction(onAbort)) to.onAbort = once(onAbort);
-    nexting ? nexting(to) : this.history.push(to);
+    if (nexting) return nexting(to);
+    if (to.origin && isAbsoluteUrl(to.origin)) location.href = to.origin;
+    else this.history.push(to);
   }
 
   replace(to, onComplete, onAbort) {
