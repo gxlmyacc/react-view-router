@@ -37,7 +37,8 @@ export default function (router) {
       activeClass: PropTypes.string,
       exact: PropTypes.bool,
       exactActiveClass: PropTypes.string,
-      event: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)])
+      event: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+      onRouteChange: PropTypes.func
     }
 
     static defaultProps = {
@@ -59,7 +60,10 @@ export default function (router) {
     componentDidMount() {
       this.unplugin = router.plugin({
         name: 'router-link-plugin',
-        onRouteChange: currentRoute => this.setState({ currentRoute })
+        onRouteChange: currentRoute => {
+          this.setState({ currentRoute });
+          if (this.props.onRouteChange) this.props.onRouteChange(currentRoute);
+        }
       });
       let routerView = getParentRouterView(this);
       this.setState({

@@ -381,6 +381,16 @@ export default class ReactViewRouter {
     else this.history.replace(to);
   }
 
+  _push(to, onComplete, onAbort, onInit) {
+    to = normalizeLocation(to);
+    if (isFunction(onComplete)) to.onComplete = once(onComplete);
+    if (isFunction(onAbort)) to.onAbort = once(onAbort);
+    if (onInit) to.onInit = onInit;
+    if (nexting) return nexting(to);
+    if (to.origin && isAbsoluteUrl(to.origin)) location.href = to.origin;
+    else this.history.push(to);
+  }
+
   getMatched(to, from, parent) {
     if (!from) from = this.currentRoute;
     function copyInstance(to, from) {
@@ -456,12 +466,7 @@ export default class ReactViewRouter {
   }
 
   push(to, onComplete, onAbort) {
-    to = normalizeLocation(to);
-    if (isFunction(onComplete)) to.onComplete = once(onComplete);
-    if (isFunction(onAbort)) to.onAbort = once(onAbort);
-    if (nexting) return nexting(to);
-    if (to.origin && isAbsoluteUrl(to.origin)) location.href = to.origin;
-    else this.history.push(to);
+    return this._push(to, onComplete, onAbort);
   }
 
   replace(to, onComplete, onAbort) {
@@ -472,7 +477,7 @@ export default class ReactViewRouter {
     to = normalizeLocation(to);
     to.isRedirect = true;
     to.redirectedFrom = from || this.currentRoute;
-    return this._replace(to, onComplete, onAbort, onInit);
+    return this._push(to, onComplete, onAbort, onInit);
   }
 
   go(n) {

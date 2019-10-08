@@ -750,7 +750,18 @@ function () {
       if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
       if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
       if (onInit) to.onInit = onInit;
-      nexting ? nexting(to) : this.history.replace(to);
+      if (nexting) return nexting(to);
+      if (to.origin && (0, _util.isAbsoluteUrl)(to.origin)) location.replace(to.origin);else this.history.replace(to);
+    }
+  }, {
+    key: "_push",
+    value: function _push(to, onComplete, onAbort, onInit) {
+      to = (0, _util.normalizeLocation)(to);
+      if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
+      if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
+      if (onInit) to.onInit = onInit;
+      if (nexting) return nexting(to);
+      if (to.origin && (0, _util.isAbsoluteUrl)(to.origin)) location.href = to.origin;else this.history.push(to);
     }
   }, {
     key: "getMatched",
@@ -858,10 +869,7 @@ function () {
   }, {
     key: "push",
     value: function push(to, onComplete, onAbort) {
-      to = (0, _util.normalizeLocation)(to);
-      if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
-      if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
-      nexting ? nexting(to) : this.history.push(to);
+      return this._push(to, onComplete, onAbort);
     }
   }, {
     key: "replace",
@@ -874,7 +882,7 @@ function () {
       to = (0, _util.normalizeLocation)(to);
       to.isRedirect = true;
       to.redirectedFrom = from || this.currentRoute;
-      return this._replace(to, onComplete, onAbort, onInit);
+      return this._push(to, onComplete, onAbort, onInit);
     }
   }, {
     key: "go",

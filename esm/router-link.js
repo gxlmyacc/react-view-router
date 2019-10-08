@@ -120,9 +120,11 @@ function _default(router) {
         this.unplugin = router.plugin({
           name: 'router-link-plugin',
           onRouteChange: function onRouteChange(currentRoute) {
-            return _this2.setState({
+            _this2.setState({
               currentRoute: currentRoute
             });
+
+            if (_this2.props.onRouteChange) _this2.props.onRouteChange(currentRoute);
           }
         });
         var routerView = (0, _util.getParentRouterView)(this);
@@ -200,7 +202,8 @@ function _default(router) {
     activeClass: _propTypes.default.string,
     exact: _propTypes.default.bool,
     exactActiveClass: _propTypes.default.string,
-    event: _propTypes.default.oneOfType([_propTypes.default.string, _propTypes.default.arrayOf(_propTypes.default.string)])
+    event: _propTypes.default.oneOfType([_propTypes.default.string, _propTypes.default.arrayOf(_propTypes.default.string)]),
+    onRouteChange: _propTypes.default.func
   }), _defineProperty(_class, "defaultProps", {
     tag: 'a',
     activeClass: 'router-link-active',

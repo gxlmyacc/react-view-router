@@ -17,6 +17,7 @@ exports.isFunction = isFunction;
 exports.isLocation = isLocation;
 exports.isRouteChanged = isRouteChanged;
 exports.isRoutesChanged = isRoutesChanged;
+exports.isAbsoluteUrl = isAbsoluteUrl;
 exports.resolveRedirect = resolveRedirect;
 exports.normalizePath = normalizePath;
 exports.normalizeRoute = normalizeRoute;
@@ -292,7 +293,8 @@ function normalizeLocation(to, route, append) {
 
     to = {
       pathname: pathname,
-      search: search ? "?".concat(search) : ''
+      search: search ? "?".concat(search) : '',
+      origin: to
     };
   }
 
@@ -632,4 +634,8 @@ function getParentRouterView(ctx) {
     if (memoizedState && memoizedState._routerView) return parent.stateNode;
     parent = parent.return;
   }
+}
+
+function isAbsoluteUrl(to) {
+  return typeof to === 'string' && /^https?:\/\/.+/.test(to);
 }
