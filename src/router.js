@@ -371,24 +371,28 @@ export default class ReactViewRouter {
     }
   }
 
-  _replace(to, onComplete, onAbort, onInit) {
+  _go(to, onComplete, onAbort, onInit, replace) {
     to = normalizeLocation(to);
     if (isFunction(onComplete)) to.onComplete = once(onComplete);
     if (isFunction(onAbort)) to.onAbort = once(onAbort);
     if (onInit) to.onInit = onInit;
     if (nexting) return nexting(to);
-    if (to.origin && isAbsoluteUrl(to.origin)) location.replace(to.origin);
-    else this.history.replace(to);
+    if (replace) {
+      to.isReplace = true;
+      if (to.origin && isAbsoluteUrl(to.origin)) location.replace(to.origin);
+      else this.history.replace(to);
+    } else {
+      if (to.origin && isAbsoluteUrl(to.origin)) location.href = to.origin;
+      else this.history.push(to);
+    }
+  }
+
+  _replace(to, onComplete, onAbort, onInit) {
+    return this._go(to, onComplete, onAbort, onInit, true);
   }
 
   _push(to, onComplete, onAbort, onInit) {
-    to = normalizeLocation(to);
-    if (isFunction(onComplete)) to.onComplete = once(onComplete);
-    if (isFunction(onAbort)) to.onAbort = once(onAbort);
-    if (onInit) to.onInit = onInit;
-    if (nexting) return nexting(to);
-    if (to.origin && isAbsoluteUrl(to.origin)) location.href = to.origin;
-    else this.history.push(to);
+    return this._go(to, onComplete, onAbort, onInit);
   }
 
   getMatched(to, from, parent) {
@@ -477,7 +481,9 @@ export default class ReactViewRouter {
     to = normalizeLocation(to);
     to.isRedirect = true;
     to.redirectedFrom = from || this.currentRoute;
-    return this._push(to, onComplete, onAbort, onInit);
+    return to.isReplace
+      ? this._replace(to, onComplete, onAbort, onInit)
+      : this._push(to, onComplete, onAbort, onInit);
   }
 
   go(n) {
