@@ -744,24 +744,30 @@ function () {
       return _internalHandleRouteInterceptor;
     }()
   }, {
-    key: "_replace",
-    value: function _replace(to, onComplete, onAbort, onInit) {
+    key: "_go",
+    value: function _go(to, onComplete, onAbort, onInit, replace) {
       to = (0, _util.normalizeLocation)(to);
       if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
       if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
       if (onInit) to.onInit = onInit;
       if (nexting) return nexting(to);
-      if (to.origin && (0, _util.isAbsoluteUrl)(to.origin)) location.replace(to.origin);else this.history.replace(to);
+
+      if (replace) {
+        to.isReplace = true;
+        if (to.origin && (0, _util.isAbsoluteUrl)(to.origin)) location.replace(to.origin);else this.history.replace(to);
+      } else {
+        if (to.origin && (0, _util.isAbsoluteUrl)(to.origin)) location.href = to.origin;else this.history.push(to);
+      }
+    }
+  }, {
+    key: "_replace",
+    value: function _replace(to, onComplete, onAbort, onInit) {
+      return this._go(to, onComplete, onAbort, onInit, true);
     }
   }, {
     key: "_push",
     value: function _push(to, onComplete, onAbort, onInit) {
-      to = (0, _util.normalizeLocation)(to);
-      if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
-      if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
-      if (onInit) to.onInit = onInit;
-      if (nexting) return nexting(to);
-      if (to.origin && (0, _util.isAbsoluteUrl)(to.origin)) location.href = to.origin;else this.history.push(to);
+      return this._go(to, onComplete, onAbort, onInit);
     }
   }, {
     key: "getMatched",
@@ -882,7 +888,7 @@ function () {
       to = (0, _util.normalizeLocation)(to);
       to.isRedirect = true;
       to.redirectedFrom = from || this.currentRoute;
-      return this._push(to, onComplete, onAbort, onInit);
+      return to.isReplace ? this._replace(to, onComplete, onAbort, onInit) : this._push(to, onComplete, onAbort, onInit);
     }
   }, {
     key: "go",

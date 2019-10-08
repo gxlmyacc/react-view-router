@@ -82,7 +82,12 @@ function normalizeRoutePath(path, route, append) {
 
 function resloveIndex(index, routes) {
   index = isFunction(index) ? index() : index;
-  return routes.find(r => r.subpath === index);
+  let r = routes.find(r => r.subpath === index);
+  if (r && r.index) {
+    if (r.index === index) return null;
+    return resloveIndex(r.index, routes);
+  }
+  return r;
 }
 
 function matchRoutes(routes, to, parent, branch) {
