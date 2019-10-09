@@ -366,7 +366,10 @@ function (_React$Component) {
         });
       }
 
-      if (this.state._routerResolving && ret) ret = _react.default.createElement(_react.default.Fragment, {}, ret, this._resolveFallback());else if (!ret) ret = this._resolveFallback();
+      if (this.state._routerResolving && ret) {
+        ret = _react.default.createElement(_react.default.Fragment, {}, ret, this._resolveFallback());
+      } else if (!ret) ret = this._resolveFallback();
+
       return ret;
     }
   }, {

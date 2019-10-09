@@ -189,8 +189,9 @@ class RouterView extends React.Component {
         });
     }
 
-    if (this.state._routerResolving && ret) ret = React.createElement(React.Fragment, {}, ret, this._resolveFallback());
-    else if (!ret) ret = this._resolveFallback();
+    if (this.state._routerResolving && ret) {
+      ret = React.createElement(React.Fragment, {}, ret, this._resolveFallback());
+    } else if (!ret) ret = this._resolveFallback();
 
     return ret;
   }

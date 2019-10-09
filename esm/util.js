@@ -576,7 +576,7 @@ function renderRoute(route, routes, props, children) {
     });
     if (component.__component) component = (0, _routeGuard.getGuardsComponent)(component);
 
-    var ret = _react.default.createElement.apply(_react.default, [component, Object.assign(_props, _config.default.inheritProps ? props : null, _config.default.inheritProps ? {
+    var ret = _react.default.createElement.apply(_react.default, [component, Object.assign(_props, props, _config.default.inheritProps ? {
       route: route
     } : null, {
       ref: ref

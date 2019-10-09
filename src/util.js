@@ -303,7 +303,7 @@ function renderRoute(route, routes, props, children, options = {}) {
       component,
       Object.assign(
         _props,
-        config.inheritProps ? props : null,
+        props,
         config.inheritProps ? { route } : null,
         { ref }
       ),
