@@ -18,7 +18,13 @@ let nexting = null;
 async function routetInterceptors(interceptors, to, from, next) {
   function isBlock(v, interceptor) {
     let _isLocation = typeof v === 'string' || isLocation(v);
-    if (_isLocation && interceptor && interceptor.route) v = normalizeLocation(v, interceptor.route);
+    if (_isLocation && interceptor && interceptor.route) {
+      v = normalizeLocation(v, interceptor.route);
+      if (v.fullPath === to.fullPath) {
+        v = undefined;
+        _isLocation = false;
+      }
+    }
     return v === false || _isLocation || v instanceof Error;
   }
   async function routetInterceptor(interceptor, index, to, from, next) {
@@ -328,7 +334,11 @@ export default class ReactViewRouter {
       const from = isInit ? null : to.redirectedFrom || this.currentRoute;
       const current = this.currentRoute;
 
-      if (to && from && to.fullPath === from.fullPath) return callback(true);
+      if (to && from && to.fullPath === from.fullPath) {
+        callback(true);
+        if (to.onInit) to.onInit(to);
+        return;
+      }
 
       let fallbackView;
       if (hasMatchedRouteLazy(to.matched)) {
@@ -388,10 +398,10 @@ export default class ReactViewRouter {
     if (nexting) return nexting(to);
     if (replace) {
       to.isReplace = true;
-      if (to.origin && isAbsoluteUrl(to.origin)) location.replace(to.origin);
+      if (to.fullPath && isAbsoluteUrl(to.fullPath)) location.replace(to.fullPath);
       else this.history.replace(to);
     } else {
-      if (to.origin && isAbsoluteUrl(to.origin)) location.href = to.origin;
+      if (to.fullPath && isAbsoluteUrl(to.fullPath)) location.href = to.fullPath;
       else this.history.push(to);
     }
   }

@@ -209,7 +209,15 @@ function _routetInterceptors() {
             isBlock = function _ref6(v, interceptor) {
               var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
 
-              if (_isLocation && interceptor && interceptor.route) v = (0, _util.normalizeLocation)(v, interceptor.route);
+              if (_isLocation && interceptor && interceptor.route) {
+                v = (0, _util.normalizeLocation)(v, interceptor.route);
+
+                if (v.fullPath === to.fullPath) {
+                  v = undefined;
+                  _isLocation = false;
+                }
+              }
+
               return v === false || _isLocation || v instanceof Error;
             };
 
@@ -674,13 +682,15 @@ function () {
                 current = this.currentRoute;
 
                 if (!(to && from && to.fullPath === from.fullPath)) {
-                  _context3.next = 11;
+                  _context3.next = 13;
                   break;
                 }
 
-                return _context3.abrupt("return", callback(true));
+                callback(true);
+                if (to.onInit) to.onInit(to);
+                return _context3.abrupt("return");
 
-              case 11:
+              case 13:
                 if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
                   fallbackView = this.viewRoot;
 
@@ -729,21 +739,21 @@ function () {
                     routetInterceptors(_this4._getAfterEachGuards(to, current), to, current);
                   });
                 });
-                _context3.next = 20;
+                _context3.next = 22;
                 break;
 
-              case 16:
-                _context3.prev = 16;
+              case 18:
+                _context3.prev = 18;
                 _context3.t0 = _context3["catch"](5);
                 console.error(_context3.t0);
                 if (!isContinue) callback(isContinue);
 
-              case 20:
+              case 22:
               case "end":
                 return _context3.stop();
             }
           }
-        }, _callee3, this, [[5, 16]]);
+        }, _callee3, this, [[5, 18]]);
       }));
 
       function _internalHandleRouteInterceptor(_x7, _x8) {
@@ -763,9 +773,9 @@ function () {
 
       if (replace) {
         to.isReplace = true;
-        if (to.origin && (0, _util.isAbsoluteUrl)(to.origin)) location.replace(to.origin);else this.history.replace(to);
+        if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else this.history.replace(to);
       } else {
-        if (to.origin && (0, _util.isAbsoluteUrl)(to.origin)) location.href = to.origin;else this.history.push(to);
+        if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else this.history.push(to);
       }
     }
   }, {

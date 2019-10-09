@@ -301,7 +301,7 @@ function normalizeLocation(to, route, append) {
     to = {
       pathname: pathname,
       search: search ? "?".concat(search) : '',
-      origin: to
+      fullPath: to
     };
   }
 
