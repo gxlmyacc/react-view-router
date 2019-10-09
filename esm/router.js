@@ -378,7 +378,7 @@ function () {
 
         if (cc && ReactVueLike && cc.prototype instanceof ReactVueLike && Array.isArray(cc.mixins)) {
           cc.mixins.forEach(function (m) {
-            var ccg = m[guardName];
+            var ccg = m[guardName] || m.prototype && m.prototype[guardName];
             if (!ccg) return;
             if (!ccg.isMobxFlow && m.__flows && m.__flows.includes(guardName)) ccg = ReactVueLike.flow(ccg);
             ret.push(ccg);
