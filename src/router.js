@@ -153,14 +153,23 @@ export default class ReactViewRouter {
     const toResovle = (c, key) => {
       let ret = [];
       const cc = c.__component ? getGuardsComponent(c, true) : c;
+
       const cg = c.__guards && c.__guards[guardName];
+      if (cg) ret.push(cg);
+
       let ccg = cc && cc.prototype && cc.prototype[guardName];
       if (ccg) {
         if (ReactVueLike && !ccg.isMobxFlow && cc.__flows && cc.__flows.includes(guardName)) ccg = ReactVueLike.flow(ccg);
         ret.push(ccg);
       }
-
-      if (cg) ret.push(cg);
+      if (cc && ReactVueLike && cc.prototype instanceof ReactVueLike && Array.isArray(cc.mixins)) {
+        cc.mixins.forEach(m => {
+          let ccg = m[guardName];
+          if (!ccg) return;
+          if (!ccg.isMobxFlow && m.__flows && m.__flows.includes(guardName)) ccg = ReactVueLike.flow(ccg);
+          ret.push(ccg);
+        });
+      }
 
       const ci = componentInstances[key];
       if (bindInstance) {
