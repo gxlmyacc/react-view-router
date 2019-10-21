@@ -70,6 +70,7 @@ function normalizeRoutes(routes, parent, depth, force = false) {
 }
 
 function normalizeRoutePath(path, route, append) {
+  if (route && route.matched) route = route.matched[route.matched.length - 1];
   if (!path || path[0] === '/' || !route) return path || '';
   if (route.config) route = route.config;
   let parent = append ? route : route.parent;
@@ -135,7 +136,7 @@ function normalizeLocation(to, route, append) {
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search.substr(1));
 
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, append);
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append);
   to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
   if (!to.query) to.query = {};
   return to;

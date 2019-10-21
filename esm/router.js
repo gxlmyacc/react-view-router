@@ -363,6 +363,8 @@ function () {
   }, {
     key: "_getComponentGurads",
     value: function _getComponentGurads(r, guardName) {
+      var _this2 = this;
+
       var bindInstance = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       var ret = [];
       var componentInstances = r.componentInstances; // route config
@@ -422,26 +424,34 @@ function () {
             var _ref2 = _asyncToGenerator(
             /*#__PURE__*/
             regeneratorRuntime.mark(function _callee(interceptors, index) {
-              var nc, ret;
+              var nc, _ret;
+
               return regeneratorRuntime.wrap(function _callee$(_context) {
                 while (1) {
                   switch (_context.prev = _context.next) {
                     case 0:
-                      _context.next = 2;
+                      _this2.fallbackView && _this2.fallbackView._updateResolving(true);
+                      _context.prev = 1;
+                      _context.next = 4;
                       return c.toResolve(r, key);
 
-                    case 2:
+                    case 4:
                       nc = _context.sent;
-                      ret = toResovle(nc, key);
-                      interceptors.splice.apply(interceptors, [index, 1].concat(_toConsumableArray(ret)));
+                      _ret = toResovle(nc, key);
+                      interceptors.splice.apply(interceptors, [index, 1].concat(_toConsumableArray(_ret)));
                       return _context.abrupt("return", interceptors[index]);
 
-                    case 6:
+                    case 8:
+                      _context.prev = 8;
+                      _this2.fallbackView && _this2.fallbackView._updateResolving(false);
+                      return _context.finish(8);
+
+                    case 11:
                     case "end":
                       return _context.stop();
                   }
                 }
-              }, _callee);
+              }, _callee, null, [[1,, 8, 11]]);
             }));
 
             return function lazyResovle(_x5, _x6) {
@@ -459,14 +469,14 @@ function () {
   }, {
     key: "_getRouteComponentGurads",
     value: function _getRouteComponentGurads(matched, guardName) {
-      var _this2 = this;
+      var _this3 = this;
 
       var reverse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       var bindInstance = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
       var ret = [];
       if (reverse) matched = matched.reverse();
       matched.forEach(function (r) {
-        var guards = _this2._getComponentGurads(r, guardName, bindInstance);
+        var guards = _this3._getComponentGurads(r, guardName, bindInstance);
 
         ret.push.apply(ret, _toConsumableArray(guards));
       });
@@ -510,7 +520,7 @@ function () {
   }, {
     key: "_getBeforeEachGuards",
     value: function _getBeforeEachGuards(to, from, current) {
-      var _this3 = this;
+      var _this4 = this;
 
       var ret = _toConsumableArray(this.beforeEachGuards);
 
@@ -528,7 +538,7 @@ function () {
         var tm = this._getChangeMatched(to, from);
 
         tm.forEach(function (r) {
-          var guards = _this3._getComponentGurads(r, 'beforeRouteEnter', function (fn, name) {
+          var guards = _this4._getComponentGurads(r, 'beforeRouteEnter', function (fn, name) {
             return function (to, from, next) {
               return fn(to, from, function (cb) {
                 if ((0, _util.isFunction)(cb)) {
@@ -552,7 +562,7 @@ function () {
         tm.forEach(function (r) {
           var compGuards = {};
 
-          var allGuards = _this3._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
+          var allGuards = _this4._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
               return fn.call(this, to, current);
@@ -651,14 +661,13 @@ function () {
       var _internalHandleRouteInterceptor2 = _asyncToGenerator(
       /*#__PURE__*/
       regeneratorRuntime.mark(function _callee3(location, callback) {
-        var _this4 = this;
+        var _this5 = this;
 
         var isInit,
             isContinue,
             to,
             from,
             current,
-            fallbackView,
             _args3 = arguments;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) {
@@ -691,21 +700,20 @@ function () {
                 return _context3.abrupt("return");
 
               case 13:
+                this.fallbackView = null;
+
                 if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
-                  fallbackView = this.viewRoot;
+                  this.fallbackView = this.viewRoot;
 
                   this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(function (m) {
                     if (!m.viewInstances.default || !m.viewInstances.default.props.fallback) return;
-                    return fallbackView = m.viewInstances.default;
+                    return _this5.fallbackView = m.viewInstances.default;
                   });
                 }
 
-                fallbackView && fallbackView._updateResolving(true);
                 routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, function (ok) {
                   nexting = null;
-                  fallbackView && setTimeout(function () {
-                    return fallbackView._updateResolving(false);
-                  }, 0);
+                  _this5.fallbackView && _this5.fallbackView._updateResolving(false);
                   if (ok && typeof ok === 'string') ok = {
                     path: ok
                   };
@@ -723,7 +731,7 @@ function () {
                     if ((0, _util.isLocation)(ok)) {
                       if (to.onAbort) ok.onAbort = to.onAbort;
                       if (to.onComplete) ok.onComplete = to.onComplete;
-                      return _this4.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+                      return _this5.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
                     }
 
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
@@ -732,11 +740,11 @@ function () {
 
                   if (to.onInit) to.onInit(to);
 
-                  _this4.nextTick(function () {
+                  _this5.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok(to);
-                    if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, current), to, current);
+                    if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this5._getRouteUpdateGuards(to, current), to, current);
                     if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
-                    routetInterceptors(_this4._getAfterEachGuards(to, current), to, current);
+                    routetInterceptors(_this5._getAfterEachGuards(to, current), to, current);
                   });
                 });
                 _context3.next = 22;

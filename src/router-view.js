@@ -18,6 +18,7 @@ class RouterView extends React.Component {
       _routerDepth: depth,
       _routerInited: false,
       _routerResolving: false,
+      // _stack: [],
 
       router,
       parentRoute: null,
@@ -166,32 +167,51 @@ class RouterView extends React.Component {
     return ~index ? route : undefined;
   }
 
+  renderCurrent(currentRoute) {
+    if (!currentRoute) return this.props.children || null;
+
+    const { routes } = this.state;
+    // eslint-disable-next-line
+    const { _updateRef, container, router, children, /*keepAlive,*/ ...props } = this.props;
+    const { query, params } = this.state.router.currentRoute;
+
+    // if (keepAlive) {
+    //   let idx = this._stack.findIndex(v => v.route.path === currentRoute.path);
+    //   if (~idx) {
+    //     let instance = this._stack[idx].instance;
+    //     let current = this._stack[this._stack.length - 1].instance;
+    //     if (instance !== current) {
+    //       if (current.stateNode && current.stateNode.deactivated) current.stateNode.deactivated();
+    //       if (instance.stateNode && instance.stateNode.activated) instance.stateNode.activated();
+    //       this._stack.splice(idx + 1);
+    //     }
+    //     return instance;
+    //   }
+    // }
+
+    let ret = renderRoute(currentRoute, routes, props,
+      children,
+      {
+        name: this.name,
+        query,
+        params,
+        container,
+        ref: this._updateRef
+      });
+
+    // if (keepAlive) this._stack.push({ route: currentRoute, instance: ret });
+
+    return ret;
+  }
+
   render() {
     if (!this.state._routerInited) return this._resolveFallback();
 
-    const { currentRoute } = this.state;
+    let ret = this.renderCurrent(this.state.currentRoute);
 
-    let ret = null;
-    if (currentRoute) {
-      const { routes } = this.state;
-      // eslint-disable-next-line
-      const { _updateRef, container, router, children, ...props } = this.props || {};
-      const { query, params } = this.state.router.currentRoute;
-
-      ret = renderRoute(currentRoute, routes, props,
-        children,
-        {
-          name: this.name,
-          query,
-          params,
-          container,
-          ref: this._updateRef
-        });
-    }
-
-    if (this.state._routerResolving && ret) {
+    if (this.state._routerResolving) {
       ret = React.createElement(React.Fragment, {}, ret, this._resolveFallback());
-    } else if (!ret) ret = this._resolveFallback();
+    }
 
     return ret;
   }

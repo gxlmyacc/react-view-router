@@ -391,7 +391,7 @@ export default class ReactViewRouter {
   }
 
   _go(to, onComplete, onAbort, onInit, replace) {
-    to = normalizeLocation(to);
+    to = normalizeLocation(to, this.currentRoute);
     if (isFunction(onComplete)) to.onComplete = once(onComplete);
     if (isFunction(onAbort)) to.onAbort = once(onAbort);
     if (onInit) to.onInit = onInit;
