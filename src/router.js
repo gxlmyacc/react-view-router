@@ -93,6 +93,8 @@ export default class ReactViewRouter {
     this.currentRoute = null;
     this.viewRoot = null;
     this.errorCallback = null;
+    // this.states = [];
+    // this.stateOrigin = this.history.length;
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
@@ -455,12 +457,13 @@ export default class ReactViewRouter {
     const matched = this.getMatched(to, from);
     const last = matched.length ? matched[matched.length - 1] : { url: '', params: {}, meta: {} };
 
-    const { search, query, path, onAbort, onComplete } = to;
+    const { search, query, path, state, onAbort, onComplete } = to;
     const ret = Object.assign({
       url: last.url,
       basename: this.basename,
       path,
       fullPath: `${path}${search}`,
+      state,
       query: query || (search ? config.parseQuery(to.search.substr(1)) : {}),
       params: last.params || {},
       matched,
@@ -481,6 +484,16 @@ export default class ReactViewRouter {
     if (!to) to = this.history.location;
     const current = this.currentRoute;
     this.currentRoute = this.createRoute(to, current);
+
+    // const statesLen = this.states.length + this.stateOrigin;
+    // const historyLen = this.history.length - this.stateOrigin;
+    // if (this.history.action === 'POP') {
+    //   this.currentRoute.state = this.states[historyLen];
+    //   if (statesLen > this.history.length) this.states.splice(historyLen);
+    // } else {
+    //   if (statesLen > this.history.length) this.states.splice(historyLen - 1);
+    //   this.states.push(this.currentRoute.state);
+    // }
 
     let tm = current && this._getChangeMatched(current, this.currentRoute, 1)[0];
     if (tm) {

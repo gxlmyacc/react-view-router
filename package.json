@@ -34,12 +34,12 @@
   },
   "author": "gxlmyacc",
   "dependencies": {
-    "history-fix": "^1.0.1",
+    "history-fix": "^4.10.1",
     "path-to-regexp": "^3.0.0",
     "react": "^16.9.0"
   },
   "peerDependencies": {
-    "history-fix": ">=1",
+    "history-fix": ">=4",
     "prop-types": ">=15",
     "react": ">=16",
     "react-is": ">=16",
