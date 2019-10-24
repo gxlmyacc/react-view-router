@@ -47,7 +47,7 @@ async function routetInterceptors(interceptors, to, from, next) {
           : next(res => isFunction(f1) && f1(res));
       } catch (ex) {
         console.error(ex);
-        next(ex);
+        next(typeof ex === 'string' ? new Error(ex) : ex);
       }
     });
     return await interceptor(to, from, nextWrapper);
@@ -92,6 +92,7 @@ export default class ReactViewRouter {
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
+    this.errorCallback = null;
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
@@ -372,6 +373,7 @@ export default class ReactViewRouter {
             return this.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
           }
           if (to && isFunction(to.onAbort)) to.onAbort(ok);
+          if (ok instanceof Error) this.errorCallback && this.errorCallback(ok);
           return;
         }
 
@@ -560,6 +562,10 @@ export default class ReactViewRouter {
 
   stringifyQuery(obj) {
     return config.stringifyQuery(obj);
+  }
+
+  onError(callback) {
+    this.errorCallback = callback;
   }
 
   install(_ReactVueLike, { App }) {

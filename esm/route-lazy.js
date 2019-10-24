@@ -49,13 +49,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var RouteLazy =
 /*#__PURE__*/
 function () {
-  function RouteLazy(ctor) {
+  function RouteLazy(ctor, options) {
     _classCallCheck(this, RouteLazy);
 
     this.$$typeof = _routeGuard.REACT_LAZY_TYPE;
     this._ctor = ctor;
     this._status = -1;
     this._result = null;
+    this.options = options;
     this.defaultProps = undefined;
     this.propTypes = undefined;
     this.render = this.render.bind(this);
@@ -207,6 +208,6 @@ function hasMatchedRouteLazy(matched) {
   });
 }
 
-function lazyImport(importMethod) {
-  return new RouteLazy(importMethod);
+function lazyImport(importMethod, options) {
+  return new RouteLazy(importMethod, options || {});
 }
