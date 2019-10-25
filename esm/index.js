@@ -13,6 +13,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 var _exportNames = {
   RouterView: true,
+  withRouter: true,
+  createRouterLink: true,
   useRouteGuards: true,
   REACT_FORWARD_REF_TYPE: true,
   lazyImport: true
@@ -21,6 +23,18 @@ Object.defineProperty(exports, "RouterView", {
   enumerable: true,
   get: function get() {
     return _routerView.default;
+  }
+});
+Object.defineProperty(exports, "withRouter", {
+  enumerable: true,
+  get: function get() {
+    return _withRouter.default;
+  }
+});
+Object.defineProperty(exports, "createRouterLink", {
+  enumerable: true,
+  get: function get() {
+    return _routerLink.default;
   }
 });
 Object.defineProperty(exports, "useRouteGuards", {
@@ -46,6 +60,10 @@ exports.default = void 0;
 var _router = _interopRequireDefault(require("./router"));
 
 var _routerView = _interopRequireDefault(require("./router-view"));
+
+var _withRouter = _interopRequireDefault(require("./with-router"));
+
+var _routerLink = _interopRequireDefault(require("./router-link"));
 
 var _routeGuard = require("./route-guard");
 

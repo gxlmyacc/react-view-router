@@ -29,6 +29,7 @@ exports.matchRoutes = matchRoutes;
 exports.renderRoute = renderRoute;
 exports.innumerable = innumerable;
 exports.afterInterceptors = afterInterceptors;
+exports.getParentRoute = getParentRoute;
 exports.getParentRouterView = getParentRouterView;
 Object.defineProperty(exports, "matchPath", {
   enumerable: true,
@@ -156,8 +157,12 @@ function normalizeRoute(route, parent, depth, force) {
   });
 
   if (parent) innumerable(r, 'parent', parent);
-  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1, force);
-  r.exact = r.exact === undefined ? Boolean(!r.children || !r.children.length) : r.exact;
+
+  if (r.children && !isFunction(r.children)) {
+    innumerable(r, 'children', normalizeRoutes(r.children, r, depth + 1, force));
+  }
+
+  r.exact = r.exact !== undefined ? r.exact : Boolean(r.redirect || r.index);
   if (!r.components) r.components = {};
 
   if (r.component) {
@@ -173,7 +178,7 @@ function normalizeRoute(route, parent, depth, force) {
         if (c.__children) {
           var children = c.__children || [];
           if (isFunction(children)) children = children(r) || [];
-          r.children = normalizeRoutes(children, r, depth + 1);
+          innumerable(r, 'children', normalizeRoutes(children, r, depth + 1));
           r.exact = !r.children.length;
         }
 
@@ -525,7 +530,7 @@ function renderRoute(route, routes, props, children) {
   }
 
   function createComp(route, props, children, options) {
-    var component = route.components[options.name || 'default'];
+    var component = route.components && route.components[options.name || 'default'];
     if (!component) return null;
     var _props = {};
 
@@ -617,7 +622,7 @@ function camelize(str) {
 }
 
 function isRouteChanged(prev, next) {
-  if (prev && next) return prev.path !== next.path;
+  if (prev && next) return prev.path !== next.path && prev.subpath !== next.subpath;
   if ((!prev || !next) && prev !== next) return true;
   return false;
 }
@@ -644,6 +649,11 @@ function getParentRouterView(ctx) {
   }
 }
 
+function getParentRoute(ctx) {
+  var view = getParentRouterView(ctx);
+  return view && view.state.currentRoute || null;
+}
+
 function isAbsoluteUrl(to) {
-  return typeof to === 'string' && /^https?:\/\/.+/.test(to);
+  return typeof to === 'string' && /^(https?:)?\/\/.+/.test(to);
 }

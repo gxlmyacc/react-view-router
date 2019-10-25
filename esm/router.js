@@ -5,8 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-require("core-js/modules/es6.promise");
-
 require("core-js/modules/es6.string.iterator");
 
 require("core-js/modules/es6.array.from");
@@ -24,6 +22,8 @@ require("core-js/modules/es6.object.assign");
 require("core-js/modules/es6.regexp.search");
 
 require("core-js/modules/es6.regexp.match");
+
+require("core-js/modules/es6.promise");
 
 require("regenerator-runtime/runtime");
 
@@ -52,8 +52,6 @@ var _routeCache = _interopRequireDefault(require("./route-cache"));
 var _routeLazy = require("./route-lazy");
 
 var _routeGuard = require("./route-guard");
-
-var _routerLink = _interopRequireDefault(require("./router-link"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -172,7 +170,7 @@ function _routetInterceptors() {
                                     _context4.prev = 15;
                                     _context4.t1 = _context4["catch"](4);
                                     console.error(_context4.t1);
-                                    next(_context4.t1);
+                                    next(typeof _context4.t1 === 'string' ? new Error(_context4.t1) : _context4.t1);
 
                                   case 19:
                                   case "end":
@@ -292,6 +290,9 @@ function () {
     this.afterEachGuards = [];
     this.currentRoute = null;
     this.viewRoot = null;
+    this.errorCallback = null; // this.states = [];
+    // this.stateOrigin = this.history.length;
+
     this._unlisten = this.history.listen(function (location) {
       return _this.updateRoute(location);
     });
@@ -411,7 +412,7 @@ function () {
       }; // route component
 
 
-      Object.keys(r.components).forEach(function (key) {
+      r.components && Object.keys(r.components).forEach(function (key) {
         var c = r.components[key];
         if (!c) return;
 
@@ -727,6 +728,7 @@ function () {
                     }
 
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
+                    if (ok instanceof Error) _this4.errorCallback && _this4.errorCallback(ok);
                     return;
                   }
 
@@ -735,7 +737,7 @@ function () {
                   _this4.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok(to);
                     if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, current), to, current);
-                    if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete();
+                    if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok);
                     routetInterceptors(_this4._getAfterEachGuards(to, current), to, current);
                   });
                 });
@@ -765,18 +767,33 @@ function () {
   }, {
     key: "_go",
     value: function _go(to, onComplete, onAbort, onInit, replace) {
-      to = (0, _util.normalizeLocation)(to, this.currentRoute);
-      if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(onComplete);
-      if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(onAbort);
-      if (onInit) to.onInit = onInit;
-      if (nexting) return nexting(to);
+      var _this5 = this;
 
-      if (replace) {
-        to.isReplace = true;
-        if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else this.history.replace(to);
-      } else {
-        if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else this.history.push(to);
-      }
+      return new Promise(function (resolve, reject) {
+        to = (0, _util.normalizeLocation)(to, _this5.currentRoute);
+
+        function doComplete(res) {
+          onComplete && onComplete(res);
+          resolve(res);
+        }
+
+        function doAbort(res) {
+          onAbort && onAbort(res);
+          reject(res);
+        }
+
+        if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(doComplete);
+        if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(doAbort);
+        if (onInit) to.onInit = onInit;
+        if (nexting) return nexting(to);
+
+        if (replace) {
+          to.isReplace = true;
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this5.history.replace(to);
+        } else {
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this5.history.push(to);
+        }
+      });
     }
   }, {
     key: "_replace",
@@ -789,8 +806,25 @@ function () {
       return this._go(to, onComplete, onAbort, onInit);
     }
   }, {
+    key: "createMatchedRoute",
+    value: function createMatchedRoute(route, match) {
+      var ret = {
+        componentInstances: {},
+        viewInstances: {}
+      };
+      Object.keys(route).forEach(function (key) {
+        return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = route[key]);
+      });
+      ret.config = route;
+      ret.url = match.url;
+      ret.params = match.params;
+      return ret;
+    }
+  }, {
     key: "getMatched",
     value: function getMatched(to, from, parent) {
+      var _this6 = this;
+
       if (!from) from = this.currentRoute;
 
       function copyInstance(to, from) {
@@ -803,16 +837,8 @@ function () {
       return matched.map(function (_ref3, i) {
         var route = _ref3.route,
             match = _ref3.match;
-        var ret = {
-          componentInstances: {},
-          viewInstances: {}
-        };
-        Object.keys(route).forEach(function (key) {
-          return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = route[key]);
-        });
-        ret.config = route;
-        ret.url = match.url;
-        ret.params = match.params;
+
+        var ret = _this6.createMatchedRoute(route, match);
 
         if (from) {
           var fr = from.matched[i];
@@ -853,6 +879,7 @@ function () {
           onAbort = to.onAbort,
           onComplete = to.onComplete;
       var ret = Object.assign({
+        action: this.history.action,
         url: last.url,
         basename: this.basename,
         path: path,
@@ -879,7 +906,15 @@ function () {
     value: function updateRoute(to) {
       if (!to) to = this.history.location;
       var current = this.currentRoute;
-      this.currentRoute = this.createRoute(to, current);
+      this.currentRoute = this.createRoute(to, current); // const statesLen = this.states.length + this.stateOrigin;
+      // const historyLen = this.history.length - this.stateOrigin;
+      // if (this.history.action === 'POP') {
+      //   this.currentRoute.state = this.states[historyLen];
+      //   if (statesLen > this.history.length) this.states.splice(historyLen);
+      // } else {
+      //   if (statesLen > this.history.length) this.states.splice(historyLen - 1);
+      //   this.states.push(this.currentRoute.state);
+      // }
 
       var tm = current && this._getChangeMatched(current, this.currentRoute, 1)[0];
 
@@ -982,6 +1017,11 @@ function () {
       return _config.default.stringifyQuery(obj);
     }
   }, {
+    key: "onError",
+    value: function onError(callback) {
+      this.errorCallback = callback;
+    }
+  }, {
     key: "install",
     value: function install(_ReactVueLike, _ref4) {
       var App = _ref4.App;
@@ -1013,13 +1053,6 @@ function () {
           }));
         })
       });
-    }
-  }, {
-    key: "RouterLink",
-    get: function get() {
-      if (this._RouterLink) return this._RouterLink;
-      (0, _util.innumerable)(this, '_RouterLink', (0, _routerLink.default)(this));
-      return this._RouterLink;
     }
   }]);
 

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = _default;
+exports.default = createRouterLink;
 
 require("core-js/modules/es6.string.iterator");
 
@@ -67,8 +67,6 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function guardEvent(e) {
   // don't redirect with control keys
   if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return; // don't redirect when preventDefault called
@@ -90,10 +88,8 @@ function guardEvent(e) {
   return true;
 }
 
-function _default(router) {
-  var _class, _temp;
-
-  return _temp = _class =
+function createRouterLink(router) {
+  var RouterLink =
   /*#__PURE__*/
   function (_React$Component) {
     _inherits(RouterLink, _React$Component);
@@ -194,7 +190,9 @@ function _default(router) {
     }]);
 
     return RouterLink;
-  }(_react.default.Component), _defineProperty(_class, "propTypes", {
+  }(_react.default.Component);
+
+  RouterLink.propTypes = {
     to: _propTypes.default.oneOfType([_propTypes.default.string, _propTypes.default.object]).isRequired,
     replace: _propTypes.default.bool,
     append: _propTypes.default.bool,
@@ -204,10 +202,12 @@ function _default(router) {
     exactActiveClass: _propTypes.default.string,
     event: _propTypes.default.oneOfType([_propTypes.default.string, _propTypes.default.arrayOf(_propTypes.default.string)]),
     onRouteChange: _propTypes.default.func
-  }), _defineProperty(_class, "defaultProps", {
+  };
+  RouterLink.defaultProps = {
     tag: 'a',
     activeClass: 'router-link-active',
     exactActiveClass: 'exact-active-class',
     event: 'click'
-  }), _temp;
+  };
+  return RouterLink;
 }

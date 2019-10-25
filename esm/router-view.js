@@ -155,7 +155,13 @@ function (_React$Component) {
 
       var currentRoute = this._getRouteMatch(state, state._routerDepth);
 
-      if (!currentRoute || currentRoute.redirect) currentRoute = null;
+      if (!currentRoute) {
+        currentRoute = state.router.createMatchedRoute((0, _util.normalizeRoute)({
+          path: ''
+        }, state.parentRoute, state._routerDepth), state.parentRoute);
+        state.router.currentRoute.matched.push(currentRoute);
+      } else if (!currentRoute || currentRoute.redirect) currentRoute = null;
+
       if (currentRoute) currentRoute.viewInstances[this.name] = this;
       if (this.state && this.state._routerInited) this.setState({
         currentRoute: currentRoute
@@ -246,8 +252,8 @@ function (_React$Component) {
                 }
 
                 if (state._routerDepth) {
-                  state.currentRoute = this._refreshCurrentRoute(state);
                   state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
+                  state.currentRoute = this._refreshCurrentRoute(state);
                   state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
                 } else console.error('[RouterView] cannot find root RouterView instance!', this);
 
@@ -341,7 +347,7 @@ function (_React$Component) {
   }, {
     key: "renderCurrent",
     value: function renderCurrent(currentRoute) {
-      if (!currentRoute) return this.props.children || null;
+      if (!currentRoute || !currentRoute.subpath) return this.props.children || null;
       var routes = this.state.routes; // eslint-disable-next-line
 
       var _this$props2 = this.props,

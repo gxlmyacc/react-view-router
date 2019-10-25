@@ -1,9 +1,8 @@
 import React from 'react';
 import { RouterView, useRouteGuards } from 'react-view-router';
-import router from 'router';
+import { RouterLink } from 'router';
 
 function HomeMainIndex() {
-  const RouterLink = router.RouterLink;
   return (
     <div>
       <h1>HomeMainIndex</h1>
