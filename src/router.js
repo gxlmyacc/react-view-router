@@ -103,7 +103,7 @@ export default class ReactViewRouter {
     this.use(options);
   }
 
-  use({ routes, parseQuery, stringifyQuery, inheritProps, install }) {
+  use({ routes, inheritProps, install, ...restOptions }) {
     if (routes) {
       this.routes = routes ? normalizeRoutes(routes) : [];
       this.updateRoute(this.history.location);
@@ -113,6 +113,8 @@ export default class ReactViewRouter {
 
     if (parseQuery) config.parseQuery = parseQuery;
     if (stringifyQuery) config.stringifyQuery = stringifyQuery;
+
+    Object.assign(config, restOptions);
 
     if (install) this.install = install.bind(this);
   }

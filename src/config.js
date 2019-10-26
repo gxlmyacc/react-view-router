@@ -77,6 +77,9 @@ export default {
 
   inheritProps: true,
 
+  zIndexStart: 0,
+  zIndexStep: 1,
+
   get parseQuery() {
     return this._parseQuery;
   },
