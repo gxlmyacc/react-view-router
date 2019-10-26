@@ -74,7 +74,7 @@ function normalizeRoutePath(path, route, append) {
   if (route && route.matched) route = route.matched[route.matched.length - 1];
   if (!path || path[0] === '/' || !route) return path || '';
   if (route.config) route = route.config;
-  let parent = append ? route : route.parent;
+  let parent = (append || /^\.\//.test(path)) ? route : route.parent;
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
     parent = route.parent;

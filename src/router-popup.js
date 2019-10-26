@@ -35,7 +35,8 @@ class RouterPopup extends RouterView {
   renderCurrent(currentRoute) {
     const { routes } = this.state;
     // eslint-disable-next-line
-    const { _updateRef, container: oldContainer, router, children, ...props } = this.props;
+    const { _updateRef, container: oldContainer, prefixCls, transitionName, zIndexStart,
+      router, children, ...props } = this.props;
     const { query, params } = this.state.router.currentRoute || {};
 
     let ret = renderRoute(currentRoute, routes, props,
@@ -47,11 +48,11 @@ class RouterPopup extends RouterView {
         container: comp => {
           if (oldContainer) comp = oldContainer(comp);
           return React.createElement(Dialog, {
-            prefixCls: 'rvr-route-popup',
-            transitionName: 'rvr-slide-right',
+            prefixCls,
+            transitionName,
             closable: false,
-            visible: this.state.popup,
-            zIndex: currentRoute.depth + 1,
+            visible: Boolean(this.state.popup && comp),
+            zIndex: zIndexStart + currentRoute.depth + 1,
           }, comp);
         },
         ref: this._updateRef
@@ -61,6 +62,12 @@ class RouterPopup extends RouterView {
   }
 
 }
+
+RouterPopup.defaultProps = {
+  prefixCls: 'rvr-route-popup',
+  transitionName: 'rvr-slide-right',
+  zIndexStart: 0
+};
 
 export default React.forwardRef((props, ref) => React.createElement(RouterPopup, {
   ...props,
