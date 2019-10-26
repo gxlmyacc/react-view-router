@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 var _exportNames = {
   RouterView: true,
+  RouterPopup: true,
   withRouter: true,
   createRouterLink: true,
   useRouteGuards: true,
@@ -23,6 +24,12 @@ Object.defineProperty(exports, "RouterView", {
   enumerable: true,
   get: function get() {
     return _routerView.default;
+  }
+});
+Object.defineProperty(exports, "RouterPopup", {
+  enumerable: true,
+  get: function get() {
+    return _routerPopup.default;
   }
 });
 Object.defineProperty(exports, "withRouter", {
@@ -60,6 +67,8 @@ exports.default = void 0;
 var _router = _interopRequireDefault(require("./router"));
 
 var _routerView = _interopRequireDefault(require("./router-view"));
+
+var _routerPopup = _interopRequireDefault(require("./router-popup"));
 
 var _withRouter = _interopRequireDefault(require("./with-router"));
 

@@ -26,13 +26,14 @@ function normalizePath(path) {
   return paths.join('/');
 }
 
-function normalizeRoute(route, parent, depth, force) {
+function normalizeRoute(route, parent, depth = 0, force) {
   let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
   let r = { ...route, subpath: route.path, path, depth };
   if (parent) innumerable(r, 'parent', parent);
   if (r.children && !isFunction(r.children)) {
     innumerable(r, 'children', normalizeRoutes(r.children, r, depth + 1, force));
   }
+  r.depth = depth;
   r.exact = r.exact !== undefined ? r.exact : Boolean(r.redirect || r.index);
   if (!r.components) r.components = {};
   if (r.component) {
@@ -61,7 +62,7 @@ function normalizeRoute(route, parent, depth, force) {
   return r;
 }
 
-function normalizeRoutes(routes, parent, depth, force = false) {
+function normalizeRoutes(routes, parent, depth = 0, force = false) {
   if (!routes) routes = [];
   if (!force && routes._normalized) return routes;
   routes = routes.map(route => normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
@@ -173,7 +174,7 @@ function normalizeProps(props) {
 
 function once(fn, ctx) {
   let ret;
-  return function (...args) {
+  return function _once(...args) {
     if (!fn) return ret;
     const _fn = fn;
     fn = null;

@@ -18,7 +18,6 @@ class RouterView extends React.Component {
       _routerDepth: depth,
       _routerInited: false,
       _routerResolving: false,
-      // _stack: [],
 
       router,
       parentRoute: null,
@@ -94,6 +93,10 @@ class RouterView extends React.Component {
       });
     }
     return fallback || null;
+  }
+
+  isNull(route) {
+    return !route || !route.subpath;
   }
 
   async componentDidMount() {
@@ -174,26 +177,12 @@ class RouterView extends React.Component {
   }
 
   renderCurrent(currentRoute) {
-    if (!currentRoute || !currentRoute.subpath) return this.props.children || null;
+    if (this.isNull(currentRoute)) return this.props.children || null;
 
     const { routes } = this.state;
     // eslint-disable-next-line
-    const { _updateRef, container, router, children, /*keepAlive,*/ ...props } = this.props;
+    const { _updateRef, container, router, children, ...props } = this.props;
     const { query, params } = this.state.router.currentRoute;
-
-    // if (keepAlive) {
-    //   let idx = this._stack.findIndex(v => v.route.path === currentRoute.path);
-    //   if (~idx) {
-    //     let instance = this._stack[idx].instance;
-    //     let current = this._stack[this._stack.length - 1].instance;
-    //     if (instance !== current) {
-    //       if (current.stateNode && current.stateNode.deactivated) current.stateNode.deactivated();
-    //       if (instance.stateNode && instance.stateNode.activated) instance.stateNode.activated();
-    //       this._stack.splice(idx + 1);
-    //     }
-    //     return instance;
-    //   }
-    // }
 
     let ret = renderRoute(currentRoute, routes, props,
       children,
@@ -204,8 +193,6 @@ class RouterView extends React.Component {
         container,
         ref: this._updateRef
       });
-
-    // if (keepAlive) this._stack.push({ route: currentRoute, instance: ret });
 
     return ret;
   }
@@ -223,6 +210,10 @@ class RouterView extends React.Component {
   }
 
 }
+
+export {
+  RouterView
+};
 
 export default React.forwardRef((props, ref) => React.createElement(RouterView, {
   ...props,

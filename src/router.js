@@ -25,24 +25,23 @@ async function routetInterceptors(interceptors, to, from, next) {
     }
     return v === false || _isLocation || v instanceof Error;
   }
-  async function routetInterceptor(interceptor, index, to, from, next) {
+  async function beforeInterceptor(interceptor, index, to, from, next) {
     while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, index);
     if (!interceptor) return next();
 
     const nextWrapper = nexting = once(async f1 => {
       let nextInterceptor = interceptors[++index];
-      if (isBlock(f1, interceptor) || !nextInterceptor) return next(f1);
-      if (typeof f1 === 'boolean') f1 = undefined;
+      if (isBlock(f1, interceptor)) return next(f1);
+      if (f1 === true) f1 = undefined;
+      if (!nextInterceptor) return next(res => isFunction(f1) && f1(res));
       try {
-        return nextInterceptor
-          ? await routetInterceptor(
-            nextInterceptor,
-            index,
-            to,
-            from,
-            next
-          )
-          : next(res => isFunction(f1) && f1(res));
+        return await beforeInterceptor(
+          nextInterceptor,
+          index,
+          to,
+          from,
+          next
+        );
       } catch (ex) {
         console.error(ex);
         next(typeof ex === 'string' ? new Error(ex) : ex);
@@ -50,11 +49,11 @@ async function routetInterceptors(interceptors, to, from, next) {
     });
     return await interceptor(to, from, nextWrapper);
   }
-  if (next) await routetInterceptor(interceptors[0], 0, to, from, next);
+  if (next) await beforeInterceptor(interceptors[0], 0, to, from, next);
   else afterInterceptors(interceptors, to, from);
 }
 
-const HISTORY_METHODS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
+const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
 
 export default class ReactViewRouter {
 
@@ -97,8 +96,8 @@ export default class ReactViewRouter {
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this.history.block(location => routeCache.create(location));
 
-    Object.keys(this.history).forEach(key => !HISTORY_METHODS.includes(key) && (this[key] = this.history[key]));
-    HISTORY_METHODS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
+    Object.keys(this.history).forEach(key => !HISTORY_METHS.includes(key) && (this[key] = this.history[key]));
+    HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
     this.nextTick = nextTick.bind(this);
 
     this.use(options);
@@ -119,20 +118,27 @@ export default class ReactViewRouter {
   }
 
   plugin(plugin) {
-    if (this.plugins.indexOf(plugin) < 0) this.plugins.push(plugin);
+    if (~this.plugins.indexOf(plugin)) return;
+    this.plugins.push(plugin);
+    if (plugin.install) plugin.install(this);
     return function () {
       const idx = this.plugins.indexOf(plugin);
-      if (~idx) this.plugins.splice(idx, 1);
+      if (~idx) {
+        this.plugins.splice(idx, 1);
+        if (plugin.uninstall) plugin.uninstall(this);
+      }
     };
   }
 
   _callEvent(event, ...args) {
     let plugin;
     try {
-      let ret = this.plugins.map(p => {
+      let ret;
+      this.plugins.forEach(p => {
         plugin = p;
-        return p[event] && p[event].call(p, ...args);
-      }).filter(v => v !== undefined);
+        const newRet = p[event] && p[event].call(p, ...args, ret);
+        if (newRet !== undefined) ret = newRet;
+      });
       return ret;
     } catch (ex) {
       if (plugin && plugin.name && ex && ex.message) ex.message = `[${plugin.name}:${event}]${ex.message}`;
@@ -190,6 +196,7 @@ export default class ReactViewRouter {
       if (c instanceof RouteLazy) {
         const lazyResovle = async (interceptors, index) => {
           let nc = await c.toResolve(r, key);
+          nc = this._callEvent('onResolveComponent', nc, r) || nc;
           let ret = toResovle(nc, key);
           interceptors.splice(index, 1, ...ret);
           return interceptors[index];
@@ -242,10 +249,27 @@ export default class ReactViewRouter {
 
   _getBeforeEachGuards(to, from, current) {
     const ret = [...this.beforeEachGuards];
+    const view = this;
     if (from) {
       const fm = this._getChangeMatched(from, to)
         .filter(r => Object.keys(r.componentInstances).some(key => r.componentInstances[key]));
-      ret.push(...this._getRouteComponentGurads(fm, 'beforeRouteLeave', true));
+      ret.push(...this._getRouteComponentGurads(
+        fm,
+        'beforeRouteLeave',
+        (fn, name, ci, r) => (function beforeRouteLeaveWraper(to, from, next) {
+          return fn(to, from, (cb, ...args) => {
+            if (isFunction(cb)) {
+              const _cb = cb;
+              cb = (...as) => {
+                const res = _cb(...as);
+                view._callEvent('onRouteLeaveNext', r, ci, res);
+                return res;
+              };
+            }
+            return next(cb, ...args);
+          });
+        })
+      ));
     }
     if (to) {
       let tm = this._getChangeMatched(to, from);
@@ -253,14 +277,18 @@ export default class ReactViewRouter {
         let guards = this._getComponentGurads(
           r,
           'beforeRouteEnter',
-          (fn, name) => (function (to, from, next) {
-            return fn(to, from, cb => {
+          (fn, name) => (function beforeRouteEnterWraper(to, from, next) {
+            return fn(to, from, (cb, ...args) => {
               if (isFunction(cb)) {
                 const _cb = cb;
-                r.config._pending.completeCallbacks[name] = el => _cb(el);
+                r.config._pending.completeCallbacks[name] = ci => {
+                  const res = _cb(ci);
+                  view._callEvent('onRouteEnterNext', r, ci, res);
+                  return res;
+                };
                 cb = undefined;
               }
-              return next(cb);
+              return next(cb, ...args);
             });
           })
         );
@@ -366,7 +394,7 @@ export default class ReactViewRouter {
             if (to.onComplete) ok.onComplete = to.onComplete;
             return this.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
           }
-          if (to && isFunction(to.onAbort)) to.onAbort(ok);
+          if (to && isFunction(to.onAbort)) to.onAbort(ok, to);
           if (ok instanceof Error) this.errorCallback && this.errorCallback(ok);
           return;
         }
@@ -374,9 +402,9 @@ export default class ReactViewRouter {
         if (to.onInit) to.onInit(to);
 
         this.nextTick(() => {
-          if (isFunction(ok)) ok(to);
+          if (isFunction(ok)) ok = ok(to);
           if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
-          if (to && isFunction(to.onComplete)) to.onComplete(ok);
+          if (to && isFunction(to.onComplete)) to.onComplete(ok, to);
           routetInterceptors(this._getAfterEachGuards(to, current), to, current);
         });
       });
@@ -389,12 +417,12 @@ export default class ReactViewRouter {
   _go(to, onComplete, onAbort, onInit, replace) {
     return new Promise((resolve, reject) => {
       to = normalizeLocation(to, this.currentRoute);
-      function doComplete(res) {
-        onComplete && onComplete(res);
+      function doComplete(res, _to) {
+        onComplete && onComplete(res, _to);
         resolve(res);
       }
-      function doAbort(res) {
-        onAbort && onAbort(res);
+      function doAbort(res, _to) {
+        onAbort && onAbort(res, _to);
         reject(res);
       }
       if (isFunction(onComplete)) to.onComplete = once(doComplete);
@@ -423,11 +451,12 @@ export default class ReactViewRouter {
   createMatchedRoute(route, match) {
     let ret = { componentInstances: {}, viewInstances: {} };
     Object.keys(route).forEach(key => [
-      'path', 'name', 'subpath', 'meta', 'redirect', 'alias'
+      'path', 'name', 'subpath', 'meta', 'redirect', 'depth'
     ].includes(key) && (ret[key] = route[key]));
     ret.config = route;
-    ret.url = match.url;
-    ret.params = match.params;
+    if (!match) match = {};
+    ret.url = match.url || '';
+    ret.params = match.params || {};
     return ret;
   }
 

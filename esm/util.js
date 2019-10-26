@@ -357,7 +357,7 @@ function normalizeProps(props) {
 
 function once(fn, ctx) {
   var ret;
-  return function () {
+  return function _once() {
     if (!fn) return ret;
     var _fn = fn;
     fn = null;

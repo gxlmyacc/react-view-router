@@ -103,7 +103,6 @@ function (_React$Component) {
       _routerDepth: depth,
       _routerInited: false,
       _routerResolving: false,
-      // _stack: [],
       router: router,
       parentRoute: null,
       currentRoute: null,
@@ -191,6 +190,11 @@ function (_React$Component) {
       }
 
       return fallback || null;
+    }
+  }, {
+    key: "isNull",
+    value: function isNull(route) {
+      return !route || !route.subpath;
     }
   }, {
     key: "componentDidMount",
@@ -347,7 +351,7 @@ function (_React$Component) {
   }, {
     key: "renderCurrent",
     value: function renderCurrent(currentRoute) {
-      if (!currentRoute || !currentRoute.subpath) return this.props.children || null;
+      if (this.isNull(currentRoute)) return this.props.children || null;
       var routes = this.state.routes; // eslint-disable-next-line
 
       var _this$props2 = this.props,
@@ -359,28 +363,14 @@ function (_React$Component) {
 
       var _this$state$router$cu = this.state.router.currentRoute,
           query = _this$state$router$cu.query,
-          params = _this$state$router$cu.params; // if (keepAlive) {
-      //   let idx = this._stack.findIndex(v => v.route.path === currentRoute.path);
-      //   if (~idx) {
-      //     let instance = this._stack[idx].instance;
-      //     let current = this._stack[this._stack.length - 1].instance;
-      //     if (instance !== current) {
-      //       if (current.stateNode && current.stateNode.deactivated) current.stateNode.deactivated();
-      //       if (instance.stateNode && instance.stateNode.activated) instance.stateNode.activated();
-      //       this._stack.splice(idx + 1);
-      //     }
-      //     return instance;
-      //   }
-      // }
-
+          params = _this$state$router$cu.params;
       var ret = (0, _util.renderRoute)(currentRoute, routes, props, children, {
         name: this.name,
         query: query,
         params: params,
         container: container,
         ref: this._updateRef
-      }); // if (keepAlive) this._stack.push({ route: currentRoute, instance: ret });
-
+      });
       return ret;
     }
   }, {

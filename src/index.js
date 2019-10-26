@@ -3,6 +3,7 @@
 import ReactViewRouter from './router';
 
 export { default as RouterView }  from './router-view';
+export { default as RouterPopup }  from './router-popup';
 export { default as withRouter }  from './with-router';
 export { default as createRouterLink } from './router-link';
 

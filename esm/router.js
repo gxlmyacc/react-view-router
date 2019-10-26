@@ -84,14 +84,14 @@ function _routetInterceptors() {
   _routetInterceptors = _asyncToGenerator(
   /*#__PURE__*/
   regeneratorRuntime.mark(function _callee6(interceptors, to, from, next) {
-    var isBlock, routetInterceptor, _routetInterceptor;
+    var isBlock, beforeInterceptor, _beforeInterceptor;
 
     return regeneratorRuntime.wrap(function _callee6$(_context6) {
       while (1) {
         switch (_context6.prev = _context6.next) {
           case 0:
-            _routetInterceptor = function _ref8() {
-              _routetInterceptor = _asyncToGenerator(
+            _beforeInterceptor = function _ref8() {
+              _beforeInterceptor = _asyncToGenerator(
               /*#__PURE__*/
               regeneratorRuntime.mark(function _callee5(interceptor, index, to, from, next) {
                 var nextWrapper;
@@ -134,7 +134,7 @@ function _routetInterceptors() {
                                   case 0:
                                     nextInterceptor = interceptors[++index];
 
-                                    if (!(isBlock(f1, interceptor) || !nextInterceptor)) {
+                                    if (!isBlock(f1, interceptor)) {
                                       _context4.next = 3;
                                       break;
                                     }
@@ -142,42 +142,37 @@ function _routetInterceptors() {
                                     return _context4.abrupt("return", next(f1));
 
                                   case 3:
-                                    if (typeof f1 === 'boolean') f1 = undefined;
-                                    _context4.prev = 4;
+                                    if (f1 === true) f1 = undefined;
 
-                                    if (!nextInterceptor) {
-                                      _context4.next = 11;
+                                    if (nextInterceptor) {
+                                      _context4.next = 6;
                                       break;
                                     }
 
-                                    _context4.next = 8;
-                                    return routetInterceptor(nextInterceptor, index, to, from, next);
-
-                                  case 8:
-                                    _context4.t0 = _context4.sent;
-                                    _context4.next = 12;
-                                    break;
-
-                                  case 11:
-                                    _context4.t0 = next(function (res) {
+                                    return _context4.abrupt("return", next(function (res) {
                                       return (0, _util.isFunction)(f1) && f1(res);
-                                    });
+                                    }));
+
+                                  case 6:
+                                    _context4.prev = 6;
+                                    _context4.next = 9;
+                                    return beforeInterceptor(nextInterceptor, index, to, from, next);
+
+                                  case 9:
+                                    return _context4.abrupt("return", _context4.sent);
 
                                   case 12:
-                                    return _context4.abrupt("return", _context4.t0);
+                                    _context4.prev = 12;
+                                    _context4.t0 = _context4["catch"](6);
+                                    console.error(_context4.t0);
+                                    next(typeof _context4.t0 === 'string' ? new Error(_context4.t0) : _context4.t0);
 
-                                  case 15:
-                                    _context4.prev = 15;
-                                    _context4.t1 = _context4["catch"](4);
-                                    console.error(_context4.t1);
-                                    next(typeof _context4.t1 === 'string' ? new Error(_context4.t1) : _context4.t1);
-
-                                  case 19:
+                                  case 16:
                                   case "end":
                                     return _context4.stop();
                                 }
                               }
-                            }, _callee4, null, [[4, 15]]);
+                            }, _callee4, null, [[6, 12]]);
                           }));
 
                           return function (_x14) {
@@ -197,11 +192,11 @@ function _routetInterceptors() {
                   }
                 }, _callee5);
               }));
-              return _routetInterceptor.apply(this, arguments);
+              return _beforeInterceptor.apply(this, arguments);
             };
 
-            routetInterceptor = function _ref7(_x9, _x10, _x11, _x12, _x13) {
-              return _routetInterceptor.apply(this, arguments);
+            beforeInterceptor = function _ref7(_x9, _x10, _x11, _x12, _x13) {
+              return _beforeInterceptor.apply(this, arguments);
             };
 
             isBlock = function _ref6(v, interceptor) {
@@ -225,7 +220,7 @@ function _routetInterceptors() {
             }
 
             _context6.next = 6;
-            return routetInterceptor(interceptors[0], 0, to, from, next);
+            return beforeInterceptor(interceptors[0], 0, to, from, next);
 
           case 6:
             _context6.next = 9;
@@ -244,7 +239,7 @@ function _routetInterceptors() {
   return _routetInterceptors.apply(this, arguments);
 }
 
-var HISTORY_METHODS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
+var HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
 
 var ReactViewRouter =
 /*#__PURE__*/
@@ -300,9 +295,9 @@ function () {
       return _routeCache.default.create(location);
     });
     Object.keys(this.history).forEach(function (key) {
-      return !HISTORY_METHODS.includes(key) && (_this[key] = _this.history[key]);
+      return !HISTORY_METHS.includes(key) && (_this[key] = _this.history[key]);
     });
-    HISTORY_METHODS.forEach(function (key) {
+    HISTORY_METHS.forEach(function (key) {
       return _this[key] && (_this[key] = _this[key].bind(_this));
     });
     this.nextTick = _util.nextTick.bind(this);
@@ -331,10 +326,16 @@ function () {
   }, {
     key: "plugin",
     value: function plugin(_plugin) {
-      if (this.plugins.indexOf(_plugin) < 0) this.plugins.push(_plugin);
+      if (~this.plugins.indexOf(_plugin)) return;
+      this.plugins.push(_plugin);
+      if (_plugin.install) _plugin.install(this);
       return function () {
         var idx = this.plugins.indexOf(_plugin);
-        if (~idx) this.plugins.splice(idx, 1);
+
+        if (~idx) {
+          this.plugins.splice(idx, 1);
+          if (_plugin.uninstall) _plugin.uninstall(this);
+        }
       };
     }
   }, {
@@ -347,13 +348,15 @@ function () {
       var plugin;
 
       try {
-        var ret = this.plugins.map(function (p) {
+        var ret;
+        this.plugins.forEach(function (p) {
           var _p$event;
 
           plugin = p;
-          return p[event] && (_p$event = p[event]).call.apply(_p$event, [p].concat(args));
-        }).filter(function (v) {
-          return v !== undefined;
+
+          var newRet = p[event] && (_p$event = p[event]).call.apply(_p$event, [p].concat(args, [ret]));
+
+          if (newRet !== undefined) ret = newRet;
         });
         return ret;
       } catch (ex) {
@@ -364,6 +367,8 @@ function () {
   }, {
     key: "_getComponentGurads",
     value: function _getComponentGurads(r, guardName) {
+      var _this2 = this;
+
       var bindInstance = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       var ret = [];
       var componentInstances = r.componentInstances; // route config
@@ -433,11 +438,12 @@ function () {
 
                     case 2:
                       nc = _context.sent;
+                      nc = _this2._callEvent('onResolveComponent', nc, r) || nc;
                       ret = toResovle(nc, key);
                       interceptors.splice.apply(interceptors, [index, 1].concat(_toConsumableArray(ret)));
                       return _context.abrupt("return", interceptors[index]);
 
-                    case 6:
+                    case 7:
                     case "end":
                       return _context.stop();
                   }
@@ -460,14 +466,14 @@ function () {
   }, {
     key: "_getRouteComponentGurads",
     value: function _getRouteComponentGurads(matched, guardName) {
-      var _this2 = this;
+      var _this3 = this;
 
       var reverse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       var bindInstance = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
       var ret = [];
       if (reverse) matched = matched.reverse();
       matched.forEach(function (r) {
-        var guards = _this2._getComponentGurads(r, guardName, bindInstance);
+        var guards = _this3._getComponentGurads(r, guardName, bindInstance);
 
         ret.push.apply(ret, _toConsumableArray(guards));
       });
@@ -511,7 +517,7 @@ function () {
   }, {
     key: "_getBeforeEachGuards",
     value: function _getBeforeEachGuards(to, from, current) {
-      var _this3 = this;
+      var _this5 = this;
 
       var ret = _toConsumableArray(this.beforeEachGuards);
 
@@ -522,27 +528,61 @@ function () {
           });
         });
 
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteLeave', true)));
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteLeave', function (fn, name, ci, r) {
+          return function beforeRouteLeaveWraper(to, from, next) {
+            var _this4 = this;
+
+            return fn(to, from, function (cb) {
+              if ((0, _util.isFunction)(cb)) {
+                var _cb = cb;
+
+                cb = function cb() {
+                  var res = _cb.apply(void 0, arguments);
+
+                  _this4._callEvent('onRouteLeaveNext', r, ci, res);
+
+                  return res;
+                };
+              }
+
+              for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+                args[_key2 - 1] = arguments[_key2];
+              }
+
+              return next.apply(void 0, [cb].concat(args));
+            });
+          };
+        })));
       }
 
       if (to) {
         var tm = this._getChangeMatched(to, from);
 
         tm.forEach(function (r) {
-          var guards = _this3._getComponentGurads(r, 'beforeRouteEnter', function (fn, name) {
-            return function (to, from, next) {
+          var guards = _this5._getComponentGurads(r, 'beforeRouteEnter', function (fn, name) {
+            return function beforeRouteEnterWraper(to, from, next) {
+              var _this6 = this;
+
               return fn(to, from, function (cb) {
                 if ((0, _util.isFunction)(cb)) {
                   var _cb = cb;
 
-                  r.config._pending.completeCallbacks[name] = function (el) {
-                    return _cb(el);
+                  r.config._pending.completeCallbacks[name] = function (ci) {
+                    var res = _cb(ci);
+
+                    _this6._callEvent('onRouteEnterNext', r, ci, res);
+
+                    return res;
                   };
 
                   cb = undefined;
                 }
 
-                return next(cb);
+                for (var _len3 = arguments.length, args = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+                  args[_key3 - 1] = arguments[_key3];
+                }
+
+                return next.apply(void 0, [cb].concat(args));
               });
             };
           });
@@ -553,7 +593,7 @@ function () {
         tm.forEach(function (r) {
           var compGuards = {};
 
-          var allGuards = _this3._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
+          var allGuards = _this5._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
               return fn.call(this, to, current);
@@ -652,7 +692,7 @@ function () {
       var _internalHandleRouteInterceptor2 = _asyncToGenerator(
       /*#__PURE__*/
       regeneratorRuntime.mark(function _callee3(location, callback) {
-        var _this4 = this;
+        var _this7 = this;
 
         var isInit,
             isContinue,
@@ -724,21 +764,21 @@ function () {
                     if ((0, _util.isLocation)(ok)) {
                       if (to.onAbort) ok.onAbort = to.onAbort;
                       if (to.onComplete) ok.onComplete = to.onComplete;
-                      return _this4.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+                      return _this7.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
                     }
 
-                    if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok);
-                    if (ok instanceof Error) _this4.errorCallback && _this4.errorCallback(ok);
+                    if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok, to);
+                    if (ok instanceof Error) _this7.errorCallback && _this7.errorCallback(ok);
                     return;
                   }
 
                   if (to.onInit) to.onInit(to);
 
-                  _this4.nextTick(function () {
-                    if ((0, _util.isFunction)(ok)) ok(to);
-                    if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this4._getRouteUpdateGuards(to, current), to, current);
-                    if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok);
-                    routetInterceptors(_this4._getAfterEachGuards(to, current), to, current);
+                  _this7.nextTick(function () {
+                    if ((0, _util.isFunction)(ok)) ok = ok(to);
+                    if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this7._getRouteUpdateGuards(to, current), to, current);
+                    if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok, to);
+                    routetInterceptors(_this7._getAfterEachGuards(to, current), to, current);
                   });
                 });
                 _context3.next = 22;
@@ -767,18 +807,18 @@ function () {
   }, {
     key: "_go",
     value: function _go(to, onComplete, onAbort, onInit, replace) {
-      var _this5 = this;
+      var _this8 = this;
 
       return new Promise(function (resolve, reject) {
-        to = (0, _util.normalizeLocation)(to, _this5.currentRoute);
+        to = (0, _util.normalizeLocation)(to, _this8.currentRoute);
 
-        function doComplete(res) {
-          onComplete && onComplete(res);
+        function doComplete(res, _to) {
+          onComplete && onComplete(res, _to);
           resolve(res);
         }
 
-        function doAbort(res) {
-          onAbort && onAbort(res);
+        function doAbort(res, _to) {
+          onAbort && onAbort(res, _to);
           reject(res);
         }
 
@@ -789,9 +829,9 @@ function () {
 
         if (replace) {
           to.isReplace = true;
-          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this5.history.replace(to);
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this8.history.replace(to);
         } else {
-          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this5.history.push(to);
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this8.history.push(to);
         }
       });
     }
@@ -823,7 +863,7 @@ function () {
   }, {
     key: "getMatched",
     value: function getMatched(to, from, parent) {
-      var _this6 = this;
+      var _this9 = this;
 
       if (!from) from = this.currentRoute;
 
@@ -838,7 +878,7 @@ function () {
         var route = _ref3.route,
             match = _ref3.match;
 
-        var ret = _this6.createMatchedRoute(route, match);
+        var ret = _this9.createMatchedRoute(route, match);
 
         if (from) {
           var fr = from.matched[i];
