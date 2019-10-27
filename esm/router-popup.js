@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+require("core-js/modules/es7.object.get-own-property-descriptors");
+
 require("core-js/modules/es7.symbol.async-iterator");
 
 require("core-js/modules/es6.symbol");
@@ -21,17 +23,29 @@ require("core-js/modules/es6.reflect.get");
 
 require("core-js/modules/es6.object.set-prototype-of");
 
+require("core-js/modules/es6.object.assign");
+
 var _react = _interopRequireDefault(require("react"));
 
 var _rmcDialog = _interopRequireDefault(require("rmc-dialog"));
 
-var _routerView = _interopRequireDefault(require("./router-view"));
+var _routerView = require("./router-view");
 
 var _util = require("./util");
+
+var _config = _interopRequireDefault(require("./config"));
+
+var _reactSwipeable = require("react-swipeable");
 
 require("../style/router-popup.css");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -71,6 +85,8 @@ function (_RouterView) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(RouterPopup).call(this, props));
     _this.state.popup = false;
+    _this.state.prevRoute = null;
+    _this._handleAnimationEnd = _this._handleAnimationEnd.bind(_assertThisInitialized(_this));
     return _this;
   }
 
@@ -79,51 +95,77 @@ function (_RouterView) {
     value: function _refreshCurrentRoute(state) {
       if (!state) state = this.state;
       var prevRoute = state.currentRoute;
+      var newState = {};
 
-      var currentRoute = _get(_getPrototypeOf(RouterPopup.prototype), "_refreshCurrentRoute", this).call(this, state);
+      var currentRoute = _get(_getPrototypeOf(RouterPopup.prototype), "_refreshCurrentRoute", this).call(this, state, newState);
 
-      if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
-        if (this.state) this.setState({
-          popup: true
-        });else state.popup = true;
+      var popup;
+      if (this.isNull(prevRoute) && !this.isNull(currentRoute)) popup = true;
+      if (!this.isNull(prevRoute) && this.isNull(currentRoute)) popup = false;
+
+      if (popup !== undefined && this.state.popup !== popup) {
+        newState.popup = popup;
+        if (!popup && this.props.transitionName) newState.prevRoute = prevRoute;
       }
 
-      if (!this.isNull(prevRoute) && this.isNull(currentRoute)) {
-        if (this.state) this.setState({
-          popup: false
-        });else state.popup = false;
-      }
+      if (this.state && this.state._routerInited) this.setState(newState);else Object.assign(state, newState);
+      return currentRoute;
+    }
+  }, {
+    key: "_handleAnimationEnd",
+    value: function _handleAnimationEnd() {
+      if (!this.state.popup) this.setState({
+        prevRoute: null
+      });
+    }
+  }, {
+    key: "shouldComponentUpdate",
+    value: function shouldComponentUpdate(nextProps, nextState) {
+      if (this.state.popup !== nextState.popup) return true;
+      if (this.state.prevRoute !== nextState.prevRoute) return true;
+      return _get(_getPrototypeOf(RouterPopup.prototype), "shouldComponentUpdate", this).call(this, nextProps, nextState);
     }
   }, {
     key: "renderCurrent",
     value: function renderCurrent(currentRoute) {
-      if (!currentRoute || !currentRoute.subpath) return this.props.children || null;
+      var _this2 = this;
+
       var routes = this.state.routes; // eslint-disable-next-line
 
       var _this$props = this.props,
           _updateRef = _this$props._updateRef,
-          oldContainer = _this$props.container,
           router = _this$props.router,
-          popup = _this$props.popup,
+          oldContainer = _this$props.container,
+          prefixCls = _this$props.prefixCls,
+          transitionName = _this$props.transitionName,
+          zIndexStart = _this$props.zIndexStart,
           children = _this$props.children,
-          props = _objectWithoutProperties(_this$props, ["_updateRef", "container", "router", "popup", "children"]);
+          props = _objectWithoutProperties(_this$props, ["_updateRef", "router", "container", "prefixCls", "transitionName", "zIndexStart", "children"]);
 
-      var _this$state$router$cu = this.state.router.currentRoute,
-          query = _this$state$router$cu.query,
-          params = _this$state$router$cu.params;
-      var ret = (0, _util.renderRoute)(currentRoute, routes, props, children, {
+      var _this$state = this.state,
+          popup = _this$state.popup,
+          prevRoute = _this$state.prevRoute;
+
+      var _ref = this.state.router.currentRoute || {},
+          query = _ref.query,
+          params = _ref.params;
+
+      var ret = (0, _util.renderRoute)(!popup ? prevRoute : currentRoute, routes, props, children, {
         name: this.name,
         query: query,
         params: params,
         container: function container(comp) {
           if (oldContainer) comp = oldContainer(comp);
-          if (!comp) return comp;
-          return _react.default.createElement(_rmcDialog.default, {
-            prefixCls: 'rvr-route-pupup',
-            transitionName: 'rvr-slide-right',
+          return _react.default.createElement(_reactSwipeable.Swipeable, {}, _react.default.createElement(_rmcDialog.default, {
+            prefixCls: prefixCls,
+            transitionName: transitionName,
             closable: false,
-            visible: popup
-          }, comp);
+            visible: Boolean(popup && comp),
+            zIndex: _config.default.zIndexStart + currentRoute.depth * _config.default.zIndexStep,
+            onClose: function onClose() {
+              return transitionName && setTimeout(_this2._handleAnimationEnd, _this2.delay);
+            }
+          }, comp));
         },
         ref: this._updateRef
       });
@@ -132,7 +174,18 @@ function (_RouterView) {
   }]);
 
   return RouterPopup;
-}(_routerView.default);
+}(_routerView.RouterView);
 
-var _default = RouterPopup;
+RouterPopup.defaultProps = {
+  prefixCls: 'rvr-route-popup',
+  transitionName: 'rvr-slide-right',
+  delay: 200
+};
+
+var _default = _react.default.forwardRef(function (props, ref) {
+  return _react.default.createElement(RouterPopup, _objectSpread({}, props, {
+    _updateRef: ref
+  }));
+});
+
 exports.default = _default;

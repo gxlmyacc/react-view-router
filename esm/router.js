@@ -17,8 +17,6 @@ require("core-js/modules/es6.symbol");
 
 require("core-js/modules/es6.array.find-index");
 
-require("core-js/modules/es6.object.assign");
-
 require("core-js/modules/es6.regexp.search");
 
 require("core-js/modules/es6.regexp.match");
@@ -30,6 +28,8 @@ require("regenerator-runtime/runtime");
 require("core-js/modules/es6.string.includes");
 
 require("core-js/modules/es6.regexp.replace");
+
+require("core-js/modules/es6.object.assign");
 
 require("core-js/modules/es7.array.includes");
 
@@ -62,6 +62,10 @@ function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread n
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -308,10 +312,9 @@ function () {
     key: "use",
     value: function use(_ref) {
       var routes = _ref.routes,
-          parseQuery = _ref.parseQuery,
-          stringifyQuery = _ref.stringifyQuery,
           inheritProps = _ref.inheritProps,
-          install = _ref.install;
+          install = _ref.install,
+          restOptions = _objectWithoutProperties(_ref, ["routes", "inheritProps", "install"]);
 
       if (routes) {
         this.routes = routes ? (0, _util.normalizeRoutes)(routes) : [];
@@ -319,8 +322,7 @@ function () {
       }
 
       if (inheritProps !== undefined) _config.default.inheritProps = inheritProps;
-      if (parseQuery) _config.default.parseQuery = parseQuery;
-      if (stringifyQuery) _config.default.stringifyQuery = stringifyQuery;
+      Object.assign(_config.default, restOptions);
       if (install) this.install = install.bind(this);
     }
   }, {
@@ -517,9 +519,11 @@ function () {
   }, {
     key: "_getBeforeEachGuards",
     value: function _getBeforeEachGuards(to, from, current) {
-      var _this5 = this;
+      var _this4 = this;
 
       var ret = _toConsumableArray(this.beforeEachGuards);
+
+      var view = this;
 
       if (from) {
         var fm = this._getChangeMatched(from, to).filter(function (r) {
@@ -530,8 +534,6 @@ function () {
 
         ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteLeave', function (fn, name, ci, r) {
           return function beforeRouteLeaveWraper(to, from, next) {
-            var _this4 = this;
-
             return fn(to, from, function (cb) {
               if ((0, _util.isFunction)(cb)) {
                 var _cb = cb;
@@ -539,7 +541,7 @@ function () {
                 cb = function cb() {
                   var res = _cb.apply(void 0, arguments);
 
-                  _this4._callEvent('onRouteLeaveNext', r, ci, res);
+                  view._callEvent('onRouteLeaveNext', r, ci, res);
 
                   return res;
                 };
@@ -559,10 +561,8 @@ function () {
         var tm = this._getChangeMatched(to, from);
 
         tm.forEach(function (r) {
-          var guards = _this5._getComponentGurads(r, 'beforeRouteEnter', function (fn, name) {
+          var guards = _this4._getComponentGurads(r, 'beforeRouteEnter', function (fn, name) {
             return function beforeRouteEnterWraper(to, from, next) {
-              var _this6 = this;
-
               return fn(to, from, function (cb) {
                 if ((0, _util.isFunction)(cb)) {
                   var _cb = cb;
@@ -570,7 +570,7 @@ function () {
                   r.config._pending.completeCallbacks[name] = function (ci) {
                     var res = _cb(ci);
 
-                    _this6._callEvent('onRouteEnterNext', r, ci, res);
+                    view._callEvent('onRouteEnterNext', r, ci, res);
 
                     return res;
                   };
@@ -593,7 +593,7 @@ function () {
         tm.forEach(function (r) {
           var compGuards = {};
 
-          var allGuards = _this5._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
+          var allGuards = _this4._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
               return fn.call(this, to, current);
@@ -692,7 +692,7 @@ function () {
       var _internalHandleRouteInterceptor2 = _asyncToGenerator(
       /*#__PURE__*/
       regeneratorRuntime.mark(function _callee3(location, callback) {
-        var _this7 = this;
+        var _this5 = this;
 
         var isInit,
             isContinue,
@@ -764,21 +764,21 @@ function () {
                     if ((0, _util.isLocation)(ok)) {
                       if (to.onAbort) ok.onAbort = to.onAbort;
                       if (to.onComplete) ok.onComplete = to.onComplete;
-                      return _this7.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+                      return _this5.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
                     }
 
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok, to);
-                    if (ok instanceof Error) _this7.errorCallback && _this7.errorCallback(ok);
+                    if (ok instanceof Error) _this5.errorCallback && _this5.errorCallback(ok);
                     return;
                   }
 
                   if (to.onInit) to.onInit(to);
 
-                  _this7.nextTick(function () {
+                  _this5.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok = ok(to);
-                    if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this7._getRouteUpdateGuards(to, current), to, current);
+                    if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this5._getRouteUpdateGuards(to, current), to, current);
                     if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok, to);
-                    routetInterceptors(_this7._getAfterEachGuards(to, current), to, current);
+                    routetInterceptors(_this5._getAfterEachGuards(to, current), to, current);
                   });
                 });
                 _context3.next = 22;
@@ -807,10 +807,10 @@ function () {
   }, {
     key: "_go",
     value: function _go(to, onComplete, onAbort, onInit, replace) {
-      var _this8 = this;
+      var _this6 = this;
 
       return new Promise(function (resolve, reject) {
-        to = (0, _util.normalizeLocation)(to, _this8.currentRoute);
+        to = (0, _util.normalizeLocation)(to, _this6.currentRoute);
 
         function doComplete(res, _to) {
           onComplete && onComplete(res, _to);
@@ -829,9 +829,9 @@ function () {
 
         if (replace) {
           to.isReplace = true;
-          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this8.history.replace(to);
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this6.history.replace(to);
         } else {
-          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this8.history.push(to);
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this6.history.push(to);
         }
       });
     }
@@ -853,17 +853,18 @@ function () {
         viewInstances: {}
       };
       Object.keys(route).forEach(function (key) {
-        return ['path', 'name', 'subpath', 'meta', 'redirect', 'alias'].includes(key) && (ret[key] = route[key]);
+        return ['path', 'name', 'subpath', 'meta', 'redirect', 'depth'].includes(key) && (ret[key] = route[key]);
       });
       ret.config = route;
-      ret.url = match.url;
-      ret.params = match.params;
+      if (!match) match = {};
+      ret.url = match.url || '';
+      ret.params = match.params || {};
       return ret;
     }
   }, {
     key: "getMatched",
     value: function getMatched(to, from, parent) {
-      var _this9 = this;
+      var _this7 = this;
 
       if (!from) from = this.currentRoute;
 
@@ -878,7 +879,7 @@ function () {
         var route = _ref3.route,
             match = _ref3.match;
 
-        var ret = _this9.createMatchedRoute(route, match);
+        var ret = _this7.createMatchedRoute(route, match);
 
         if (from) {
           var fr = from.matched[i];

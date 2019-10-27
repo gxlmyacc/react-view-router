@@ -2,7 +2,7 @@ import React from 'react';
 import {
   renderRoute, normalizeRoute, normalizeRoutes, isFunction,
   isRouteChanged, isRoutesChanged,
-  getParentRouterView,
+  getParentRouterView
 } from './util';
 
 class RouterView extends React.Component {
@@ -61,7 +61,7 @@ class RouterView extends React.Component {
     return matched.length > depth ? matched[depth] : null;
   }
 
-  _refreshCurrentRoute(state) {
+  _refreshCurrentRoute(state, newState) {
     if (!state) state = this.state;
     let currentRoute = this._getRouteMatch(state, state._routerDepth);
     if (!currentRoute) {
@@ -73,7 +73,10 @@ class RouterView extends React.Component {
     } else if (!currentRoute || currentRoute.redirect) currentRoute = null;
 
     if (currentRoute) currentRoute.viewInstances[this.name] = this;
-    if (this.state && this.state._routerInited) this.setState({ currentRoute });
+    if (this.state && this.state._routerInited) {
+      if (newState) Object.assign(newState, { currentRoute });
+      else this.setState({ currentRoute });
+    }
     return currentRoute;
   }
 
@@ -96,7 +99,7 @@ class RouterView extends React.Component {
   }
 
   isNull(route) {
-    return !route || !route.subpath;
+    return !route || !route.path || route.subpath === '';
   }
 
   async componentDidMount() {

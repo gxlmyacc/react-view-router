@@ -147,7 +147,9 @@ function normalizePath(path) {
   return paths.join('/');
 }
 
-function normalizeRoute(route, parent, depth, force) {
+function normalizeRoute(route, parent) {
+  var depth = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+  var force = arguments.length > 3 ? arguments[3] : undefined;
   var path = normalizePath(parent ? "".concat(parent.path, "/").concat(route.path.replace(/^(\/)/, '')) : route.path);
 
   var r = _objectSpread({}, route, {
@@ -162,6 +164,7 @@ function normalizeRoute(route, parent, depth, force) {
     innumerable(r, 'children', normalizeRoutes(r.children, r, depth + 1, force));
   }
 
+  r.depth = depth;
   r.exact = r.exact !== undefined ? r.exact : Boolean(r.redirect || r.index);
   if (!r.components) r.components = {};
 
@@ -197,7 +200,8 @@ function normalizeRoute(route, parent, depth, force) {
   return r;
 }
 
-function normalizeRoutes(routes, parent, depth) {
+function normalizeRoutes(routes, parent) {
+  var depth = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
   var force = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
   if (!routes) routes = [];
   if (!force && routes._normalized) return routes;
@@ -214,7 +218,7 @@ function normalizeRoutePath(path, route, append) {
   if (route && route.matched) route = route.matched[route.matched.length - 1];
   if (!path || path[0] === '/' || !route) return path || '';
   if (route.config) route = route.config;
-  var parent = append ? route : route.parent;
+  var parent = append || /^\.\//.test(path) ? route : route.parent;
 
   while (parent && path[0] !== '/') {
     path = "".concat(parent.path, "/").concat(path);

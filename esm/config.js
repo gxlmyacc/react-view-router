@@ -98,6 +98,8 @@ var _default = {
   _parseQuery: _parseQuery,
   _stringifyQuery: _stringifyQuery,
   inheritProps: true,
+  zIndexStart: 0,
+  zIndexStep: 1,
 
   get parseQuery() {
     return this._parseQuery;

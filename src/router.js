@@ -87,6 +87,7 @@ export default class ReactViewRouter {
     this.plugins = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
+    this.prevRoute = null;
     this.currentRoute = null;
     this.viewRoot = null;
     this.errorCallback = null;
@@ -110,9 +111,6 @@ export default class ReactViewRouter {
     }
 
     if (inheritProps !== undefined) config.inheritProps = inheritProps;
-
-    if (parseQuery) config.parseQuery = parseQuery;
-    if (stringifyQuery) config.stringifyQuery = stringifyQuery;
 
     Object.assign(config, restOptions);
 
@@ -495,7 +493,7 @@ export default class ReactViewRouter {
     const last = matched.length ? matched[matched.length - 1] : { url: '', params: {}, meta: {} };
 
     const { search, query, path, onAbort, onComplete } = to;
-    const ret = Object.assign({
+    const ret = {
       action: this.history.action,
       url: last.url,
       basename: this.basename,
@@ -507,7 +505,7 @@ export default class ReactViewRouter {
       meta: last.meta || {},
       onAbort,
       onComplete
-    });
+    };
     if (to.isRedirect && from) {
       ret.redirectedFrom = from;
       if (!ret.onAbort && from.onAbort) ret.onAbort = from.onAbort;
@@ -519,8 +517,8 @@ export default class ReactViewRouter {
 
   updateRoute(to) {
     if (!to) to = this.history.location;
-    const current = this.currentRoute;
-    this.currentRoute = this.createRoute(to, current);
+    this.prevRoute = this.currentRoute;
+    this.currentRoute = this.createRoute(to, this.prevRoute);
 
     // const statesLen = this.states.length + this.stateOrigin;
     // const historyLen = this.history.length - this.stateOrigin;
@@ -532,7 +530,7 @@ export default class ReactViewRouter {
     //   this.states.push(this.currentRoute.state);
     // }
 
-    let tm = current && this._getChangeMatched(current, this.currentRoute, 1)[0];
+    let tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, 1)[0];
     if (tm) {
       Object.keys(tm.viewInstances).forEach(key => tm.viewInstances[key]._refreshCurrentRoute());
     } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute();

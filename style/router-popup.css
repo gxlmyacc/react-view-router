@@ -33,10 +33,26 @@
   background-color: #fff;
   background-clip: padding-box;
   height: 100%;
+  box-shadow: -4px 0 8px -1px #999;
+}
+
+.rvr-route-popup-content.swipe-restore {
+  -webkit-transform: translateX(0px);
+  transform: translateX(0px);
+}
+
+.rvr-route-popup-content.swipe-hide {
+  -webkit-transform: translateX(100%);
+  transform: translateX(100%);
+}
+
+.rvr-route-popup-body.swiped {
+  transition: transform cubic-bezier(0.55, 0, 0.55, 0.2) .2s;
 }
 
 .rvr-route-popup-body {
   -webkit-margin-collapse: discard;
+  margin-collapse: discard;
   height: 100%;
   width: 100%;
   overflow: auto;

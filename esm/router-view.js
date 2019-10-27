@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = exports.RouterView = void 0;
 
 require("core-js/modules/es6.string.iterator");
 
@@ -31,9 +31,9 @@ require("core-js/modules/es6.object.set-prototype-of");
 
 require("core-js/modules/es6.array.find-index");
 
-require("core-js/modules/es6.object.assign");
-
 require("regenerator-runtime/runtime");
+
+require("core-js/modules/es6.object.assign");
 
 require("core-js/modules/es6.number.constructor");
 
@@ -149,7 +149,7 @@ function (_React$Component) {
     }
   }, {
     key: "_refreshCurrentRoute",
-    value: function _refreshCurrentRoute(state) {
+    value: function _refreshCurrentRoute(state, newState) {
       if (!state) state = this.state;
 
       var currentRoute = this._getRouteMatch(state, state._routerDepth);
@@ -162,9 +162,15 @@ function (_React$Component) {
       } else if (!currentRoute || currentRoute.redirect) currentRoute = null;
 
       if (currentRoute) currentRoute.viewInstances[this.name] = this;
-      if (this.state && this.state._routerInited) this.setState({
-        currentRoute: currentRoute
-      });
+
+      if (this.state && this.state._routerInited) {
+        if (newState) Object.assign(newState, {
+          currentRoute: currentRoute
+        });else this.setState({
+          currentRoute: currentRoute
+        });
+      }
+
       return currentRoute;
     }
   }, {
@@ -394,6 +400,8 @@ function (_React$Component) {
 
   return RouterView;
 }(_react.default.Component);
+
+exports.RouterView = RouterView;
 
 var _default = _react.default.forwardRef(function (props, ref) {
   return _react.default.createElement(RouterView, _objectSpread({}, props, {
