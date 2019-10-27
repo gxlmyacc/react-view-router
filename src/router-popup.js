@@ -86,9 +86,9 @@ class RouterPopup extends RouterView {
     const { routes } = this.state;
     // eslint-disable-next-line
     const { _updateRef, router, container: oldContainer, prefixCls, transitionName, zIndexStart,
-      children, touchBack, ...props
+      popupClassName, children, touchBack, ...props
     } = this.props;
-    const { popup, prevRoute, bodyClassName, bodyStyle } = this.state;
+    const { popup, prevRoute } = this.state;
     const { query, params } = this.state.router.currentRoute || {};
 
     let ret = renderRoute(!popup ? prevRoute : currentRoute, routes, props,
@@ -108,10 +108,9 @@ class RouterPopup extends RouterView {
           comp = React.createElement(Dialog, {
             ref: el => this.dialog = (el && el._component),
             prefixCls,
-            className: bodyClassName,
+            className: popupClassName,
             transitionName,
             closable: false,
-            bodyStyle,
             visible: Boolean(popup && comp),
             zIndex: config.zIndexStart + currentRoute.depth * config.zIndexStep,
             onClose: () => transitionName && setTimeout(this._handleAnimationEnd, this.delay)
