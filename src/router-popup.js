@@ -45,8 +45,9 @@ class RouterPopup extends RouterView {
     }
     if (this.isSwiping === false) return;
 
+    let deltaX = Math.max(-event.deltaX, 0);
     const bodyContent = this.dialog.bodyRef.parentElement;
-    bodyContent.style.webkitTransform = bodyContent.style.transform = `translateX(${-event.deltaX}px)`;
+    bodyContent.style.webkitTransform = bodyContent.style.transform = `translateX(${deltaX}px)`;
   }
 
   _handleSwipeEnd(event) {
