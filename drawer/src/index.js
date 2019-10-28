@@ -2,7 +2,7 @@ import React from 'react';
 import { RouterViewComponent, renderRoute, config } from 'react-view-router';
 import Drawer from './drawer';
 
-import '../style/router-drawer.css';
+import '../style/drawer.css';
 
 class RouterDrawer extends RouterViewComponent {
 
