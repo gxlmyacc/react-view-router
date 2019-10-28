@@ -269,8 +269,8 @@ function (_React$Component) {
   }, {
     key: "render",
     value: function render() {
-      if (!CAN_USE_DOM) return null;
       var props = this.props;
+      if (!CAN_USE_DOM || !this.drawerRef && !props.open) return null;
       var drawer = this.getDrawerElement();
 
       if (props.mask) {

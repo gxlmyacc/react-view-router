@@ -177,9 +177,10 @@ class Drawer extends React.Component {
   }
 
   render() {
-    if (!CAN_USE_DOM) return null;
-
     const props = this.props;
+
+    if (!CAN_USE_DOM || (!this.drawerRef && !props.open)) return null;
+
     let drawer = this.getDrawerElement();
     if (props.mask) {
       drawer = React.createElement('div', {

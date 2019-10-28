@@ -31,7 +31,7 @@ var _reactViewRouter = require("react-view-router");
 
 var _drawer = _interopRequireDefault(require("./drawer"));
 
-require("../style/router-drawer.css");
+require("../style/drawer.css");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
