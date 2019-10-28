@@ -287,6 +287,7 @@ function () {
     this.plugins = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
+    this.prevRoute = null;
     this.currentRoute = null;
     this.viewRoot = null;
     this.errorCallback = null; // this.states = [];
@@ -919,7 +920,7 @@ function () {
           path = to.path,
           onAbort = to.onAbort,
           onComplete = to.onComplete;
-      var ret = Object.assign({
+      var ret = {
         action: this.history.action,
         url: last.url,
         basename: this.basename,
@@ -931,7 +932,7 @@ function () {
         meta: last.meta || {},
         onAbort: onAbort,
         onComplete: onComplete
-      });
+      };
 
       if (to.isRedirect && from) {
         ret.redirectedFrom = from;
@@ -946,8 +947,8 @@ function () {
     key: "updateRoute",
     value: function updateRoute(to) {
       if (!to) to = this.history.location;
-      var current = this.currentRoute;
-      this.currentRoute = this.createRoute(to, current); // const statesLen = this.states.length + this.stateOrigin;
+      this.prevRoute = this.currentRoute;
+      this.currentRoute = this.createRoute(to, this.prevRoute); // const statesLen = this.states.length + this.stateOrigin;
       // const historyLen = this.history.length - this.stateOrigin;
       // if (this.history.action === 'POP') {
       //   this.currentRoute.state = this.states[historyLen];
@@ -957,7 +958,7 @@ function () {
       //   this.states.push(this.currentRoute.state);
       // }
 
-      var tm = current && this._getChangeMatched(current, this.currentRoute, 1)[0];
+      var tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, 1)[0];
 
       if (tm) {
         Object.keys(tm.viewInstances).forEach(function (key) {

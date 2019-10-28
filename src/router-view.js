@@ -215,7 +215,7 @@ class RouterView extends React.Component {
 }
 
 export {
-  RouterView
+  RouterView as RouterViewComponent
 };
 
 export default React.forwardRef((props, ref) => React.createElement(RouterView, {

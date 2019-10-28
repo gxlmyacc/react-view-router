@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = exports.RouterView = void 0;
+exports.default = exports.RouterViewComponent = void 0;
 
 require("core-js/modules/es6.string.iterator");
 
@@ -200,7 +200,7 @@ function (_React$Component) {
   }, {
     key: "isNull",
     value: function isNull(route) {
-      return !route || !route.subpath;
+      return !route || !route.path || route.subpath === '';
     }
   }, {
     key: "componentDidMount",
@@ -401,7 +401,7 @@ function (_React$Component) {
   return RouterView;
 }(_react.default.Component);
 
-exports.RouterView = RouterView;
+exports.RouterViewComponent = RouterView;
 
 var _default = _react.default.forwardRef(function (props, ref) {
   return _react.default.createElement(RouterView, _objectSpread({}, props, {

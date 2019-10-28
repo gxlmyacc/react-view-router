@@ -46,6 +46,8 @@ require("regenerator-runtime/runtime");
 
 require("core-js/modules/es7.object.get-own-property-descriptors");
 
+require("core-js/modules/es6.object.assign");
+
 require("core-js/modules/es6.regexp.to-string");
 
 require("core-js/modules/es6.regexp.search");
@@ -67,8 +69,6 @@ require("core-js/modules/es6.object.keys");
 require("core-js/modules/es6.regexp.replace");
 
 require("core-js/modules/es6.regexp.split");
-
-require("core-js/modules/es6.object.assign");
 
 require("core-js/modules/es6.promise");
 
@@ -127,10 +127,9 @@ function nextTick(cb, ctx) {
 
 function innumerable(obj, key, value) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {
-    configurable: true,
-    writable: true
+    configurable: true
   };
-  Object.defineProperty(obj, key, Object.assign({
+  Object.defineProperty(obj, key, _objectSpread({
     value: value
   }, options));
   return obj;

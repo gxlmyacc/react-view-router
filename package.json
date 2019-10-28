@@ -1,6 +1,6 @@
 {
   "name": "react-view-router",
-  "version": "2.0.5",
+  "version": "2.0.4",
   "description": "react-view-router",
   "keywords": [
     "react-view-router",
@@ -12,7 +12,7 @@
   ],
   "sideEffects": false,
   "main": "dist/react-view-router.min.js",
-  "module": "esm/index.js",
+  "module": "src/index.js",
   "engines": {
     "node": "> 6.9.1"
   },
@@ -20,13 +20,14 @@
     "dist",
     "esm",
     "src",
-    "build",
-    "style"
+    "build"
   ],
   "scripts": {
     "build-dev": "cross-env NODE_ENV=development webpack --progresss  --config build/webpack-dev.config.js",
     "build-prod": "cross-env NODE_ENV=production webpack --progresss  --config build/webpack-prod.config.js",
-    "build": "babel src -d esm",
+    "build-src": "babel src -d esm",
+    "build-drawer": "babel drawer/src -d drawer/esm",
+    "build": "npm run build-src && npm run build-drawer",
     "prepare": "npm run build"
   },
   "repository": {
@@ -35,18 +36,16 @@
   },
   "author": "gxlmyacc",
   "dependencies": {
-    "history-fix": "^4.10.1",
+    "history-fix": "^1.0.1",
     "path-to-regexp": "^3.0.0",
-    "react": "^16.9.0",
-    "react-swipeable": "^5.4.0",
-    "rmc-dialog": "^1.1.1"
+    "react": "^16.9.0"
   },
   "peerDependencies": {
-    "history-fix": ">=4",
-    "path-to-regexp": ">=3",
+    "history-fix": ">=1",
     "prop-types": ">=15",
     "react": ">=16",
-    "react-is": ">=16"
+    "react-is": ">=16",
+    "path-to-regexp": ">=3"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",

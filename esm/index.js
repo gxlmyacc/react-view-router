@@ -1,21 +1,26 @@
 "use strict";
 
+require("core-js/modules/es6.object.keys");
+
 require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.array.iterator");
 
 require("core-js/modules/es6.object.to-string");
 
-require("core-js/modules/es6.object.keys");
+require("core-js/modules/es6.string.iterator");
+
+require("core-js/modules/es6.weak-map");
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var _exportNames = {
   RouterView: true,
-  RouterPopup: true,
+  RouterViewComponent: true,
   withRouter: true,
   createRouterLink: true,
+  config: true,
   useRouteGuards: true,
   REACT_FORWARD_REF_TYPE: true,
   lazyImport: true
@@ -26,10 +31,10 @@ Object.defineProperty(exports, "RouterView", {
     return _routerView.default;
   }
 });
-Object.defineProperty(exports, "RouterPopup", {
+Object.defineProperty(exports, "RouterViewComponent", {
   enumerable: true,
   get: function get() {
-    return _routerPopup.default;
+    return _routerView.RouterViewComponent;
   }
 });
 Object.defineProperty(exports, "withRouter", {
@@ -42,6 +47,12 @@ Object.defineProperty(exports, "createRouterLink", {
   enumerable: true,
   get: function get() {
     return _routerLink.default;
+  }
+});
+Object.defineProperty(exports, "config", {
+  enumerable: true,
+  get: function get() {
+    return _config.default;
   }
 });
 Object.defineProperty(exports, "useRouteGuards", {
@@ -66,13 +77,13 @@ exports.default = void 0;
 
 var _router = _interopRequireDefault(require("./router"));
 
-var _routerView = _interopRequireDefault(require("./router-view"));
-
-var _routerPopup = _interopRequireDefault(require("./router-popup"));
+var _routerView = _interopRequireWildcard(require("./router-view"));
 
 var _withRouter = _interopRequireDefault(require("./with-router"));
 
 var _routerLink = _interopRequireDefault(require("./router-link"));
+
+var _config = _interopRequireDefault(require("./config"));
 
 var _routeGuard = require("./route-guard");
 
@@ -90,6 +101,10 @@ Object.keys(_util).forEach(function (key) {
     }
   });
 });
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; if (obj != null) { var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

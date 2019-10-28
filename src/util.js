@@ -11,8 +11,8 @@ function nextTick(cb, ctx) {
   });
 }
 
-function innumerable(obj, key, value, options = { configurable: true, writable: true }) {
-  Object.defineProperty(obj, key, Object.assign({ value }, options));
+function innumerable(obj, key, value, options = { configurable: true }) {
+  Object.defineProperty(obj, key, { value, ...options });
   return obj;
 }
 
@@ -405,5 +405,5 @@ export {
   innumerable,
   afterInterceptors,
   getParentRoute,
-  getParentRouterView,
+  getParentRouterView
 };
