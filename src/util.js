@@ -232,6 +232,7 @@ async function afterInterceptors(interceptors, ...args) {
 function renderRoute(route, routes, props, children, options = {}) {
   if (props === undefined) props = {};
   if (!route) return null;
+  if (React.isValidElement(route)) return route;
   if (route.config) route = route.config;
 
   function configProps(_props, configs, obj, name) {

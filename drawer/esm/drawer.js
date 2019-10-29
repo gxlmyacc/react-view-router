@@ -68,6 +68,7 @@ function (_React$Component) {
     _classCallCheck(this, Drawer);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(Drawer).call(this, props));
+    _this.closed = false;
     _this.isTouching = null;
     _this.getContainer = _this.getContainer.bind(_assertThisInitialized(_this));
     _this.removeContainer = _this.removeContainer.bind(_assertThisInitialized(_this));
@@ -110,21 +111,23 @@ function (_React$Component) {
         var drawerRef = this.drawerRef;
         var viewLength = drawerRef.getBoundingClientRect().width;
         drawerRef.classList.add('touched');
-        var fn = null;
+        var close = null;
         var actionClass = '';
 
         if (-event.deltaX > viewLength / 2) {
           actionClass = 'touch-hide';
 
-          fn = function fn() {
-            return _this2.close();
+          close = function close() {
+            _this2.closed = true;
+
+            _this2.close();
           };
         } else actionClass = 'touch-restore';
 
         drawerRef.style.webkitTransform = drawerRef.style.transform = '';
         if (actionClass) drawerRef.classList.add(actionClass);
         setTimeout(function () {
-          fn && fn();
+          close && close();
           drawerRef.classList.remove(actionClass);
           drawerRef.classList.remove('touched');
         }, this.props.delay);
@@ -174,6 +177,7 @@ function (_React$Component) {
   }, {
     key: "getMaskTransitionName",
     value: function getMaskTransitionName() {
+      if (this.closed) return '';
       var props = this.props;
       var transitionName = props.maskTransitionName;
       var animation = props.maskAnimation;
@@ -187,6 +191,7 @@ function (_React$Component) {
   }, {
     key: "getTransitionName",
     value: function getTransitionName() {
+      if (this.closed) return '';
       var props = this.props;
       var transitionName = props.transitionName;
       var animation = props.animation;
@@ -204,7 +209,6 @@ function (_React$Component) {
 
       var props = this.props;
       var prefixCls = props.prefixCls;
-      var transitionName = this.getTransitionName();
 
       var dialogElement = _react.default.createElement('div', {
         key: 'drawer-element',
@@ -217,15 +221,19 @@ function (_React$Component) {
         open: props.open
       }, props.children);
 
-      dialogElement = _react.default.createElement(_rcAnimate.default, {
-        key: 'drawer',
-        showProp: 'open',
-        onAppear: this.onAnimateAppear,
-        onLeave: this.onAnimateLeave,
-        transitionName: transitionName,
-        component: '',
-        transitionAppear: true
-      }, dialogElement);
+      var transitionName = this.getTransitionName();
+
+      if (transitionName) {
+        dialogElement = _react.default.createElement(_rcAnimate.default, {
+          key: 'drawer',
+          showProp: 'open',
+          onAppear: this.onAnimateAppear,
+          onLeave: this.onAnimateLeave,
+          transitionName: transitionName,
+          component: '',
+          transitionAppear: true
+        }, dialogElement);
+      }
 
       if (this.props.touch) {
         dialogElement = _react.default.createElement(_reactSwipeable.Swipeable, {
@@ -269,8 +277,9 @@ function (_React$Component) {
   }, {
     key: "render",
     value: function render() {
+      if (!CAN_USE_DOM) return null;
       var props = this.props;
-      if (!CAN_USE_DOM || !this.drawerRef && !props.open) return null;
+      if (props.open) this.closed = false;
       var drawer = this.getDrawerElement();
 
       if (props.mask) {

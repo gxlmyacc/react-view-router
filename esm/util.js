@@ -508,6 +508,7 @@ function renderRoute(route, routes, props, children) {
   var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
   if (props === undefined) props = {};
   if (!route) return null;
+  if (_react.default.isValidElement(route)) return route;
   if (route.config) route = route.config;
 
   function configProps(_props, configs, obj, name) {

@@ -13,6 +13,7 @@ class Drawer extends React.Component {
 
   constructor(props) {
     super(props);
+    this.closed = false;
     this.isTouching = null;
     this.getContainer = this.getContainer.bind(this);
     this.removeContainer = this.removeContainer.bind(this);
@@ -47,16 +48,19 @@ class Drawer extends React.Component {
       const drawerRef = this.drawerRef;
       const viewLength = drawerRef.getBoundingClientRect().width;
       drawerRef.classList.add('touched');
-      let fn = null;
+      let close = null;
       let actionClass = '';
       if (-event.deltaX > (viewLength / 2)) {
         actionClass = 'touch-hide';
-        fn = () => this.close();
+        close = () => {
+          this.closed = true;
+          this.close();
+        };
       } else actionClass = 'touch-restore';
       drawerRef.style.webkitTransform = drawerRef.style.transform = '';
       if (actionClass) drawerRef.classList.add(actionClass);
       setTimeout(() => {
-        fn && fn();
+        close && close();
         drawerRef.classList.remove(actionClass);
         drawerRef.classList.remove('touched');
       }, this.props.delay);
@@ -98,6 +102,7 @@ class Drawer extends React.Component {
   }
 
   getMaskTransitionName() {
+    if (this.closed) return '';
     const props = this.props;
     let transitionName = props.maskTransitionName;
     const animation = props.maskAnimation;
@@ -108,6 +113,7 @@ class Drawer extends React.Component {
   }
 
   getTransitionName() {
+    if (this.closed) return '';
     const props = this.props;
     let transitionName = props.transitionName;
     const animation = props.animation;
@@ -121,7 +127,6 @@ class Drawer extends React.Component {
     const props = this.props;
     const prefixCls = props.prefixCls;
 
-    const transitionName = this.getTransitionName();
     let dialogElement = React.createElement('div', {
       key: 'drawer-element',
       role: 'document',
@@ -131,15 +136,18 @@ class Drawer extends React.Component {
       open: props.open,
     }, props.children);
 
-    dialogElement = React.createElement(Animate, {
-      key: 'drawer',
-      showProp: 'open',
-      onAppear: this.onAnimateAppear,
-      onLeave: this.onAnimateLeave,
-      transitionName,
-      component: '',
-      transitionAppear: true,
-    }, dialogElement);
+    const transitionName = this.getTransitionName();
+    if (transitionName) {
+      dialogElement = React.createElement(Animate, {
+        key: 'drawer',
+        showProp: 'open',
+        onAppear: this.onAnimateAppear,
+        onLeave: this.onAnimateLeave,
+        transitionName,
+        component: '',
+        transitionAppear: true,
+      }, dialogElement);
+    }
 
     if (this.props.touch) {
       dialogElement = React.createElement(Swipeable, {
@@ -177,9 +185,11 @@ class Drawer extends React.Component {
   }
 
   render() {
+    if (!CAN_USE_DOM) return null;
+
     const props = this.props;
 
-    if (!CAN_USE_DOM || (!this.drawerRef && !props.open)) return null;
+    if (props.open) this.closed = false;
 
     let drawer = this.getDrawerElement();
     if (props.mask) {

@@ -25,7 +25,7 @@ class RouterDrawer extends RouterViewComponent {
     if (!this.isNull(prevRoute) && this.isNull(currentRoute)) openDrawer = false;
     if (openDrawer !== undefined && this.state.openDrawer !== openDrawer) {
       newState.openDrawer = openDrawer;
-      if (!openDrawer && this.props.transitionName) newState.prevRoute = prevRoute;
+      if (!openDrawer && this.props.position) newState.prevRoute = prevRoute;
     }
 
     if (this.state && this.state._routerInited) this.setState(newState);
@@ -40,7 +40,9 @@ class RouterDrawer extends RouterViewComponent {
   }
 
   _handleClose() {
-    this.state.router.back();
+    const { router, parentRoute } = this.state;
+    if (parentRoute && router.currentRoute.path !== parentRoute.path) this.state.router.back();
+    this.setState({ openDrawer: false });
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -99,6 +101,7 @@ class RouterDrawer extends RouterViewComponent {
 RouterDrawer.defaultProps = {
   prefixCls: 'rvr-route-drawer',
   position: 'right',
+  touch: true,
 };
 
 export default React.forwardRef((props, ref) => React.createElement(RouterDrawer, {

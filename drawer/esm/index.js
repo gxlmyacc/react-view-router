@@ -101,7 +101,7 @@ function (_RouterViewComponent) {
 
       if (openDrawer !== undefined && this.state.openDrawer !== openDrawer) {
         newState.openDrawer = openDrawer;
-        if (!openDrawer && this.props.transitionName) newState.prevRoute = prevRoute;
+        if (!openDrawer && this.props.position) newState.prevRoute = prevRoute;
       }
 
       if (this.state && this.state._routerInited) this.setState(newState);else Object.assign(state, newState);
@@ -118,7 +118,13 @@ function (_RouterViewComponent) {
   }, {
     key: "_handleClose",
     value: function _handleClose() {
-      this.state.router.back();
+      var _this$state = this.state,
+          router = _this$state.router,
+          parentRoute = _this$state.parentRoute;
+      if (parentRoute && router.currentRoute.path !== parentRoute.path) this.state.router.back();
+      this.setState({
+        openDrawer: false
+      });
     }
   }, {
     key: "shouldComponentUpdate",
@@ -149,9 +155,9 @@ function (_RouterViewComponent) {
           touch = _this$props.touch,
           props = _objectWithoutProperties(_this$props, ["_updateRef", "router", "container", "prefixCls", "position", "zIndexStart", "swipeDelay", "delay", "touchThreshold", "drawerClassName", "children", "touch"]);
 
-      var _this$state = this.state,
-          openDrawer = _this$state.openDrawer,
-          prevRoute = _this$state.prevRoute;
+      var _this$state2 = this.state,
+          openDrawer = _this$state2.openDrawer,
+          prevRoute = _this$state2.prevRoute;
 
       var _ref = this.state.router.currentRoute || {},
           query = _ref.query,
@@ -195,7 +201,8 @@ function (_RouterViewComponent) {
 
 RouterDrawer.defaultProps = {
   prefixCls: 'rvr-route-drawer',
-  position: 'right'
+  position: 'right',
+  touch: true
 };
 
 var _default = _react.default.forwardRef(function (props, ref) {
