@@ -37,13 +37,13 @@
   },
   "author": "gxlmyacc",
   "dependencies": {
-    "history-fix": "^1.0.1"
-  },
-  "peerDependencies": {
+    "history-fix": "^1.0.1",
     "path-to-regexp": "^3.0.0",
     "react": "^16.8.0",
     "react-dom": "^16.8.0",
     "react-swipeable": "^5.4.0"
+  },
+  "peerDependencies": {
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
