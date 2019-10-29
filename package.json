@@ -1,6 +1,6 @@
 {
   "name": "react-view-router",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "react-view-router",
   "keywords": [
     "react-view-router",
@@ -37,17 +37,12 @@
   },
   "author": "gxlmyacc",
   "dependencies": {
-    "history-fix": "^1.0.1",
-    "path-to-regexp": "^3.0.0",
-    "react": "^16.9.0",
-    "react-swipeable": "^5.4.0"
   },
   "peerDependencies": {
-    "history-fix": ">=1",
-    "path-to-regexp": ">=3",
-    "prop-types": ">=15",
-    "react": ">=16",
-    "react-is": ">=16"
+    "history-fix": "^1.0.1",
+    "path-to-regexp": "^3.0.0",
+    "react": "^16.8.0",
+    "react-swipeable": "^5.4.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",

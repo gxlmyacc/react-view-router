@@ -601,7 +601,7 @@ function renderRoute(route, routes, props, children) {
   if (route.index) renderRoute = resloveIndex(route.index, routes);
   if (!renderRoute) return null;
   var result = createComp(renderRoute, props, children, options);
-  if (options.container) result = options.container(result);
+  if (options.container) result = options.container(result, route, props);
   return result;
 }
 

@@ -322,7 +322,7 @@ function renderRoute(route, routes, props, children, options = {}) {
   if (!renderRoute) return null;
 
   let result = createComp(renderRoute, props, children, options);
-  if (options.container) result = options.container(result);
+  if (options.container) result = options.container(result, route, props);
   return result;
 }
 
