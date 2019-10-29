@@ -1,6 +1,6 @@
 {
   "name": "react-view-router",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "react-view-router",
   "keywords": [
     "react-view-router",
@@ -12,7 +12,7 @@
   ],
   "sideEffects": false,
   "main": "dist/react-view-router.min.js",
-  "module": "src/index.js",
+  "module": "esm/index.js",
   "engines": {
     "node": "> 6.9.1"
   },
@@ -20,7 +20,8 @@
     "dist",
     "esm",
     "src",
-    "build"
+    "build",
+    "drawer"
   ],
   "scripts": {
     "build-dev": "cross-env NODE_ENV=development webpack --progresss  --config build/webpack-dev.config.js",
@@ -38,14 +39,15 @@
   "dependencies": {
     "history-fix": "^1.0.1",
     "path-to-regexp": "^3.0.0",
-    "react": "^16.9.0"
+    "react": "^16.9.0",
+    "react-swipeable": "^5.4.0"
   },
   "peerDependencies": {
     "history-fix": ">=1",
+    "path-to-regexp": ">=3",
     "prop-types": ">=15",
     "react": ">=16",
-    "react-is": ">=16",
-    "path-to-regexp": ">=3"
+    "react-is": ">=16"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
