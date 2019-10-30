@@ -37,7 +37,7 @@
   },
   "author": "gxlmyacc",
   "dependencies": {
-    "history-fix": "^1.0.1",
+    "history-fix": "^4.10.1",
     "path-to-regexp": "^3.0.0",
     "react": "^16.8.0",
     "react-dom": "^16.8.0",
