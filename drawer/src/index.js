@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouterViewComponent, renderRoute, config } from 'react-view-router';
+import { RouterViewComponent, renderRoute, config, isFunction } from 'react-view-router';
 import Drawer from './drawer';
 
 import '../style/drawer.css';
@@ -45,6 +45,16 @@ class RouterDrawer extends RouterViewComponent {
     this.setState({ openDrawer: false });
   }
 
+  getZindex() {
+    const currentRoute = this.state.currentRoute;
+    const { zIndex } = this.props;
+    if (zIndex !== undefined) {
+      if (isFunction(zIndex)) return zIndex(currentRoute, { config, view: this });
+      return zIndex;
+    }
+    return config.zIndexStart + currentRoute.depth * config.zIndexStep;
+  }
+
   shouldComponentUpdate(nextProps, nextState) {
     if (this.state.openDrawer !== nextState.openDrawer) return true;
     if (this.state.prevRoute !== nextState.prevRoute) return true;
@@ -84,7 +94,7 @@ class RouterDrawer extends RouterViewComponent {
             touch: touch && !this.isNull(this.state.router.prevRoute),
             transitionName: position ? `rvr-slide-${position}` : '',
             open: Boolean(openDrawer && comp),
-            zIndex: config.zIndexStart + currentRoute.depth * config.zIndexStep,
+            zIndex: this.getZindex(),
             onAnimateLeave: this._handleAnimationEnd,
             onClose: this._handleClose,
           }, comp);
