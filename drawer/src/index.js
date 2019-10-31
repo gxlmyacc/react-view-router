@@ -109,6 +109,7 @@ class RouterDrawer extends RouterViewComponent {
 }
 
 RouterDrawer.defaultProps = {
+  ...RouterViewComponent.defaultProps,
   prefixCls: 'rvr-route-drawer',
   position: 'right',
   touch: true,
