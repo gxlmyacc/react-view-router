@@ -190,7 +190,7 @@ function (_RouterViewComponent) {
         query: query,
         params: params,
         container: function container(comp) {
-          if (oldContainer) comp = oldContainer(comp);
+          if (oldContainer) comp = oldContainer(comp, currentRoute, props);
           comp = _react.default.createElement(_drawer.default, {
             ref: function ref(el) {
               return _this2.drawer = el;

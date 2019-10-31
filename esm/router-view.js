@@ -355,6 +355,11 @@ function (_React$Component) {
       return ~index ? route : undefined;
     }
   }, {
+    key: "getComponent",
+    value: function getComponent(comp) {
+      return comp;
+    }
+  }, {
     key: "renderCurrent",
     value: function renderCurrent(currentRoute) {
       if (this.isNull(currentRoute)) return this.props.children || null;
@@ -377,7 +382,7 @@ function (_React$Component) {
         container: container,
         ref: this._updateRef
       });
-      return ret;
+      return this.getComponent(ret);
     }
   }, {
     key: "render",

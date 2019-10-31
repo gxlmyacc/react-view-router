@@ -179,19 +179,13 @@ class RouterView extends React.Component {
     return ~index ? route : undefined;
   }
 
-  getComponent(comp) {
-    return comp;
-  }
-
-  renderCurrent(currentRoute) {
-    if (this.isNull(currentRoute)) return this.props.children || null;
-
+  getComponent(currentRoute) {
     const { routes } = this.state;
     // eslint-disable-next-line
     const { _updateRef, container, router, children, ...props } = this.props;
     const { query, params } = this.state.router.currentRoute;
 
-    let ret = renderRoute(currentRoute, routes, props,
+    return renderRoute(currentRoute, routes, props,
       children,
       {
         name: this.name,
@@ -200,8 +194,11 @@ class RouterView extends React.Component {
         container,
         ref: this._updateRef
       });
+  }
 
-    return this.getComponent(ret);
+  renderCurrent(currentRoute) {
+    if (this.isNull(currentRoute)) return this.props.children || null;
+    return this.getComponent(currentRoute);
   }
 
   render() {
