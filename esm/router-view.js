@@ -368,7 +368,7 @@ function (_React$Component) {
       var _this$state$router$cu = this.state.router.currentRoute,
           query = _this$state$router$cu.query,
           params = _this$state$router$cu.params;
-      var targetExcludeProps = this.target.excludeProps || RouterView.excludeProps;
+      var targetExcludeProps = this.target.defaultProps.excludeProps || RouterView.defaultProps.excludeProps || [];
       (excludeProps || targetExcludeProps).forEach(function (key) {
         return delete props[key];
       });

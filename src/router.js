@@ -375,7 +375,7 @@ export default class ReactViewRouter {
       fallbackView && fallbackView._updateResolving(true);
       routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, ok => {
         nexting = null;
-        fallbackView && setTimeout(() => fallbackView._updateResolving(false), 0);
+        fallbackView && setTimeout(() => fallbackView._isMounted && fallbackView._updateResolving(false), 0);
 
         if (ok && typeof ok === 'string') ok = { path: ok };
         isContinue = Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));

@@ -104,6 +104,7 @@ class RouterView extends React.Component {
   }
 
   async componentDidMount() {
+    this._isMounted = true;
     if (this.state._routerInited) return;
     const state = { ...this.state };
 
@@ -138,6 +139,10 @@ class RouterView extends React.Component {
     } else console.error('[RouterView] cannot find root RouterView instance!', this);
 
     this.setState(Object.assign(state, { _routerInited: true }));
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   shouldComponentUpdate(nextProps, nextState) {
