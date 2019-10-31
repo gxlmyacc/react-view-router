@@ -356,13 +356,7 @@ function (_React$Component) {
     }
   }, {
     key: "getComponent",
-    value: function getComponent(comp) {
-      return comp;
-    }
-  }, {
-    key: "renderCurrent",
-    value: function renderCurrent(currentRoute) {
-      if (this.isNull(currentRoute)) return this.props.children || null;
+    value: function getComponent(currentRoute) {
       var routes = this.state.routes; // eslint-disable-next-line
 
       var _this$props2 = this.props,
@@ -375,14 +369,19 @@ function (_React$Component) {
       var _this$state$router$cu = this.state.router.currentRoute,
           query = _this$state$router$cu.query,
           params = _this$state$router$cu.params;
-      var ret = (0, _util.renderRoute)(currentRoute, routes, props, children, {
+      return (0, _util.renderRoute)(currentRoute, routes, props, children, {
         name: this.name,
         query: query,
         params: params,
         container: container,
         ref: this._updateRef
       });
-      return this.getComponent(ret);
+    }
+  }, {
+    key: "renderCurrent",
+    value: function renderCurrent(currentRoute) {
+      if (this.isNull(currentRoute)) return this.props.children || null;
+      return this.getComponent(currentRoute);
     }
   }, {
     key: "render",

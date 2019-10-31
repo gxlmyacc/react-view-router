@@ -179,11 +179,12 @@ class RouterView extends React.Component {
     return ~index ? route : undefined;
   }
 
-  getComponent(currentRoute) {
+  getComponent(currentRoute, excludeProps) {
     const { routes } = this.state;
-    // eslint-disable-next-line
-    const { _updateRef, container, router, children, ...props } = this.props;
+    const { container, children, ...props } = this.props;
     const { query, params } = this.state.router.currentRoute;
+
+    (excludeProps || this.props.excludeProps).forEach(key => delete props[key]);
 
     return renderRoute(currentRoute, routes, props,
       children,
@@ -214,6 +215,10 @@ class RouterView extends React.Component {
   }
 
 }
+
+RouterView.defaultProps = {
+  excludeProps: ['_updateRef', 'router', 'excludeProps']
+};
 
 export {
   RouterView as RouterViewComponent
