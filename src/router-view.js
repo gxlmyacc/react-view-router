@@ -185,7 +185,7 @@ class RouterView extends React.Component {
     const { container, children, ...props } = this.props;
     const { query, params } = this.state.router.currentRoute;
 
-    const targetExcludeProps = this.target.excludeProps || RouterView.excludeProps;
+    const targetExcludeProps = this.target.defaultProps.excludeProps || RouterView.defaultProps.excludeProps;
     (excludeProps || targetExcludeProps).forEach(key => delete props[key]);
 
     return renderRoute(currentRoute, routes, props,
