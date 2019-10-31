@@ -146,6 +146,7 @@ class RouterView extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
+    if (!this._isMounted) return false;
     if (this.props.name !== nextProps.name) return true;
     if (this.state._routerResolving !== nextState._routerResolving) return true;
     if (this.state._routerInited !== nextState._routerInited) return true;
