@@ -116,6 +116,7 @@ function matchRoutes(routes, to, parent, branch) {
     if (match && route.index) {
       route = resloveIndex(route.index, routes);
       if (!route) continue;
+      else to.pathname = to.path = route.path;
     }
 
     if (match) {

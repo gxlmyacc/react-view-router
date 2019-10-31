@@ -127,6 +127,22 @@ function (_RouterViewComponent) {
       });
     }
   }, {
+    key: "getZindex",
+    value: function getZindex() {
+      var currentRoute = this.state.currentRoute;
+      var zIndex = this.props.zIndex;
+
+      if (zIndex !== undefined) {
+        if ((0, _reactViewRouter.isFunction)(zIndex)) return zIndex(currentRoute, {
+          config: _reactViewRouter.config,
+          view: this
+        });
+        return zIndex;
+      }
+
+      return _reactViewRouter.config.zIndexStart + currentRoute.depth * _reactViewRouter.config.zIndexStep;
+    }
+  }, {
     key: "shouldComponentUpdate",
     value: function shouldComponentUpdate(nextProps, nextState) {
       if (this.state.openDrawer !== nextState.openDrawer) return true;
@@ -184,7 +200,7 @@ function (_RouterViewComponent) {
             touch: touch && !_this2.isNull(_this2.state.router.prevRoute),
             transitionName: position ? "rvr-slide-".concat(position) : '',
             open: Boolean(openDrawer && comp),
-            zIndex: _reactViewRouter.config.zIndexStart + currentRoute.depth * _reactViewRouter.config.zIndexStep,
+            zIndex: _this2.getZindex(),
             onAnimateLeave: _this2._handleAnimationEnd,
             onClose: _this2._handleClose
           }, comp);

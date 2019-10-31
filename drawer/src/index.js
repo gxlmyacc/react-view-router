@@ -86,7 +86,7 @@ class RouterDrawer extends RouterViewComponent {
         query,
         params,
         container: comp => {
-          if (oldContainer) comp = oldContainer(comp);
+          if (oldContainer) comp = oldContainer(comp, currentRoute, props);
           comp = React.createElement(Drawer, {
             ref: el => this.drawer = el,
             prefixCls,

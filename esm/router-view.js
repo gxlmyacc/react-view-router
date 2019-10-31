@@ -136,7 +136,7 @@ function (_React$Component) {
         if (r.redirect || r.index) return hasName ? name === r.name : !r.name;
         return hasName ? r.components && r.components[name] : r.component || r.components && r.components.default;
       });
-      if (filter) ret = filter(ret);
+      if (filter) ret = filter(ret, state);
       return ret;
     }
   }, {
@@ -263,8 +263,8 @@ function (_React$Component) {
 
                 if (state._routerDepth) {
                   state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
-                  state.currentRoute = this._refreshCurrentRoute(state);
                   state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
+                  state.currentRoute = this._refreshCurrentRoute(state);
                 } else console.error('[RouterView] cannot find root RouterView instance!', this);
 
                 this.setState(Object.assign(state, {
