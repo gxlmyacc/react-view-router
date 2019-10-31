@@ -206,7 +206,7 @@ function _routetInterceptors() {
             isBlock = function _ref6(v, interceptor) {
               var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
 
-              if (_isLocation && interceptor && interceptor.route) {
+              if (_isLocation && interceptor) {
                 v = (0, _util.normalizeLocation)(v, interceptor.route);
 
                 if (v.fullPath === to.fullPath) {
@@ -746,7 +746,7 @@ function () {
                 routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, function (ok) {
                   nexting = null;
                   fallbackView && setTimeout(function () {
-                    return fallbackView._updateResolving(false);
+                    return fallbackView._isMounted && fallbackView._updateResolving(false);
                   }, 0);
                   if (ok && typeof ok === 'string') ok = {
                     path: ok

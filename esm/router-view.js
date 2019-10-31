@@ -216,18 +216,20 @@ function (_React$Component) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
+                this._isMounted = true;
+
                 if (!this.state._routerInited) {
-                  _context.next = 2;
+                  _context.next = 3;
                   break;
                 }
 
                 return _context.abrupt("return");
 
-              case 2:
+              case 3:
                 state = _objectSpread({}, this.state);
 
                 if (!(state._routerRoot && state.router)) {
-                  _context.next = 7;
+                  _context.next = 8;
                   break;
                 }
 
@@ -244,15 +246,15 @@ function (_React$Component) {
 
                 return _context.abrupt("return");
 
-              case 7:
+              case 8:
                 if (this._reactInternalFiber) {
-                  _context.next = 9;
+                  _context.next = 10;
                   break;
                 }
 
                 return _context.abrupt("return");
 
-              case 9:
+              case 10:
                 parent = (0, _util.getParentRouterView)(this);
 
                 if (parent) {
@@ -272,7 +274,7 @@ function (_React$Component) {
                   _routerInited: true
                 }));
 
-              case 13:
+              case 14:
               case "end":
                 return _context.stop();
             }
@@ -287,8 +289,14 @@ function (_React$Component) {
       return componentDidMount;
     }()
   }, {
+    key: "componentWillUnmount",
+    value: function componentWillUnmount() {
+      this._isMounted = false;
+    }
+  }, {
     key: "shouldComponentUpdate",
     value: function shouldComponentUpdate(nextProps, nextState) {
+      if (!this._isMounted) return false;
       if (this.props.name !== nextProps.name) return true;
       if (this.state._routerResolving !== nextState._routerResolving) return true;
       if (this.state._routerInited !== nextState._routerInited) return true;

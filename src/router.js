@@ -16,7 +16,7 @@ let nexting = null;
 async function routetInterceptors(interceptors, to, from, next) {
   function isBlock(v, interceptor) {
     let _isLocation = typeof v === 'string' || isLocation(v);
-    if (_isLocation && interceptor && interceptor.route) {
+    if (_isLocation && interceptor) {
       v = normalizeLocation(v, interceptor.route);
       if (v.fullPath === to.fullPath) {
         v = undefined;
