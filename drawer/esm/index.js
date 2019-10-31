@@ -215,11 +215,11 @@ function (_RouterViewComponent) {
   return RouterDrawer;
 }(_reactViewRouter.RouterViewComponent);
 
-RouterDrawer.defaultProps = {
+RouterDrawer.defaultProps = _objectSpread({}, _reactViewRouter.RouterViewComponent.defaultProps, {
   prefixCls: 'rvr-route-drawer',
   position: 'right',
   touch: true
-};
+});
 
 var _default = _react.default.forwardRef(function (props, ref) {
   return _react.default.createElement(RouterDrawer, _objectSpread({}, props, {

@@ -109,6 +109,7 @@ function (_React$Component) {
       routes: router ? _this._filterRoutes(router.routes) : []
     };
     _this.state = state;
+    _this.target = this instanceof RouterView ? this.constructor : void 0;
     _this._updateRef = _this._updateRef.bind(_assertThisInitialized(_this));
     _this._filterRoutes = _this._filterRoutes.bind(_assertThisInitialized(_this));
     return _this;
@@ -356,19 +357,21 @@ function (_React$Component) {
     }
   }, {
     key: "getComponent",
-    value: function getComponent(currentRoute) {
-      var routes = this.state.routes; // eslint-disable-next-line
+    value: function getComponent(currentRoute, excludeProps) {
+      var routes = this.state.routes;
 
       var _this$props2 = this.props,
-          _updateRef = _this$props2._updateRef,
           container = _this$props2.container,
-          router = _this$props2.router,
           children = _this$props2.children,
-          props = _objectWithoutProperties(_this$props2, ["_updateRef", "container", "router", "children"]);
+          props = _objectWithoutProperties(_this$props2, ["container", "children"]);
 
       var _this$state$router$cu = this.state.router.currentRoute,
           query = _this$state$router$cu.query,
           params = _this$state$router$cu.params;
+      var targetExcludeProps = this.target.excludeProps || RouterView.excludeProps;
+      (excludeProps || targetExcludeProps).forEach(function (key) {
+        return delete props[key];
+      });
       return (0, _util.renderRoute)(currentRoute, routes, props, children, {
         name: this.name,
         query: query,
@@ -406,6 +409,9 @@ function (_React$Component) {
 }(_react.default.Component);
 
 exports.RouterViewComponent = RouterView;
+RouterView.defaultProps = {
+  excludeProps: ['_updateRef', 'router', 'excludeProps']
+};
 
 var _default = _react.default.forwardRef(function (props, ref) {
   return _react.default.createElement(RouterView, _objectSpread({}, props, {

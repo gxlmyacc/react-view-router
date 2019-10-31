@@ -25,6 +25,7 @@ class RouterView extends React.Component {
       routes: router ? this._filterRoutes(router.routes) : [],
     };
     this.state = state;
+    this.target = new.target;
 
     this._updateRef = this._updateRef.bind(this);
     this._filterRoutes = this._filterRoutes.bind(this);
@@ -184,7 +185,8 @@ class RouterView extends React.Component {
     const { container, children, ...props } = this.props;
     const { query, params } = this.state.router.currentRoute;
 
-    (excludeProps || this.props.excludeProps).forEach(key => delete props[key]);
+    const targetExcludeProps = this.target.excludeProps || RouterView.excludeProps;
+    (excludeProps || targetExcludeProps).forEach(key => delete props[key]);
 
     return renderRoute(currentRoute, routes, props,
       children,
