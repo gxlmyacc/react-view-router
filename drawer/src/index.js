@@ -21,8 +21,22 @@ class RouterDrawer extends RouterViewComponent {
     const newState = {};
     const currentRoute = super._refreshCurrentRoute(state, newState);
     let openDrawer;
-    if (this.isNull(prevRoute) && !this.isNull(currentRoute)) openDrawer = true;
-    if (!this.isNull(prevRoute) && this.isNull(currentRoute)) openDrawer = false;
+    if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
+      let r = state._routerParent && state._routerParent.state.currentRoute;
+      r && Object.keys(r.componentInstances).forEach(key => {
+        const c = r.componentInstances[key];
+        if (c && c.componentWillUnactivate) c.componentWillUnactivate();
+      });
+      openDrawer = true;
+    }
+    if (!this.isNull(prevRoute) && this.isNull(currentRoute)) {
+      let r = state._routerParent && state._routerParent.state.currentRoute;
+      r && Object.keys(r.componentInstances).forEach(key => {
+        const c = r.componentInstances[key];
+        if (c && c.componentDidActivate) c.componentDidActivate();
+      });
+      openDrawer = false;
+    }
     if (openDrawer !== undefined && this.state.openDrawer !== openDrawer) {
       newState.openDrawer = openDrawer;
       if (!openDrawer && this.props.position) newState.prevRoute = prevRoute;
@@ -64,9 +78,7 @@ class RouterDrawer extends RouterViewComponent {
   renderCurrent(currentRoute) {
     const { routes } = this.state;
     // eslint-disable-next-line
-    const { _updateRef, router, container: oldContainer, prefixCls, position, zIndexStart,
-      // eslint-disable-next-line
-      swipeDelay, delay, touchThreshold,
+    const { _updateRef, router, container: oldContainer, prefixCls, position, zIndexStart, delay,
       drawerClassName, children, touch, ...props
     } = this.props;
     const { openDrawer, prevRoute } = this.state;

@@ -47,7 +47,7 @@ async function routetInterceptors(interceptors, to, from, next) {
         next(typeof ex === 'string' ? new Error(ex) : ex);
       }
     });
-    return await interceptor(to, from, nextWrapper);
+    return await interceptor(to, from, nextWrapper, interceptor.route);
   }
   if (next) await beforeInterceptor(interceptors[0], 0, to, from, next);
   else afterInterceptors(interceptors, to, from);
