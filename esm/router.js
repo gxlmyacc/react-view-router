@@ -184,7 +184,7 @@ function _routetInterceptors() {
                           };
                         }());
                         _context5.next = 11;
-                        return interceptor(to, from, nextWrapper);
+                        return interceptor(to, from, nextWrapper, interceptor.route);
 
                       case 11:
                         return _context5.abrupt("return", _context5.sent);

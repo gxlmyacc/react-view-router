@@ -11,6 +11,12 @@ require("core-js/modules/es7.symbol.async-iterator");
 
 require("core-js/modules/es6.symbol");
 
+require("core-js/modules/es6.reflect.get");
+
+require("core-js/modules/es6.object.set-prototype-of");
+
+require("core-js/modules/es6.object.assign");
+
 require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.array.iterator");
@@ -18,12 +24,6 @@ require("core-js/modules/es6.array.iterator");
 require("core-js/modules/es6.object.to-string");
 
 require("core-js/modules/es6.object.keys");
-
-require("core-js/modules/es6.reflect.get");
-
-require("core-js/modules/es6.object.set-prototype-of");
-
-require("core-js/modules/es6.object.assign");
 
 var _react = _interopRequireDefault(require("react"));
 
@@ -96,8 +96,25 @@ function (_RouterViewComponent) {
       var currentRoute = _get(_getPrototypeOf(RouterDrawer.prototype), "_refreshCurrentRoute", this).call(this, state, newState);
 
       var openDrawer;
-      if (this.isNull(prevRoute) && !this.isNull(currentRoute)) openDrawer = true;
-      if (!this.isNull(prevRoute) && this.isNull(currentRoute)) openDrawer = false;
+
+      if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
+        var r = state._routerParent && state._routerParent.state.currentRoute;
+        r && Object.keys(r.componentInstances).forEach(function (key) {
+          var c = r.componentInstances[key];
+          if (c && c.componentWillUnactivate) c.componentWillUnactivate();
+        });
+        openDrawer = true;
+      }
+
+      if (!this.isNull(prevRoute) && this.isNull(currentRoute)) {
+        var _r = state._routerParent && state._routerParent.state.currentRoute;
+
+        _r && Object.keys(_r.componentInstances).forEach(function (key) {
+          var c = _r.componentInstances[key];
+          if (c && c.componentDidActivate) c.componentDidActivate();
+        });
+        openDrawer = false;
+      }
 
       if (openDrawer !== undefined && this.state.openDrawer !== openDrawer) {
         newState.openDrawer = openDrawer;
@@ -163,13 +180,11 @@ function (_RouterViewComponent) {
           prefixCls = _this$props.prefixCls,
           position = _this$props.position,
           zIndexStart = _this$props.zIndexStart,
-          swipeDelay = _this$props.swipeDelay,
           delay = _this$props.delay,
-          touchThreshold = _this$props.touchThreshold,
           drawerClassName = _this$props.drawerClassName,
           children = _this$props.children,
           touch = _this$props.touch,
-          props = _objectWithoutProperties(_this$props, ["_updateRef", "router", "container", "prefixCls", "position", "zIndexStart", "swipeDelay", "delay", "touchThreshold", "drawerClassName", "children", "touch"]);
+          props = _objectWithoutProperties(_this$props, ["_updateRef", "router", "container", "prefixCls", "position", "zIndexStart", "delay", "drawerClassName", "children", "touch"]);
 
       var _this$state2 = this.state,
           openDrawer = _this$state2.openDrawer,

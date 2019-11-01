@@ -99,12 +99,13 @@ class RouterDrawer extends RouterViewComponent {
         params,
         container: comp => {
           if (oldContainer) comp = oldContainer(comp, currentRoute, props);
+          const hasPrev = !this.isNull(this.state.router.prevRoute);
           comp = React.createElement(Drawer, {
             ref: el => this.drawer = el,
             prefixCls,
             className: drawerClassName,
-            touch: touch && !this.isNull(this.state.router.prevRoute),
-            transitionName: position ? `rvr-slide-${position}` : '',
+            touch: touch && hasPrev,
+            transitionName: (hasPrev && position) ? `rvr-slide-${position}` : '',
             open: Boolean(openDrawer && comp),
             zIndex: this.getZindex(),
             onAnimateLeave: this._handleAnimationEnd,
