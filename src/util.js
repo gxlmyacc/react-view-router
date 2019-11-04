@@ -11,8 +11,8 @@ function nextTick(cb, ctx) {
   });
 }
 
-function innumerable(obj, key, value, options = { configurable: true, writable: true }) {
-  Object.defineProperty(obj, key, Object.assign({ value }, options));
+function innumerable(obj, key, value, options = { configurable: true }) {
+  Object.defineProperty(obj, key, { value, ...options });
   return obj;
 }
 
@@ -26,14 +26,15 @@ function normalizePath(path) {
   return paths.join('/');
 }
 
-function normalizeRoute(route, parent, depth, force) {
+function normalizeRoute(route, parent, depth = 0, force) {
   let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
   let r = { ...route, subpath: route.path, path, depth };
   if (parent) innumerable(r, 'parent', parent);
-  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1, force);
-  r.exact = r.exact === undefined
-    ? Boolean(!r.children || !r.children.length)
-    : r.exact;
+  if (r.children && !isFunction(r.children)) {
+    innumerable(r, 'children', normalizeRoutes(r.children, r, depth + 1, force));
+  }
+  r.depth = depth;
+  r.exact = r.exact !== undefined ? r.exact : Boolean(r.redirect || r.index);
   if (!r.components) r.components = {};
   if (r.component) {
     r.components.default = r.component;
@@ -46,7 +47,7 @@ function normalizeRoute(route, parent, depth, force) {
         if (c.__children) {
           let children = c.__children || [];
           if (isFunction(children)) children = children(r) || [];
-          r.children = normalizeRoutes(children, r, depth + 1);
+          innumerable(r, 'children', normalizeRoutes(children, r, depth + 1));
           r.exact = !r.children.length;
         }
         return r.components[key] = c;
@@ -61,7 +62,7 @@ function normalizeRoute(route, parent, depth, force) {
   return r;
 }
 
-function normalizeRoutes(routes, parent, depth, force = false) {
+function normalizeRoutes(routes, parent, depth = 0, force = false) {
   if (!routes) routes = [];
   if (!force && routes._normalized) return routes;
   routes = routes.map(route => normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
@@ -70,9 +71,10 @@ function normalizeRoutes(routes, parent, depth, force = false) {
 }
 
 function normalizeRoutePath(path, route, append) {
+  if (route && route.matched) route = route.matched[route.matched.length - 1];
   if (!path || path[0] === '/' || !route) return path || '';
   if (route.config) route = route.config;
-  let parent = append ? route : route.parent;
+  let parent = (append || /^\.\//.test(path)) ? route : route.parent;
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
     parent = route.parent;
@@ -82,7 +84,12 @@ function normalizeRoutePath(path, route, append) {
 
 function resloveIndex(index, routes) {
   index = isFunction(index) ? index() : index;
-  return routes.find(r => r.subpath === index);
+  let r = routes.find(r => r.subpath === index);
+  if (r && r.index) {
+    if (r.index === index) return null;
+    return resloveIndex(r.index, routes);
+  }
+  return r;
 }
 
 function matchRoutes(routes, to, parent, branch) {
@@ -109,6 +116,7 @@ function matchRoutes(routes, to, parent, branch) {
     if (match && route.index) {
       route = resloveIndex(route.index, routes);
       if (!route) continue;
+      else to.pathname = to.path = route.path;
     }
 
     if (match) {
@@ -125,12 +133,12 @@ function normalizeLocation(to, route, append) {
   if (!to) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
-    to = { pathname, search: search ? `?${search}` : '' };
+    to = { pathname, search: search ? `?${search}` : '', fullPath: to };
   }
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search.substr(1));
 
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, append);
+  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append);
   to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
   if (!to.query) to.query = {};
   return to;
@@ -167,7 +175,7 @@ function normalizeProps(props) {
 
 function once(fn, ctx) {
   let ret;
-  return function (...args) {
+  return function _once(...args) {
     if (!fn) return ret;
     const _fn = fn;
     fn = null;
@@ -249,17 +257,19 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       });
     }
   }
-  function renderComp(route, component, routeProps, options) {
+  function createComp(route, props, children, options) {
+    let component = route.components && route.components[options.name || 'default'];
     if (!component) return null;
+
     const _props = {};
     if (route.defaultProps) {
-      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(routeProps) : route.defaultProps);
+      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
     }
     if (route.props) configProps(_props, route.props, options.params, options.name);
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
     if (route.render) return route.render(Object.assign(_props,
-      config.inheritProps ? routeProps : null,
+      config.inheritProps ? props : null,
       extraProps,
       config.inheritProps ? { route } : null));
 
@@ -299,11 +309,13 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
     if (component.__component) component = getGuardsComponent(component);
     const ret = React.createElement(
       component,
-      Object.assign(_props,
-        config.inheritProps ? routeProps : null,
-        extraProps,
+      Object.assign(
+        _props,
+        props,
         config.inheritProps ? { route } : null,
-        { ref })
+        { ref }
+      ),
+      ...(Array.isArray(children) ? children : [children])
     );
     if (!ref) nextTick(refHandler);
     return ret;
@@ -321,7 +333,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       path: route.path,
       exact: route.exact,
       strict: route.strict,
-      render: props => renderComp(renderRoute, renderRoute.components[options.name || 'default'], props, options)
+      render: props => createComp(renderRoute, props, children, options)
     });
   }).filter(Boolean);
   if (options.container) children = options.container(children);
@@ -347,7 +359,7 @@ function camelize(str) {
 }
 
 function isRouteChanged(prev, next) {
-  if (prev && next) return prev.path !== next.path;
+  if (prev && next) return prev.path !== next.path && prev.subpath !== next.subpath;
   if ((!prev || !next) && prev !== next) return true;
   return false;
 }
@@ -373,6 +385,15 @@ function getParentRouterView(ctx) {
   }
 }
 
+function getParentRoute(ctx) {
+  const view = getParentRouterView(ctx);
+  return (view && view.state.currentRoute) || null;
+}
+
+function isAbsoluteUrl(to) {
+  return typeof to === 'string' && /^(https?:)?\/\/.+/.test(to);
+}
+
 export {
   camelize,
   flatten,
@@ -387,6 +408,7 @@ export {
   isLocation,
   isRouteChanged,
   isRoutesChanged,
+  isAbsoluteUrl,
   resolveRedirect,
   normalizePath,
   normalizeRoute,
@@ -399,5 +421,6 @@ export {
   renderRoutes,
   innumerable,
   afterInterceptors,
+  getParentRoute,
   getParentRouterView
 };

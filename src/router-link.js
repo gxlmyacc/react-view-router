@@ -26,26 +26,8 @@ function guardEvent(e) {
   return true;
 }
 
-export default function (router) {
-  return class RouterLink extends React.Component {
-
-    static propTypes = {
-      to: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
-      replace: PropTypes.bool,
-      append: PropTypes.bool,
-      tag: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
-      activeClass: PropTypes.string,
-      exact: PropTypes.bool,
-      exactActiveClass: PropTypes.string,
-      event: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)])
-    }
-
-    static defaultProps = {
-      tag: 'a',
-      activeClass: 'router-link-active',
-      exactActiveClass: 'exact-active-class',
-      event: 'click'
-    }
+export default function createRouterLink(router) {
+  class RouterLink extends React.Component {
 
     constructor(props) {
       super(props);
@@ -59,7 +41,10 @@ export default function (router) {
     componentDidMount() {
       this.unplugin = router.plugin({
         name: 'router-link-plugin',
-        onRouteChange: currentRoute => this.setState({ currentRoute })
+        onRouteChange: currentRoute => {
+          this.setState({ currentRoute });
+          if (this.props.onRouteChange) this.props.onRouteChange(currentRoute);
+        }
       });
       let routerView = getParentRouterView(this);
       this.setState({
@@ -122,5 +107,26 @@ export default function (router) {
       return React.createElement(tag, remainProps, ...children);
     }
 
+  }
+
+  RouterLink.propTypes = {
+    to: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
+    replace: PropTypes.bool,
+    append: PropTypes.bool,
+    tag: PropTypes.oneOfType([PropTypes.string, PropTypes.elementType]),
+    activeClass: PropTypes.string,
+    exact: PropTypes.bool,
+    exactActiveClass: PropTypes.string,
+    event: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+    onRouteChange: PropTypes.func
   };
+
+  RouterLink.defaultProps = {
+    tag: 'a',
+    activeClass: 'router-link-active',
+    exactActiveClass: 'exact-active-class',
+    event: 'click'
+  };
+
+  return RouterLink;
 }
