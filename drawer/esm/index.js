@@ -206,14 +206,15 @@ function (_RouterViewComponent) {
         params: params,
         container: function container(comp) {
           if (oldContainer) comp = oldContainer(comp, currentRoute, props);
+          var hasPrev = !_this2.isNull(_this2.state.router.prevRoute);
           comp = _react.default.createElement(_drawer.default, {
             ref: function ref(el) {
               return _this2.drawer = el;
             },
             prefixCls: prefixCls,
             className: drawerClassName,
-            touch: touch && !_this2.isNull(_this2.state.router.prevRoute),
-            transitionName: position ? "rvr-slide-".concat(position) : '',
+            touch: touch && hasPrev,
+            transitionName: hasPrev && position ? "rvr-slide-".concat(position) : '',
             open: Boolean(openDrawer && comp),
             zIndex: _this2.getZindex(),
             onAnimateLeave: _this2._handleAnimationEnd,

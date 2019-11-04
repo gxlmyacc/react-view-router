@@ -25,14 +25,6 @@ require("core-js/modules/es6.promise");
 
 require("regenerator-runtime/runtime");
 
-require("core-js/modules/es6.string.includes");
-
-require("core-js/modules/es6.regexp.replace");
-
-require("core-js/modules/es6.object.assign");
-
-require("core-js/modules/es7.array.includes");
-
 require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.array.iterator");
@@ -40,6 +32,14 @@ require("core-js/modules/es6.array.iterator");
 require("core-js/modules/es6.object.to-string");
 
 require("core-js/modules/es6.object.keys");
+
+require("core-js/modules/es7.array.includes");
+
+require("core-js/modules/es6.string.includes");
+
+require("core-js/modules/es6.regexp.replace");
+
+require("core-js/modules/es6.object.assign");
 
 var _historyFix = require("history-fix");
 
@@ -249,39 +249,22 @@ var ReactViewRouter =
 /*#__PURE__*/
 function () {
   function ReactViewRouter() {
-    var _this = this;
-
     var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
     _classCallCheck(this, ReactViewRouter);
 
     if (!options.mode) options.mode = 'hash';
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
-    if (options.base) options.basename = options.base;
 
     if (options.history) {
       if (options.history instanceof ReactViewRouter) {
-        this.history = options.history.history;
+        this._history = options.history.history;
         this.mode = options.history.mode;
-      } else this.history = options.history;
-    } else {
-      switch (options.mode) {
-        case 'browser':
-        case 'history':
-          this.history = (0, _historyFix.createBrowserHistory)(options);
-          break;
-
-        case 'memory':
-        case 'abstract':
-          this.history = (0, _historyFix.createMemoryHistory)(options);
-          break;
-
-        default:
-          this.history = (0, _historyFix.createHashHistory)(options);
-      }
+      } else this._history = options.history;
     }
 
-    this.mode = options.mode;
+    this.options = options;
+    this.mode = options.mode || 'hash';
     this.basename = options.basename || '';
     this.routes = [];
     this.plugins = [];
@@ -293,23 +276,36 @@ function () {
     this.errorCallback = null; // this.states = [];
     // this.stateOrigin = this.history.length;
 
-    this._unlisten = this.history.listen(function (location) {
-      return _this.updateRoute(location);
-    });
-    this.history.block(function (location) {
-      return _routeCache.default.create(location);
-    });
-    Object.keys(this.history).forEach(function (key) {
-      return !HISTORY_METHS.includes(key) && (_this[key] = _this.history[key]);
-    });
-    HISTORY_METHS.forEach(function (key) {
-      return _this[key] && (_this[key] = _this[key].bind(_this));
-    });
-    this.nextTick = _util.nextTick.bind(this);
     this.use(options);
+    this.nextTick = _util.nextTick.bind(this);
+    if (!options.manual) this.start();
   }
 
   _createClass(ReactViewRouter, [{
+    key: "start",
+    value: function start() {
+      var _this = this;
+
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      this.stop();
+      if (options.base !== undefined) options.basename = options.base;
+      if (options.basename !== undefined) this.basename = options.basename;
+      if (options.mode !== undefined) this.mode = options.mode;
+      this._unlisten = this.history.listen(function (location) {
+        return _this.updateRoute(location);
+      });
+      this._unblock = this.history.block(function (location) {
+        return _routeCache.default.create(location);
+      });
+    }
+  }, {
+    key: "stop",
+    value: function stop() {
+      if (this._unlisten) this._unlisten();
+      if (this._unblock) this._unblock();
+      this._history = null;
+    }
+  }, {
     key: "use",
     value: function use(_ref) {
       var routes = _ref.routes,
@@ -1095,6 +1091,36 @@ function () {
           }));
         })
       });
+    }
+  }, {
+    key: "history",
+    get: function get() {
+      var _this8 = this;
+
+      if (this._history) return this._history;
+
+      switch (this.mode) {
+        case 'browser':
+        case 'history':
+          this._history = (0, _historyFix.createBrowserHistory)(this.options);
+          break;
+
+        case 'memory':
+        case 'abstract':
+          this._history = (0, _historyFix.createMemoryHistory)(this.options);
+          break;
+
+        default:
+          this._history = (0, _historyFix.createHashHistory)(this.options);
+      }
+
+      Object.keys(this._history).forEach(function (key) {
+        return !HISTORY_METHS.includes(key) && (_this8[key] = _this8._history[key]);
+      });
+      HISTORY_METHS.forEach(function (key) {
+        return _this8[key] && (_this8[key] = _this8[key].bind(_this8));
+      });
+      return this._history;
     }
   }]);
 

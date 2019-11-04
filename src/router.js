@@ -61,27 +61,14 @@ export default class ReactViewRouter {
     if (!options.mode) options.mode = 'hash';
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
-    if (options.base) options.basename = options.base;
     if (options.history) {
       if (options.history instanceof ReactViewRouter) {
-        this.history = options.history.history;
+        this._history = options.history.history;
         this.mode = options.history.mode;
-      } else this.history = options.history;
-    } else {
-      switch (options.mode) {
-        case 'browser':
-        case 'history':
-          this.history = createBrowserHistory(options);
-          break;
-        case 'memory':
-        case 'abstract':
-          this.history = createMemoryHistory(options);
-          break;
-        default: this.history = createHashHistory(options);
-      }
+      } else this._history = options.history;
     }
-
-    this.mode = options.mode;
+    this.options = options;
+    this.mode = options.mode || 'hash';
     this.basename = options.basename || '';
     this.routes = [];
     this.plugins = [];
@@ -94,14 +81,45 @@ export default class ReactViewRouter {
     // this.states = [];
     // this.stateOrigin = this.history.length;
 
-    this._unlisten = this.history.listen(location => this.updateRoute(location));
-    this.history.block(location => routeCache.create(location));
-
-    Object.keys(this.history).forEach(key => !HISTORY_METHS.includes(key) && (this[key] = this.history[key]));
-    HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
+    this.use(options);
     this.nextTick = nextTick.bind(this);
 
-    this.use(options);
+    if (!options.manual) this.start();
+  }
+
+  get history() {
+    if (this._history) return this._history;
+
+    switch (this.mode) {
+      case 'browser':
+      case 'history':
+        this._history = createBrowserHistory(this.options);
+        break;
+      case 'memory':
+      case 'abstract':
+        this._history = createMemoryHistory(this.options);
+        break;
+      default: this._history = createHashHistory(this.options);
+    }
+    Object.keys(this._history).forEach(key => !HISTORY_METHS.includes(key) && (this[key] = this._history[key]));
+    HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
+
+    return this._history;
+  }
+
+  start(options = {}) {
+    this.stop();
+    if (options.base !== undefined) options.basename = options.base;
+    if (options.basename !== undefined) this.basename = options.basename;
+    if (options.mode !== undefined) this.mode = options.mode;
+    this._unlisten = this.history.listen(location => this.updateRoute(location));
+    this._unblock = this.history.block(location => routeCache.create(location));
+  }
+
+  stop() {
+    if (this._unlisten) this._unlisten();
+    if (this._unblock) this._unblock();
+    this._history = null;
   }
 
   use({ routes, inheritProps, install, ...restOptions }) {
