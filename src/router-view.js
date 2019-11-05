@@ -112,8 +112,9 @@ class RouterView extends React.Component {
       state.router.viewRoot = this;
       state.router._handleRouteInterceptor(
         state.router.history.location,
-        ok => {
+        (ok, to) => {
           if (!ok) return;
+          this.state.router && (this.state.router.currentRoute = to);
           state.currentRoute = this._refreshCurrentRoute();
           this.setState(Object.assign(state, { _routerInited: true }));
         },

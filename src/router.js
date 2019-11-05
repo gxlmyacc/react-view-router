@@ -61,12 +61,7 @@ export default class ReactViewRouter {
     if (!options.mode) options.mode = 'hash';
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
-    if (options.history) {
-      if (options.history instanceof ReactViewRouter) {
-        this._history = options.history.history;
-        this.mode = options.history.mode;
-      } else this._history = options.history;
-    }
+
     this.options = options;
     this.mode = options.mode || 'hash';
     this.basename = options.basename || '';
@@ -90,16 +85,24 @@ export default class ReactViewRouter {
   get history() {
     if (this._history) return this._history;
 
-    switch (this.mode) {
-      case 'browser':
-      case 'history':
-        this._history = createBrowserHistory(this.options);
-        break;
-      case 'memory':
-      case 'abstract':
-        this._history = createMemoryHistory(this.options);
-        break;
-      default: this._history = createHashHistory(this.options);
+    const options = this.options;
+    if (options.history) {
+      if (options.history instanceof ReactViewRouter) {
+        this._history = options.history.history;
+        this.mode = options.history.mode;
+      } else this._history = options.history;
+    } else {
+      switch (this.mode) {
+        case 'browser':
+        case 'history':
+          this._history = createBrowserHistory(this.options);
+          break;
+        case 'memory':
+        case 'abstract':
+          this._history = createMemoryHistory(this.options);
+          break;
+        default: this._history = createHashHistory(this.options);
+      }
     }
     Object.keys(this._history).forEach(key => !HISTORY_METHS.includes(key) && (this[key] = this._history[key]));
     HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
@@ -110,8 +113,11 @@ export default class ReactViewRouter {
   start(options = {}) {
     this.stop();
     if (options.base !== undefined) options.basename = options.base;
-    if (options.basename !== undefined) this.basename = options.basename;
-    if (options.mode !== undefined) this.mode = options.mode;
+
+    Object.assign(this.options, options);
+    if (this.options.basename !== undefined) this.basename = this.options.basename;
+    if (this.options.mode !== undefined) this.mode = this.options.mode;
+
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this._unblock = this.history.block(location => routeCache.create(location));
   }
@@ -377,7 +383,7 @@ export default class ReactViewRouter {
 
       if (to && from && to.fullPath === from.fullPath) {
         callback(true);
-        if (to.onInit) to.onInit(to);
+        if (to.onInit) to.onInit(Boolean(to), to);
         return;
       }
 
@@ -404,7 +410,7 @@ export default class ReactViewRouter {
           if (ok) isContinue = false;
         }
 
-        callback(isContinue);
+        callback(isContinue, to);
 
         if (!isContinue) {
           if (isLocation(ok)) {
@@ -417,7 +423,7 @@ export default class ReactViewRouter {
           return;
         }
 
-        if (to.onInit) to.onInit(to);
+        if (to.onInit) to.onInit(Boolean(to), to);
 
         this.nextTick(() => {
           if (isFunction(ok)) ok = ok(to);

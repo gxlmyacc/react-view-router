@@ -255,14 +255,6 @@ function () {
 
     if (!options.mode) options.mode = 'hash';
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
-
-    if (options.history) {
-      if (options.history instanceof ReactViewRouter) {
-        this._history = options.history.history;
-        this.mode = options.history.mode;
-      } else this._history = options.history;
-    }
-
     this.options = options;
     this.mode = options.mode || 'hash';
     this.basename = options.basename || '';
@@ -289,8 +281,9 @@ function () {
       var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       this.stop();
       if (options.base !== undefined) options.basename = options.base;
-      if (options.basename !== undefined) this.basename = options.basename;
-      if (options.mode !== undefined) this.mode = options.mode;
+      Object.assign(this.options, options);
+      if (this.options.basename !== undefined) this.basename = this.options.basename;
+      if (this.options.mode !== undefined) this.mode = this.options.mode;
       this._unlisten = this.history.listen(function (location) {
         return _this.updateRoute(location);
       });
@@ -725,7 +718,7 @@ function () {
                 }
 
                 callback(true);
-                if (to.onInit) to.onInit(to);
+                if (to.onInit) to.onInit(Boolean(to), to);
                 return _context3.abrupt("return");
 
               case 13:
@@ -755,7 +748,7 @@ function () {
                     if (ok) isContinue = false;
                   }
 
-                  callback(isContinue);
+                  callback(isContinue, to);
 
                   if (!isContinue) {
                     if ((0, _util.isLocation)(ok)) {
@@ -769,7 +762,7 @@ function () {
                     return;
                   }
 
-                  if (to.onInit) to.onInit(to);
+                  if (to.onInit) to.onInit(Boolean(to), to);
 
                   _this5.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok = ok(to);
@@ -1098,20 +1091,28 @@ function () {
       var _this8 = this;
 
       if (this._history) return this._history;
+      var options = this.options;
 
-      switch (this.mode) {
-        case 'browser':
-        case 'history':
-          this._history = (0, _historyFix.createBrowserHistory)(this.options);
-          break;
+      if (options.history) {
+        if (options.history instanceof ReactViewRouter) {
+          this._history = options.history.history;
+          this.mode = options.history.mode;
+        } else this._history = options.history;
+      } else {
+        switch (this.mode) {
+          case 'browser':
+          case 'history':
+            this._history = (0, _historyFix.createBrowserHistory)(this.options);
+            break;
 
-        case 'memory':
-        case 'abstract':
-          this._history = (0, _historyFix.createMemoryHistory)(this.options);
-          break;
+          case 'memory':
+          case 'abstract':
+            this._history = (0, _historyFix.createMemoryHistory)(this.options);
+            break;
 
-        default:
-          this._history = (0, _historyFix.createHashHistory)(this.options);
+          default:
+            this._history = (0, _historyFix.createHashHistory)(this.options);
+        }
       }
 
       Object.keys(this._history).forEach(function (key) {

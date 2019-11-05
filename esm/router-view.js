@@ -235,8 +235,9 @@ function (_React$Component) {
 
                 state.router.viewRoot = this;
 
-                state.router._handleRouteInterceptor(state.router.history.location, function (ok) {
+                state.router._handleRouteInterceptor(state.router.history.location, function (ok, to) {
                   if (!ok) return;
+                  _this2.state.router && (_this2.state.router.currentRoute = to);
                   state.currentRoute = _this2._refreshCurrentRoute();
 
                   _this2.setState(Object.assign(state, {
