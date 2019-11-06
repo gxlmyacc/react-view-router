@@ -226,7 +226,7 @@ async function afterInterceptors(interceptors, ...args) {
     while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, i);
     if (!interceptor) return;
 
-    interceptor && await interceptor.call(this, ...args);
+    interceptor && await interceptor.call(this, ...args, interceptor.route);
   }
 }
 

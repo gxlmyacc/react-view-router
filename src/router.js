@@ -10,48 +10,6 @@ import routeCache from './route-cache';
 import { RouteLazy, hasMatchedRouteLazy } from './route-lazy';
 import { getGuardsComponent } from './route-guard';
 
-let ReactVueLike;
-let nexting = null;
-
-async function routetInterceptors(interceptors, to, from, next) {
-  function isBlock(v, interceptor) {
-    let _isLocation = typeof v === 'string' || isLocation(v);
-    if (_isLocation && interceptor) {
-      v = normalizeLocation(v, interceptor.route);
-      if (v.fullPath === to.fullPath) {
-        v = undefined;
-        _isLocation = false;
-      }
-    }
-    return v === false || _isLocation || v instanceof Error;
-  }
-  async function beforeInterceptor(interceptor, index, to, from, next) {
-    while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, index);
-    if (!interceptor) return next();
-
-    const nextWrapper = nexting = once(async f1 => {
-      let nextInterceptor = interceptors[++index];
-      if (isBlock(f1, interceptor)) return next(f1);
-      if (f1 === true) f1 = undefined;
-      if (!nextInterceptor) return next(res => isFunction(f1) && f1(res));
-      try {
-        return await beforeInterceptor(
-          nextInterceptor,
-          index,
-          to,
-          from,
-          next
-        );
-      } catch (ex) {
-        console.error(ex);
-        next(typeof ex === 'string' ? new Error(ex) : ex);
-      }
-    });
-    return await interceptor(to, from, nextWrapper, interceptor.route);
-  }
-  if (next) await beforeInterceptor(interceptors[0], 0, to, from, next);
-  else afterInterceptors(interceptors, to, from);
-}
 
 const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
 
@@ -120,6 +78,8 @@ export default class ReactViewRouter {
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this._unblock = this.history.block(location => routeCache.create(location));
+
+    if (this.routes.length) this.updateRoute(this.history.location);
   }
 
   stop() {
@@ -131,7 +91,7 @@ export default class ReactViewRouter {
   use({ routes, inheritProps, install, ...restOptions }) {
     if (routes) {
       this.routes = routes ? normalizeRoutes(routes) : [];
-      this.updateRoute(this.history.location);
+      this._history && this.updateRoute(this._history.location);
     }
 
     if (inheritProps !== undefined) config.inheritProps = inheritProps;
@@ -190,14 +150,14 @@ export default class ReactViewRouter {
 
       let ccg = cc && cc.prototype && cc.prototype[guardName];
       if (ccg) {
-        if (ReactVueLike && !ccg.isMobxFlow && cc.__flows && cc.__flows.includes(guardName)) ccg = ReactVueLike.flow(ccg);
+        if (this.ReactVueLike && !ccg.isMobxFlow && cc.__flows && cc.__flows.includes(guardName)) ccg = this.ReactVueLike.flow(ccg);
         ret.push(ccg);
       }
-      if (cc && ReactVueLike && cc.prototype instanceof ReactVueLike && Array.isArray(cc.mixins)) {
+      if (cc && this.ReactVueLike && cc.prototype instanceof this.ReactVueLike && Array.isArray(cc.mixins)) {
         cc.mixins.forEach(m => {
           let ccg = m[guardName] || (m.prototype && m.prototype[guardName]);
           if (!ccg) return;
-          if (!ccg.isMobxFlow && m.__flows && m.__flows.includes(guardName)) ccg = ReactVueLike.flow(ccg);
+          if (!ccg.isMobxFlow && m.__flows && m.__flows.includes(guardName)) ccg = this.ReactVueLike.flow(ccg);
           ret.push(ccg);
         });
       }
@@ -372,6 +332,46 @@ export default class ReactViewRouter {
     }
   }
 
+  async _routetInterceptors(interceptors, to, from, next) {
+    function isBlock(v, interceptor) {
+      let _isLocation = typeof v === 'string' || isLocation(v);
+      if (_isLocation && interceptor) {
+        v = normalizeLocation(v, interceptor.route);
+        if (v.fullPath === to.fullPath) {
+          v = undefined;
+          _isLocation = false;
+        }
+      }
+      return v === false || _isLocation || v instanceof Error;
+    }
+
+    async function beforeInterceptor(interceptor, index, to, from, next) {
+      while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, index);
+      if (!interceptor) return next();
+
+      const nextWrapper = this._nexting = once(async f1 => {
+        let nextInterceptor = interceptors[++index];
+        if (isBlock(f1, interceptor)) return next(f1);
+        if (f1 === true) f1 = undefined;
+        if (!nextInterceptor) return next(res => isFunction(f1) && f1(res));
+        try {
+          return await beforeInterceptor.call(this,
+            nextInterceptor,
+            index,
+            to,
+            from,
+            next);
+        } catch (ex) {
+          console.error(ex);
+          next(typeof ex === 'string' ? new Error(ex) : ex);
+        }
+      });
+      return await interceptor(to, from, nextWrapper, interceptor.route);
+    }
+    if (next) await beforeInterceptor.call(this, interceptors[0], 0, to, from, next);
+    else afterInterceptors.call(this, interceptors, to, from);
+  }
+
   async _internalHandleRouteInterceptor(location, callback, isInit = false) {
     if (typeof location === 'string') location = routeCache.flush(location);
     if (!location) return callback(true);
@@ -397,8 +397,8 @@ export default class ReactViewRouter {
       }
 
       fallbackView && fallbackView._updateResolving(true);
-      routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, ok => {
-        nexting = null;
+      this._routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, ok => {
+        this._nexting = null;
         fallbackView && setTimeout(() => fallbackView._isMounted && fallbackView._updateResolving(false), 0);
 
         if (ok && typeof ok === 'string') ok = { path: ok };
@@ -427,9 +427,9 @@ export default class ReactViewRouter {
 
         this.nextTick(() => {
           if (isFunction(ok)) ok = ok(to);
-          if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
+          if (!isInit && current.fullPath !== to.fullPath) this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
           if (to && isFunction(to.onComplete)) to.onComplete(ok, to);
-          routetInterceptors(this._getAfterEachGuards(to, current), to, current);
+          this._routetInterceptors(this._getAfterEachGuards(to, current), to, current);
         });
       });
     } catch (ex) {
@@ -452,7 +452,7 @@ export default class ReactViewRouter {
       if (isFunction(onComplete)) to.onComplete = once(doComplete);
       if (isFunction(onAbort)) to.onAbort = once(doAbort);
       if (onInit) to.onInit = onInit;
-      if (nexting) return nexting(to);
+      if (this._nexting) return this._nexting(to);
       if (replace) {
         to.isReplace = true;
         if (to.fullPath && isAbsoluteUrl(to.fullPath)) location.replace(to.fullPath);
@@ -640,8 +640,8 @@ export default class ReactViewRouter {
     this.errorCallback = callback;
   }
 
-  install(_ReactVueLike, { App }) {
-    ReactVueLike = _ReactVueLike;
+  install(ReactVueLike, { App }) {
+    this.ReactVueLike = ReactVueLike;
 
     if (!App.inherits) App.inherits = {};
     App.inherits.$router = this;

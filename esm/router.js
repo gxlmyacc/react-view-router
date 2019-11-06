@@ -63,6 +63,10 @@ function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
 
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
 
 function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
@@ -72,176 +76,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
-
-var ReactVueLike;
-var nexting = null;
-
-function routetInterceptors(_x, _x2, _x3, _x4) {
-  return _routetInterceptors.apply(this, arguments);
-}
-
-function _routetInterceptors() {
-  _routetInterceptors = _asyncToGenerator(
-  /*#__PURE__*/
-  regeneratorRuntime.mark(function _callee6(interceptors, to, from, next) {
-    var isBlock, beforeInterceptor, _beforeInterceptor;
-
-    return regeneratorRuntime.wrap(function _callee6$(_context6) {
-      while (1) {
-        switch (_context6.prev = _context6.next) {
-          case 0:
-            _beforeInterceptor = function _ref8() {
-              _beforeInterceptor = _asyncToGenerator(
-              /*#__PURE__*/
-              regeneratorRuntime.mark(function _callee5(interceptor, index, to, from, next) {
-                var nextWrapper;
-                return regeneratorRuntime.wrap(function _callee5$(_context5) {
-                  while (1) {
-                    switch (_context5.prev = _context5.next) {
-                      case 0:
-                        if (!(interceptor && interceptor.lazy)) {
-                          _context5.next = 6;
-                          break;
-                        }
-
-                        _context5.next = 3;
-                        return interceptor(interceptors, index);
-
-                      case 3:
-                        interceptor = _context5.sent;
-                        _context5.next = 0;
-                        break;
-
-                      case 6:
-                        if (interceptor) {
-                          _context5.next = 8;
-                          break;
-                        }
-
-                        return _context5.abrupt("return", next());
-
-                      case 8:
-                        nextWrapper = nexting = (0, _util.once)(
-                        /*#__PURE__*/
-                        function () {
-                          var _ref5 = _asyncToGenerator(
-                          /*#__PURE__*/
-                          regeneratorRuntime.mark(function _callee4(f1) {
-                            var nextInterceptor;
-                            return regeneratorRuntime.wrap(function _callee4$(_context4) {
-                              while (1) {
-                                switch (_context4.prev = _context4.next) {
-                                  case 0:
-                                    nextInterceptor = interceptors[++index];
-
-                                    if (!isBlock(f1, interceptor)) {
-                                      _context4.next = 3;
-                                      break;
-                                    }
-
-                                    return _context4.abrupt("return", next(f1));
-
-                                  case 3:
-                                    if (f1 === true) f1 = undefined;
-
-                                    if (nextInterceptor) {
-                                      _context4.next = 6;
-                                      break;
-                                    }
-
-                                    return _context4.abrupt("return", next(function (res) {
-                                      return (0, _util.isFunction)(f1) && f1(res);
-                                    }));
-
-                                  case 6:
-                                    _context4.prev = 6;
-                                    _context4.next = 9;
-                                    return beforeInterceptor(nextInterceptor, index, to, from, next);
-
-                                  case 9:
-                                    return _context4.abrupt("return", _context4.sent);
-
-                                  case 12:
-                                    _context4.prev = 12;
-                                    _context4.t0 = _context4["catch"](6);
-                                    console.error(_context4.t0);
-                                    next(typeof _context4.t0 === 'string' ? new Error(_context4.t0) : _context4.t0);
-
-                                  case 16:
-                                  case "end":
-                                    return _context4.stop();
-                                }
-                              }
-                            }, _callee4, null, [[6, 12]]);
-                          }));
-
-                          return function (_x14) {
-                            return _ref5.apply(this, arguments);
-                          };
-                        }());
-                        _context5.next = 11;
-                        return interceptor(to, from, nextWrapper, interceptor.route);
-
-                      case 11:
-                        return _context5.abrupt("return", _context5.sent);
-
-                      case 12:
-                      case "end":
-                        return _context5.stop();
-                    }
-                  }
-                }, _callee5);
-              }));
-              return _beforeInterceptor.apply(this, arguments);
-            };
-
-            beforeInterceptor = function _ref7(_x9, _x10, _x11, _x12, _x13) {
-              return _beforeInterceptor.apply(this, arguments);
-            };
-
-            isBlock = function _ref6(v, interceptor) {
-              var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
-
-              if (_isLocation && interceptor) {
-                v = (0, _util.normalizeLocation)(v, interceptor.route);
-
-                if (v.fullPath === to.fullPath) {
-                  v = undefined;
-                  _isLocation = false;
-                }
-              }
-
-              return v === false || _isLocation || v instanceof Error;
-            };
-
-            if (!next) {
-              _context6.next = 8;
-              break;
-            }
-
-            _context6.next = 6;
-            return beforeInterceptor(interceptors[0], 0, to, from, next);
-
-          case 6:
-            _context6.next = 9;
-            break;
-
-          case 8:
-            (0, _util.afterInterceptors)(interceptors, to, from);
-
-          case 9:
-          case "end":
-            return _context6.stop();
-        }
-      }
-    }, _callee6);
-  }));
-  return _routetInterceptors.apply(this, arguments);
-}
 
 var HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
 
@@ -308,7 +142,7 @@ function () {
 
       if (routes) {
         this.routes = routes ? (0, _util.normalizeRoutes)(routes) : [];
-        this.updateRoute(this.history.location);
+        this._history && this.updateRoute(this._history.location);
       }
 
       if (inheritProps !== undefined) _config.default.inheritProps = inheritProps;
@@ -378,15 +212,15 @@ function () {
         var ccg = cc && cc.prototype && cc.prototype[guardName];
 
         if (ccg) {
-          if (ReactVueLike && !ccg.isMobxFlow && cc.__flows && cc.__flows.includes(guardName)) ccg = ReactVueLike.flow(ccg);
+          if (_this2.ReactVueLike && !ccg.isMobxFlow && cc.__flows && cc.__flows.includes(guardName)) ccg = _this2.ReactVueLike.flow(ccg);
           ret.push(ccg);
         }
 
-        if (cc && ReactVueLike && cc.prototype instanceof ReactVueLike && Array.isArray(cc.mixins)) {
+        if (cc && _this2.ReactVueLike && cc.prototype instanceof _this2.ReactVueLike && Array.isArray(cc.mixins)) {
           cc.mixins.forEach(function (m) {
             var ccg = m[guardName] || m.prototype && m.prototype[guardName];
             if (!ccg) return;
-            if (!ccg.isMobxFlow && m.__flows && m.__flows.includes(guardName)) ccg = ReactVueLike.flow(ccg);
+            if (!ccg.isMobxFlow && m.__flows && m.__flows.includes(guardName)) ccg = _this2.ReactVueLike.flow(ccg);
             ret.push(ccg);
           });
         }
@@ -443,7 +277,7 @@ function () {
               }, _callee);
             }));
 
-            return function lazyResovle(_x5, _x6) {
+            return function lazyResovle(_x, _x2) {
               return _ref2.apply(this, arguments);
             };
           }();
@@ -677,12 +511,179 @@ function () {
       return _handleRouteInterceptor;
     }()
   }, {
+    key: "_routetInterceptors",
+    value: function () {
+      var _routetInterceptors2 = _asyncToGenerator(
+      /*#__PURE__*/
+      regeneratorRuntime.mark(function _callee5(interceptors, to, from, next) {
+        var isBlock, beforeInterceptor, _beforeInterceptor;
+
+        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+          while (1) {
+            switch (_context5.prev = _context5.next) {
+              case 0:
+                _beforeInterceptor = function _ref6() {
+                  _beforeInterceptor = _asyncToGenerator(
+                  /*#__PURE__*/
+                  regeneratorRuntime.mark(function _callee4(interceptor, index, to, from, next) {
+                    var _this5 = this;
+
+                    var nextWrapper;
+                    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                      while (1) {
+                        switch (_context4.prev = _context4.next) {
+                          case 0:
+                            if (!(interceptor && interceptor.lazy)) {
+                              _context4.next = 6;
+                              break;
+                            }
+
+                            _context4.next = 3;
+                            return interceptor(interceptors, index);
+
+                          case 3:
+                            interceptor = _context4.sent;
+                            _context4.next = 0;
+                            break;
+
+                          case 6:
+                            if (interceptor) {
+                              _context4.next = 8;
+                              break;
+                            }
+
+                            return _context4.abrupt("return", next());
+
+                          case 8:
+                            nextWrapper = this._nexting = (0, _util.once)(
+                            /*#__PURE__*/
+                            function () {
+                              var _ref3 = _asyncToGenerator(
+                              /*#__PURE__*/
+                              regeneratorRuntime.mark(function _callee3(f1) {
+                                var nextInterceptor;
+                                return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                                  while (1) {
+                                    switch (_context3.prev = _context3.next) {
+                                      case 0:
+                                        nextInterceptor = interceptors[++index];
+
+                                        if (!isBlock(f1, interceptor)) {
+                                          _context3.next = 3;
+                                          break;
+                                        }
+
+                                        return _context3.abrupt("return", next(f1));
+
+                                      case 3:
+                                        if (f1 === true) f1 = undefined;
+
+                                        if (nextInterceptor) {
+                                          _context3.next = 6;
+                                          break;
+                                        }
+
+                                        return _context3.abrupt("return", next(function (res) {
+                                          return (0, _util.isFunction)(f1) && f1(res);
+                                        }));
+
+                                      case 6:
+                                        _context3.prev = 6;
+                                        _context3.next = 9;
+                                        return beforeInterceptor.call(_this5, nextInterceptor, index, to, from, next);
+
+                                      case 9:
+                                        return _context3.abrupt("return", _context3.sent);
+
+                                      case 12:
+                                        _context3.prev = 12;
+                                        _context3.t0 = _context3["catch"](6);
+                                        console.error(_context3.t0);
+                                        next(typeof _context3.t0 === 'string' ? new Error(_context3.t0) : _context3.t0);
+
+                                      case 16:
+                                      case "end":
+                                        return _context3.stop();
+                                    }
+                                  }
+                                }, _callee3, null, [[6, 12]]);
+                              }));
+
+                              return function (_x12) {
+                                return _ref3.apply(this, arguments);
+                              };
+                            }());
+                            _context4.next = 11;
+                            return interceptor(to, from, nextWrapper, interceptor.route);
+
+                          case 11:
+                            return _context4.abrupt("return", _context4.sent);
+
+                          case 12:
+                          case "end":
+                            return _context4.stop();
+                        }
+                      }
+                    }, _callee4, this);
+                  }));
+                  return _beforeInterceptor.apply(this, arguments);
+                };
+
+                beforeInterceptor = function _ref5(_x7, _x8, _x9, _x10, _x11) {
+                  return _beforeInterceptor.apply(this, arguments);
+                };
+
+                isBlock = function _ref4(v, interceptor) {
+                  var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
+
+                  if (_isLocation && interceptor) {
+                    v = (0, _util.normalizeLocation)(v, interceptor.route);
+
+                    if (v.fullPath === to.fullPath) {
+                      v = undefined;
+                      _isLocation = false;
+                    }
+                  }
+
+                  return v === false || _isLocation || v instanceof Error;
+                };
+
+                if (!next) {
+                  _context5.next = 8;
+                  break;
+                }
+
+                _context5.next = 6;
+                return beforeInterceptor.call(this, interceptors[0], 0, to, from, next);
+
+              case 6:
+                _context5.next = 9;
+                break;
+
+              case 8:
+                _util.afterInterceptors.call(this, interceptors, to, from);
+
+              case 9:
+              case "end":
+                return _context5.stop();
+            }
+          }
+        }, _callee5, this);
+      }));
+
+      function _routetInterceptors(_x3, _x4, _x5, _x6) {
+        return _routetInterceptors2.apply(this, arguments);
+      }
+
+      return _routetInterceptors;
+    }()
+  }, {
     key: "_internalHandleRouteInterceptor",
     value: function () {
       var _internalHandleRouteInterceptor2 = _asyncToGenerator(
       /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee3(location, callback) {
-        var _this5 = this;
+      regeneratorRuntime.mark(function _callee6(location, callback) {
+        var _this6 = this;
 
         var isInit,
             isContinue,
@@ -690,36 +691,36 @@ function () {
             from,
             current,
             fallbackView,
-            _args3 = arguments;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+            _args6 = arguments;
+        return regeneratorRuntime.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
-                isInit = _args3.length > 2 && _args3[2] !== undefined ? _args3[2] : false;
+                isInit = _args6.length > 2 && _args6[2] !== undefined ? _args6[2] : false;
                 if (typeof location === 'string') location = _routeCache.default.flush(location);
 
                 if (location) {
-                  _context3.next = 4;
+                  _context6.next = 4;
                   break;
                 }
 
-                return _context3.abrupt("return", callback(true));
+                return _context6.abrupt("return", callback(true));
 
               case 4:
                 isContinue = false;
-                _context3.prev = 5;
+                _context6.prev = 5;
                 to = this.createRoute(location);
                 from = isInit ? null : to.redirectedFrom || this.currentRoute;
                 current = this.currentRoute;
 
                 if (!(to && from && to.fullPath === from.fullPath)) {
-                  _context3.next = 13;
+                  _context6.next = 13;
                   break;
                 }
 
                 callback(true);
                 if (to.onInit) to.onInit(Boolean(to), to);
-                return _context3.abrupt("return");
+                return _context6.abrupt("return");
 
               case 13:
                 if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
@@ -732,8 +733,9 @@ function () {
                 }
 
                 fallbackView && fallbackView._updateResolving(true);
-                routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, function (ok) {
-                  nexting = null;
+
+                this._routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, function (ok) {
+                  _this6._nexting = null;
                   fallbackView && setTimeout(function () {
                     return fallbackView._isMounted && fallbackView._updateResolving(false);
                   }, 0);
@@ -754,41 +756,43 @@ function () {
                     if ((0, _util.isLocation)(ok)) {
                       if (to.onAbort) ok.onAbort = to.onAbort;
                       if (to.onComplete) ok.onComplete = to.onComplete;
-                      return _this5.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+                      return _this6.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
                     }
 
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok, to);
-                    if (ok instanceof Error) _this5.errorCallback && _this5.errorCallback(ok);
+                    if (ok instanceof Error) _this6.errorCallback && _this6.errorCallback(ok);
                     return;
                   }
 
                   if (to.onInit) to.onInit(Boolean(to), to);
 
-                  _this5.nextTick(function () {
+                  _this6.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok = ok(to);
-                    if (!isInit && current.fullPath !== to.fullPath) routetInterceptors(_this5._getRouteUpdateGuards(to, current), to, current);
+                    if (!isInit && current.fullPath !== to.fullPath) _this6._routetInterceptors(_this6._getRouteUpdateGuards(to, current), to, current);
                     if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok, to);
-                    routetInterceptors(_this5._getAfterEachGuards(to, current), to, current);
+
+                    _this6._routetInterceptors(_this6._getAfterEachGuards(to, current), to, current);
                   });
                 });
-                _context3.next = 22;
+
+                _context6.next = 22;
                 break;
 
               case 18:
-                _context3.prev = 18;
-                _context3.t0 = _context3["catch"](5);
-                console.error(_context3.t0);
+                _context6.prev = 18;
+                _context6.t0 = _context6["catch"](5);
+                console.error(_context6.t0);
                 if (!isContinue) callback(isContinue);
 
               case 22:
               case "end":
-                return _context3.stop();
+                return _context6.stop();
             }
           }
-        }, _callee3, this, [[5, 18]]);
+        }, _callee6, this, [[5, 18]]);
       }));
 
-      function _internalHandleRouteInterceptor(_x7, _x8) {
+      function _internalHandleRouteInterceptor(_x13, _x14) {
         return _internalHandleRouteInterceptor2.apply(this, arguments);
       }
 
@@ -797,10 +801,10 @@ function () {
   }, {
     key: "_go",
     value: function _go(to, onComplete, onAbort, onInit, replace) {
-      var _this6 = this;
+      var _this7 = this;
 
       return new Promise(function (resolve, reject) {
-        to = (0, _util.normalizeLocation)(to, _this6.currentRoute);
+        to = (0, _util.normalizeLocation)(to, _this7.currentRoute);
 
         function doComplete(res, _to) {
           onComplete && onComplete(res, _to);
@@ -815,13 +819,13 @@ function () {
         if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(doComplete);
         if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(doAbort);
         if (onInit) to.onInit = onInit;
-        if (nexting) return nexting(to);
+        if (_this7._nexting) return _this7._nexting(to);
 
         if (replace) {
           to.isReplace = true;
-          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this6.history.replace(to);
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this7.history.replace(to);
         } else {
-          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this6.history.push(to);
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this7.history.push(to);
         }
       });
     }
@@ -854,7 +858,7 @@ function () {
   }, {
     key: "getMatched",
     value: function getMatched(to, from, parent) {
-      var _this7 = this;
+      var _this8 = this;
 
       if (!from) from = this.currentRoute;
 
@@ -865,11 +869,11 @@ function () {
       }
 
       var matched = (0, _util.matchRoutes)(this.routes, to, parent);
-      return matched.map(function (_ref3, i) {
-        var route = _ref3.route,
-            match = _ref3.match;
+      return matched.map(function (_ref7, i) {
+        var route = _ref7.route,
+            match = _ref7.match;
 
-        var ret = _this7.createMatchedRoute(route, match);
+        var ret = _this8.createMatchedRoute(route, match);
 
         if (from) {
           var fr = from.matched[i];
@@ -1054,9 +1058,9 @@ function () {
     }
   }, {
     key: "install",
-    value: function install(_ReactVueLike, _ref4) {
-      var App = _ref4.App;
-      ReactVueLike = _ReactVueLike;
+    value: function install(ReactVueLike, _ref8) {
+      var App = _ref8.App;
+      this.ReactVueLike = ReactVueLike;
       if (!App.inherits) App.inherits = {};
       App.inherits.$router = this;
       App.inherits.$route = ReactVueLike.observable(this.currentRoute || {});
@@ -1088,7 +1092,7 @@ function () {
   }, {
     key: "history",
     get: function get() {
-      var _this8 = this;
+      var _this9 = this;
 
       if (this._history) return this._history;
       var options = this.options;
@@ -1116,10 +1120,10 @@ function () {
       }
 
       Object.keys(this._history).forEach(function (key) {
-        return !HISTORY_METHS.includes(key) && (_this8[key] = _this8._history[key]);
+        return !HISTORY_METHS.includes(key) && (_this9[key] = _this9._history[key]);
       });
       HISTORY_METHS.forEach(function (key) {
-        return _this8[key] && (_this8[key] = _this8[key].bind(_this8));
+        return _this9[key] && (_this9[key] = _this9[key].bind(_this9));
       });
       return this._history;
     }

@@ -487,7 +487,7 @@ function _afterInterceptors() {
             }
 
             _context.next = 16;
-            return (_interceptor = interceptor).call.apply(_interceptor, [this].concat(args));
+            return (_interceptor = interceptor).call.apply(_interceptor, [this].concat(args, [interceptor.route]));
 
           case 16:
             i++;
