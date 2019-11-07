@@ -336,7 +336,7 @@ export default class ReactViewRouter {
     function isBlock(v, interceptor) {
       let _isLocation = typeof v === 'string' || isLocation(v);
       if (_isLocation && interceptor) {
-        v = normalizeLocation(v, interceptor.route);
+        v = this.createRoute(normalizeLocation(v, interceptor.route));
         if (v.fullPath === to.fullPath) {
           v = undefined;
           _isLocation = false;
@@ -351,7 +351,7 @@ export default class ReactViewRouter {
 
       const nextWrapper = this._nexting = once(async f1 => {
         let nextInterceptor = interceptors[++index];
-        if (isBlock(f1, interceptor)) return next(f1);
+        if (isBlock.call(this, f1, interceptor)) return next(f1);
         if (f1 === true) f1 = undefined;
         if (!nextInterceptor) return next(res => isFunction(f1) && f1(res));
         try {

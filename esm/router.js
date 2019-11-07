@@ -124,6 +124,7 @@ function () {
       this._unblock = this.history.block(function (location) {
         return _routeCache.default.create(location);
       });
+      if (this.routes.length) this.updateRoute(this.history.location);
     }
   }, {
     key: "stop",

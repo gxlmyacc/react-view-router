@@ -140,6 +140,7 @@ function normalizeLocation(to, route, append) {
 
   to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append);
   to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
+  if (!to.fullPath) to.fullPath = `${to.path}${to.search ? '?' + to.search : ''}`;
   if (!to.query) to.query = {};
   return to;
 }
@@ -303,16 +304,22 @@ function renderRoute(route, routes, props, children, options = {}) {
     _pending.afterEnterGuards[options.name] = [];
     if (ref) ref = mergeFns(ref, el => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
-    const ret = React.createElement(
-      component,
-      Object.assign(
-        _props,
-        props,
-        config.inheritProps ? { route } : null,
-        { ref }
-      ),
-      ...(Array.isArray(children) ? children : [children])
-    );
+    let ret;
+    if (component instanceof RouteLazy) {
+      ret = null;
+      warn(`route [${route.path}] component should not be RouteLazy instance!`);
+    } else {
+      ret = React.createElement(
+        component,
+        Object.assign(
+          _props,
+          props,
+          config.inheritProps ? { route } : null,
+          { ref }
+        ),
+        ...(Array.isArray(children) ? children : [children])
+      );
+    }
     if (!ref) nextTick(refHandler);
     return ret;
   }
