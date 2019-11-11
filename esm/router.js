@@ -569,7 +569,7 @@ function () {
                                       case 0:
                                         nextInterceptor = interceptors[++index];
 
-                                        if (!isBlock(f1, interceptor)) {
+                                        if (!isBlock.call(_this5, f1, interceptor)) {
                                           _context3.next = 3;
                                           break;
                                         }
@@ -638,7 +638,7 @@ function () {
                   var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
 
                   if (_isLocation && interceptor) {
-                    v = (0, _util.normalizeLocation)(v, interceptor.route);
+                    v = this.createRoute((0, _util.normalizeLocation)(v, interceptor.route));
 
                     if (v.fullPath === to.fullPath) {
                       v = undefined;

@@ -121,7 +121,7 @@ function (_React$Component) {
       var currentRoute = this.state.currentRoute;
       if (currentRoute) currentRoute.componentInstances[this.name] = ref;
       if (this.props && this.props._updateRef) this.props._updateRef(ref);
-      this.setState({
+      if (this._isMounted) this.setState({
         currentRoute: currentRoute
       });
     }
@@ -167,7 +167,7 @@ function (_React$Component) {
       if (this.state && this.state._routerInited) {
         if (newState) Object.assign(newState, {
           currentRoute: currentRoute
-        });else this.setState({
+        });else if (this._isMounted) this.setState({
           currentRoute: currentRoute
         });
       }
@@ -177,7 +177,7 @@ function (_React$Component) {
   }, {
     key: "_updateResolving",
     value: function _updateResolving(resolving) {
-      this.setState({
+      if (this._isMounted) this.setState({
         _routerResolving: Boolean(resolving)
       });
     }
@@ -239,8 +239,7 @@ function (_React$Component) {
                   if (!ok) return;
                   _this2.state.router && (_this2.state.router.currentRoute = to);
                   state.currentRoute = _this2._refreshCurrentRoute();
-
-                  _this2.setState(Object.assign(state, {
+                  if (_this2._isMounted) _this2.setState(Object.assign(state, {
                     _routerInited: true
                   }));
                 }, true);
@@ -271,7 +270,7 @@ function (_React$Component) {
                   state.currentRoute = this._refreshCurrentRoute(state);
                 } else console.error('[RouterView] cannot find root RouterView instance!', this);
 
-                this.setState(Object.assign(state, {
+                if (this._isMounted) this.setState(Object.assign(state, {
                   _routerInited: true
                 }));
 
@@ -320,7 +319,7 @@ function (_React$Component) {
 
       (_state$routes = state.routes).push.apply(_state$routes, _toConsumableArray((0, _util.normalizeRoutes)(routes, state.parentRoute)));
 
-      this.setState(state);
+      if (this._isMounted) this.setState(state);
       return state.routes;
     }
   }, {
@@ -336,7 +335,7 @@ function (_React$Component) {
 
       (_state$routes2 = state.routes).splice.apply(_state$routes2, [idx, len].concat(_toConsumableArray((0, _util.normalizeRoutes)(routes, state.parentRoute))));
 
-      this.setState(state);
+      if (this._isMounted) this.setState(state);
       return state.routes;
     }
   }, {
@@ -359,7 +358,7 @@ function (_React$Component) {
       var routes = this.state.routes;
       var index = this.indexOf(route);
       if (~index) routes.splice(index, 1);
-      this.setState({
+      if (this._isMounted) this.setState({
         routes: routes
       });
       return ~index ? route : undefined;

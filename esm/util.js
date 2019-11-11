@@ -319,6 +319,7 @@ function normalizeLocation(to, route, append) {
   });else if (to.search) to.query = _config.default.parseQuery(to.search.substr(1));
   to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append);
   to.search = to.search || (to.query ? _config.default.stringifyQuery(to.query) : '');
+  if (!to.fullPath) to.fullPath = "".concat(to.path).concat(to.search ? '?' + to.search : '');
   if (!to.query) to.query = {};
   return to;
 }
@@ -585,12 +586,18 @@ function renderRoute(route, routes, props, children) {
       return el && refHandler && refHandler(el, component.__componentClass);
     });
     if (component.__component) component = (0, _routeGuard.getGuardsComponent)(component);
+    var ret;
 
-    var ret = _react.default.createElement.apply(_react.default, [component, Object.assign(_props, props, _config.default.inheritProps ? {
-      route: route
-    } : null, {
-      ref: ref
-    })].concat(_toConsumableArray(Array.isArray(children) ? children : [children])));
+    if (component instanceof _routeLazy.RouteLazy) {
+      ret = null;
+      warn("route [".concat(route.path, "] component should not be RouteLazy instance!"));
+    } else {
+      ret = _react.default.createElement.apply(_react.default, [component, Object.assign(_props, props, _config.default.inheritProps ? {
+        route: route
+      } : null, {
+        ref: ref
+      })].concat(_toConsumableArray(Array.isArray(children) ? children : [children])));
+    }
 
     if (!ref) nextTick(refHandler);
     return ret;

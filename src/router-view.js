@@ -39,7 +39,7 @@ class RouterView extends React.Component {
     let currentRoute = this.state.currentRoute;
     if (currentRoute) currentRoute.componentInstances[this.name] = ref;
     if (this.props && this.props._updateRef) this.props._updateRef(ref);
-    this.setState({ currentRoute });
+    if (this._isMounted) this.setState({ currentRoute });
   }
 
   _filterRoutes(routes, state) {
@@ -76,13 +76,13 @@ class RouterView extends React.Component {
     if (currentRoute) currentRoute.viewInstances[this.name] = this;
     if (this.state && this.state._routerInited) {
       if (newState) Object.assign(newState, { currentRoute });
-      else this.setState({ currentRoute });
+      else if (this._isMounted) this.setState({ currentRoute });
     }
     return currentRoute;
   }
 
   _updateResolving(resolving) {
-    this.setState({ _routerResolving: Boolean(resolving) });
+    if (this._isMounted) this.setState({ _routerResolving: Boolean(resolving) });
   }
 
   _resolveFallback() {
@@ -116,7 +116,7 @@ class RouterView extends React.Component {
           if (!ok) return;
           this.state.router && (this.state.router.currentRoute = to);
           state.currentRoute = this._refreshCurrentRoute();
-          this.setState(Object.assign(state, { _routerInited: true }));
+          if (this._isMounted) this.setState(Object.assign(state, { _routerInited: true }));
         },
         true,
       );
@@ -139,7 +139,7 @@ class RouterView extends React.Component {
       state.currentRoute = this._refreshCurrentRoute(state);
     } else console.error('[RouterView] cannot find root RouterView instance!', this);
 
-    this.setState(Object.assign(state, { _routerInited: true }));
+    if (this._isMounted) this.setState(Object.assign(state, { _routerInited: true }));
   }
 
   componentWillUnmount() {
@@ -161,14 +161,14 @@ class RouterView extends React.Component {
   push(...routes) {
     const state = { ...this.state };
     state.routes.push(...normalizeRoutes(routes, state.parentRoute));
-    this.setState(state);
+    if (this._isMounted) this.setState(state);
     return state.routes;
   }
 
   splice(idx, len, ...routes) {
     const state = { ...this.state };
     state.routes.splice(idx, len, ...normalizeRoutes(routes, state.parentRoute));
-    this.setState(state);
+    if (this._isMounted) this.setState(state);
     return state.routes;
   }
 
@@ -183,7 +183,7 @@ class RouterView extends React.Component {
     const { routes } = this.state;
     const index = this.indexOf(route);
     if (~index) routes.splice(index, 1);
-    this.setState({ routes });
+    if (this._isMounted) this.setState({ routes });
     return ~index ? route : undefined;
   }
 
