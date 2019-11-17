@@ -249,7 +249,7 @@ export default class ReactViewRouter {
               };
             }
             return next(cb, ...args);
-          });
+          }, r);
         })
       ));
     }
@@ -271,7 +271,7 @@ export default class ReactViewRouter {
                 cb = undefined;
               }
               return next(cb, ...args);
-            });
+            }, r);
           })
         );
         ret.push(...guards);
@@ -286,7 +286,7 @@ export default class ReactViewRouter {
           (fn, name) => {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
-              return fn.call(this, to, current);
+              return fn.call(this, to, current, r);
             });
             return null;
           }
@@ -664,16 +664,7 @@ export default class ReactViewRouter {
 
     let app = null;
     if (!ReactVueLike.config.inheritMergeStrategies.$route) {
-      ReactVueLike.config.inheritMergeStrategies.$route = function (parent, child, vm) {
-        if (vm._isVueLikeRoot) {
-          vm.$set(vm, '$route', parent);
-          vm.$router && (vm.$router.app = vm);
-        } else {
-          vm.$computed(vm, '$route', function () {
-            return this.$root ? this.$root.$route : null;
-          });
-        }
-      };
+      ReactVueLike.config.inheritMergeStrategies.$route = config.routeMergeStrategie;
     }
     this.plugin({
       name: 'react-view-router-vue-like-plugin',
