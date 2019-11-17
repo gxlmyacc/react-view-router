@@ -15,12 +15,12 @@ const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'go
 
 export default class ReactViewRouter {
 
-  constructor({ mode = 'hash', basename = '', ...options  } = {}) {
+  constructor({ mode = 'hash', basename = '', base = '', ...options  } = {}) {
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
     this.options = options;
     this.mode = mode;
-    this.basename = basename;
+    this.basename = basename || base;
     this.routes = [];
     this.plugins = [];
     this.beforeEachGuards = [];
@@ -66,11 +66,12 @@ export default class ReactViewRouter {
     return this._history;
   }
 
-  start({ mode, basename, ...options  } = {}) {
+  start({ mode, basename, base, ...options  } = {}) {
     this.stop();
 
     Object.assign(this.options, options);
     if (basename !== undefined) this.basename = basename;
+    if (base !== undefined) this.basename = base;
     if (mode !== undefined) this.mode = mode;
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
