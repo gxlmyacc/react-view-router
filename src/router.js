@@ -15,14 +15,12 @@ const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'go
 
 export default class ReactViewRouter {
 
-  constructor(options = {}) {
-    if (!options.mode) options.mode = 'hash';
+  constructor({ mode = 'hash', basename = '', ...options  } = {}) {
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
-
     this.options = options;
-    this.mode = options.mode || 'hash';
-    this.basename = options.basename || '';
+    this.mode = mode;
+    this.basename = basename;
     this.routes = [];
     this.plugins = [];
     this.beforeEachGuards = [];
@@ -68,13 +66,12 @@ export default class ReactViewRouter {
     return this._history;
   }
 
-  start(options = {}) {
+  start({ mode, basename, ...options  } = {}) {
     this.stop();
-    if (options.base !== undefined) options.basename = options.base;
 
     Object.assign(this.options, options);
-    if (this.options.basename !== undefined) this.basename = this.options.basename;
-    if (this.options.mode !== undefined) this.mode = this.options.mode;
+    if (basename !== undefined) this.basename = basename;
+    if (mode !== undefined) this.mode = mode;
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
     this._unblock = this.history.block(location => routeCache.create(location));
@@ -323,10 +320,25 @@ export default class ReactViewRouter {
     return flatten(ret);
   }
 
-  async _handleRouteInterceptor(...args) {
+  _transformLocation(location) {
+    if (!location) return location;
+    if (this.basename) {
+      if (location.pathname.indexOf(this.basename) !== 0) return null;
+      location = { ...location };
+      location.pathname = location.pathname.substr(this.basename.length) || '/';
+      if (location.fullPath) location.fullPath = location.fullPath.substr(this.basename.length) || '/';
+      if (location.path !== undefined) location.path = location.pathname;
+    }
+    return location;
+  }
+
+  async _handleRouteInterceptor(location, callback, ...args) {
+    if (typeof location === 'string') location = routeCache.flush(location);
+    location = this._transformLocation(location);
+    if (!location) return callback(false);
     this._callEvent('onRouteing', true);
     try {
-      return await this._internalHandleRouteInterceptor(...args);
+      return await this._internalHandleRouteInterceptor(location, callback, ...args);
     } finally {
       this._callEvent('onRouteing', false);
     }
@@ -373,8 +385,6 @@ export default class ReactViewRouter {
   }
 
   async _internalHandleRouteInterceptor(location, callback, isInit = false) {
-    if (typeof location === 'string') location = routeCache.flush(location);
-    if (!location) return callback(true);
     let isContinue = false;
     try {
       const to = this.createRoute(location);
@@ -440,7 +450,7 @@ export default class ReactViewRouter {
 
   _go(to, onComplete, onAbort, onInit, replace) {
     return new Promise((resolve, reject) => {
-      to = normalizeLocation(to, this.currentRoute);
+      to = normalizeLocation(to, this.currentRoute, false, this.basename);
       function doComplete(res, _to) {
         onComplete && onComplete(res, _to);
         resolve(res);
@@ -539,10 +549,12 @@ export default class ReactViewRouter {
     return ret;
   }
 
-  updateRoute(to) {
-    if (!to) to = this.history.location;
+  updateRoute(location) {
+    location = location && this._transformLocation(location);
+    if (!location) return;
+
     this.prevRoute = this.currentRoute;
-    this.currentRoute = this.createRoute(to, this.prevRoute);
+    this.currentRoute = this.createRoute(location, this.prevRoute);
 
     // const statesLen = this.states.length + this.stateOrigin;
     // const historyLen = this.history.length - this.stateOrigin;
@@ -649,21 +661,23 @@ export default class ReactViewRouter {
 
     config.inheritProps = false;
 
-    let app;
-    ReactVueLike.config.inheritMergeStrategies.$route = function (parent, child, vm) {
-      if (vm._isVueLikeRoot) {
-        vm.$set(vm, '$route', parent);
-        app = vm;
-      } else {
-        vm.$computed(vm, '$route', function () {
-          return this.$root ? this.$root.$route : null;
-        });
-      }
-    };
+    let app = null;
+    if (!ReactVueLike.config.inheritMergeStrategies.$route) {
+      ReactVueLike.config.inheritMergeStrategies.$route = function (parent, child, vm) {
+        if (vm._isVueLikeRoot) {
+          vm.$set(vm, '$route', parent);
+          vm.$router && (vm.$router.app = vm);
+        } else {
+          vm.$computed(vm, '$route', function () {
+            return this.$root ? this.$root.$route : null;
+          });
+        }
+      };
+    }
     this.plugin({
       name: 'react-view-router-vue-like-plugin',
       onRouteChange: ReactVueLike.action('[react-view-router]onRouteChange', function (newVal) {
-        if (app) app.$route = ReactVueLike.observable(newVal, {}, { deep: false });
+        if (app) ReactVueLike.set(app, '$route', ReactVueLike.observable(newVal, {}, { deep: false }));
         else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, { deep: false }));
       })
     });

@@ -70,15 +70,17 @@ function normalizeRoutes(routes, parent, depth = 0, force = false) {
   return routes;
 }
 
-function normalizeRoutePath(path, route, append) {
+function normalizeRoutePath(path, route, append, basename = '') {
+  if (isAbsoluteUrl(path)) return path;
   if (route && route.matched) route = route.matched[route.matched.length - 1];
-  if (!path || path[0] === '/' || !route) return path || '';
+  if (!path || path[0] === '/' || !route) return basename + (path || '');
   if (route.config) route = route.config;
   let parent = (append || /^\.\//.test(path)) ? route : route.parent;
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
     parent = route.parent;
   }
+  if (basename && path[0] === '/') path = basename + path;
   return normalizePath(path);
 }
 
@@ -129,7 +131,7 @@ function matchRoutes(routes, to, parent, branch) {
   return branch;
 }
 
-function normalizeLocation(to, route, append) {
+function normalizeLocation(to, route, append, basename = '') {
   if (!to) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
@@ -138,9 +140,11 @@ function normalizeLocation(to, route, append) {
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search.substr(1));
 
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append);
+  if (!isAbsoluteUrl(to.pathname)) {
+    to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
+  }
   to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
-  if (!to.fullPath) to.fullPath = `${to.path}${to.search ? '?' + to.search : ''}`;
+  to.fullPath = `${to.path}${to.search ? '?' + to.search : ''}`;
   if (!to.query) to.query = {};
   return to;
 }
