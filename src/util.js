@@ -355,6 +355,11 @@ function camelize(str) {
   return ret;
 }
 
+function isPropChanged(prev, next) {
+  if ((!prev || !next) && prev !== next) return true;
+  return Object.keys(next).some(key => next[key] !== prev[key]);
+}
+
 function isRouteChanged(prev, next) {
   if (prev && next) return prev.path !== next.path && prev.subpath !== next.subpath;
   if ((!prev || !next) && prev !== next) return true;
@@ -402,6 +407,7 @@ export {
   isPlainObject,
   isFunction,
   isLocation,
+  isPropChanged,
   isRouteChanged,
   isRoutesChanged,
   isAbsoluteUrl,

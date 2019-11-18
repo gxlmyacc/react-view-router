@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   renderRoute, normalizeRoute, normalizeRoutes, isFunction,
-  isRouteChanged, isRoutesChanged,
+  isRouteChanged, isRoutesChanged, isPropChanged,
   getParentRouterView
 } from './util';
 
@@ -148,11 +148,11 @@ class RouterView extends React.Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     if (!this._isMounted) return false;
-    if (this.props.name !== nextProps.name) return true;
     if (this.state._routerResolving !== nextState._routerResolving) return true;
     if (this.state._routerInited !== nextState._routerInited) return true;
     if (this.state._routerDepth !== nextState._routerDepth) return true;
     if (this.state.router !== nextState.router) return true;
+    if (isPropChanged(this.props, nextProps)) return true;
     if (isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
     if (isRoutesChanged(this.state.routes, nextState.routes)) return true;
     return false;
