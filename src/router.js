@@ -662,14 +662,14 @@ export default class ReactViewRouter {
 
     config.inheritProps = false;
 
-    let app = null;
     if (!ReactVueLike.config.inheritMergeStrategies.$route) {
       ReactVueLike.config.inheritMergeStrategies.$route = config.routeMergeStrategie;
     }
+    const router = this;
     this.plugin({
       name: 'react-view-router-vue-like-plugin',
       onRouteChange: ReactVueLike.action('[react-view-router]onRouteChange', function (newVal) {
-        if (app) ReactVueLike.set(app, '$route', ReactVueLike.observable(newVal, {}, { deep: false }));
+        if (router.app) ReactVueLike.set(router.app, '$route', ReactVueLike.observable(newVal, {}, { deep: false }));
         else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, { deep: false }));
       })
     });

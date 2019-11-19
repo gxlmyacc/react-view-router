@@ -297,11 +297,11 @@ function (_React$Component) {
     key: "shouldComponentUpdate",
     value: function shouldComponentUpdate(nextProps, nextState) {
       if (!this._isMounted) return false;
-      if (this.props.name !== nextProps.name) return true;
       if (this.state._routerResolving !== nextState._routerResolving) return true;
       if (this.state._routerInited !== nextState._routerInited) return true;
       if (this.state._routerDepth !== nextState._routerDepth) return true;
       if (this.state.router !== nextState.router) return true;
+      if ((0, _util.isPropChanged)(this.props, nextProps)) return true;
       if ((0, _util.isRouteChanged)(this.state.currentRoute, nextState.currentRoute)) return true;
       if ((0, _util.isRoutesChanged)(this.state.routes, nextState.routes)) return true;
       return false;

@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+require("core-js/modules/es7.object.get-own-property-descriptors");
+
 require("core-js/modules/es6.string.iterator");
 
 require("core-js/modules/es6.array.from");
@@ -55,6 +57,12 @@ var _routeGuard = require("./route-guard");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
@@ -83,15 +91,21 @@ var ReactViewRouter =
 /*#__PURE__*/
 function () {
   function ReactViewRouter() {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        _ref$mode = _ref.mode,
+        mode = _ref$mode === void 0 ? 'hash' : _ref$mode,
+        _ref$basename = _ref.basename,
+        basename = _ref$basename === void 0 ? '' : _ref$basename,
+        _ref$base = _ref.base,
+        base = _ref$base === void 0 ? '' : _ref$base,
+        options = _objectWithoutProperties(_ref, ["mode", "basename", "base"]);
 
     _classCallCheck(this, ReactViewRouter);
 
-    if (!options.mode) options.mode = 'hash';
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
     this.options = options;
-    this.mode = options.mode || 'hash';
-    this.basename = options.basename || '';
+    this.mode = mode;
+    this.basename = basename || base;
     this.routes = [];
     this.plugins = [];
     this.beforeEachGuards = [];
@@ -112,12 +126,17 @@ function () {
     value: function start() {
       var _this = this;
 
-      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+          mode = _ref2.mode,
+          basename = _ref2.basename,
+          base = _ref2.base,
+          options = _objectWithoutProperties(_ref2, ["mode", "basename", "base"]);
+
       this.stop();
-      if (options.base !== undefined) options.basename = options.base;
       Object.assign(this.options, options);
-      if (this.options.basename !== undefined) this.basename = this.options.basename;
-      if (this.options.mode !== undefined) this.mode = this.options.mode;
+      if (basename !== undefined) this.basename = basename;
+      if (base !== undefined) this.basename = base;
+      if (mode !== undefined) this.mode = mode;
       this._unlisten = this.history.listen(function (location) {
         return _this.updateRoute(location);
       });
@@ -135,11 +154,11 @@ function () {
     }
   }, {
     key: "use",
-    value: function use(_ref) {
-      var routes = _ref.routes,
-          inheritProps = _ref.inheritProps,
-          install = _ref.install,
-          restOptions = _objectWithoutProperties(_ref, ["routes", "inheritProps", "install"]);
+    value: function use(_ref3) {
+      var routes = _ref3.routes,
+          inheritProps = _ref3.inheritProps,
+          install = _ref3.install,
+          restOptions = _objectWithoutProperties(_ref3, ["routes", "inheritProps", "install"]);
 
       if (routes) {
         this.routes = routes ? (0, _util.normalizeRoutes)(routes) : [];
@@ -252,7 +271,7 @@ function () {
           var lazyResovle =
           /*#__PURE__*/
           function () {
-            var _ref2 = _asyncToGenerator(
+            var _ref4 = _asyncToGenerator(
             /*#__PURE__*/
             regeneratorRuntime.mark(function _callee(interceptors, index) {
               var nc, ret;
@@ -279,7 +298,7 @@ function () {
             }));
 
             return function lazyResovle(_x, _x2) {
-              return _ref2.apply(this, arguments);
+              return _ref4.apply(this, arguments);
             };
           }();
 
@@ -377,7 +396,7 @@ function () {
               }
 
               return next.apply(void 0, [cb].concat(args));
-            });
+            }, r);
           };
         })));
       }
@@ -408,7 +427,7 @@ function () {
                 }
 
                 return next.apply(void 0, [cb].concat(args));
-              });
+              }, r);
             };
           });
 
@@ -421,7 +440,7 @@ function () {
           var allGuards = _this4._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
-              return fn.call(this, to, current);
+              return fn.call(this, to, current, r);
             });
             return null;
           });
@@ -471,41 +490,76 @@ function () {
       return (0, _util.flatten)(ret);
     }
   }, {
+    key: "_transformLocation",
+    value: function _transformLocation(location) {
+      if (!location) return location;
+
+      if (this.basename) {
+        if (location.pathname.indexOf(this.basename) !== 0) return null;
+        location = _objectSpread({}, location);
+        location.pathname = location.pathname.substr(this.basename.length) || '/';
+        if (location.fullPath) location.fullPath = location.fullPath.substr(this.basename.length) || '/';
+        if (location.path !== undefined) location.path = location.pathname;
+      }
+
+      return location;
+    }
+  }, {
     key: "_handleRouteInterceptor",
     value: function () {
       var _handleRouteInterceptor2 = _asyncToGenerator(
       /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee2() {
-        var _args2 = arguments;
+      regeneratorRuntime.mark(function _callee2(location, callback) {
+        var _len4,
+            args,
+            _key4,
+            _args2 = arguments;
+
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                this._callEvent('onRouteing', true);
+                if (typeof location === 'string') location = _routeCache.default.flush(location);
+                location = this._transformLocation(location);
 
-                _context2.prev = 1;
-                _context2.next = 4;
-                return this._internalHandleRouteInterceptor.apply(this, _args2);
+                if (location) {
+                  _context2.next = 4;
+                  break;
+                }
+
+                return _context2.abrupt("return", callback(false));
 
               case 4:
+                this._callEvent('onRouteing', true);
+
+                _context2.prev = 5;
+
+                for (_len4 = _args2.length, args = new Array(_len4 > 2 ? _len4 - 2 : 0), _key4 = 2; _key4 < _len4; _key4++) {
+                  args[_key4 - 2] = _args2[_key4];
+                }
+
+                _context2.next = 9;
+                return this._internalHandleRouteInterceptor.apply(this, [location, callback].concat(args));
+
+              case 9:
                 return _context2.abrupt("return", _context2.sent);
 
-              case 5:
-                _context2.prev = 5;
+              case 10:
+                _context2.prev = 10;
 
                 this._callEvent('onRouteing', false);
 
-                return _context2.finish(5);
+                return _context2.finish(10);
 
-              case 8:
+              case 13:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, this, [[1,, 5, 8]]);
+        }, _callee2, this, [[5,, 10, 13]]);
       }));
 
-      function _handleRouteInterceptor() {
+      function _handleRouteInterceptor(_x3, _x4) {
         return _handleRouteInterceptor2.apply(this, arguments);
       }
 
@@ -523,7 +577,7 @@ function () {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                _beforeInterceptor = function _ref6() {
+                _beforeInterceptor = function _ref8() {
                   _beforeInterceptor = _asyncToGenerator(
                   /*#__PURE__*/
                   regeneratorRuntime.mark(function _callee4(interceptor, index, to, from, next) {
@@ -559,7 +613,7 @@ function () {
                             nextWrapper = this._nexting = (0, _util.once)(
                             /*#__PURE__*/
                             function () {
-                              var _ref3 = _asyncToGenerator(
+                              var _ref5 = _asyncToGenerator(
                               /*#__PURE__*/
                               regeneratorRuntime.mark(function _callee3(f1) {
                                 var nextInterceptor;
@@ -610,8 +664,8 @@ function () {
                                 }, _callee3, null, [[6, 12]]);
                               }));
 
-                              return function (_x12) {
-                                return _ref3.apply(this, arguments);
+                              return function (_x14) {
+                                return _ref5.apply(this, arguments);
                               };
                             }());
                             _context4.next = 11;
@@ -630,11 +684,11 @@ function () {
                   return _beforeInterceptor.apply(this, arguments);
                 };
 
-                beforeInterceptor = function _ref5(_x7, _x8, _x9, _x10, _x11) {
+                beforeInterceptor = function _ref7(_x9, _x10, _x11, _x12, _x13) {
                   return _beforeInterceptor.apply(this, arguments);
                 };
 
-                isBlock = function _ref4(v, interceptor) {
+                isBlock = function _ref6(v, interceptor) {
                   var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
 
                   if (_isLocation && interceptor) {
@@ -672,7 +726,7 @@ function () {
         }, _callee5, this);
       }));
 
-      function _routetInterceptors(_x3, _x4, _x5, _x6) {
+      function _routetInterceptors(_x5, _x6, _x7, _x8) {
         return _routetInterceptors2.apply(this, arguments);
       }
 
@@ -698,24 +752,14 @@ function () {
             switch (_context6.prev = _context6.next) {
               case 0:
                 isInit = _args6.length > 2 && _args6[2] !== undefined ? _args6[2] : false;
-                if (typeof location === 'string') location = _routeCache.default.flush(location);
-
-                if (location) {
-                  _context6.next = 4;
-                  break;
-                }
-
-                return _context6.abrupt("return", callback(true));
-
-              case 4:
                 isContinue = false;
-                _context6.prev = 5;
+                _context6.prev = 2;
                 to = this.createRoute(location);
                 from = isInit ? null : to.redirectedFrom || this.currentRoute;
                 current = this.currentRoute;
 
                 if (!(to && from && to.fullPath === from.fullPath)) {
-                  _context6.next = 13;
+                  _context6.next = 10;
                   break;
                 }
 
@@ -723,7 +767,7 @@ function () {
                 if (to.onInit) to.onInit(Boolean(to), to);
                 return _context6.abrupt("return");
 
-              case 13:
+              case 10:
                 if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
                   fallbackView = this.viewRoot;
 
@@ -776,24 +820,24 @@ function () {
                   });
                 });
 
-                _context6.next = 22;
+                _context6.next = 19;
                 break;
 
-              case 18:
-                _context6.prev = 18;
-                _context6.t0 = _context6["catch"](5);
+              case 15:
+                _context6.prev = 15;
+                _context6.t0 = _context6["catch"](2);
                 console.error(_context6.t0);
                 if (!isContinue) callback(isContinue);
 
-              case 22:
+              case 19:
               case "end":
                 return _context6.stop();
             }
           }
-        }, _callee6, this, [[5, 18]]);
+        }, _callee6, this, [[2, 15]]);
       }));
 
-      function _internalHandleRouteInterceptor(_x13, _x14) {
+      function _internalHandleRouteInterceptor(_x15, _x16) {
         return _internalHandleRouteInterceptor2.apply(this, arguments);
       }
 
@@ -805,7 +849,7 @@ function () {
       var _this7 = this;
 
       return new Promise(function (resolve, reject) {
-        to = (0, _util.normalizeLocation)(to, _this7.currentRoute);
+        to = (0, _util.normalizeLocation)(to, _this7.currentRoute, false, _this7.basename);
 
         function doComplete(res, _to) {
           onComplete && onComplete(res, _to);
@@ -870,9 +914,9 @@ function () {
       }
 
       var matched = (0, _util.matchRoutes)(this.routes, to, parent);
-      return matched.map(function (_ref7, i) {
-        var route = _ref7.route,
-            match = _ref7.match;
+      return matched.map(function (_ref9, i) {
+        var route = _ref9.route,
+            match = _ref9.match;
 
         var ret = _this8.createMatchedRoute(route, match);
 
@@ -939,10 +983,11 @@ function () {
     }
   }, {
     key: "updateRoute",
-    value: function updateRoute(to) {
-      if (!to) to = this.history.location;
+    value: function updateRoute(location) {
+      location = location && this._transformLocation(location);
+      if (!location) return;
       this.prevRoute = this.currentRoute;
-      this.currentRoute = this.createRoute(to, this.prevRoute); // const statesLen = this.states.length + this.stateOrigin;
+      this.currentRoute = this.createRoute(location, this.prevRoute); // const statesLen = this.states.length + this.stateOrigin;
       // const historyLen = this.history.length - this.stateOrigin;
       // if (this.history.action === 'POP') {
       //   this.currentRoute.state = this.states[historyLen];
@@ -1059,32 +1104,25 @@ function () {
     }
   }, {
     key: "install",
-    value: function install(ReactVueLike, _ref8) {
-      var App = _ref8.App;
+    value: function install(ReactVueLike, _ref10) {
+      var App = _ref10.App;
       this.ReactVueLike = ReactVueLike;
       if (!App.inherits) App.inherits = {};
       App.inherits.$router = this;
       App.inherits.$route = ReactVueLike.observable(this.currentRoute || {});
       _config.default.inheritProps = false;
-      var app;
 
-      ReactVueLike.config.inheritMergeStrategies.$route = function (parent, child, vm) {
-        if (vm._isVueLikeRoot) {
-          vm.$set(vm, '$route', parent);
-          app = vm;
-        } else {
-          vm.$computed(vm, '$route', function () {
-            return this.$root ? this.$root.$route : null;
-          });
-        }
-      };
+      if (!ReactVueLike.config.inheritMergeStrategies.$route) {
+        ReactVueLike.config.inheritMergeStrategies.$route = _config.default.routeMergeStrategie;
+      }
 
+      var router = this;
       this.plugin({
         name: 'react-view-router-vue-like-plugin',
         onRouteChange: ReactVueLike.action('[react-view-router]onRouteChange', function (newVal) {
-          if (app) app.$route = ReactVueLike.observable(newVal, {}, {
+          if (router.app) ReactVueLike.set(router.app, '$route', ReactVueLike.observable(newVal, {}, {
             deep: false
-          });else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, {
+          }));else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, {
             deep: false
           }));
         })

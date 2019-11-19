@@ -15,6 +15,7 @@ exports.nextTick = nextTick;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
 exports.isLocation = isLocation;
+exports.isPropChanged = isPropChanged;
 exports.isRouteChanged = isRouteChanged;
 exports.isRoutesChanged = isRoutesChanged;
 exports.isAbsoluteUrl = isAbsoluteUrl;
@@ -214,8 +215,10 @@ function normalizeRoutes(routes, parent) {
 }
 
 function normalizeRoutePath(path, route, append) {
+  var basename = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+  if (isAbsoluteUrl(path)) return path;
   if (route && route.matched) route = route.matched[route.matched.length - 1];
-  if (!path || path[0] === '/' || !route) return path || '';
+  if (!path || path[0] === '/' || !route) return basename + (path || '');
   if (route.config) route = route.config;
   var parent = append || /^\.\//.test(path) ? route : route.parent;
 
@@ -224,6 +227,7 @@ function normalizeRoutePath(path, route, append) {
     parent = route.parent;
   }
 
+  if (basename && path[0] === '/') path = basename + path;
   return normalizePath(path);
 }
 
@@ -299,6 +303,7 @@ function matchRoutes(routes, to, parent, branch) {
 }
 
 function normalizeLocation(to, route, append) {
+  var basename = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
   if (!to) return to;
 
   if (typeof to === 'string') {
@@ -317,9 +322,13 @@ function normalizeLocation(to, route, append) {
   if (to.query) Object.keys(to.query).forEach(function (key) {
     return to.query[key] === undefined && delete to.query[key];
   });else if (to.search) to.query = _config.default.parseQuery(to.search.substr(1));
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append);
+
+  if (!isAbsoluteUrl(to.pathname)) {
+    to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
+  }
+
   to.search = to.search || (to.query ? _config.default.stringifyQuery(to.query) : '');
-  if (!to.fullPath) to.fullPath = "".concat(to.path).concat(to.search ? '?' + to.search : '');
+  to.fullPath = "".concat(to.path).concat(to.search ? '?' + to.search : '');
   if (!to.query) to.query = {};
   return to;
 }
@@ -630,6 +639,13 @@ function camelize(str) {
   });
   if (/^[A-Z]/.test(ret)) ret = ret.charAt(0).toLowerCase() + ret.substr(1);
   return ret;
+}
+
+function isPropChanged(prev, next) {
+  if ((!prev || !next) && prev !== next) return true;
+  return Object.keys(next).some(function (key) {
+    return next[key] !== prev[key];
+  });
 }
 
 function isRouteChanged(prev, next) {

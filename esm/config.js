@@ -107,7 +107,17 @@ var _default = {
 
   get stringifyQuery() {
     return this._stringifyQuery;
-  }
+  },
 
+  routeMergeStrategie: function routeMergeStrategie(parent, child, vm) {
+    if (vm._isVueLikeRoot) {
+      vm.$set(vm, '$route', parent);
+      vm.$router && (vm.$router.app = vm);
+    } else {
+      vm.$computed(vm, '$route', function () {
+        return this.$root ? this.$root.$route : null;
+      });
+    }
+  }
 };
 exports.default = _default;
