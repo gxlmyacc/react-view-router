@@ -438,7 +438,9 @@ export default class ReactViewRouter {
 
         this.nextTick(() => {
           if (isFunction(ok)) ok = ok(to);
-          if (!isInit && current.fullPath !== to.fullPath) this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
+          if (!isInit && (!current || current.fullPath !== to.fullPath)) {
+            this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
+          }
           if (to && isFunction(to.onComplete)) to.onComplete(ok, to);
           this._routetInterceptors(this._getAfterEachGuards(to, current), to, current);
         });

@@ -70,7 +70,7 @@ class RouterView extends React.Component {
         normalizeRoute({ path: '' }, state.parentRoute, state._routerDepth),
         state.parentRoute
       );
-      state.router.currentRoute.matched.push(currentRoute);
+      state.router.currentRoute && state.router.currentRoute.matched.push(currentRoute);
     } else if (!currentRoute || currentRoute.redirect) currentRoute = null;
 
     if (currentRoute) currentRoute.viewInstances[this.name] = this;

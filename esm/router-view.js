@@ -159,7 +159,7 @@ function (_React$Component) {
         currentRoute = state.router.createMatchedRoute((0, _util.normalizeRoute)({
           path: ''
         }, state.parentRoute, state._routerDepth), state.parentRoute);
-        state.router.currentRoute.matched.push(currentRoute);
+        state.router.currentRoute && state.router.currentRoute.matched.push(currentRoute);
       } else if (!currentRoute || currentRoute.redirect) currentRoute = null;
 
       if (currentRoute) currentRoute.viewInstances[this.name] = this;

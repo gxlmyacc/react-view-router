@@ -813,7 +813,11 @@ function () {
 
                   _this6.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok = ok(to);
-                    if (!isInit && current.fullPath !== to.fullPath) _this6._routetInterceptors(_this6._getRouteUpdateGuards(to, current), to, current);
+
+                    if (!isInit && (!current || current.fullPath !== to.fullPath)) {
+                      _this6._routetInterceptors(_this6._getRouteUpdateGuards(to, current), to, current);
+                    }
+
                     if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok, to);
 
                     _this6._routetInterceptors(_this6._getAfterEachGuards(to, current), to, current);
