@@ -671,8 +671,8 @@ export default class ReactViewRouter {
     this.plugin({
       name: 'react-view-router-vue-like-plugin',
       onRouteChange: ReactVueLike.action('[react-view-router]onRouteChange', function (newVal) {
-        if (router.app) ReactVueLike.set(router.app, '$route', ReactVueLike.observable(newVal, {}, { deep: false }));
-        else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, { deep: false }));
+        if (router.app) Object.assign(router.app.$route, newVal);
+        else App.inherits.$route = ReactVueLike.observable(newVal, {}, { deep: false });
       })
     });
   }
