@@ -527,7 +527,7 @@ function () {
                   break;
                 }
 
-                return _context2.abrupt("return", callback(false));
+                return _context2.abrupt("return", callback(true));
 
               case 4:
                 this._callEvent('onRouteing', true);

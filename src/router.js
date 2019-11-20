@@ -336,7 +336,7 @@ export default class ReactViewRouter {
   async _handleRouteInterceptor(location, callback, ...args) {
     if (typeof location === 'string') location = routeCache.flush(location);
     location = this._transformLocation(location);
-    if (!location) return callback(false);
+    if (!location) return callback(true);
     this._callEvent('onRouteing', true);
     try {
       return await this._internalHandleRouteInterceptor(location, callback, ...args);
