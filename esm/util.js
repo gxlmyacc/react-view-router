@@ -328,7 +328,7 @@ function normalizeLocation(to, route, append) {
   }
 
   to.search = to.search || (to.query ? _config.default.stringifyQuery(to.query) : '');
-  to.fullPath = "".concat(to.path).concat(to.search ? '?' + to.search : '');
+  to.fullPath = "".concat(to.path).concat(to.search ? to.search : '');
   if (!to.query) to.query = {};
   return to;
 }

@@ -35,10 +35,6 @@ require("core-js/modules/es6.object.to-string");
 
 require("core-js/modules/es6.object.keys");
 
-require("core-js/modules/es7.array.includes");
-
-require("core-js/modules/es6.string.includes");
-
 require("core-js/modules/es6.regexp.replace");
 
 require("core-js/modules/es6.object.assign");
@@ -232,7 +228,7 @@ function () {
         var ccg = cc && cc.prototype && cc.prototype[guardName];
 
         if (ccg) {
-          if (_this2.ReactVueLike && !ccg.isMobxFlow && cc.__flows && cc.__flows.includes(guardName)) ccg = _this2.ReactVueLike.flow(ccg);
+          if (_this2.ReactVueLike && !ccg.isMobxFlow && cc.__flows && ~cc.__flows.indexOf(guardName)) ccg = _this2.ReactVueLike.flow(ccg);
           ret.push(ccg);
         }
 
@@ -240,7 +236,7 @@ function () {
           cc.mixins.forEach(function (m) {
             var ccg = m[guardName] || m.prototype && m.prototype[guardName];
             if (!ccg) return;
-            if (!ccg.isMobxFlow && m.__flows && m.__flows.includes(guardName)) ccg = _this2.ReactVueLike.flow(ccg);
+            if (!ccg.isMobxFlow && m.__flows && ~m.__flows.indexOf(guardName)) ccg = _this2.ReactVueLike.flow(ccg);
             ret.push(ccg);
           });
         }
@@ -896,7 +892,7 @@ function () {
         viewInstances: {}
       };
       Object.keys(route).forEach(function (key) {
-        return ['path', 'name', 'subpath', 'meta', 'redirect', 'depth'].includes(key) && (ret[key] = route[key]);
+        return ~['path', 'name', 'subpath', 'meta', 'redirect', 'depth'].indexOf(key) && (ret[key] = route[key]);
       });
       ret.config = route;
       if (!match) match = {};
@@ -1163,7 +1159,7 @@ function () {
       }
 
       Object.keys(this._history).forEach(function (key) {
-        return !HISTORY_METHS.includes(key) && (_this9[key] = _this9._history[key]);
+        return !~HISTORY_METHS.indexOf(key) && (_this9[key] = _this9._history[key]);
       });
       HISTORY_METHS.forEach(function (key) {
         return _this9[key] && (_this9[key] = _this9[key].bind(_this9));

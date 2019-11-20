@@ -144,7 +144,7 @@ function normalizeLocation(to, route, append, basename = '') {
     to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
   }
   to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
-  to.fullPath = `${to.path}${to.search ? '?' + to.search : ''}`;
+  to.fullPath = `${to.path}${to.search ? to.search : ''}`;
   if (!to.query) to.query = {};
   return to;
 }

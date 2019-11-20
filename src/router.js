@@ -60,7 +60,7 @@ export default class ReactViewRouter {
         default: this._history = createHashHistory(this.options);
       }
     }
-    Object.keys(this._history).forEach(key => !HISTORY_METHS.includes(key) && (this[key] = this._history[key]));
+    Object.keys(this._history).forEach(key => !~HISTORY_METHS.indexOf(key) && (this[key] = this._history[key]));
     HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
 
     return this._history;
@@ -148,14 +148,14 @@ export default class ReactViewRouter {
 
       let ccg = cc && cc.prototype && cc.prototype[guardName];
       if (ccg) {
-        if (this.ReactVueLike && !ccg.isMobxFlow && cc.__flows && cc.__flows.includes(guardName)) ccg = this.ReactVueLike.flow(ccg);
+        if (this.ReactVueLike && !ccg.isMobxFlow && cc.__flows && ~cc.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
         ret.push(ccg);
       }
       if (cc && this.ReactVueLike && cc.prototype instanceof this.ReactVueLike && Array.isArray(cc.mixins)) {
         cc.mixins.forEach(m => {
           let ccg = m[guardName] || (m.prototype && m.prototype[guardName]);
           if (!ccg) return;
-          if (!ccg.isMobxFlow && m.__flows && m.__flows.includes(guardName)) ccg = this.ReactVueLike.flow(ccg);
+          if (!ccg.isMobxFlow && m.__flows && ~m.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
           ret.push(ccg);
         });
       }
@@ -487,9 +487,9 @@ export default class ReactViewRouter {
 
   createMatchedRoute(route, match) {
     let ret = { componentInstances: {}, viewInstances: {} };
-    Object.keys(route).forEach(key => [
+    Object.keys(route).forEach(key => ~[
       'path', 'name', 'subpath', 'meta', 'redirect', 'depth'
-    ].includes(key) && (ret[key] = route[key]));
+    ].indexOf(key) && (ret[key] = route[key]));
     ret.config = route;
     if (!match) match = {};
     ret.url = match.url || '';
