@@ -13,11 +13,14 @@ import { getGuardsComponent } from './route-guard';
 
 const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
 
+let idSeed = 1;
+
 export default class ReactViewRouter {
 
   constructor({ mode = 'hash', basename = '', base = '', ...options  } = {}) {
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
+    this.id = idSeed++;
     this.options = options;
     this.mode = mode;
     this.basename = basename || base;
@@ -29,6 +32,7 @@ export default class ReactViewRouter {
     this.currentRoute = null;
     this.viewRoot = null;
     this.errorCallback = null;
+    this.app = null;
     // this.states = [];
     // this.stateOrigin = this.history.length;
 
@@ -75,7 +79,7 @@ export default class ReactViewRouter {
     if (mode !== undefined) this.mode = mode;
 
     this._unlisten = this.history.listen(location => this.updateRoute(location));
-    this._unblock = this.history.block(location => routeCache.create(location));
+    this._unblock = this.history.block(location => routeCache.create(location, this.id));
 
     if (this.routes.length) this.updateRoute(this.history.location);
   }
@@ -84,6 +88,7 @@ export default class ReactViewRouter {
     if (this._unlisten) this._unlisten();
     if (this._unblock) this._unblock();
     this._history = null;
+    this.app = null;
   }
 
   use({ routes, inheritProps, install, ...restOptions }) {
@@ -346,7 +351,7 @@ export default class ReactViewRouter {
   }
 
   async _routetInterceptors(interceptors, to, from, next) {
-    function isBlock(v, interceptor) {
+    const isBlock = (v, interceptor) => {
       let _isLocation = typeof v === 'string' || isLocation(v);
       if (_isLocation && interceptor) {
         v = this.createRoute(normalizeLocation(v, interceptor.route));
@@ -355,8 +360,8 @@ export default class ReactViewRouter {
           _isLocation = false;
         }
       }
-      return v === false || _isLocation || v instanceof Error;
-    }
+      return !this._history || v === false || _isLocation || v instanceof Error;
+    };
 
     async function beforeInterceptor(interceptor, index, to, from, next) {
       while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, index);
@@ -657,6 +662,7 @@ export default class ReactViewRouter {
 
   install(ReactVueLike, { App }) {
     this.ReactVueLike = ReactVueLike;
+    this.App = App;
 
     if (!App.inherits) App.inherits = {};
     App.inherits.$router = this;
@@ -667,12 +673,17 @@ export default class ReactViewRouter {
     if (!ReactVueLike.config.inheritMergeStrategies.$route) {
       ReactVueLike.config.inheritMergeStrategies.$route = config.routeMergeStrategie;
     }
+
     const router = this;
     this.plugin({
       name: 'react-view-router-vue-like-plugin',
-      onRouteChange: ReactVueLike.action('[react-view-router]onRouteChange', function (newVal) {
-        if (router.app) Object.assign(router.app.$route, newVal);
-        else App.inherits.$route = ReactVueLike.observable(newVal, {}, { deep: false });
+      onRouteChange: ReactVueLike.action(`[react-view-router][${this.id}]onRouteChange`, function (newVal) {
+        if (router.app) {
+          router.app.$route = ReactVueLike.observable(newVal, {}, { deep: false });
+        } else {
+          App.inherits.$route = ReactVueLike.observable(newVal, {}, { deep: false });
+          if (App.inherits.$router !== router) App.inherits.$router = router;
+        }
       })
     });
   }

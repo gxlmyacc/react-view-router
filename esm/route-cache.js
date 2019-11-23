@@ -24,7 +24,8 @@ function () {
   _createClass(RouterCache, [{
     key: "create",
     value: function create(data) {
-      var key = "[route_cache_id:".concat(++this.seed, "]");
+      var id = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+      var key = "[route_cache_id:".concat(id ? "[".concat(id, "]") : '').concat(++this.seed, "]");
       this.cached[key] = data;
       return key;
     }

@@ -89,13 +89,15 @@ export default {
 
   routeMergeStrategie(parent, child, vm) {
     if (vm._isVueLikeRoot) {
-      vm.$set(vm, '$route', parent);
-      vm.$router && (vm.$router.app = vm);
-    } else {
-      vm.$computed(vm, '$route', function () {
-        return this.$root ? this.$root.$route : null;
-      });
+      const router = vm.$router || vm._inherits.$router;
+      if (router) {
+        if (!router.App || (router.App === vm.$options)) router.app = vm;
+      }
+      return parent;
     }
+    vm.$computed(vm, '$route', function () {
+      return this.$root ? this.$root.$route : null;
+    });
   },
 
 };

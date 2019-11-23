@@ -5,8 +5,8 @@ class RouterCache {
     this.seed = 0;
   }
 
-  create(data) {
-    const key = `[route_cache_id:${++this.seed}]`;
+  create(data, id = 0) {
+    const key = `[route_cache_id:${id ? `[${id}]` : ''}${++this.seed}]`;
     this.cached[key] = data;
     return key;
   }

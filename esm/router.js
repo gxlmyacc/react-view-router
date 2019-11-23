@@ -82,6 +82,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 var HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
+var idSeed = 1;
 
 var ReactViewRouter =
 /*#__PURE__*/
@@ -99,6 +100,7 @@ function () {
     _classCallCheck(this, ReactViewRouter);
 
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
+    this.id = idSeed++;
     this.options = options;
     this.mode = mode;
     this.basename = basename || base;
@@ -109,7 +111,8 @@ function () {
     this.prevRoute = null;
     this.currentRoute = null;
     this.viewRoot = null;
-    this.errorCallback = null; // this.states = [];
+    this.errorCallback = null;
+    this.app = null; // this.states = [];
     // this.stateOrigin = this.history.length;
 
     this.use(options);
@@ -137,7 +140,7 @@ function () {
         return _this.updateRoute(location);
       });
       this._unblock = this.history.block(function (location) {
-        return _routeCache.default.create(location);
+        return _routeCache.default.create(location, _this.id);
       });
       if (this.routes.length) this.updateRoute(this.history.location);
     }
@@ -147,6 +150,7 @@ function () {
       if (this._unlisten) this._unlisten();
       if (this._unblock) this._unblock();
       this._history = null;
+      this.app = null;
     }
   }, {
     key: "use",
@@ -567,17 +571,19 @@ function () {
       var _routetInterceptors2 = _asyncToGenerator(
       /*#__PURE__*/
       regeneratorRuntime.mark(function _callee5(interceptors, to, from, next) {
+        var _this5 = this;
+
         var isBlock, beforeInterceptor, _beforeInterceptor;
 
         return regeneratorRuntime.wrap(function _callee5$(_context5) {
           while (1) {
             switch (_context5.prev = _context5.next) {
               case 0:
-                _beforeInterceptor = function _ref8() {
+                _beforeInterceptor = function _ref7() {
                   _beforeInterceptor = _asyncToGenerator(
                   /*#__PURE__*/
                   regeneratorRuntime.mark(function _callee4(interceptor, index, to, from, next) {
-                    var _this5 = this;
+                    var _this6 = this;
 
                     var nextWrapper;
                     return regeneratorRuntime.wrap(function _callee4$(_context4) {
@@ -619,7 +625,7 @@ function () {
                                       case 0:
                                         nextInterceptor = interceptors[++index];
 
-                                        if (!isBlock.call(_this5, f1, interceptor)) {
+                                        if (!isBlock.call(_this6, f1, interceptor)) {
                                           _context3.next = 3;
                                           break;
                                         }
@@ -641,7 +647,7 @@ function () {
                                       case 6:
                                         _context3.prev = 6;
                                         _context3.next = 9;
-                                        return beforeInterceptor.call(_this5, nextInterceptor, index, to, from, next);
+                                        return beforeInterceptor.call(_this6, nextInterceptor, index, to, from, next);
 
                                       case 9:
                                         return _context3.abrupt("return", _context3.sent);
@@ -680,15 +686,15 @@ function () {
                   return _beforeInterceptor.apply(this, arguments);
                 };
 
-                beforeInterceptor = function _ref7(_x9, _x10, _x11, _x12, _x13) {
+                beforeInterceptor = function _ref6(_x9, _x10, _x11, _x12, _x13) {
                   return _beforeInterceptor.apply(this, arguments);
                 };
 
-                isBlock = function _ref6(v, interceptor) {
+                isBlock = function isBlock(v, interceptor) {
                   var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
 
                   if (_isLocation && interceptor) {
-                    v = this.createRoute((0, _util.normalizeLocation)(v, interceptor.route));
+                    v = _this5.createRoute((0, _util.normalizeLocation)(v, interceptor.route));
 
                     if (v.fullPath === to.fullPath) {
                       v = undefined;
@@ -696,7 +702,7 @@ function () {
                     }
                   }
 
-                  return v === false || _isLocation || v instanceof Error;
+                  return !_this5._history || v === false || _isLocation || v instanceof Error;
                 };
 
                 if (!next) {
@@ -734,7 +740,7 @@ function () {
       var _internalHandleRouteInterceptor2 = _asyncToGenerator(
       /*#__PURE__*/
       regeneratorRuntime.mark(function _callee6(location, callback) {
-        var _this6 = this;
+        var _this7 = this;
 
         var isInit,
             isContinue,
@@ -776,7 +782,7 @@ function () {
                 fallbackView && fallbackView._updateResolving(true);
 
                 this._routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, function (ok) {
-                  _this6._nexting = null;
+                  _this7._nexting = null;
                   fallbackView && setTimeout(function () {
                     return fallbackView._isMounted && fallbackView._updateResolving(false);
                   }, 0);
@@ -797,26 +803,26 @@ function () {
                     if ((0, _util.isLocation)(ok)) {
                       if (to.onAbort) ok.onAbort = to.onAbort;
                       if (to.onComplete) ok.onComplete = to.onComplete;
-                      return _this6.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+                      return _this7.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
                     }
 
                     if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok, to);
-                    if (ok instanceof Error) _this6.errorCallback && _this6.errorCallback(ok);
+                    if (ok instanceof Error) _this7.errorCallback && _this7.errorCallback(ok);
                     return;
                   }
 
                   if (to.onInit) to.onInit(Boolean(to), to);
 
-                  _this6.nextTick(function () {
+                  _this7.nextTick(function () {
                     if ((0, _util.isFunction)(ok)) ok = ok(to);
 
                     if (!isInit && (!current || current.fullPath !== to.fullPath)) {
-                      _this6._routetInterceptors(_this6._getRouteUpdateGuards(to, current), to, current);
+                      _this7._routetInterceptors(_this7._getRouteUpdateGuards(to, current), to, current);
                     }
 
                     if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok, to);
 
-                    _this6._routetInterceptors(_this6._getAfterEachGuards(to, current), to, current);
+                    _this7._routetInterceptors(_this7._getAfterEachGuards(to, current), to, current);
                   });
                 });
 
@@ -846,10 +852,10 @@ function () {
   }, {
     key: "_go",
     value: function _go(to, onComplete, onAbort, onInit, replace) {
-      var _this7 = this;
+      var _this8 = this;
 
       return new Promise(function (resolve, reject) {
-        to = (0, _util.normalizeLocation)(to, _this7.currentRoute, false, _this7.basename);
+        to = (0, _util.normalizeLocation)(to, _this8.currentRoute, false, _this8.basename);
 
         function doComplete(res, _to) {
           onComplete && onComplete(res, _to);
@@ -864,13 +870,13 @@ function () {
         if ((0, _util.isFunction)(onComplete)) to.onComplete = (0, _util.once)(doComplete);
         if ((0, _util.isFunction)(onAbort)) to.onAbort = (0, _util.once)(doAbort);
         if (onInit) to.onInit = onInit;
-        if (_this7._nexting) return _this7._nexting(to);
+        if (_this8._nexting) return _this8._nexting(to);
 
         if (replace) {
           to.isReplace = true;
-          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this7.history.replace(to);
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.replace(to.fullPath);else _this8.history.replace(to);
         } else {
-          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this7.history.push(to);
+          if (to.fullPath && (0, _util.isAbsoluteUrl)(to.fullPath)) location.href = to.fullPath;else _this8.history.push(to);
         }
       });
     }
@@ -903,7 +909,7 @@ function () {
   }, {
     key: "getMatched",
     value: function getMatched(to, from, parent) {
-      var _this8 = this;
+      var _this9 = this;
 
       if (!from) from = this.currentRoute;
 
@@ -914,11 +920,11 @@ function () {
       }
 
       var matched = (0, _util.matchRoutes)(this.routes, to, parent);
-      return matched.map(function (_ref9, i) {
-        var route = _ref9.route,
-            match = _ref9.match;
+      return matched.map(function (_ref8, i) {
+        var route = _ref8.route,
+            match = _ref8.match;
 
-        var ret = _this8.createMatchedRoute(route, match);
+        var ret = _this9.createMatchedRoute(route, match);
 
         if (from) {
           var fr = from.matched[i];
@@ -1104,9 +1110,10 @@ function () {
     }
   }, {
     key: "install",
-    value: function install(ReactVueLike, _ref10) {
-      var App = _ref10.App;
+    value: function install(ReactVueLike, _ref9) {
+      var App = _ref9.App;
       this.ReactVueLike = ReactVueLike;
+      this.App = App;
       if (!App.inherits) App.inherits = {};
       App.inherits.$router = this;
       App.inherits.$route = ReactVueLike.observable(this.currentRoute || {});
@@ -1119,19 +1126,24 @@ function () {
       var router = this;
       this.plugin({
         name: 'react-view-router-vue-like-plugin',
-        onRouteChange: ReactVueLike.action('[react-view-router]onRouteChange', function (newVal) {
-          if (router.app) ReactVueLike.set(router.app, '$route', ReactVueLike.observable(newVal, {}, {
-            deep: false
-          }));else Object.assign(App.inherits.$route, ReactVueLike.observable(newVal, {}, {
-            deep: false
-          }));
+        onRouteChange: ReactVueLike.action("[react-view-router][".concat(this.id, "]onRouteChange"), function (newVal) {
+          if (router.app) {
+            router.app.$route = ReactVueLike.observable(newVal, {}, {
+              deep: false
+            });
+          } else {
+            App.inherits.$route = ReactVueLike.observable(newVal, {}, {
+              deep: false
+            });
+            if (App.inherits.$router !== router) App.inherits.$router = router;
+          }
         })
       });
     }
   }, {
     key: "history",
     get: function get() {
-      var _this9 = this;
+      var _this10 = this;
 
       if (this._history) return this._history;
       var options = this.options;
@@ -1159,10 +1171,10 @@ function () {
       }
 
       Object.keys(this._history).forEach(function (key) {
-        return !~HISTORY_METHS.indexOf(key) && (_this9[key] = _this9._history[key]);
+        return !~HISTORY_METHS.indexOf(key) && (_this10[key] = _this10._history[key]);
       });
       HISTORY_METHS.forEach(function (key) {
-        return _this9[key] && (_this9[key] = _this9[key].bind(_this9));
+        return _this10[key] && (_this10[key] = _this10[key].bind(_this10));
       });
       return this._history;
     }
