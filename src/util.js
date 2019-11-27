@@ -135,7 +135,7 @@ function normalizeLocation(to, route, append, basename = '') {
   if (!to) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
-    to = { pathname, search: search ? `?${search}` : '', fullPath: to };
+    to = { pathname, path: pathname, search: search ? `?${search}` : '', fullPath: to };
   }
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search.substr(1));
