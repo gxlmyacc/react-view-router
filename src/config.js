@@ -88,15 +88,23 @@ export default {
   },
 
   routeMergeStrategie(parent, child, vm) {
+    const router = vm.$router || vm._inherits.$router;
     if (vm._isVueLikeRoot) {
-      const router = vm.$router || vm._inherits.$router;
       if (router) {
-        if (!router.App || (router.App === vm.$options)) router.app = vm;
+        if (!router.App || (vm instanceof router.App)) router.app = vm;
       }
       return parent;
     }
     vm.$computed(vm, '$route', function () {
       return this.$root ? this.$root.$route : null;
+    });
+    vm.$computed(vm, '$routeIndex', function () {
+      if (this._routeIndex !== undefined) return this._routeIndex;
+      let routeView = router.getHostRouterView(this, v => !v._isVueLikeRoot);
+      return this._routeIndex = routeView ? routeView.state._routerDepth : -1;
+    });
+    vm.$computed(vm, '$matchedRoute', function () {
+      return (this.$route && this.$route.matched[this.$routeIndex]) || null;
     });
   },
 

@@ -4,7 +4,8 @@ import {
   flatten, isAbsoluteUrl,
   normalizeRoutes, normalizeLocation, resolveRedirect,
   matchRoutes, isFunction, isLocation, nextTick, once,
-  afterInterceptors
+  afterInterceptors,
+  getHostRouterView,
 } from './util';
 import routeCache from './route-cache';
 import { RouteLazy, hasMatchedRouteLazy } from './route-lazy';
@@ -33,6 +34,7 @@ export default class ReactViewRouter {
     this.viewRoot = null;
     this.errorCallback = null;
     this.app = null;
+    this.getHostRouterView = getHostRouterView;
     // this.states = [];
     // this.stateOrigin = this.history.length;
 

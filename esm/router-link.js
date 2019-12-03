@@ -123,7 +123,7 @@ function createRouterLink(router) {
             if (_this2.props.onRouteChange) _this2.props.onRouteChange(currentRoute);
           }
         });
-        var routerView = (0, _util.getParentRouterView)(this);
+        var routerView = (0, _util.getHostRouterView)(this);
         this.setState({
           inited: true,
           parentRoute: routerView ? routerView.state.currentRoute : null

@@ -4,7 +4,7 @@ import {
   camelize,
   normalizeLocation,
   isRouteChanged,
-  getParentRouterView
+  getHostRouterView
 } from './util';
 
 function guardEvent(e) {
@@ -46,7 +46,7 @@ export default function createRouterLink(router) {
           if (this.props.onRouteChange) this.props.onRouteChange(currentRoute);
         }
       });
-      let routerView = getParentRouterView(this);
+      let routerView = getHostRouterView(this);
       this.setState({
         inited: true,
         parentRoute: routerView ? routerView.state.currentRoute : null

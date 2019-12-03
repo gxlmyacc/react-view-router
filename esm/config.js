@@ -110,11 +110,11 @@ var _default = {
   },
 
   routeMergeStrategie: function routeMergeStrategie(parent, child, vm) {
-    if (vm._isVueLikeRoot) {
-      var router = vm.$router || vm._inherits.$router;
+    var router = vm.$router || vm._inherits.$router;
 
+    if (vm._isVueLikeRoot) {
       if (router) {
-        if (!router.App || router.App === vm.$options) router.app = vm;
+        if (!router.App || vm instanceof router.App) router.app = vm;
       }
 
       return parent;
@@ -122,6 +122,16 @@ var _default = {
 
     vm.$computed(vm, '$route', function () {
       return this.$root ? this.$root.$route : null;
+    });
+    vm.$computed(vm, '$routeIndex', function () {
+      if (this._routeIndex !== undefined) return this._routeIndex;
+      var routeView = router.getHostRouterView(this, function (v) {
+        return !v._isVueLikeRoot;
+      });
+      return this._routeIndex = routeView ? routeView.state._routerDepth : -1;
+    });
+    vm.$computed(vm, '$matchedRoute', function () {
+      return this.$route && this.$route.matched[this.$routeIndex] || null;
     });
   }
 };

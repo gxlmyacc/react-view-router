@@ -2,7 +2,7 @@ import React from 'react';
 import {
   renderRoute, normalizeRoute, normalizeRoutes, isFunction,
   isRouteChanged, isRoutesChanged, isPropChanged,
-  getParentRouterView
+  getHostRouterView
 } from './util';
 
 class RouterView extends React.Component {
@@ -125,7 +125,7 @@ class RouterView extends React.Component {
 
     if (!this._reactInternalFiber) return;
 
-    let parent = getParentRouterView(this);
+    let parent = getHostRouterView(this);
     if (parent) {
       state._routerRoot = false;
       state._routerParent = parent.state._routerView;

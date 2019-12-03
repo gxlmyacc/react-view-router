@@ -65,7 +65,7 @@ function normalizeRoute(route, parent, depth = 0, force) {
 function normalizeRoutes(routes, parent, depth = 0, force = false) {
   if (!routes) routes = [];
   if (!force && routes._normalized) return routes;
-  routes = routes.map(route => normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
+  routes = routes.map(route => route && normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
   Object.defineProperty(routes, '_normalized', { value: true });
   return routes;
 }
@@ -377,9 +377,11 @@ function isRoutesChanged(prevs, nexts) {
   return changed;
 }
 
-function getParentRouterView(ctx) {
+function getHostRouterView(ctx, continueCb) {
   let parent = ctx._reactInternalFiber.return;
   while (parent) {
+    if (continueCb && continueCb(parent) === false) return;
+
     const memoizedState = parent.memoizedState;
     // const memoizedProps = parent.memoizedProps;
     if (memoizedState && memoizedState._routerView) return parent.stateNode;
@@ -388,7 +390,7 @@ function getParentRouterView(ctx) {
 }
 
 function getParentRoute(ctx) {
-  const view = getParentRouterView(ctx);
+  const view = getHostRouterView(ctx);
   return (view && view.state.currentRoute) || null;
 }
 
@@ -424,5 +426,5 @@ export {
   innumerable,
   afterInterceptors,
   getParentRoute,
-  getParentRouterView
+  getHostRouterView
 };

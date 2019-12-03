@@ -112,7 +112,8 @@ function () {
     this.currentRoute = null;
     this.viewRoot = null;
     this.errorCallback = null;
-    this.app = null; // this.states = [];
+    this.app = null;
+    this.getHostRouterView = _util.getHostRouterView; // this.states = [];
     // this.stateOrigin = this.history.length;
 
     this.use(options);

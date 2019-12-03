@@ -255,7 +255,7 @@ function (_React$Component) {
                 return _context.abrupt("return");
 
               case 10:
-                parent = (0, _util.getParentRouterView)(this);
+                parent = (0, _util.getHostRouterView)(this);
 
                 if (parent) {
                   state._routerRoot = false;
