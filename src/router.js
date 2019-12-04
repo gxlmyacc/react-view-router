@@ -227,7 +227,7 @@ export default class ReactViewRouter {
     route && route.matched.some((tr, i) => {
       let fr = compare.matched[i];
       if (!start) {
-        start = hasRouteLazy(tr) || !fr || fr.path !== tr.path;
+        start = (options.containLazy && hasRouteLazy(tr)) || !fr || fr.path !== tr.path;
         if (!start) return;
       }
       ret.push(tr);
@@ -261,7 +261,7 @@ export default class ReactViewRouter {
       ));
     }
     if (to) {
-      let tm = this._getChangeMatched(to, from);
+      let tm = this._getChangeMatched(to, from, { containLazy: true });
       tm.forEach(r => {
         let guards = this._getComponentGurads(
           r,

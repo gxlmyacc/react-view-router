@@ -351,7 +351,7 @@ function () {
         var fr = compare.matched[i];
 
         if (!start) {
-          start = (0, _routeLazy.hasRouteLazy)(tr) || !fr || fr.path !== tr.path;
+          start = options.containLazy && (0, _routeLazy.hasRouteLazy)(tr) || !fr || fr.path !== tr.path;
           if (!start) return;
         }
 
@@ -404,7 +404,9 @@ function () {
       }
 
       if (to) {
-        var tm = this._getChangeMatched(to, from);
+        var tm = this._getChangeMatched(to, from, {
+          containLazy: true
+        });
 
         tm.forEach(function (r) {
           var guards = _this4._getComponentGurads(r, 'beforeRouteEnter', function (fn, name) {
