@@ -342,7 +342,8 @@ function () {
     }
   }, {
     key: "_getChangeMatched",
-    value: function _getChangeMatched(route, compare, count) {
+    value: function _getChangeMatched(route, compare) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       var ret = [];
       if (!compare) return _toConsumableArray(route.matched);
       var start = false;
@@ -350,12 +351,12 @@ function () {
         var fr = compare.matched[i];
 
         if (!start) {
-          start = !fr || fr.path !== tr.path;
+          start = (0, _routeLazy.hasRouteLazy)(tr) || !fr || fr.path !== tr.path;
           if (!start) return;
         }
 
         ret.push(tr);
-        return count !== undefined && ret.length === count;
+        return typeof options.count === 'number' && ret.length === options.count;
       });
       return ret.filter(function (r) {
         return !r.redirect;
@@ -1004,7 +1005,9 @@ function () {
       //   this.states.push(this.currentRoute.state);
       // }
 
-      var tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, 1)[0];
+      var tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, {
+        count: 1
+      })[0];
 
       if (tm) {
         Object.keys(tm.viewInstances).forEach(function (key) {

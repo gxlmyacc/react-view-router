@@ -8,7 +8,7 @@ import {
   getHostRouterView,
 } from './util';
 import routeCache from './route-cache';
-import { RouteLazy, hasMatchedRouteLazy } from './route-lazy';
+import { RouteLazy, hasRouteLazy, hasMatchedRouteLazy } from './route-lazy';
 import { getGuardsComponent } from './route-guard';
 
 
@@ -220,18 +220,18 @@ export default class ReactViewRouter {
     return ret.filter(r => !r.redirect);
   }
 
-  _getChangeMatched(route, compare, count) {
+  _getChangeMatched(route, compare, options = {}) {
     const ret = [];
     if (!compare) return [...route.matched];
     let start = false;
     route && route.matched.some((tr, i) => {
       let fr = compare.matched[i];
       if (!start) {
-        start = !fr || fr.path !== tr.path;
+        start = hasRouteLazy(tr) || !fr || fr.path !== tr.path;
         if (!start) return;
       }
       ret.push(tr);
-      return count !== undefined && ret.length === count;
+      return typeof options.count === 'number' && ret.length === options.count;
     });
     return ret.filter(r => !r.redirect);
   }
@@ -576,7 +576,7 @@ export default class ReactViewRouter {
     //   this.states.push(this.currentRoute.state);
     // }
 
-    let tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, 1)[0];
+    let tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, { count: 1 })[0];
     if (tm) {
       Object.keys(tm.viewInstances).forEach(key => tm.viewInstances[key]._refreshCurrentRoute());
     } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute();
