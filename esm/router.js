@@ -652,8 +652,9 @@ function () {
                                         _context3.prev = 6;
                                         _context3.next = 9;
                                         return beforeInterceptor.call(_this6, nextInterceptor, index, to, from, function (res) {
-                                          next(res);
-                                          (0, _util.isFunction)(f1) && f1(res);
+                                          var ret = next(res);
+                                          if (interceptor.global) (0, _util.isFunction)(f1) && f1(res);
+                                          return ret;
                                         });
 
                                       case 9:
@@ -1073,6 +1074,7 @@ function () {
       if (!guard || typeof guard !== 'function') return;
       var i = this.beforeEachGuards.indexOf(guard);
       if (~i) this.beforeEachGuards.splice(i, 1);
+      guard.global = true;
       this.beforeEachGuards.push(guard);
     }
   }, {
@@ -1081,6 +1083,7 @@ function () {
       if (!guard || typeof guard !== 'function') return;
       var i = this.afterEachGuards.indexOf(guard);
       if (~i) this.afterEachGuards.splice(i, 1);
+      guard.global = true;
       this.afterEachGuards.push(guard);
     }
   }, {

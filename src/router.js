@@ -381,8 +381,9 @@ export default class ReactViewRouter {
             to,
             from,
             res => {
-              next(res);
-              isFunction(f1) && f1(res);
+              let ret = next(res);
+              if (interceptor.global) isFunction(f1) && f1(res);
+              return ret;
             });
         } catch (ex) {
           console.error(ex);
@@ -630,6 +631,7 @@ export default class ReactViewRouter {
     if (!guard || typeof guard !== 'function') return;
     let i = this.beforeEachGuards.indexOf(guard);
     if (~i) this.beforeEachGuards.splice(i, 1);
+    guard.global = true;
     this.beforeEachGuards.push(guard);
   }
 
@@ -637,6 +639,7 @@ export default class ReactViewRouter {
     if (!guard || typeof guard !== 'function') return;
     let i = this.afterEachGuards.indexOf(guard);
     if (~i) this.afterEachGuards.splice(i, 1);
+    guard.global = true;
     this.afterEachGuards.push(guard);
   }
 
