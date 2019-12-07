@@ -651,7 +651,10 @@ function () {
                                       case 6:
                                         _context3.prev = 6;
                                         _context3.next = 9;
-                                        return beforeInterceptor.call(_this6, nextInterceptor, index, to, from, next);
+                                        return beforeInterceptor.call(_this6, nextInterceptor, index, to, from, function (res) {
+                                          next(res);
+                                          (0, _util.isFunction)(f1) && f1(res);
+                                        });
 
                                       case 9:
                                         return _context3.abrupt("return", _context3.sent);
@@ -974,6 +977,8 @@ function () {
         basename: this.basename,
         path: path,
         fullPath: "".concat(path).concat(search),
+        isRedirect: Boolean(to.isRedirect),
+        isReplace: Boolean(to.isReplace),
         query: query || (search ? _config.default.parseQuery(to.search.substr(1)) : {}),
         params: last.params || {},
         matched: matched,

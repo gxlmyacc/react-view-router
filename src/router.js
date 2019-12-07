@@ -380,7 +380,10 @@ export default class ReactViewRouter {
             index,
             to,
             from,
-            next);
+            res => {
+              next(res);
+              isFunction(f1) && f1(res);
+            });
         } catch (ex) {
           console.error(ex);
           next(typeof ex === 'string' ? new Error(ex) : ex);
@@ -543,6 +546,8 @@ export default class ReactViewRouter {
       basename: this.basename,
       path,
       fullPath: `${path}${search}`,
+      isRedirect: Boolean(to.isRedirect),
+      isReplace: Boolean(to.isReplace),
       query: query || (search ? config.parseQuery(to.search.substr(1)) : {}),
       params: last.params || {},
       matched,
