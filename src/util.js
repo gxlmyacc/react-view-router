@@ -143,8 +143,21 @@ function normalizeLocation(to, route, append, basename = '') {
   if (!isAbsoluteUrl(to.pathname)) {
     to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
   }
-  to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
-  to.fullPath = `${to.path}${to.search ? to.search : ''}`;
+  Object.defineProperty(to, 'search', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      return config.stringifyQuery(this.query);
+    }
+  });
+  Object.defineProperty(to, 'fullPath', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      let s = this.search;
+      return `${this.path}${s || ''}` || '/';
+    }
+  });
   if (!to.query) to.query = {};
   return to;
 }

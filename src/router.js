@@ -334,7 +334,6 @@ export default class ReactViewRouter {
       if (location.pathname.indexOf(this.basename) !== 0) return null;
       location = { ...location };
       location.pathname = location.pathname.substr(this.basename.length) || '/';
-      if (location.fullPath) location.fullPath = location.fullPath.substr(this.basename.length) || '/';
       if (location.path !== undefined) location.path = location.pathname;
     }
     return location;
@@ -556,6 +555,7 @@ export default class ReactViewRouter {
       onAbort,
       onComplete
     };
+    Object.defineProperty(ret, 'origin', { configurable: true, value: to });
     if (to.isRedirect && from) {
       ret.redirectedFrom = from;
       if (!ret.onAbort && from.onAbort) ret.onAbort = from.onAbort;

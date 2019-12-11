@@ -55,7 +55,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
@@ -66,10 +66,6 @@ function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread n
 function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
 
 function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
 
@@ -269,39 +265,29 @@ function () {
         if (!c) return;
 
         if (c instanceof _routeLazy.RouteLazy) {
-          var lazyResovle =
-          /*#__PURE__*/
-          function () {
-            var _ref4 = _asyncToGenerator(
-            /*#__PURE__*/
-            regeneratorRuntime.mark(function _callee(interceptors, index) {
-              var nc, ret;
-              return regeneratorRuntime.wrap(function _callee$(_context) {
-                while (1) {
-                  switch (_context.prev = _context.next) {
-                    case 0:
-                      _context.next = 2;
-                      return c.toResolve(r, key);
+          var lazyResovle = function lazyResovle(interceptors, index) {
+            var nc, ret;
+            return regeneratorRuntime.async(function lazyResovle$(_context) {
+              while (1) {
+                switch (_context.prev = _context.next) {
+                  case 0:
+                    _context.next = 2;
+                    return regeneratorRuntime.awrap(c.toResolve(r, key));
 
-                    case 2:
-                      nc = _context.sent;
-                      nc = _this2._callEvent('onResolveComponent', nc, r) || nc;
-                      ret = toResovle(nc, key);
-                      interceptors.splice.apply(interceptors, [index, 1].concat(_toConsumableArray(ret)));
-                      return _context.abrupt("return", interceptors[index]);
+                  case 2:
+                    nc = _context.sent;
+                    nc = _this2._callEvent('onResolveComponent', nc, r) || nc;
+                    ret = toResovle(nc, key);
+                    interceptors.splice.apply(interceptors, [index, 1].concat(_toConsumableArray(ret)));
+                    return _context.abrupt("return", interceptors[index]);
 
-                    case 7:
-                    case "end":
-                      return _context.stop();
-                  }
+                  case 7:
+                  case "end":
+                    return _context.stop();
                 }
-              }, _callee);
-            }));
-
-            return function lazyResovle(_x, _x2) {
-              return _ref4.apply(this, arguments);
-            };
-          }();
+              }
+            });
+          };
 
           lazyResovle.lazy = true;
           lazyResovle.route = r;
@@ -502,7 +488,6 @@ function () {
         if (location.pathname.indexOf(this.basename) !== 0) return null;
         location = _objectSpread({}, location);
         location.pathname = location.pathname.substr(this.basename.length) || '/';
-        if (location.fullPath) location.fullPath = location.fullPath.substr(this.basename.length) || '/';
         if (location.path !== undefined) location.path = location.pathname;
       }
 
@@ -510,353 +495,303 @@ function () {
     }
   }, {
     key: "_handleRouteInterceptor",
-    value: function () {
-      var _handleRouteInterceptor2 = _asyncToGenerator(
-      /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee2(location, callback) {
-        var _len4,
-            args,
-            _key4,
-            _args2 = arguments;
+    value: function _handleRouteInterceptor(location, callback) {
+      var _len4,
+          args,
+          _key4,
+          _args2 = arguments;
 
-        return regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                if (typeof location === 'string') location = _routeCache.default.flush(location);
-                location = this._transformLocation(location);
+      return regeneratorRuntime.async(function _handleRouteInterceptor$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              if (typeof location === 'string') location = _routeCache.default.flush(location);
+              location = this._transformLocation(location);
 
-                if (location) {
-                  _context2.next = 4;
-                  break;
-                }
+              if (location) {
+                _context2.next = 4;
+                break;
+              }
 
-                return _context2.abrupt("return", callback(true));
+              return _context2.abrupt("return", callback(true));
 
-              case 4:
-                this._callEvent('onRouteing', true);
+            case 4:
+              this._callEvent('onRouteing', true);
 
-                _context2.prev = 5;
+              _context2.prev = 5;
 
-                for (_len4 = _args2.length, args = new Array(_len4 > 2 ? _len4 - 2 : 0), _key4 = 2; _key4 < _len4; _key4++) {
-                  args[_key4 - 2] = _args2[_key4];
-                }
+              for (_len4 = _args2.length, args = new Array(_len4 > 2 ? _len4 - 2 : 0), _key4 = 2; _key4 < _len4; _key4++) {
+                args[_key4 - 2] = _args2[_key4];
+              }
 
-                _context2.next = 9;
-                return this._internalHandleRouteInterceptor.apply(this, [location, callback].concat(args));
+              _context2.next = 9;
+              return regeneratorRuntime.awrap(this._internalHandleRouteInterceptor.apply(this, [location, callback].concat(args)));
 
-              case 9:
-                return _context2.abrupt("return", _context2.sent);
+            case 9:
+              return _context2.abrupt("return", _context2.sent);
 
-              case 10:
-                _context2.prev = 10;
+            case 10:
+              _context2.prev = 10;
 
-                this._callEvent('onRouteing', false);
+              this._callEvent('onRouteing', false);
 
-                return _context2.finish(10);
+              return _context2.finish(10);
 
-              case 13:
-              case "end":
-                return _context2.stop();
-            }
+            case 13:
+            case "end":
+              return _context2.stop();
           }
-        }, _callee2, this, [[5,, 10, 13]]);
-      }));
-
-      function _handleRouteInterceptor(_x3, _x4) {
-        return _handleRouteInterceptor2.apply(this, arguments);
-      }
-
-      return _handleRouteInterceptor;
-    }()
+        }
+      }, null, this, [[5,, 10, 13]]);
+    }
   }, {
     key: "_routetInterceptors",
-    value: function () {
-      var _routetInterceptors2 = _asyncToGenerator(
-      /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee5(interceptors, to, from, next) {
-        var _this5 = this;
+    value: function _routetInterceptors(interceptors, to, from, next) {
+      var _this5 = this;
 
-        var isBlock, beforeInterceptor, _beforeInterceptor;
+      var isBlock, beforeInterceptor;
+      return regeneratorRuntime.async(function _routetInterceptors$(_context5) {
+        while (1) {
+          switch (_context5.prev = _context5.next) {
+            case 0:
+              beforeInterceptor = function _ref4(interceptor, index, to, from, next) {
+                var _this6 = this;
 
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
-          while (1) {
-            switch (_context5.prev = _context5.next) {
-              case 0:
-                _beforeInterceptor = function _ref7() {
-                  _beforeInterceptor = _asyncToGenerator(
-                  /*#__PURE__*/
-                  regeneratorRuntime.mark(function _callee4(interceptor, index, to, from, next) {
-                    var _this6 = this;
-
-                    var nextWrapper;
-                    return regeneratorRuntime.wrap(function _callee4$(_context4) {
-                      while (1) {
-                        switch (_context4.prev = _context4.next) {
-                          case 0:
-                            if (!(interceptor && interceptor.lazy)) {
-                              _context4.next = 6;
-                              break;
-                            }
-
-                            _context4.next = 3;
-                            return interceptor(interceptors, index);
-
-                          case 3:
-                            interceptor = _context4.sent;
-                            _context4.next = 0;
-                            break;
-
-                          case 6:
-                            if (interceptor) {
-                              _context4.next = 8;
-                              break;
-                            }
-
-                            return _context4.abrupt("return", next());
-
-                          case 8:
-                            nextWrapper = this._nexting = (0, _util.once)(
-                            /*#__PURE__*/
-                            function () {
-                              var _ref5 = _asyncToGenerator(
-                              /*#__PURE__*/
-                              regeneratorRuntime.mark(function _callee3(f1) {
-                                var nextInterceptor;
-                                return regeneratorRuntime.wrap(function _callee3$(_context3) {
-                                  while (1) {
-                                    switch (_context3.prev = _context3.next) {
-                                      case 0:
-                                        nextInterceptor = interceptors[++index];
-
-                                        if (!isBlock.call(_this6, f1, interceptor)) {
-                                          _context3.next = 3;
-                                          break;
-                                        }
-
-                                        return _context3.abrupt("return", next(f1));
-
-                                      case 3:
-                                        if (f1 === true) f1 = undefined;
-
-                                        if (nextInterceptor) {
-                                          _context3.next = 6;
-                                          break;
-                                        }
-
-                                        return _context3.abrupt("return", next(function (res) {
-                                          return (0, _util.isFunction)(f1) && f1(res);
-                                        }));
-
-                                      case 6:
-                                        _context3.prev = 6;
-                                        _context3.next = 9;
-                                        return beforeInterceptor.call(_this6, nextInterceptor, index, to, from, function (res) {
-                                          var ret = next(res);
-                                          if (interceptor.global) (0, _util.isFunction)(f1) && f1(res);
-                                          return ret;
-                                        });
-
-                                      case 9:
-                                        return _context3.abrupt("return", _context3.sent);
-
-                                      case 12:
-                                        _context3.prev = 12;
-                                        _context3.t0 = _context3["catch"](6);
-                                        console.error(_context3.t0);
-                                        next(typeof _context3.t0 === 'string' ? new Error(_context3.t0) : _context3.t0);
-
-                                      case 16:
-                                      case "end":
-                                        return _context3.stop();
-                                    }
-                                  }
-                                }, _callee3, null, [[6, 12]]);
-                              }));
-
-                              return function (_x14) {
-                                return _ref5.apply(this, arguments);
-                              };
-                            }());
-                            _context4.next = 11;
-                            return interceptor(to, from, nextWrapper, interceptor.route);
-
-                          case 11:
-                            return _context4.abrupt("return", _context4.sent);
-
-                          case 12:
-                          case "end":
-                            return _context4.stop();
+                var nextWrapper;
+                return regeneratorRuntime.async(function beforeInterceptor$(_context4) {
+                  while (1) {
+                    switch (_context4.prev = _context4.next) {
+                      case 0:
+                        if (!(interceptor && interceptor.lazy)) {
+                          _context4.next = 6;
+                          break;
                         }
-                      }
-                    }, _callee4, this);
-                  }));
-                  return _beforeInterceptor.apply(this, arguments);
-                };
 
-                beforeInterceptor = function _ref6(_x9, _x10, _x11, _x12, _x13) {
-                  return _beforeInterceptor.apply(this, arguments);
-                };
+                        _context4.next = 3;
+                        return regeneratorRuntime.awrap(interceptor(interceptors, index));
 
-                isBlock = function isBlock(v, interceptor) {
-                  var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
+                      case 3:
+                        interceptor = _context4.sent;
+                        _context4.next = 0;
+                        break;
 
-                  if (_isLocation && interceptor) {
-                    v = _this5.createRoute((0, _util.normalizeLocation)(v, interceptor.route));
+                      case 6:
+                        if (interceptor) {
+                          _context4.next = 8;
+                          break;
+                        }
 
-                    if (v.fullPath === to.fullPath) {
-                      v = undefined;
-                      _isLocation = false;
+                        return _context4.abrupt("return", next());
+
+                      case 8:
+                        nextWrapper = this._nexting = (0, _util.once)(function _callee(f1) {
+                          var nextInterceptor;
+                          return regeneratorRuntime.async(function _callee$(_context3) {
+                            while (1) {
+                              switch (_context3.prev = _context3.next) {
+                                case 0:
+                                  nextInterceptor = interceptors[++index];
+
+                                  if (!isBlock.call(_this6, f1, interceptor)) {
+                                    _context3.next = 3;
+                                    break;
+                                  }
+
+                                  return _context3.abrupt("return", next(f1));
+
+                                case 3:
+                                  if (f1 === true) f1 = undefined;
+
+                                  if (nextInterceptor) {
+                                    _context3.next = 6;
+                                    break;
+                                  }
+
+                                  return _context3.abrupt("return", next(function (res) {
+                                    return (0, _util.isFunction)(f1) && f1(res);
+                                  }));
+
+                                case 6:
+                                  _context3.prev = 6;
+                                  _context3.next = 9;
+                                  return regeneratorRuntime.awrap(beforeInterceptor.call(_this6, nextInterceptor, index, to, from, function (res) {
+                                    var ret = next(res);
+                                    if (interceptor.global) (0, _util.isFunction)(f1) && f1(res);
+                                    return ret;
+                                  }));
+
+                                case 9:
+                                  return _context3.abrupt("return", _context3.sent);
+
+                                case 12:
+                                  _context3.prev = 12;
+                                  _context3.t0 = _context3["catch"](6);
+                                  console.error(_context3.t0);
+                                  next(typeof _context3.t0 === 'string' ? new Error(_context3.t0) : _context3.t0);
+
+                                case 16:
+                                case "end":
+                                  return _context3.stop();
+                              }
+                            }
+                          }, null, null, [[6, 12]]);
+                        });
+                        _context4.next = 11;
+                        return regeneratorRuntime.awrap(interceptor(to, from, nextWrapper, interceptor.route));
+
+                      case 11:
+                        return _context4.abrupt("return", _context4.sent);
+
+                      case 12:
+                      case "end":
+                        return _context4.stop();
                     }
                   }
+                }, null, this);
+              };
 
-                  return !_this5._history || v === false || _isLocation || v instanceof Error;
-                };
+              isBlock = function isBlock(v, interceptor) {
+                var _isLocation = typeof v === 'string' || (0, _util.isLocation)(v);
 
-                if (!next) {
-                  _context5.next = 8;
-                  break;
+                if (_isLocation && interceptor) {
+                  v = _this5.createRoute((0, _util.normalizeLocation)(v, interceptor.route));
+
+                  if (v.fullPath === to.fullPath) {
+                    v = undefined;
+                    _isLocation = false;
+                  }
                 }
 
-                _context5.next = 6;
-                return beforeInterceptor.call(this, interceptors[0], 0, to, from, next);
+                return !_this5._history || v === false || _isLocation || v instanceof Error;
+              };
 
-              case 6:
-                _context5.next = 9;
+              if (!next) {
+                _context5.next = 7;
                 break;
+              }
 
-              case 8:
-                _util.afterInterceptors.call(this, interceptors, to, from);
+              _context5.next = 5;
+              return regeneratorRuntime.awrap(beforeInterceptor.call(this, interceptors[0], 0, to, from, next));
 
-              case 9:
-              case "end":
-                return _context5.stop();
-            }
+            case 5:
+              _context5.next = 8;
+              break;
+
+            case 7:
+              _util.afterInterceptors.call(this, interceptors, to, from);
+
+            case 8:
+            case "end":
+              return _context5.stop();
           }
-        }, _callee5, this);
-      }));
-
-      function _routetInterceptors(_x5, _x6, _x7, _x8) {
-        return _routetInterceptors2.apply(this, arguments);
-      }
-
-      return _routetInterceptors;
-    }()
+        }
+      }, null, this);
+    }
   }, {
     key: "_internalHandleRouteInterceptor",
-    value: function () {
-      var _internalHandleRouteInterceptor2 = _asyncToGenerator(
-      /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee6(location, callback) {
-        var _this7 = this;
+    value: function _internalHandleRouteInterceptor(location, callback) {
+      var _this7 = this;
 
-        var isInit,
-            isContinue,
-            to,
-            from,
-            current,
-            fallbackView,
-            _args6 = arguments;
-        return regeneratorRuntime.wrap(function _callee6$(_context6) {
-          while (1) {
-            switch (_context6.prev = _context6.next) {
-              case 0:
-                isInit = _args6.length > 2 && _args6[2] !== undefined ? _args6[2] : false;
-                isContinue = false;
-                _context6.prev = 2;
-                to = this.createRoute(location);
-                from = isInit ? null : to.redirectedFrom || this.currentRoute;
-                current = this.currentRoute;
+      var isInit,
+          isContinue,
+          to,
+          from,
+          current,
+          fallbackView,
+          _args6 = arguments;
+      return regeneratorRuntime.async(function _internalHandleRouteInterceptor$(_context6) {
+        while (1) {
+          switch (_context6.prev = _context6.next) {
+            case 0:
+              isInit = _args6.length > 2 && _args6[2] !== undefined ? _args6[2] : false;
+              isContinue = false;
+              _context6.prev = 2;
+              to = this.createRoute(location);
+              from = isInit ? null : to.redirectedFrom || this.currentRoute;
+              current = this.currentRoute;
 
-                if (!(to && from && to.fullPath === from.fullPath)) {
-                  _context6.next = 10;
-                  break;
-                }
-
-                callback(true);
-                if (to.onInit) to.onInit(Boolean(to), to);
-                return _context6.abrupt("return");
-
-              case 10:
-                if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
-                  fallbackView = this.viewRoot;
-
-                  this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(function (m) {
-                    if (!m.viewInstances.default || !m.viewInstances.default.props.fallback) return;
-                    return fallbackView = m.viewInstances.default;
-                  });
-                }
-
-                fallbackView && fallbackView._updateResolving(true);
-
-                this._routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, function (ok) {
-                  _this7._nexting = null;
-                  fallbackView && setTimeout(function () {
-                    return fallbackView._isMounted && fallbackView._updateResolving(false);
-                  }, 0);
-                  if (ok && typeof ok === 'string') ok = {
-                    path: ok
-                  };
-                  isContinue = Boolean(ok === undefined || ok && !(ok instanceof Error) && !(0, _util.isLocation)(ok));
-                  var toLast = to.matched[to.matched.length - 1];
-
-                  if (isContinue && toLast && toLast.config.exact && toLast.redirect) {
-                    ok = (0, _util.resolveRedirect)(toLast.redirect, toLast, to);
-                    if (ok) isContinue = false;
-                  }
-
-                  callback(isContinue, to);
-
-                  if (!isContinue) {
-                    if ((0, _util.isLocation)(ok)) {
-                      if (to.onAbort) ok.onAbort = to.onAbort;
-                      if (to.onComplete) ok.onComplete = to.onComplete;
-                      return _this7.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
-                    }
-
-                    if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok, to);
-                    if (ok instanceof Error) _this7.errorCallback && _this7.errorCallback(ok);
-                    return;
-                  }
-
-                  if (to.onInit) to.onInit(Boolean(to), to);
-
-                  _this7.nextTick(function () {
-                    if ((0, _util.isFunction)(ok)) ok = ok(to);
-
-                    if (!isInit && (!current || current.fullPath !== to.fullPath)) {
-                      _this7._routetInterceptors(_this7._getRouteUpdateGuards(to, current), to, current);
-                    }
-
-                    if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok, to);
-
-                    _this7._routetInterceptors(_this7._getAfterEachGuards(to, current), to, current);
-                  });
-                });
-
-                _context6.next = 19;
+              if (!(to && from && to.fullPath === from.fullPath)) {
+                _context6.next = 10;
                 break;
+              }
 
-              case 15:
-                _context6.prev = 15;
-                _context6.t0 = _context6["catch"](2);
-                console.error(_context6.t0);
-                if (!isContinue) callback(isContinue);
+              callback(true);
+              if (to.onInit) to.onInit(Boolean(to), to);
+              return _context6.abrupt("return");
 
-              case 19:
-              case "end":
-                return _context6.stop();
-            }
+            case 10:
+              if ((0, _routeLazy.hasMatchedRouteLazy)(to.matched)) {
+                fallbackView = this.viewRoot;
+
+                this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(function (m) {
+                  if (!m.viewInstances.default || !m.viewInstances.default.props.fallback) return;
+                  return fallbackView = m.viewInstances.default;
+                });
+              }
+
+              fallbackView && fallbackView._updateResolving(true);
+
+              this._routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, function (ok) {
+                _this7._nexting = null;
+                fallbackView && setTimeout(function () {
+                  return fallbackView._isMounted && fallbackView._updateResolving(false);
+                }, 0);
+                if (ok && typeof ok === 'string') ok = {
+                  path: ok
+                };
+                isContinue = Boolean(ok === undefined || ok && !(ok instanceof Error) && !(0, _util.isLocation)(ok));
+                var toLast = to.matched[to.matched.length - 1];
+
+                if (isContinue && toLast && toLast.config.exact && toLast.redirect) {
+                  ok = (0, _util.resolveRedirect)(toLast.redirect, toLast, to);
+                  if (ok) isContinue = false;
+                }
+
+                callback(isContinue, to);
+
+                if (!isContinue) {
+                  if ((0, _util.isLocation)(ok)) {
+                    if (to.onAbort) ok.onAbort = to.onAbort;
+                    if (to.onComplete) ok.onComplete = to.onComplete;
+                    return _this7.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+                  }
+
+                  if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok, to);
+                  if (ok instanceof Error) _this7.errorCallback && _this7.errorCallback(ok);
+                  return;
+                }
+
+                if (to.onInit) to.onInit(Boolean(to), to);
+
+                _this7.nextTick(function () {
+                  if ((0, _util.isFunction)(ok)) ok = ok(to);
+
+                  if (!isInit && (!current || current.fullPath !== to.fullPath)) {
+                    _this7._routetInterceptors(_this7._getRouteUpdateGuards(to, current), to, current);
+                  }
+
+                  if (to && (0, _util.isFunction)(to.onComplete)) to.onComplete(ok, to);
+
+                  _this7._routetInterceptors(_this7._getAfterEachGuards(to, current), to, current);
+                });
+              });
+
+              _context6.next = 19;
+              break;
+
+            case 15:
+              _context6.prev = 15;
+              _context6.t0 = _context6["catch"](2);
+              console.error(_context6.t0);
+              if (!isContinue) callback(isContinue);
+
+            case 19:
+            case "end":
+              return _context6.stop();
           }
-        }, _callee6, this, [[2, 15]]);
-      }));
-
-      function _internalHandleRouteInterceptor(_x15, _x16) {
-        return _internalHandleRouteInterceptor2.apply(this, arguments);
-      }
-
-      return _internalHandleRouteInterceptor;
-    }()
+        }
+      }, null, this, [[2, 15]]);
+    }
   }, {
     key: "_go",
     value: function _go(to, onComplete, onAbort, onInit, replace) {
@@ -928,9 +863,9 @@ function () {
       }
 
       var matched = (0, _util.matchRoutes)(this.routes, to, parent);
-      return matched.map(function (_ref8, i) {
-        var route = _ref8.route,
-            match = _ref8.match;
+      return matched.map(function (_ref5, i) {
+        var route = _ref5.route,
+            match = _ref5.match;
 
         var ret = _this9.createMatchedRoute(route, match);
 
@@ -987,6 +922,10 @@ function () {
         onAbort: onAbort,
         onComplete: onComplete
       };
+      Object.defineProperty(ret, 'origin', {
+        configurable: true,
+        value: to
+      });
 
       if (to.isRedirect && from) {
         ret.redirectedFrom = from;
@@ -1124,8 +1063,8 @@ function () {
     }
   }, {
     key: "install",
-    value: function install(ReactVueLike, _ref9) {
-      var App = _ref9.App;
+    value: function install(ReactVueLike, _ref6) {
+      var App = _ref6.App;
       this.ReactVueLike = ReactVueLike;
       this.App = App;
       if (!App.inherits) App.inherits = {};
