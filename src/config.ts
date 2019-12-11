@@ -1,18 +1,18 @@
 const encodeReserveRE = /[!'()*]/g;
-const encodeReserveReplacer = c => '%' + c.charCodeAt(0).toString(16);
+const encodeReserveReplacer = (c: string) => '%' + c.charCodeAt(0).toString(16);
 const commaRE = /%2C/g;
 
 // fixed encodeURIComponent which is more conformant to RFC3986:
 // - escapes [!'()*]
 // - preserve commas
-const encode = str => encodeURIComponent(str)
+const encode = (str: string) => encodeURIComponent(str)
   .replace(encodeReserveRE, encodeReserveReplacer)
   .replace(commaRE, ',');
 
 const decode = decodeURIComponent;
 
-function _parseQuery(query) {
-  const res = {};
+function _parseQuery(query: string) {
+  const res: any = {};
 
   query = query.trim().replace(/^(\?|#|&)/, '');
 
@@ -20,10 +20,10 @@ function _parseQuery(query) {
     return res;
   }
 
-  query.split('&').forEach(param => {
-    const parts = param.replace(/\+/g, ' ').split('=');
-    const key = decode(parts.shift());
-    const val = parts.length > 0
+  query.split('&').forEach((param: string) => {
+    const parts: string[] = param.replace(/\+/g, ' ').split('=');
+    const key: string = decode(parts.shift() || '');
+    const val: any = parts.length > 0
       ? decode(parts.join('='))
       : null;
 
@@ -39,9 +39,9 @@ function _parseQuery(query) {
   return res;
 }
 
-function _stringifyQuery(obj) {
-  const res = obj ? Object.keys(obj).map(key => {
-    const val = obj[key];
+function _stringifyQuery(obj: { [key: string]: any }) {
+  const res = obj ? Object.keys(obj).map((key: string) => {
+    const val: any = obj[key];
 
     if (val === undefined) {
       return '';
@@ -52,7 +52,7 @@ function _stringifyQuery(obj) {
     }
 
     if (Array.isArray(val)) {
-      const result = [];
+      const result: string[] = [];
       val.forEach(val2 => {
         if (val2 === undefined) {
           return;
@@ -67,7 +67,7 @@ function _stringifyQuery(obj) {
     }
 
     return encode(key) + '=' + encode(val);
-  }).filter(x => x.length > 0).join('&') : null;
+  }).filter((x: string) => x.length > 0).join('&') : null;
   return res ? `?${res}` : '';
 }
 
@@ -87,7 +87,7 @@ export default {
     return this._stringifyQuery;
   },
 
-  routeMergeStrategie(parent, child, vm) {
+  routeMergeStrategie(parent: any, child: any, vm: any) {
     const router = vm.$router || vm._inherits.$router;
     if (vm._isVueLikeRoot) {
       if (router) {
@@ -100,7 +100,7 @@ export default {
     });
     vm.$computed(vm, '$routeIndex', function () {
       if (this._routeIndex !== undefined) return this._routeIndex;
-      let routeView = router.getHostRouterView(this, v => !v._isVueLikeRoot);
+      let routeView = router.getHostRouterView(this, (v: any) => !v._isVueLikeRoot);
       return this._routeIndex = routeView ? routeView.state._routerDepth : -1;
     });
     vm.$computed(vm, '$matchedRoute', function () {

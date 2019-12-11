@@ -24,11 +24,13 @@
     "drawer"
   ],
   "scripts": {
-    "build-dev": "cross-env NODE_ENV=development webpack --progresss  --config build/webpack-dev.config.js",
-    "build-prod": "cross-env NODE_ENV=production webpack --progresss  --config build/webpack-prod.config.js",
-    "build-src": "babel src -d esm",
-    "build-drawer": "babel drawer/src -d drawer/esm",
-    "build": "npm run build-src && npm run build-drawer",
+    "build-drawer": "npm run build-drawer:types && npm run build-drawer:js",
+    "build-drawer:types": "tsc -p drawer --emitDeclarationOnly",
+    "build-drawer:js": "babel drawer/src -d drawer/esm --extensions \".ts,.tsx\" --source-maps",
+    "build-src": "npm run build:types && npm run build:js",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:js": "babel src -d esm --extensions \".ts,.tsx\" --source-maps",
+    "build": "npm run build && npm run build-drawer",
     "prepare": "npm run build"
   },
   "repository": {
@@ -37,6 +39,8 @@
   },
   "author": "gxlmyacc",
   "dependencies": {
+    "@types/react": "^16.9.16",
+    "@types/react-dom": "^16.9.4",
     "history-fix": "^4.10.1",
     "path-to-regexp": "^3.0.0"
   },
@@ -46,14 +50,15 @@
     "react-swipeable": "^5.4.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.5.4",
-    "@babel/plugin-proposal-class-properties": "^7.5.0",
+    "@babel/cli": "^7.7.5",
+    "@babel/core": "^7.7.5",
+    "@babel/plugin-proposal-class-properties": "^7.7.4",
     "@babel/plugin-proposal-decorators": "^7.4.4",
     "@babel/plugin-proposal-export-default-from": "^7.2.0",
     "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
     "@babel/plugin-proposal-json-strings": "^7.2.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.5.4",
+    "@babel/plugin-proposal-numeric-separator": "^7.7.4",
+    "@babel/plugin-proposal-object-rest-spread": "^7.7.4",
     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/plugin-syntax-import-meta": "^7.2.0",
     "@babel/plugin-transform-arrow-functions": "^7.2.0",
@@ -63,8 +68,9 @@
     "@babel/plugin-transform-runtime": "^7.5.5",
     "@babel/plugin-transform-spread": "^7.2.2",
     "@babel/plugin-transform-strict-mode": "^7.2.0",
-    "@babel/preset-env": "7.4.5",
+    "@babel/preset-env": "^7.7.6",
     "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.7.4",
     "babel-eslint": "^10.0.2",
     "babel-loader": "^8.0.6",
     "clean-webpack-plugin": "^1.0.1",
@@ -83,6 +89,7 @@
     "friendly-errors-webpack-plugin": "^1.7.0",
     "jsx-loader": "^0.13.2",
     "progress-bar-webpack-plugin": "^1.12.1",
+    "typescript": "^3.7.3",
     "uglifyjs-webpack-plugin": "^2.1.3",
     "webpack": "^4.35.3",
     "webpack-bundle-analyzer": "^3.4.1",

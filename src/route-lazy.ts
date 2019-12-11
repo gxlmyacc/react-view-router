@@ -1,31 +1,48 @@
 import React from 'react';
 import { REACT_LAZY_TYPE } from './route-guard';
 
+interface RouteLazyUpdater {
+  (component: (React.FunctionComponent | React.ComponentClass) & {
+    __children?: any[] | ((r: any) => any[])
+  }):
+    React.FunctionComponent | React.ComponentClass | undefined;
+}
+
 export class RouteLazy {
 
-  constructor(ctor, options) {
-    this.$$typeof = REACT_LAZY_TYPE;
+  private _ctor: any
+  private _result: any;
+  private resolved: boolean;
+
+  $$typeof: Symbol | number = REACT_LAZY_TYPE;
+  options: any;
+  updaters: RouteLazyUpdater[] = [];
+
+
+  constructor(
+    ctor: any,
+    options?: any
+  ) {
     this._ctor = ctor;
-    this._status = -1;
     this._result = null;
 
     this.options = options;
-    this.defaultProps = undefined;
-    this.propTypes = undefined;
     this.render = this.render.bind(this);
 
-    Object.defineProperty(this, 'resolved', { writable: true, value: false });
-    Object.defineProperty(this, 'updaters', { writable: true, value: [] });
-    Object.defineProperty(this, 'toResolve', { value: this.toResolve });
+    this.resolved = false;
+    this.updaters = [];
   }
 
-  toResolve(...args) {
+  toResolve(...args: any[]): Promise<React.FunctionComponent | React.ComponentClass> {
     return new Promise(async (resolve, reject) => {
       if (this.resolved) return resolve(this._result);
 
-      let _resolve = v => {
+      let _resolve = (v:
+        (React.FunctionComponent | React.ComponentClass)
+        & { __esModule?: boolean; default: any }
+      ) => {
         v = (v && v.__esModule) ? v.default : v;
-        this.updaters.forEach(updater => v = updater(v) || v);
+        this.updaters.forEach(updater => v = updater(v) as any || v);
         this._result = v;
         this.resolved = true;
         resolve(v);
@@ -44,14 +61,14 @@ export class RouteLazy {
     });
   }
 
-  render(props, ref) {
+  render(props: object, ref: any) {
     if (!this.resolved || !this._result) return null;
     return React.createElement(this._result, { ...props, ref });
   }
 
 }
 
-export function hasRouteLazy(route) {
+export function hasRouteLazy(route: any) {
   const config = route.config || route;
   if (config.components instanceof RouteLazy) return true;
   if (config.components) {
@@ -62,10 +79,10 @@ export function hasRouteLazy(route) {
   return false;
 }
 
-export function hasMatchedRouteLazy(matched) {
+export function hasMatchedRouteLazy(matched: any[]) {
   return matched && matched.some(r => hasRouteLazy(r));
 }
 
-export function lazyImport(importMethod, options) {
+export function lazyImport(importMethod: Function, options?: any) {
   return new RouteLazy(importMethod, options || {});
 }

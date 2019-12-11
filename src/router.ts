@@ -18,7 +18,24 @@ let idSeed = 1;
 
 export default class ReactViewRouter {
 
-  constructor({ mode = 'hash', basename = '', base = '', ...options  } = {}) {
+  private id: number;
+
+  options: any;
+  mode: string;
+  basename: string;
+  routes: any[];
+  plugins: any[];
+  beforeEachGuards: any[];
+  afterEachGuards: any[];
+  prevRoute: any;
+  currentRoute: any;
+  viewRoot: any;
+  errorCallback: any;
+  app: any;
+  getHostRouterView: any;
+  nextTick: any;
+
+  constructor({ mode = 'hash', basename = '', base = '', ...options  }: any = {}) {
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
     this.id = idSeed++;

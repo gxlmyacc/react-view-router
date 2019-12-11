@@ -21,11 +21,9 @@ require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.array.iterator");
 
-require("core-js/modules/es6.object.keys");
-
-require("core-js/modules/es6.promise");
-
 require("core-js/modules/es6.object.to-string");
+
+require("core-js/modules/es6.object.keys");
 
 require("core-js/modules/es6.object.set-prototype-of");
 
@@ -59,13 +57,9 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -205,89 +199,79 @@ function (_React$Component) {
     }
   }, {
     key: "componentDidMount",
-    value: function () {
-      var _componentDidMount = _asyncToGenerator(
-      /*#__PURE__*/
-      regeneratorRuntime.mark(function _callee() {
-        var _this2 = this;
+    value: function componentDidMount() {
+      var _this2 = this;
 
-        var state, parent;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                this._isMounted = true;
+      var state, parent;
+      return regeneratorRuntime.async(function componentDidMount$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              this._isMounted = true;
 
-                if (!this.state._routerInited) {
-                  _context.next = 3;
-                  break;
-                }
+              if (!this.state._routerInited) {
+                _context.next = 3;
+                break;
+              }
 
-                return _context.abrupt("return");
+              return _context.abrupt("return");
 
-              case 3:
-                state = _objectSpread({}, this.state);
+            case 3:
+              state = _objectSpread({}, this.state);
 
-                if (!(state._routerRoot && state.router)) {
-                  _context.next = 8;
-                  break;
-                }
+              if (!(state._routerRoot && state.router)) {
+                _context.next = 8;
+                break;
+              }
 
-                state.router.viewRoot = this;
+              state.router.viewRoot = this;
 
-                state.router._handleRouteInterceptor(state.router.history.location, function (ok, to) {
-                  if (!ok) return;
-                  _this2.state.router && (_this2.state.router.currentRoute = to);
-                  state.currentRoute = _this2._refreshCurrentRoute();
-                  if (_this2._isMounted) _this2.setState(Object.assign(state, {
-                    _routerInited: true
-                  }));
-                }, true);
-
-                return _context.abrupt("return");
-
-              case 8:
-                if (this._reactInternalFiber) {
-                  _context.next = 10;
-                  break;
-                }
-
-                return _context.abrupt("return");
-
-              case 10:
-                parent = (0, _util.getHostRouterView)(this);
-
-                if (parent) {
-                  state._routerRoot = false;
-                  state._routerParent = parent.state._routerView;
-                  if (!state.router) state.router = parent.state.router;
-                  state._routerDepth = parent.state._routerDepth + 1;
-                }
-
-                if (state._routerDepth) {
-                  state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
-                  state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
-                  state.currentRoute = this._refreshCurrentRoute(state);
-                } else console.error('[RouterView] cannot find root RouterView instance!', this);
-
-                if (this._isMounted) this.setState(Object.assign(state, {
+              state.router._handleRouteInterceptor(state.router.history.location, function (ok, to) {
+                if (!ok) return;
+                _this2.state.router && (_this2.state.router.currentRoute = to);
+                state.currentRoute = _this2._refreshCurrentRoute();
+                if (_this2._isMounted) _this2.setState(Object.assign(state, {
                   _routerInited: true
                 }));
+              }, true);
 
-              case 14:
-              case "end":
-                return _context.stop();
-            }
+              return _context.abrupt("return");
+
+            case 8:
+              if (this._reactInternalFiber) {
+                _context.next = 10;
+                break;
+              }
+
+              return _context.abrupt("return");
+
+            case 10:
+              parent = (0, _util.getHostRouterView)(this);
+
+              if (parent) {
+                state._routerRoot = false;
+                state._routerParent = parent.state._routerView;
+                if (!state.router) state.router = parent.state.router;
+                state._routerDepth = parent.state._routerDepth + 1;
+              }
+
+              if (state._routerDepth) {
+                state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
+                state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
+                state.currentRoute = this._refreshCurrentRoute(state);
+              } else console.error('[RouterView] cannot find root RouterView instance!', this);
+
+              if (this._isMounted) this.setState(Object.assign(state, {
+                _routerInited: true
+              }));
+
+            case 14:
+            case "end":
+              return _context.stop();
           }
-        }, _callee, this);
-      }));
-
-      function componentDidMount() {
-        return _componentDidMount.apply(this, arguments);
-      }
-
-      return componentDidMount;
-    }()
+        }
+      }, null, this);
+    }
   }, {
     key: "componentWillUnmount",
     value: function componentWillUnmount() {

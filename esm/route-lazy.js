@@ -32,13 +32,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -82,96 +78,86 @@ function () {
         args[_key] = arguments[_key];
       }
 
-      return new Promise(
-      /*#__PURE__*/
-      function () {
-        var _ref = _asyncToGenerator(
-        /*#__PURE__*/
-        regeneratorRuntime.mark(function _callee(resolve, reject) {
-          var _resolve, component;
+      return new Promise(function _callee(resolve, reject) {
+        var _resolve, component;
 
-          return regeneratorRuntime.wrap(function _callee$(_context) {
-            while (1) {
-              switch (_context.prev = _context.next) {
-                case 0:
-                  if (!_this.resolved) {
-                    _context.next = 2;
-                    break;
-                  }
-
-                  return _context.abrupt("return", resolve(_this._result));
-
-                case 2:
-                  _resolve = function _resolve(v) {
-                    v = v && v.__esModule ? v.default : v;
-
-                    _this.updaters.forEach(function (updater) {
-                      return v = updater(v) || v;
-                    });
-
-                    _this._result = v;
-                    _this.resolved = true;
-                    resolve(v);
-                  };
-
-                  if (!(_this._ctor.prototype instanceof _react.default.Component)) {
-                    _context.next = 7;
-                    break;
-                  }
-
-                  _context.t0 = _this._ctor;
-                  _context.next = 15;
+        return regeneratorRuntime.async(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!_this.resolved) {
+                  _context.next = 2;
                   break;
+                }
 
-                case 7:
-                  if (!(_this._ctor instanceof Promise)) {
-                    _context.next = 13;
-                    break;
-                  }
+                return _context.abrupt("return", resolve(_this._result));
 
-                  _context.next = 10;
-                  return _this._ctor;
+              case 2:
+                _resolve = function _resolve(v) {
+                  v = v && v.__esModule ? v.default : v;
 
-                case 10:
-                  _context.t1 = _context.sent;
-                  _context.next = 14;
+                  _this.updaters.forEach(function (updater) {
+                    return v = updater(v) || v;
+                  });
+
+                  _this._result = v;
+                  _this.resolved = true;
+                  resolve(v);
+                };
+
+                if (!(_this._ctor.prototype instanceof _react.default.Component)) {
+                  _context.next = 7;
                   break;
+                }
 
-                case 13:
-                  _context.t1 = _this._ctor.apply(_this, args);
+                _context.t0 = _this._ctor;
+                _context.next = 15;
+                break;
 
-                case 14:
-                  _context.t0 = _context.t1;
+              case 7:
+                if (!(_this._ctor instanceof Promise)) {
+                  _context.next = 13;
+                  break;
+                }
 
-                case 15:
-                  component = _context.t0;
+                _context.next = 10;
+                return regeneratorRuntime.awrap(_this._ctor);
 
-                  if (component) {
-                    _context.next = 18;
-                    break;
-                  }
+              case 10:
+                _context.t1 = _context.sent;
+                _context.next = 14;
+                break;
 
-                  throw new Error('component should not null!');
+              case 13:
+                _context.t1 = _this._ctor.apply(_this, args);
 
-                case 18:
-                  if (component instanceof Promise) {
-                    component.then(_resolve).catch(function () {
-                      return reject.apply(void 0, arguments);
-                    });
-                  } else _resolve(component);
+              case 14:
+                _context.t0 = _context.t1;
 
-                case 19:
-                case "end":
-                  return _context.stop();
-              }
+              case 15:
+                component = _context.t0;
+
+                if (component) {
+                  _context.next = 18;
+                  break;
+                }
+
+                throw new Error('component should not null!');
+
+              case 18:
+                if (component instanceof Promise) {
+                  component.then(_resolve).catch(function () {
+                    return reject.apply(void 0, arguments);
+                  });
+                } else _resolve(component);
+
+              case 19:
+              case "end":
+                return _context.stop();
             }
-          }, _callee);
-        }));
-
-        return function (_x, _x2) {
-          return _ref.apply(this, arguments);
-        };
-      }());
+          }
+        });
+      });
     }
   }, {
     key: "render",

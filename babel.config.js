@@ -9,6 +9,7 @@ module.exports = {
         targets: { browsers: ['Chrome >= 31'] }
       }
     ],
+    '@babel/typescript',
     '@babel/preset-react'
   ],
   plugins: [

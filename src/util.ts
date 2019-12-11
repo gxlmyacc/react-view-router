@@ -1,22 +1,27 @@
 import React from 'react';
 import config from './config';
 import { RouteLazy } from './route-lazy';
-import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
+import { REACT_FORWARD_REF_TYPE, RouteComponentGuards, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
 
-function nextTick(cb, ctx) {
+function nextTick(cb: () => void, ctx?: object) {
   if (!cb) return;
   return new Promise(function (resolve) {
     setTimeout(() => resolve(ctx ? cb.call(ctx) : cb()), 0);
   });
 }
 
-function innumerable(obj, key, value, options = { configurable: true }) {
+function innumerable(
+  obj: object,
+  key: string,
+  value: any,
+  options: PropertyDescriptor = { configurable: true }
+) {
   Object.defineProperty(obj, key, { value, ...options });
   return obj;
 }
 
-function normalizePath(path) {
+function normalizePath(path: string) {
   const paths = path.split('/');
   if (paths.length > 2 && !paths[paths.length - 1]) paths.splice(paths.length - 1, 1);
   for (let i = paths.length - 1; i > -1; i--) {
@@ -26,7 +31,7 @@ function normalizePath(path) {
   return paths.join('/');
 }
 
-function normalizeRoute(route, parent, depth = 0, force) {
+function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any) {
   let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
   let r = { ...route, subpath: route.path, path, depth };
   if (parent) innumerable(r, 'parent', parent);
@@ -43,11 +48,11 @@ function normalizeRoute(route, parent, depth = 0, force) {
   Object.keys(r.components).forEach(key => {
     let comp = r.components[key];
     if (comp instanceof RouteLazy) {
-      comp.updaters.push(c => {
+      (comp as RouteLazy).updaters.push(c => {
         if (c.__children) {
           let children = c.__children || [];
-          if (isFunction(children)) children = children(r) || [];
-          innumerable(r, 'children', normalizeRoutes(children, r, depth + 1));
+          if (isFunction(children)) children = (children as ((r: any) => any[]))(r) || [];
+          innumerable(r, 'children', normalizeRoutes(children as RoutesArray, r, depth + 1));
           r.exact = !r.children.length;
         }
         return r.components[key] = c;
@@ -62,15 +67,20 @@ function normalizeRoute(route, parent, depth = 0, force) {
   return r;
 }
 
-function normalizeRoutes(routes, parent, depth = 0, force = false) {
-  if (!routes) routes = [];
+interface RoutesArray extends Array<any> {
+  _normalized?: boolean;
+  [key: string]: any;
+}
+
+function normalizeRoutes(routes: RoutesArray, parent: any, depth = 0, force = false) {
+  if (!routes) routes = [] as RoutesArray;
   if (!force && routes._normalized) return routes;
-  routes = routes.map(route => route && normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
+  routes = routes.map((route: any) => route && normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
   Object.defineProperty(routes, '_normalized', { value: true });
   return routes;
 }
 
-function normalizeRoutePath(path, route, append, basename = '') {
+function normalizeRoutePath(path: string, route?: any, append?: boolean, basename = '') {
   if (isAbsoluteUrl(path)) return path;
   if (route && route.matched) route = route.matched[route.matched.length - 1];
   if (!path || path[0] === '/' || !route) return basename + (path || '');
@@ -84,9 +94,12 @@ function normalizeRoutePath(path, route, append, basename = '') {
   return normalizePath(path);
 }
 
-function resloveIndex(index, routes) {
-  index = isFunction(index) ? index() : index;
-  let r = routes.find(r => r.subpath === index);
+
+type RouteIndexHandler = () => string;
+
+function resloveIndex(index: string | RouteIndexHandler, routes: RoutesArray): any {
+  index = (isFunction(index) ? (index as RouteIndexHandler)() : index) as string;
+  let r = routes.find((r: any) => r.subpath === index);
   if (r && r.index) {
     if (r.index === index) return null;
     return resloveIndex(r.index, routes);
@@ -94,12 +107,19 @@ function resloveIndex(index, routes) {
   return r;
 }
 
-function matchRoutes(routes, to, parent, branch) {
-  if (branch === undefined) branch = [];
+
+type RoutesHandler = (r: any) => RoutesArray;
+
+function matchRoutes(
+  routes: RoutesArray | RoutesHandler,
+  to: any,
+  parent?: any,
+  branch: { route: any, match: any }[] = []
+) {
   to = normalizeLocation(to);
 
   if (isFunction(routes)) {
-    routes = normalizeRoutes(routes({
+    routes = normalizeRoutes((routes as RoutesHandler)({
       location,
       parent,
       branch,
@@ -108,7 +128,7 @@ function matchRoutes(routes, to, parent, branch) {
     if (parent) parent.prevChildren = routes;
   }
 
-  for (let route of routes) {
+  (routes as RoutesArray).some(route => {
     let match = route.path
       ? matchPath(to.path, route)
       : branch.length
@@ -116,8 +136,8 @@ function matchRoutes(routes, to, parent, branch) {
         : computeRootMatch(to.path); // use default "root" match
 
     if (match && route.index) {
-      route = resloveIndex(route.index, routes);
-      if (!route) continue;
+      route = resloveIndex(route.index, routes as RoutesArray);
+      if (!route) return;
       else to.pathname = to.path = route.path;
     }
 
@@ -126,12 +146,13 @@ function matchRoutes(routes, to, parent, branch) {
 
       if (route.children) matchRoutes(route.children, to, route, branch);
     }
-    if (match) break;
-  }
+    if (match) return true;
+  });
+
   return branch;
 }
 
-function normalizeLocation(to, route, append, basename = '') {
+function normalizeLocation(to: any, route?: any, append?: boolean, basename = '') {
   if (!to) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
@@ -150,19 +171,19 @@ function normalizeLocation(to, route, append, basename = '') {
 }
 
 const _toString = Object.prototype.toString;
-function isPlainObject(obj) {
+function isPlainObject(obj: any): obj is { [key: string]: any } {
   return _toString.call(obj) === '[object Object]';
 }
-function isFunction(value) {
+function isFunction(value: any): value is Function {
   return typeof value === 'function';
 }
 
-function isLocation(v) {
+function isLocation(v: any) {
   return isPlainObject(v) && (v.path || v.pathname);
 }
 
-function normalizeProps(props) {
-  let res = {};
+function normalizeProps(props: { [key: string]: any } | any[]) {
+  let res: { [key: string]: any } = {};
   if (Array.isArray(props)) {
     props.forEach(key => res[key] = { type: null });
   } else if (isPlainObject(props)) {
@@ -178,9 +199,9 @@ function normalizeProps(props) {
   return res;
 }
 
-function once(fn, ctx) {
-  let ret;
-  return function _once(...args) {
+function once(fn: ((...args: any) => any) | null, ctx?: any) {
+  let ret: any;
+  return function _once(...args: any[]) {
     if (!fn) return ret;
     const _fn = fn;
     fn = null;
@@ -190,7 +211,7 @@ function once(fn, ctx) {
 }
 
 
-function isAcceptRef(v) {
+function isAcceptRef(v: any) {
   if (!v) return false;
   if (v.$$typeof === REACT_FORWARD_REF_TYPE && v.__componentClass) return true;
   if (v.__component) v = getGuardsComponent(v);
@@ -202,8 +223,8 @@ function isAcceptRef(v) {
   return ret;
 }
 
-function mergeFns(...fns) {
-  return function (...args) {
+function mergeFns(...fns: any[]) {
+  return function (...args: any) {
     let ret;
     fns.forEach(fn => {
       ret = fn && fn.call(this, ...args);
@@ -212,7 +233,7 @@ function mergeFns(...fns) {
   };
 }
 
-function resolveRedirect(to, route, from) {
+function resolveRedirect(to: any, route: any, from?: any) {
   if (isFunction(to)) to = to.call(route, from);
   if (!to) return '';
   to = normalizeLocation(to, route);
@@ -221,11 +242,11 @@ function resolveRedirect(to, route, from) {
   return to;
 }
 
-function warn(...args) {
+function warn(...args: any) {
   console.warn(...args);
 }
 
-async function afterInterceptors(interceptors, ...args) {
+async function afterInterceptors(interceptors: any[], ...args: any) {
   for (let i = 0; i < interceptors.length; i++) {
     let interceptor = interceptors[i];
     while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, i);
@@ -235,13 +256,23 @@ async function afterInterceptors(interceptors, ...args) {
   }
 }
 
-function renderRoute(route, routes, props, children, options = {}) {
+function renderRoute(
+  route: any,
+  routes: RoutesArray,
+  props: any,
+  children?: React.ReactNode[],
+  options: {
+    container?: (result: any, route: any, props: any) => any
+    name?: string;
+    ref?: any
+  } = {}
+) {
   if (props === undefined) props = {};
   if (!route) return null;
   if (React.isValidElement(route)) return route;
   if (route.config) route = route.config;
 
-  function configProps(_props, configs, obj, name) {
+  function configProps(_props: any, configs: any, obj: any, name?: string) {
     if (!obj) return;
     if (name && configs[name] !== undefined) configs = configs[name];
     if (configs === true) Object.assign(_props, obj);
@@ -262,7 +293,7 @@ function renderRoute(route, routes, props, children, options = {}) {
       });
     }
   }
-  function createComp(route, props, children, options) {
+  function createComp(route: any, props: any, children: any, options: any) {
     let component = route.components && route.components[options.name || 'default'];
     if (!component) return null;
 
@@ -274,7 +305,7 @@ function renderRoute(route, routes, props, children, options = {}) {
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
 
-    let ref = null;
+    let ref: any = null;
     if (component) {
       if (isAcceptRef(component)) ref = options.ref;
       else if (route.enableRef) {
@@ -306,7 +337,7 @@ function renderRoute(route, routes, props, children, options = {}) {
     });
     _pending.completeCallbacks[options.name] = null;
     _pending.afterEnterGuards[options.name] = [];
-    if (ref) ref = mergeFns(ref, el => el && refHandler && refHandler(el, component.__componentClass));
+    if (ref) ref = mergeFns(ref, (el: any) => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
     let ret;
     if (component instanceof RouteLazy) {
@@ -338,8 +369,8 @@ function renderRoute(route, routes, props, children, options = {}) {
   return result;
 }
 
-function flatten(array) {
-  let flattend = [];
+function flatten(array: any[]) {
+  let flattend: any[] = [];
   (function flat(array) {
     array.forEach(function (el) {
       if (Array.isArray(el)) flat(el);
@@ -349,24 +380,24 @@ function flatten(array) {
   return flattend;
 }
 
-function camelize(str) {
+function camelize(str: string): string {
   let ret = str.replace(/[-|:](\w)/g, function (_, c) { return c ? c.toUpperCase() : ''; });
   if (/^[A-Z]/.test(ret)) ret = ret.charAt(0).toLowerCase() + ret.substr(1);
   return ret;
 }
 
-function isPropChanged(prev, next) {
+function isPropChanged(prev: { [key: string]: any }, next: { [key: string]: any }) {
   if ((!prev || !next) && prev !== next) return true;
   return Object.keys(next).some(key => next[key] !== prev[key]);
 }
 
-function isRouteChanged(prev, next) {
+function isRouteChanged(prev: { path: string, subpath: string }, next: { path: string, subpath: string }) {
   if (prev && next) return prev.path !== next.path && prev.subpath !== next.subpath;
   if ((!prev || !next) && prev !== next) return true;
   return false;
 }
 
-function isRoutesChanged(prevs, nexts) {
+function isRoutesChanged(prevs: any[], nexts: any[]) {
   if (!prevs || !nexts) return true;
   if (prevs.length !== nexts.length) return true;
   let changed = false;
@@ -377,7 +408,7 @@ function isRoutesChanged(prevs, nexts) {
   return changed;
 }
 
-function getHostRouterView(ctx, continueCb) {
+function getHostRouterView(ctx: any, continueCb?: any) {
   let parent = ctx._reactInternalFiber.return;
   while (parent) {
     if (continueCb && continueCb(parent) === false) return;
@@ -389,12 +420,12 @@ function getHostRouterView(ctx, continueCb) {
   }
 }
 
-function getParentRoute(ctx) {
+function getParentRoute(ctx: any) {
   const view = getHostRouterView(ctx);
   return (view && view.state.currentRoute) || null;
 }
 
-function isAbsoluteUrl(to) {
+function isAbsoluteUrl(to: any) {
   return typeof to === 'string' && /^(https?:)?\/\/.+/.test(to);
 }
 

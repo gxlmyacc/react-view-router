@@ -1,16 +1,16 @@
 import pathToRegexp from 'path-to-regexp';
 
-const cache = {};
+const cache: { [key: string]: any } = {};
 const cacheLimit = 10000;
 let cacheCount = 0;
 
-function compilePath(path, options) {
+function compilePath(path: string, options: (pathToRegexp.RegExpOptions & pathToRegexp.ParseOptions)) {
   const cacheKey = `${options.end}${options.strict}${options.sensitive}`;
-  const pathCache = cache[cacheKey] || (cache[cacheKey] = {});
+  const pathCache: { [key: string]: any } = cache[cacheKey] || (cache[cacheKey] = {});
 
   if (pathCache[path]) return pathCache[path];
 
-  const keys = [];
+  const keys: pathToRegexp.Key[] = [];
   const regexp = pathToRegexp(path, keys, options);
   const result = { regexp, keys };
 
@@ -22,19 +22,28 @@ function compilePath(path, options) {
   return result;
 }
 
+interface matchPathOptions {
+  path?: string,
+  exact?: boolean
+}
+
 /**
  * Public API for matching a URL pathname to a path.
  */
-function matchPath(pathname, options = {}) {
+function matchPath(pathname: string, options: (
+  pathToRegexp.RegExpOptions
+  & pathToRegexp.ParseOptions
+  & matchPathOptions
+  ) = {}) {
   if (typeof options === 'string' || Array.isArray(options)) {
-    options = { path: options };
+    options = { path: options as any } as pathToRegexp.RegExpOptions;
   }
 
   const { path, exact = false, strict = false, sensitive = false } = options;
 
-  const paths = [].concat(path);
+  const paths = ([] as string[]).concat(path || []);
 
-  return paths.reduce((matched, path) => {
+  return paths.reduce((matched: any, path: string) => {
     if (!path && path !== '') return null;
     if (matched) return matched;
 
@@ -56,7 +65,7 @@ function matchPath(pathname, options = {}) {
       path, // the path used to match
       url: path === '/' && url === '' ? '/' : url, // the matched portion of the URL
       isExact, // whether or not we matched exactly
-      params: keys.reduce((memo, key, index) => {
+      params: keys.reduce((memo: any, key: any, index: number) => {
         memo[key.name] = values[index];
         return memo;
       }, {})
@@ -64,7 +73,7 @@ function matchPath(pathname, options = {}) {
   }, null);
 }
 
-export function computeRootMatch(pathname) {
+export function computeRootMatch(pathname: string) {
   return { path: '/', url: '/', params: {}, isExact: pathname === '/' };
 }
 

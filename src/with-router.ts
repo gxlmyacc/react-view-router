@@ -1,11 +1,13 @@
 import React from 'react';
 import { getParentRoute } from './util';
 
-export default function withRouter(comp) {
-  return React.forwardRef((props, ref) => {
+export default function withRouter(comp: React.FunctionComponent | React.ComponentClass) {
+  return React.forwardRef((props, ref: any) => {
     class WithRouter extends React.Component {
 
-      constructor(props) {
+      state: { inited: boolean, route: any };
+
+      constructor(props: object) {
         super(props);
         this.state = { inited: false, route: null };
       }
@@ -17,7 +19,15 @@ export default function withRouter(comp) {
 
       render() {
         if (!this.state.inited) return null;
-        return React.createElement(comp, { ...props, ref, route: this.state.route }, ...(props.children || []));
+        return React.createElement(
+          comp,
+          {
+            ...props,
+            ref,
+            route: this.state.route
+          } as any,
+          ...(props.children as React.ReactNode[] || [])
+        );
       }
 
     }
