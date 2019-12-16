@@ -32,7 +32,7 @@ function _parseQuery(query) {
     else if (val === 'undefined') val = undefined;
     else if (val === 'NaN') val = NaN;
     else if (val.indexOf('[object ') !== 0 && /^(\{.*\})|(\[.*\])$/.test(val)) {
-      try { val = JSON.parse(val); } catch(e) { /* empty */ }
+      try { val = JSON.parse(val); } catch (e) { /* empty */ }
     }
 
     if (res[key] === undefined) {
