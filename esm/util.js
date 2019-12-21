@@ -16,6 +16,7 @@ exports.isAcceptRef = isAcceptRef;
 exports.nextTick = nextTick;
 exports.isPlainObject = isPlainObject;
 exports.isFunction = isFunction;
+exports.isMatchedRoute = isMatchedRoute;
 exports.isLocation = isLocation;
 exports.isPropChanged = isPropChanged;
 exports.isRouteChanged = isRouteChanged;
@@ -45,7 +46,11 @@ require("core-js/modules/es6.string.iterator");
 
 require("core-js/modules/es6.array.from");
 
+require("core-js/modules/es7.symbol.async-iterator");
+
 require("core-js/modules/es7.object.get-own-property-descriptors");
+
+require("core-js/modules/es6.symbol");
 
 require("regenerator-runtime/runtime");
 
@@ -56,10 +61,6 @@ require("core-js/modules/es6.regexp.to-string");
 require("core-js/modules/es6.regexp.search");
 
 require("core-js/modules/es6.regexp.match");
-
-require("core-js/modules/es7.symbol.async-iterator");
-
-require("core-js/modules/es6.symbol");
 
 require("core-js/modules/es6.array.find");
 
@@ -243,8 +244,8 @@ function resloveIndex(index, routes) {
   return r;
 }
 
-function matchRoutes(routes, to, parent, branch) {
-  if (branch === undefined) branch = [];
+function matchRoutes(routes, to, parent) {
+  var branch = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
   to = normalizeLocation(to);
 
   if (isFunction(routes)) {
@@ -257,46 +258,25 @@ function matchRoutes(routes, to, parent, branch) {
     if (parent) parent.prevChildren = routes;
   }
 
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+  routes.some(function (route) {
+    var match = route.path ? (0, _matchPath.default)(to.path, route) : branch.length ? branch[branch.length - 1].match // use parent match
+    : (0, _matchPath.computeRootMatch)(to.path); // use default "root" match
 
-  try {
-    for (var _iterator = routes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var route = _step.value;
-      var match = route.path ? (0, _matchPath.default)(to.path, route) : branch.length ? branch[branch.length - 1].match // use parent match
-      : (0, _matchPath.computeRootMatch)(to.path); // use default "root" match
-
-      if (match && route.index) {
-        route = resloveIndex(route.index, routes);
-        if (!route) continue;else to.pathname = to.path = route.path;
-      }
-
-      if (match) {
-        branch.push({
-          route: route,
-          match: match
-        });
-        if (route.children) matchRoutes(route.children, to, route, branch);
-      }
-
-      if (match) break;
+    if (match && route.index) {
+      route = resloveIndex(route.index, routes);
+      if (!route) return;else to.pathname = to.path = route.path;
     }
-  } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator.return != null) {
-        _iterator.return();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
-  }
 
+    if (match) {
+      branch.push({
+        route: route,
+        match: match
+      });
+      if (route.children) matchRoutes(route.children, to, route, branch);
+    }
+
+    if (match) return true;
+  });
   return branch;
 }
 
@@ -340,6 +320,10 @@ function isPlainObject(obj) {
 
 function isFunction(value) {
   return typeof value === 'function';
+}
+
+function isMatchedRoute(value) {
+  return Boolean(value.config);
 }
 
 function isLocation(v) {
@@ -675,3 +659,4 @@ function getParentRoute(ctx) {
 function isAbsoluteUrl(to) {
   return typeof to === 'string' && /^(https?:)?\/\/.+/.test(to);
 }
+//# sourceMappingURL=util.js.map

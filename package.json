@@ -30,7 +30,7 @@
     "build-src": "npm run build:types && npm run build:js",
     "build:types": "tsc --emitDeclarationOnly",
     "build:js": "babel src -d esm --extensions \".ts,.tsx\" --source-maps",
-    "build": "npm run build && npm run build-drawer",
+    "build": "npm run build-src && npm run build-drawer",
     "prepare": "npm run build"
   },
   "repository": {

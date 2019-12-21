@@ -3,6 +3,8 @@ import config from './config';
 import { RouteLazy } from './route-lazy';
 import { REACT_FORWARD_REF_TYPE, RouteComponentGuards, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
+import { ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation } from './types';
+import { ReactViewContainer } from './router-view';
 
 function nextTick(cb: () => void, ctx?: object) {
   if (!cb) return;
@@ -52,7 +54,7 @@ function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any)
         if (c.__children) {
           let children = c.__children || [];
           if (isFunction(children)) children = (children as ((r: any) => any[]))(r) || [];
-          innumerable(r, 'children', normalizeRoutes(children as RoutesArray, r, depth + 1));
+          innumerable(r, 'children', normalizeRoutes(children as ConfigRouteArray, r, depth + 1));
           r.exact = !r.children.length;
         }
         return r.components[key] = c;
@@ -67,13 +69,10 @@ function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any)
   return r;
 }
 
-interface RoutesArray extends Array<any> {
-  _normalized?: boolean;
-  [key: string]: any;
-}
 
-function normalizeRoutes(routes: RoutesArray, parent: any, depth = 0, force = false) {
-  if (!routes) routes = [] as RoutesArray;
+
+function normalizeRoutes(routes: ConfigRouteArray, parent?: any, depth = 0, force = false) {
+  if (!routes) routes = [] as ConfigRouteArray;
   if (!force && routes._normalized) return routes;
   routes = routes.map((route: any) => route && normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
   Object.defineProperty(routes, '_normalized', { value: true });
@@ -94,12 +93,9 @@ function normalizeRoutePath(path: string, route?: any, append?: boolean, basenam
   return normalizePath(path);
 }
 
-
-type RouteIndexHandler = () => string;
-
-function resloveIndex(index: string | RouteIndexHandler, routes: RoutesArray): any {
-  index = (isFunction(index) ? (index as RouteIndexHandler)() : index) as string;
-  let r = routes.find((r: any) => r.subpath === index);
+function resloveIndex(index: string | RouteIndexFn, routes: ConfigRouteArray): any {
+  index = isFunction(index) ? (index as RouteIndexFn)() : index;
+  let r = routes.find((r: ConfigRoute) => r.subpath === index);
   if (r && r.index) {
     if (r.index === index) return null;
     return resloveIndex(r.index, routes);
@@ -108,10 +104,10 @@ function resloveIndex(index: string | RouteIndexHandler, routes: RoutesArray): a
 }
 
 
-type RoutesHandler = (r: any) => RoutesArray;
+type RoutesHandler = (r: any) => ConfigRouteArray;
 
 function matchRoutes(
-  routes: RoutesArray | RoutesHandler,
+  routes: ConfigRouteArray | RoutesHandler,
   to: any,
   parent?: any,
   branch: { route: any, match: any }[] = []
@@ -128,7 +124,7 @@ function matchRoutes(
     if (parent) parent.prevChildren = routes;
   }
 
-  (routes as RoutesArray).some(route => {
+  (routes as ConfigRouteArray).some(route => {
     let match = route.path
       ? matchPath(to.path, route)
       : branch.length
@@ -136,7 +132,7 @@ function matchRoutes(
         : computeRootMatch(to.path); // use default "root" match
 
     if (match && route.index) {
-      route = resloveIndex(route.index, routes as RoutesArray);
+      route = resloveIndex(route.index, routes as ConfigRouteArray);
       if (!route) return;
       else to.pathname = to.path = route.path;
     }
@@ -152,7 +148,7 @@ function matchRoutes(
   return branch;
 }
 
-function normalizeLocation(to: any, route?: any, append?: boolean, basename = '') {
+function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''): RouteHistoryLocation {
   if (!to) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
@@ -176,6 +172,10 @@ function isPlainObject(obj: any): obj is { [key: string]: any } {
 }
 function isFunction(value: any): value is Function {
   return typeof value === 'function';
+}
+
+function isMatchedRoute(value: any): value is MatchedRoute {
+  return Boolean(value.config);
 }
 
 function isLocation(v: any) {
@@ -256,16 +256,20 @@ async function afterInterceptors(interceptors: any[], ...args: any) {
   }
 }
 
+type RenderRouteOption = {
+  container?: ReactViewContainer
+  name?: string;
+  ref?: any,
+  params?: Partial<any>,
+  query?: Partial<any>,
+}
+
 function renderRoute(
-  route: any,
-  routes: RoutesArray,
+  route: ConfigRoute,
+  routes: ConfigRoute[],
   props: any,
-  children?: React.ReactNode[],
-  options: {
-    container?: (result: any, route: any, props: any) => any
-    name?: string;
-    ref?: any
-  } = {}
+  children: React.ReactNode | null,
+  options: RenderRouteOption = {}
 ) {
   if (props === undefined) props = {};
   if (!route) return null;
@@ -293,7 +297,7 @@ function renderRoute(
       });
     }
   }
-  function createComp(route: any, props: any, children: any, options: any) {
+  function createComp(route: ConfigRoute, props: any, children: React.ReactNode, options: RenderRouteOption) {
     let component = route.components && route.components[options.name || 'default'];
     if (!component) return null;
 
@@ -313,8 +317,8 @@ function renderRoute(
       }
     }
     const _pending = route._pending;
-    const afterEnterGuards = _pending.afterEnterGuards[options.name] || [];
-    const completeCallback = _pending.completeCallbacks[options.name];
+    const afterEnterGuards = _pending.afterEnterGuards[options.name as string] || [];
+    const completeCallback = _pending.completeCallbacks[options.name as string];
     let refHandler = once((el, componentClass) => {
       if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
@@ -335,8 +339,8 @@ function renderRoute(
         afterEnterGuards && afterInterceptors.call(el, afterEnterGuards);
       }
     });
-    _pending.completeCallbacks[options.name] = null;
-    _pending.afterEnterGuards[options.name] = [];
+    _pending.completeCallbacks[options.name as string] = null;
+    _pending.afterEnterGuards[options.name as string] = [];
     if (ref) ref = mergeFns(ref, (el: any) => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
     let ret;
@@ -364,7 +368,7 @@ function renderRoute(
   if (route.index) renderRoute = resloveIndex(route.index, routes);
   if (!renderRoute) return null;
 
-  let result = createComp(renderRoute, props, children, options);
+  let result = createComp(renderRoute, props, children, options) as any;
   if (options.container) result = options.container(result, route, props);
   return result;
 }
@@ -391,13 +395,13 @@ function isPropChanged(prev: { [key: string]: any }, next: { [key: string]: any 
   return Object.keys(next).some(key => next[key] !== prev[key]);
 }
 
-function isRouteChanged(prev: { path: string, subpath: string }, next: { path: string, subpath: string }) {
+function isRouteChanged(prev: ConfigRoute | null, next: ConfigRoute | null) {
   if (prev && next) return prev.path !== next.path && prev.subpath !== next.subpath;
   if ((!prev || !next) && prev !== next) return true;
   return false;
 }
 
-function isRoutesChanged(prevs: any[], nexts: any[]) {
+function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]) {
   if (!prevs || !nexts) return true;
   if (prevs.length !== nexts.length) return true;
   let changed = false;
@@ -439,6 +443,7 @@ export {
   nextTick,
   isPlainObject,
   isFunction,
+  isMatchedRoute,
   isLocation,
   isPropChanged,
   isRouteChanged,

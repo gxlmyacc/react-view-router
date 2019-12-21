@@ -116,3 +116,4 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var _default = _router.default;
 exports.default = _default;
+//# sourceMappingURL=index.js.map

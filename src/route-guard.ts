@@ -1,20 +1,10 @@
 import React, { lazy } from 'react';
+import { UseRouteGuardsInfo } from './types';
 
 const hasSymbol = typeof Symbol === 'function' && Symbol.for;
 
 export const REACT_FORWARD_REF_TYPE = hasSymbol ? Symbol.for('react.forward_ref') : 0xead0;
 export const REACT_LAZY_TYPE = hasSymbol ? Symbol.for('react.lazy') : 0xead4;
-
-interface UseRouteGuardsInfo {
-  componentClass?: React.FunctionComponent | React.ComponentClass,
-  children?: any,
-
-  beforeRouteEnter?(to: any, from: any, next: Function): void,
-  beforeRouteLeave?(to: any, from: any, next: Function): void,
-  afterRouteEnter?(to: any, from: any): void,
-  afterRouteLeave?(to: any, from: any): void,
-  beforeRouteUpdate?(to: any, from: any): void,
-}
 
 export class RouteComponentGuards {
 

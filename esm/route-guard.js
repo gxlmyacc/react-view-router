@@ -1,23 +1,13 @@
 "use strict";
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-require("core-js/modules/es7.symbol.async-iterator");
-
-require("core-js/modules/es6.string.iterator");
-
-require("core-js/modules/es6.weak-map");
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getGuardsComponent = getGuardsComponent;
 exports.useRouteGuards = useRouteGuards;
-exports.REACT_LAZY_TYPE = exports.REACT_FORWARD_REF_TYPE = void 0;
+exports.RouteComponentGuards = exports.REACT_LAZY_TYPE = exports.REACT_FORWARD_REF_TYPE = void 0;
 
 require("core-js/modules/es7.object.get-own-property-descriptors");
-
-require("core-js/modules/es6.symbol");
 
 require("core-js/modules/web.dom.iterable");
 
@@ -27,35 +17,48 @@ require("core-js/modules/es6.object.to-string");
 
 require("core-js/modules/es6.object.keys");
 
-var _react = _interopRequireWildcard(require("react"));
+require("core-js/modules/es7.symbol.async-iterator");
 
-function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+require("core-js/modules/es6.symbol");
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+var _react = _interopRequireDefault(require("react"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var ForwardRefMeth = _react.default.forwardRef(function () {
-  return null;
-});
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var REACT_FORWARD_REF_TYPE = ForwardRefMeth.$$typeof;
+var hasSymbol = typeof Symbol === 'function' && Symbol.for;
+var REACT_FORWARD_REF_TYPE = hasSymbol ? Symbol.for('react.forward_ref') : 0xead0;
 exports.REACT_FORWARD_REF_TYPE = REACT_FORWARD_REF_TYPE;
-var LazyMeth = (0, _react.lazy)(function () {});
-var REACT_LAZY_TYPE = LazyMeth.$$typeof;
+var REACT_LAZY_TYPE = hasSymbol ? Symbol.for('react.lazy') : 0xead4;
 exports.REACT_LAZY_TYPE = REACT_LAZY_TYPE;
 
 var RouteComponentGuards = function RouteComponentGuards() {
   _classCallCheck(this, RouteComponentGuards);
 
+  _defineProperty(this, "$$typeof", void 0);
+
+  _defineProperty(this, "render", void 0);
+
+  _defineProperty(this, "__guards", void 0);
+
+  _defineProperty(this, "__component", void 0);
+
+  _defineProperty(this, "__componentClass", void 0);
+
+  _defineProperty(this, "__children", void 0);
+
   this.$$typeof = REACT_FORWARD_REF_TYPE;
+  this.render = null;
 };
+
+exports.RouteComponentGuards = RouteComponentGuards;
 
 function getGuardsComponent(v) {
   var useComponentClass = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
@@ -102,3 +105,4 @@ function useRouteGuards(component) {
   });
   return ret;
 }
+//# sourceMappingURL=route-guard.js.map

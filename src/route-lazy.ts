@@ -1,12 +1,6 @@
 import React from 'react';
 import { REACT_LAZY_TYPE } from './route-guard';
-
-interface RouteLazyUpdater {
-  (component: (React.FunctionComponent | React.ComponentClass) & {
-    __children?: any[] | ((r: any) => any[])
-  }):
-    React.FunctionComponent | React.ComponentClass | undefined;
-}
+import { RouteLazyUpdater } from './types';
 
 export class RouteLazy {
 

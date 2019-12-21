@@ -11,11 +11,17 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var RouterCache =
 /*#__PURE__*/
 function () {
   function RouterCache() {
     _classCallCheck(this, RouterCache);
+
+    _defineProperty(this, "cached", void 0);
+
+    _defineProperty(this, "seed", void 0);
 
     this.cached = {};
     this.seed = 0;
@@ -45,3 +51,4 @@ function () {
 var routeCache = new RouterCache();
 var _default = routeCache;
 exports.default = _default;
+//# sourceMappingURL=route-cache.js.map

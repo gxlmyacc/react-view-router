@@ -56,11 +56,10 @@ function compilePath(path, options) {
 
   return result;
 }
+
 /**
  * Public API for matching a URL pathname to a path.
  */
-
-
 function matchPath(pathname) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
@@ -78,7 +77,7 @@ function matchPath(pathname) {
       strict = _options$strict === void 0 ? false : _options$strict,
       _options$sensitive = _options.sensitive,
       sensitive = _options$sensitive === void 0 ? false : _options$sensitive;
-  var paths = [].concat(path);
+  var paths = [].concat(path || []);
   return paths.reduce(function (matched, path) {
     if (!path && path !== '') return null;
     if (matched) return matched;
@@ -126,3 +125,4 @@ function computeRootMatch(pathname) {
 
 var _default = matchPath;
 exports.default = _default;
+//# sourceMappingURL=match-path.js.map

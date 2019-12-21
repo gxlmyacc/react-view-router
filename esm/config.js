@@ -45,7 +45,7 @@ function _parseQuery(query) {
 
   query.split('&').forEach(function (param) {
     var parts = param.replace(/\+/g, ' ').split('=');
-    var key = decode(parts.shift());
+    var key = decode(parts.shift() || '');
     var val = parts.length > 0 ? decode(parts.join('=')) : null;
 
     if (res[key] === undefined) {
@@ -136,3 +136,4 @@ var _default = {
   }
 };
 exports.default = _default;
+//# sourceMappingURL=config.js.map

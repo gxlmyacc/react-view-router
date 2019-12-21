@@ -25,6 +25,8 @@ require("core-js/modules/es6.object.keys");
 
 require("core-js/modules/es6.object.set-prototype-of");
 
+require("core-js/modules/es6.object.assign");
+
 require("core-js/modules/es6.string.starts-with");
 
 require("core-js/modules/es6.regexp.replace");
@@ -59,13 +61,15 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function guardEvent(e) {
   // don't redirect with control keys
@@ -100,6 +104,9 @@ function createRouterLink(router) {
       _classCallCheck(this, RouterLink);
 
       _this = _possibleConstructorReturn(this, _getPrototypeOf(RouterLink).call(this, props));
+
+      _defineProperty(_assertThisInitialized(_this), "unplugin", void 0);
+
       _this.state = {
         inited: false,
         currentRoute: router.currentRoute,
@@ -132,7 +139,10 @@ function createRouterLink(router) {
     }, {
       key: "componentWillUnmount",
       value: function componentWillUnmount() {
-        if (this.unplugin) this.unplugin();
+        if (this.unplugin) {
+          this.unplugin();
+          this.unplugin = undefined;
+        }
       }
     }, {
       key: "shouldComponentUpdate",
@@ -178,19 +188,24 @@ function createRouterLink(router) {
         }
 
         if (!Array.isArray(event)) event = [event];
+        var events = {};
         event.forEach(function (evt) {
-          remainProps[(0, _util.camelize)("on-".concat(evt))] = function (e) {
+          events[(0, _util.camelize)("on-".concat(evt))] = function (e) {
             guardEvent(e);
             if (replace) router.replace(to);else router.push(to);
           };
         });
         if (tag === 'a') remainProps.href = to.path;
-        return _react.default.createElement.apply(_react.default, [tag, remainProps].concat(_toConsumableArray(children)));
+        return _react.default.createElement.apply(_react.default, [tag, Object.assign(remainProps, events)].concat(_toConsumableArray(children)));
       }
     }]);
 
     return RouterLink;
   }(_react.default.Component);
+
+  _defineProperty(RouterLink, "propTypes", void 0);
+
+  _defineProperty(RouterLink, "defaultProps", void 0);
 
   RouterLink.propTypes = {
     to: _propTypes.default.oneOfType([_propTypes.default.string, _propTypes.default.object]).isRequired,
@@ -211,3 +226,4 @@ function createRouterLink(router) {
   };
   return RouterLink;
 }
+//# sourceMappingURL=router-link.js.map

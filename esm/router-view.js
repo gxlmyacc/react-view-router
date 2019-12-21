@@ -59,8 +59,6 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -77,6 +75,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var RouterView =
 /*#__PURE__*/
 function (_React$Component) {
@@ -88,6 +88,13 @@ function (_React$Component) {
     _classCallCheck(this, RouterView);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(RouterView).call(this, props));
+
+    _defineProperty(_assertThisInitialized(_this), "_isMounted", void 0);
+
+    _defineProperty(_assertThisInitialized(_this), "target", void 0);
+
+    _defineProperty(_assertThisInitialized(_this), "_reactInternalFiber", void 0);
+
     var router = props && props.router;
     var depth = props && props.depth ? Number(props.depth) : 0;
     var state = {
@@ -102,6 +109,7 @@ function (_React$Component) {
       currentRoute: null,
       routes: router ? _this._filterRoutes(router.routes) : []
     };
+    _this._isMounted = false;
     _this.state = state;
     _this.target = this instanceof RouterView ? this.constructor : void 0;
     _this._updateRef = _this._updateRef.bind(_assertThisInitialized(_this));
@@ -131,7 +139,7 @@ function (_React$Component) {
         if (r.redirect || r.index) return hasName ? name === r.name : !r.name;
         return hasName ? r.components && r.components[name] : r.component || r.components && r.components.default;
       });
-      if (filter) ret = filter(ret, state);
+      if (filter) ret = filter(ret, state || this.state);
       return ret;
     }
   }, {
@@ -139,8 +147,9 @@ function (_React$Component) {
     value: function _getRouteMatch(state) {
       var depth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
       if (!state) state = this.state;
-      var matched = state.router.currentRoute && state.router.currentRoute.matched || [];
-      return matched.length > depth ? matched[depth] : null;
+      var matched = state.router && state.router.currentRoute && state.router.currentRoute.matched || [];
+      var route = matched.length > depth ? matched[depth] : null;
+      return route ? route.config : null;
     }
   }, {
     key: "_refreshCurrentRoute",
@@ -178,10 +187,11 @@ function (_React$Component) {
   }, {
     key: "_resolveFallback",
     value: function _resolveFallback() {
+      var ret = null;
       var fallback = this.props.fallback;
 
       if ((0, _util.isFunction)(fallback)) {
-        fallback = fallback({
+        ret = fallback({
           parentRoute: this.state.parentRoute,
           currentRoute: this.state.currentRoute,
           inited: this.state._routerInited,
@@ -190,7 +200,7 @@ function (_React$Component) {
         });
       }
 
-      return fallback || null;
+      return ret || null;
     }
   }, {
     key: "isNull",
@@ -227,8 +237,8 @@ function (_React$Component) {
               state.router.viewRoot = this;
 
               state.router._handleRouteInterceptor(state.router.history.location, function (ok, to) {
-                if (!ok) return;
-                _this2.state.router && (_this2.state.router.currentRoute = to);
+                if (!ok) return; // this.state.router && (this.state.router.currentRoute = to);
+
                 state.currentRoute = _this2._refreshCurrentRoute();
                 if (_this2._isMounted) _this2.setState(Object.assign(state, {
                   _routerInited: true
@@ -350,16 +360,21 @@ function (_React$Component) {
   }, {
     key: "getComponent",
     value: function getComponent(currentRoute, excludeProps) {
-      var routes = this.state.routes;
+      if (!currentRoute) return null;
+      var _this$state = this.state,
+          routes = _this$state.routes,
+          router = _this$state.router;
 
       var _this$props2 = this.props,
           container = _this$props2.container,
           children = _this$props2.children,
           props = _objectWithoutProperties(_this$props2, ["container", "children"]);
 
-      var _this$state$router$cu = this.state.router.currentRoute,
-          query = _this$state$router$cu.query,
-          params = _this$state$router$cu.params;
+      var _ref = router && router.currentRoute || {},
+          _ref$query = _ref.query,
+          query = _ref$query === void 0 ? {} : _ref$query,
+          params = _ref.params;
+
       var targetExcludeProps = this.target.defaultProps.excludeProps || RouterView.defaultProps.excludeProps || [];
       (excludeProps || targetExcludeProps).forEach(function (key) {
         return delete props[key];
@@ -401,6 +416,9 @@ function (_React$Component) {
 }(_react.default.Component);
 
 exports.RouterViewComponent = RouterView;
+
+_defineProperty(RouterView, "defaultProps", void 0);
+
 RouterView.defaultProps = {
   excludeProps: ['_updateRef', 'router', 'excludeProps']
 };
@@ -412,3 +430,4 @@ var _default = _react.default.forwardRef(function (props, ref) {
 });
 
 exports.default = _default;
+//# sourceMappingURL=router-view.js.map

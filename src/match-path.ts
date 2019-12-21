@@ -1,4 +1,5 @@
 import pathToRegexp from 'path-to-regexp';
+import { matchPathResult } from './types';
 
 const cache: { [key: string]: any } = {};
 const cacheLimit = 10000;
@@ -34,7 +35,7 @@ function matchPath(pathname: string, options: (
   pathToRegexp.RegExpOptions
   & pathToRegexp.ParseOptions
   & matchPathOptions
-  ) = {}) {
+  ) = {}): matchPathResult {
   if (typeof options === 'string' || Array.isArray(options)) {
     options = { path: options as any } as pathToRegexp.RegExpOptions;
   }
