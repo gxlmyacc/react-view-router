@@ -1,7 +1,5 @@
-declare function _parseQuery(query: string): any;
-declare function _stringifyQuery(obj: {
-    [key: string]: any;
-}): string;
+declare function _parseQuery(query: string): Partial<any>;
+declare function _stringifyQuery(obj: Partial<any> | null | undefined, prefix?: string): string;
 declare const _default: {
     _parseQuery: typeof _parseQuery;
     _stringifyQuery: typeof _stringifyQuery;

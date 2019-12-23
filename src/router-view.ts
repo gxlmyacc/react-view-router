@@ -5,7 +5,7 @@ import {
   getHostRouterView
 } from './util';
 import ReactViewRouter from './router';
-import { ConfigRoute, ConfigRouteArray } from './globals';
+import { MatchedRoute, ConfigRoute } from './globals';
 
 type RouterViewUpdateRef = (vm: React.Component | null) => void;
 
@@ -30,8 +30,8 @@ export interface RouterViewState {
   _routerResolving: boolean,
 
   router?: ReactViewRouter,
-  parentRoute: ConfigRoute | null,
-  currentRoute: ConfigRoute | null,
+  parentRoute: MatchedRoute | null,
+  currentRoute: MatchedRoute | null,
   routes: ConfigRoute[],
 }
 
@@ -41,15 +41,15 @@ export interface RouterViewDefaultProps {
 
 export type RouterViewFilter = (route: ConfigRoute[], state: RouterViewState) => ConfigRoute[];
 export type ReactViewFallback = (state: {
-  parentRoute: ConfigRoute | null,
-  currentRoute: ConfigRoute | null,
+  parentRoute: MatchedRoute | null,
+  currentRoute: MatchedRoute | null,
   inited: boolean,
   resolving: boolean,
   depth: number
 }) => React.ReactElement;
 export type ReactViewContainer = (
   result: React.ReactElement | null,
-  route: ConfigRoute,
+  route: ConfigRoute | MatchedRoute,
   props: RouterViewProps
 ) => React.ReactElement;
 
@@ -105,7 +105,7 @@ class RouterView<
     if (this._isMounted) this.setState({ currentRoute });
   }
 
-  _filterRoutes(routes: ConfigRouteArray, state?: RouterViewState) {
+  _filterRoutes(routes: ConfigRoute[], state?: RouterViewState) {
     const { name, filter } = this.props;
     let ret = routes && routes.filter(r => {
       if (r.config) r = r.config;
@@ -141,9 +141,9 @@ class RouterView<
     if (currentRoute) currentRoute.viewInstances[this.name] = this;
     if (this.state && this.state._routerInited) {
       if (newState) Object.assign(newState, { currentRoute });
-      else if (this._isMounted) this.setState({ currentRoute: currentRoute ? currentRoute.config : null });
+      else if (this._isMounted) this.setState({ currentRoute });
     }
-    return currentRoute ? currentRoute.config : null;
+    return currentRoute;
   }
 
   _updateResolving(resolving: any) {
@@ -200,9 +200,8 @@ class RouterView<
     }
 
     if (state._routerDepth) {
-      let parentMatchRoute = this._getRouteMatch(state, state._routerDepth - 1);
-      state.parentRoute = parentMatchRoute ? parentMatchRoute.config : null;
-      state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
+      state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
+      state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children as ConfigRoute[]) : [];
       state.currentRoute = this._refreshCurrentRoute(state);
     } else console.error('[RouterView] cannot find root RouterView instance!', this);
 
@@ -254,7 +253,7 @@ class RouterView<
     return ~index ? route : undefined;
   }
 
-  getComponent(currentRoute: ConfigRoute | null, excludeProps?: Partial<any>) {
+  getComponent(currentRoute: MatchedRoute | null, excludeProps?: Partial<any>) {
     if (!currentRoute) return null;
 
     const { routes, router } = this.state;
@@ -275,7 +274,7 @@ class RouterView<
       });
   }
 
-  renderCurrent(currentRoute: ConfigRoute | null) {
+  renderCurrent(currentRoute: MatchedRoute | null) {
     if (this.isNull(currentRoute)) return this.props.children || null;
     return this.getComponent(currentRoute);
   }

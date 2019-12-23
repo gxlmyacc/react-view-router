@@ -593,13 +593,14 @@ export default class ReactViewRouter {
 
   createMatchedRoute(route: ConfigRoute, match?: matchPathResult | null): MatchedRoute {
     let { url, params } = match || { url: '', params: {} };
-    let { path, subpath, meta, redirect, depth } = route;
+    let { path, subpath, meta, redirect, index, depth } = route;
     return {
       url,
       path,
       subpath,
       depth,
       meta,
+      index,
       redirect,
       params,
       componentInstances: {},

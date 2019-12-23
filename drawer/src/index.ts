@@ -7,7 +7,7 @@ import {
   config,
   isFunction,
   RouterViewDefaultProps,
-  ConfigRoute
+  MatchedRoute
 } from 'react-view-router';
 import Drawer from './drawer';
 
@@ -20,7 +20,7 @@ export interface RouterDrawerProps extends RouterViewProps {
 export interface RouterDrawerState extends RouterViewState {
   openDrawer?: boolean,
   _routerDrawer?: boolean,
-  prevRoute?: ConfigRoute | null,
+  prevRoute?: MatchedRoute | null,
 }
 
 export interface RouterDrawerDefaultProps extends RouterViewDefaultProps {
@@ -113,9 +113,9 @@ class RouterDrawer<
     return super.shouldComponentUpdate(nextProps, nextState);
   }
 
-  renderCurrent(currentRoute: ConfigRoute) {
+  renderCurrent(currentRoute: MatchedRoute | null) {
     const { routes } = this.state;
-    if (!this.state.router) return null;
+    if (!this.state.router || !currentRoute) return null;
     // eslint-disable-next-line
     const { _updateRef, router, container: oldContainer, prefixCls, position, zIndexStart, delay,
       drawerClassName, children, touch, ...props

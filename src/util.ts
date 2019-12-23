@@ -276,7 +276,7 @@ type RenderRouteOption = {
 }
 
 function renderRoute(
-  route: ConfigRoute | null | undefined,
+  route: ConfigRoute | MatchedRoute | null | undefined,
   routes: ConfigRoute[],
   props: any,
   children: React.ReactNode | null,
@@ -308,7 +308,7 @@ function renderRoute(
       });
     }
   }
-  function createComp(route: ConfigRoute, props: any, children: React.ReactNode, options: RenderRouteOption) {
+  function createComp(route: ConfigRoute | MatchedRoute, props: any, children: React.ReactNode, options: RenderRouteOption) {
     let component = route.components && route.components[options.name || 'default'];
     if (!component) return null;
 
@@ -406,7 +406,7 @@ function isPropChanged(prev: { [key: string]: any }, next: { [key: string]: any 
   return Object.keys(next).some(key => next[key] !== prev[key]);
 }
 
-function isRouteChanged(prev: ConfigRoute | null, next: ConfigRoute | null) {
+function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRoute | MatchedRoute | null) {
   if (prev && next) return prev.path !== next.path && prev.subpath !== next.subpath;
   if ((!prev || !next) && prev !== next) return true;
   return false;
@@ -436,7 +436,7 @@ function getHostRouterView(ctx: any, continueCb?: any) {
   return null;
 }
 
-function getParentRoute(ctx: any): ConfigRoute | null {
+function getParentRoute(ctx: any): MatchedRoute | null {
   const view = getHostRouterView(ctx);
   return (view && view.state.currentRoute) || null;
 }

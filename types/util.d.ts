@@ -1,7 +1,7 @@
 import React from 'react';
 import matchPath from './match-path';
 import { ConfigRouteArray, ConfigRoute, MatchedRoute, RouteHistoryLocation } from './globals';
-import { ReactViewContainer } from './router-view';
+import { ReactViewContainer, RouterViewComponent as RouterView } from './router-view';
 declare function nextTick(cb: () => void, ctx?: object): Promise<unknown> | undefined;
 declare function innumerable(obj: object, key: string, value: any, options?: PropertyDescriptor): object;
 declare function normalizePath(path: string): string;
@@ -41,7 +41,7 @@ declare type RenderRouteOption = {
     params?: Partial<any>;
     query?: Partial<any>;
 };
-declare function renderRoute(route: ConfigRoute | null | undefined, routes: ConfigRoute[], props: any, children: React.ReactNode | null, options?: RenderRouteOption): any;
+declare function renderRoute(route: ConfigRoute | MatchedRoute | null | undefined, routes: ConfigRoute[], props: any, children: React.ReactNode | null, options?: RenderRouteOption): any;
 declare function flatten(array: any[]): any[];
 declare function camelize(str: string): string;
 declare function isPropChanged(prev: {
@@ -49,9 +49,9 @@ declare function isPropChanged(prev: {
 }, next: {
     [key: string]: any;
 }): boolean;
-declare function isRouteChanged(prev: ConfigRoute | null, next: ConfigRoute | null): boolean;
+declare function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRoute | MatchedRoute | null): boolean;
 declare function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]): boolean;
-declare function getHostRouterView(ctx: any, continueCb?: any): any;
-declare function getParentRoute(ctx: any): any;
+declare function getHostRouterView(ctx: any, continueCb?: any): RouterView<import("./router-view").RouterViewProps, import("./router-view").RouterViewState, any> | null;
+declare function getParentRoute(ctx: any): MatchedRoute | null;
 declare function isAbsoluteUrl(to: any): boolean;
 export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isPlainObject, isFunction, isMatchedRoute, isLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, afterInterceptors, getParentRoute, getHostRouterView };

@@ -94,7 +94,8 @@ export declare type MatchedRoute = {
     subpath: string;
     depth: number;
     meta: Partial<any>;
-    redirect?: string | ((route: MatchedRoute, from: Route) => string);
+    index?: string | RouteIndexFn;
+    redirect?: string | RouteRedirectFn;
     config: ConfigRoute;
     params: Partial<any>;
     componentInstances: {

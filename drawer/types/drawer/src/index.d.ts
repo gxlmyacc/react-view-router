@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouterViewProps, RouterViewState, RouterViewDefaultProps, ConfigRoute } from 'react-view-router';
+import { RouterViewProps, RouterViewState, RouterViewDefaultProps, MatchedRoute } from 'react-view-router';
 import '../style/drawer.css';
 export interface RouterDrawerProps extends RouterViewProps {
     [key: string]: any;
@@ -7,7 +7,7 @@ export interface RouterDrawerProps extends RouterViewProps {
 export interface RouterDrawerState extends RouterViewState {
     openDrawer?: boolean;
     _routerDrawer?: boolean;
-    prevRoute?: ConfigRoute | null;
+    prevRoute?: MatchedRoute | null;
 }
 export interface RouterDrawerDefaultProps extends RouterViewDefaultProps {
     prefixCls: string;
