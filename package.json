@@ -13,7 +13,7 @@
   "sideEffects": false,
   "main": "dist/react-view-router.min.js",
   "module": "esm/index.js",
-  "typings": "src/index.ts",
+  "typings": "types/index.d.ts",
   "engines": {
     "node": "> 6.9.1"
   },
