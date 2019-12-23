@@ -305,7 +305,7 @@ export default class ReactViewRouter {
         'beforeRouteLeave',
         true,
         (fn, name, ci, r) => (function beforeRouteLeaveWraper(to: Route, from: Route | null, next: RouteNextFn) {
-          return (fn as RouteBeforeGuardFn)(to, from, (cb: (...args: any) => any, ...args: any[]) => {
+          return (fn as RouteBeforeGuardFn).call(ci, to, from, (cb: (...args: any) => any, ...args: any[]) => {
             if (isFunction(cb)) {
               const _cb = cb;
               cb = (...as) => {
