@@ -165,3 +165,6 @@ export interface lazyResovleFn {
   lazy?: boolean,
   route?: ConfigRoute
 }
+
+declare global {
+}

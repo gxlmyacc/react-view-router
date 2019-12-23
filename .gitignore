@@ -10,4 +10,5 @@ analyzer/
 plugin/
 esm
 drawer/esm
+dist
 
