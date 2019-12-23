@@ -188,7 +188,7 @@ function () {
         args[_key - 1] = arguments[_key];
       }
 
-      var plugin;
+      var plugin = null;
 
       try {
         var ret;
@@ -209,15 +209,15 @@ function () {
     }
   }, {
     key: "_getComponentGurads",
-    value: function _getComponentGurads(r, guardName) {
+    value: function _getComponentGurads(mr, guardName) {
       var _this2 = this;
 
       var bindInstance = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       var ret = [];
-      var componentInstances = r.componentInstances; // route config
+      var componentInstances = mr.componentInstances; // route config
 
       var routeGuardName = guardName.replace('Route', '');
-      if (r.config) r = r.config;
+      var r = mr.config;
       var guards = r[routeGuardName];
       if (guards) ret.push(guards);
 
@@ -364,7 +364,7 @@ function () {
           });
         });
 
-        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteLeave', function (fn, name, ci, r) {
+        ret.push.apply(ret, _toConsumableArray(this._getRouteComponentGurads(fm, 'beforeRouteLeave', true, function (fn, name, ci, r) {
           return function beforeRouteLeaveWraper(to, from, next) {
             return fn(to, from, function (cb) {
               if ((0, _util.isFunction)(cb)) {
@@ -417,7 +417,7 @@ function () {
                 }
 
                 return next.apply(void 0, [cb].concat(args));
-              }, r);
+              }, r.config);
             };
           });
 
@@ -430,7 +430,7 @@ function () {
           var allGuards = _this4._getComponentGurads(r, 'afterRouteEnter', function (fn, name) {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
-              return fn.call(this, to, current, r);
+              return fn.call(this, to, current, r.config);
             });
             return null;
           });
@@ -452,7 +452,7 @@ function () {
       var ret = [];
       var fm = [];
       to && to.matched.some(function (tr, i) {
-        var fr = from.matched[i];
+        var fr = from && from.matched[i];
         if (!fr || fr.path !== tr.path) return true;
         fm.push(fr);
       });
@@ -753,7 +753,7 @@ function () {
                   if ((0, _util.isLocation)(ok)) {
                     if (to.onAbort) ok.onAbort = to.onAbort;
                     if (to.onComplete) ok.onComplete = to.onComplete;
-                    return _this7.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+                    return _this7.redirect(ok, undefined, undefined, to.onInit || (isInit ? callback : null), to);
                   }
 
                   if (to && (0, _util.isFunction)(to.onAbort)) to.onAbort(ok, to);
@@ -836,18 +836,30 @@ function () {
   }, {
     key: "createMatchedRoute",
     value: function createMatchedRoute(route, match) {
-      var ret = {
+      var _ref5 = match || {
+        url: '',
+        params: {}
+      },
+          url = _ref5.url,
+          params = _ref5.params;
+
+      var path = route.path,
+          subpath = route.subpath,
+          meta = route.meta,
+          redirect = route.redirect,
+          depth = route.depth;
+      return {
+        url: url,
+        path: path,
+        subpath: subpath,
+        depth: depth,
+        meta: meta,
+        redirect: redirect,
+        params: params,
         componentInstances: {},
-        viewInstances: {}
+        viewInstances: {},
+        config: route
       };
-      Object.keys(route).forEach(function (key) {
-        return ~['path', 'name', 'subpath', 'meta', 'redirect', 'depth'].indexOf(key) && (ret[key] = route[key]);
-      });
-      ret.config = route;
-      if (!match) match = {};
-      ret.url = match.url || '';
-      ret.params = match.params || {};
-      return ret;
     }
   }, {
     key: "getMatched",
@@ -863,9 +875,9 @@ function () {
       }
 
       var matched = (0, _util.matchRoutes)(this.routes, to, parent);
-      return matched.map(function (_ref5, i) {
-        var route = _ref5.route,
-            match = _ref5.match;
+      return matched.map(function (_ref6, i) {
+        var route = _ref6.route,
+            match = _ref6.match;
 
         var ret = _this9.createMatchedRoute(route, match);
 
@@ -902,9 +914,11 @@ function () {
         params: {},
         meta: {}
       };
-      var search = to.search,
+      var _to$search = to.search,
+          search = _to$search === void 0 ? '' : _to$search,
           query = to.query,
-          path = to.path,
+          _to$path = to.path,
+          path = _to$path === void 0 ? '' : _to$path,
           onAbort = to.onAbort,
           onComplete = to.onComplete;
       var ret = {
@@ -912,6 +926,7 @@ function () {
         url: last.url,
         basename: this.basename,
         path: path,
+        search: search,
         fullPath: "".concat(path).concat(search),
         isRedirect: Boolean(to.isRedirect),
         isReplace: Boolean(to.isReplace),
@@ -921,7 +936,14 @@ function () {
         meta: last.meta || {},
         onAbort: onAbort,
         onComplete: onComplete
-      };
+      }; // Object.defineProperty(ret, 'fullPath', {
+      //   enumerable: true,
+      //   configurable: true,
+      //   get() {
+      //     return `${to.path}${to.search}`;
+      //   }
+      // });
+
       Object.defineProperty(ret, 'origin', {
         configurable: true,
         value: to
@@ -958,7 +980,7 @@ function () {
 
       if (tm) {
         Object.keys(tm.viewInstances).forEach(function (key) {
-          return tm.viewInstances[key]._refreshCurrentRoute();
+          return tm && tm.viewInstances[key]._refreshCurrentRoute();
         });
       } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute();
 
@@ -1033,6 +1055,7 @@ function () {
       if (!Array.isArray(routes)) routes = [routes];
       routes = (0, _util.normalizeRoutes)(routes, parentRoute);
       var children = parentRoute ? parentRoute.children : this.routes;
+      if ((0, _util.isFunction)(children)) children = children();
       if (!children) return;
       routes.forEach(function (r) {
         var i = children.findIndex(function (v) {
@@ -1063,8 +1086,8 @@ function () {
     }
   }, {
     key: "install",
-    value: function install(ReactVueLike, _ref6) {
-      var App = _ref6.App;
+    value: function install(ReactVueLike, _ref7) {
+      var App = _ref7.App;
       this.ReactVueLike = ReactVueLike;
       this.App = App;
       if (!App.inherits) App.inherits = {};

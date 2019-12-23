@@ -15,6 +15,8 @@ class Drawer extends React.Component {
     super(props);
     this.closed = false;
     this.isTouching = null;
+    this.container = null;
+    this.drawerRef = null;
     this.getContainer = this.getContainer.bind(this);
     this.removeContainer = this.removeContainer.bind(this);
     this.onAnimateAppear = this.onAnimateAppear.bind(this);
@@ -46,6 +48,7 @@ class Drawer extends React.Component {
   onTouchEnd(event) {
     if (this.isTouching && -event.deltaX > this.props.touchThreshold) {
       const drawerRef = this.drawerRef;
+      if (!drawerRef) return;
       const viewLength = drawerRef.getBoundingClientRect().width;
       drawerRef.classList.add('touched');
       let close = null;
@@ -70,7 +73,7 @@ class Drawer extends React.Component {
 
   removeContainer() {
     if (!this.container) return;
-    this.container.parentNode.removeChild(this.container);
+    if (this.container.parentNode) this.container.parentNode.removeChild(this.container);
     this.container = null;
   }
 

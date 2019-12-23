@@ -102,6 +102,7 @@ function (_React$Component) {
       currentRoute: null,
       routes: router ? _this._filterRoutes(router.routes) : []
     };
+    _this._isMounted = false;
     _this.state = state;
     _this.target = this instanceof RouterView ? this.constructor : void 0;
     _this._updateRef = _this._updateRef.bind(_assertThisInitialized(_this));
@@ -131,7 +132,7 @@ function (_React$Component) {
         if (r.redirect || r.index) return hasName ? name === r.name : !r.name;
         return hasName ? r.components && r.components[name] : r.component || r.components && r.components.default;
       });
-      if (filter) ret = filter(ret, state);
+      if (filter) ret = filter(ret, state || this.state);
       return ret;
     }
   }, {
@@ -139,13 +140,14 @@ function (_React$Component) {
     value: function _getRouteMatch(state) {
       var depth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
       if (!state) state = this.state;
-      var matched = state.router.currentRoute && state.router.currentRoute.matched || [];
+      var matched = state.router && state.router.currentRoute && state.router.currentRoute.matched || [];
       return matched.length > depth ? matched[depth] : null;
     }
   }, {
     key: "_refreshCurrentRoute",
     value: function _refreshCurrentRoute(state, newState) {
       if (!state) state = this.state;
+      if (!state.router) throw new Error('state.router is null!');
 
       var currentRoute = this._getRouteMatch(state, state._routerDepth);
 
@@ -162,11 +164,11 @@ function (_React$Component) {
         if (newState) Object.assign(newState, {
           currentRoute: currentRoute
         });else if (this._isMounted) this.setState({
-          currentRoute: currentRoute
+          currentRoute: currentRoute ? currentRoute.config : null
         });
       }
 
-      return currentRoute;
+      return currentRoute ? currentRoute.config : null;
     }
   }, {
     key: "_updateResolving",
@@ -178,10 +180,11 @@ function (_React$Component) {
   }, {
     key: "_resolveFallback",
     value: function _resolveFallback() {
+      var ret = null;
       var fallback = this.props.fallback;
 
       if ((0, _util.isFunction)(fallback)) {
-        fallback = fallback({
+        ret = fallback({
           parentRoute: this.state.parentRoute,
           currentRoute: this.state.currentRoute,
           inited: this.state._routerInited,
@@ -190,7 +193,7 @@ function (_React$Component) {
         });
       }
 
-      return fallback || null;
+      return ret || null;
     }
   }, {
     key: "isNull",
@@ -202,7 +205,7 @@ function (_React$Component) {
     value: function componentDidMount() {
       var _this2 = this;
 
-      var state, parent;
+      var state, parent, parentMatchRoute;
       return regeneratorRuntime.async(function componentDidMount$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
@@ -227,8 +230,8 @@ function (_React$Component) {
               state.router.viewRoot = this;
 
               state.router._handleRouteInterceptor(state.router.history.location, function (ok, to) {
-                if (!ok) return;
-                _this2.state.router && (_this2.state.router.currentRoute = to);
+                if (!ok) return; // this.state.router && (this.state.router.currentRoute = to);
+
                 state.currentRoute = _this2._refreshCurrentRoute();
                 if (_this2._isMounted) _this2.setState(Object.assign(state, {
                   _routerInited: true
@@ -256,7 +259,8 @@ function (_React$Component) {
               }
 
               if (state._routerDepth) {
-                state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
+                parentMatchRoute = this._getRouteMatch(state, state._routerDepth - 1);
+                state.parentRoute = parentMatchRoute ? parentMatchRoute.config : null;
                 state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
                 state.currentRoute = this._refreshCurrentRoute(state);
               } else console.error('[RouterView] cannot find root RouterView instance!', this);
@@ -350,16 +354,21 @@ function (_React$Component) {
   }, {
     key: "getComponent",
     value: function getComponent(currentRoute, excludeProps) {
-      var routes = this.state.routes;
+      if (!currentRoute) return null;
+      var _this$state = this.state,
+          routes = _this$state.routes,
+          router = _this$state.router;
 
       var _this$props2 = this.props,
           container = _this$props2.container,
           children = _this$props2.children,
           props = _objectWithoutProperties(_this$props2, ["container", "children"]);
 
-      var _this$state$router$cu = this.state.router.currentRoute,
-          query = _this$state$router$cu.query,
-          params = _this$state$router$cu.params;
+      var _ref = router && router.currentRoute || {},
+          _ref$query = _ref.query,
+          query = _ref$query === void 0 ? {} : _ref$query,
+          params = _ref.params;
+
       var targetExcludeProps = this.target.defaultProps.excludeProps || RouterView.defaultProps.excludeProps || [];
       (excludeProps || targetExcludeProps).forEach(function (key) {
         return delete props[key];
@@ -393,7 +402,9 @@ function (_React$Component) {
   }, {
     key: "name",
     get: function get() {
-      return this.props.name || 'default';
+      var name = this.props.name;
+      if (!name) return 'default';
+      return name;
     }
   }]);
 

@@ -70,6 +70,8 @@ function (_React$Component) {
     _this = _possibleConstructorReturn(this, _getPrototypeOf(Drawer).call(this, props));
     _this.closed = false;
     _this.isTouching = null;
+    _this.container = null;
+    _this.drawerRef = null;
     _this.getContainer = _this.getContainer.bind(_assertThisInitialized(_this));
     _this.removeContainer = _this.removeContainer.bind(_assertThisInitialized(_this));
     _this.onAnimateAppear = _this.onAnimateAppear.bind(_assertThisInitialized(_this));
@@ -109,6 +111,7 @@ function (_React$Component) {
 
       if (this.isTouching && -event.deltaX > this.props.touchThreshold) {
         var drawerRef = this.drawerRef;
+        if (!drawerRef) return;
         var viewLength = drawerRef.getBoundingClientRect().width;
         drawerRef.classList.add('touched');
         var close = null;
@@ -139,7 +142,7 @@ function (_React$Component) {
     key: "removeContainer",
     value: function removeContainer() {
       if (!this.container) return;
-      this.container.parentNode.removeChild(this.container);
+      if (this.container.parentNode) this.container.parentNode.removeChild(this.container);
       this.container = null;
     }
   }, {

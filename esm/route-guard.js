@@ -55,6 +55,7 @@ var RouteComponentGuards = function RouteComponentGuards() {
   _classCallCheck(this, RouteComponentGuards);
 
   this.$$typeof = REACT_FORWARD_REF_TYPE;
+  this.render = null;
 };
 
 function getGuardsComponent(v) {

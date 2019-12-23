@@ -108,7 +108,7 @@ function matchRoutes(routes, to, parent, branch) {
     if (parent) parent.prevChildren = routes;
   }
 
-  for (let route of routes) {
+  routes.some(route => {
     let match = route.path
       ? matchPath(to.path, route)
       : branch.length
@@ -117,8 +117,8 @@ function matchRoutes(routes, to, parent, branch) {
 
     if (match && route.index) {
       route = resloveIndex(route.index, routes);
-      if (!route) continue;
-      else to.pathname = to.path = route.path;
+      if (!route) return;
+      to.pathname = to.path = route.path;
     }
 
     if (match) {
@@ -126,8 +126,9 @@ function matchRoutes(routes, to, parent, branch) {
 
       if (route.children) matchRoutes(route.children, to, route, branch);
     }
-    if (match) break;
-  }
+    if (match) return true;
+  });
+
   return branch;
 }
 
@@ -168,6 +169,10 @@ function isPlainObject(obj) {
 }
 function isFunction(value) {
   return typeof value === 'function';
+}
+
+function isMatchedRoute(value) {
+  return Boolean(value.config);
 }
 
 function isLocation(v) {
@@ -342,12 +347,12 @@ function renderRoute(route, routes, props, children, options = {}) {
   }
 
   let renderRoute = route;
-  if (route.redirect) return null;
-  if (route.index) renderRoute = resloveIndex(route.index, routes);
+  if (route && route.redirect) return null;
+  if (route && route.index) renderRoute = resloveIndex(route.index, routes);
   if (!renderRoute) return null;
 
   let result = createComp(renderRoute, props, children, options);
-  if (options.container) result = options.container(result, route, props);
+  if (route && options.container) result = options.container(result, route, props);
   return result;
 }
 
@@ -421,6 +426,7 @@ export {
   nextTick,
   isPlainObject,
   isFunction,
+  isMatchedRoute,
   isLocation,
   isPropChanged,
   isRouteChanged,

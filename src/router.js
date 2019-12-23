@@ -120,7 +120,7 @@ export default class ReactViewRouter {
   }
 
   _callEvent(event, ...args) {
-    let plugin;
+    let plugin = null;
     try {
       let ret;
       this.plugins.forEach(p => {
@@ -135,13 +135,13 @@ export default class ReactViewRouter {
     }
   }
 
-  _getComponentGurads(r, guardName, bindInstance = true) {
+  _getComponentGurads(mr, guardName, bindInstance = true) {
     let ret = [];
-    const componentInstances = r.componentInstances;
+    const componentInstances = mr.componentInstances;
 
     // route config
     const routeGuardName = guardName.replace('Route', '');
-    if (r.config) r = r.config;
+    const r = mr.config;
 
     const guards = r[routeGuardName];
     if (guards) ret.push(guards);
@@ -245,6 +245,7 @@ export default class ReactViewRouter {
       ret.push(...this._getRouteComponentGurads(
         fm,
         'beforeRouteLeave',
+        true,
         (fn, name, ci, r) => (function beforeRouteLeaveWraper(to, from, next) {
           return fn(to, from, (cb, ...args) => {
             if (isFunction(cb)) {
@@ -278,7 +279,7 @@ export default class ReactViewRouter {
                 cb = undefined;
               }
               return next(cb, ...args);
-            }, r);
+            }, r.config);
           })
         );
         ret.push(...guards);
@@ -293,7 +294,7 @@ export default class ReactViewRouter {
           (fn, name) => {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
-              return fn.call(this, to, current, r);
+              return fn.call(this, to, current, r.config);
             });
             return null;
           }
@@ -309,7 +310,7 @@ export default class ReactViewRouter {
     const ret = [];
     const fm = [];
     to && to.matched.some((tr, i) => {
-      let fr = from.matched[i];
+      let fr = from && from.matched[i];
       if (!fr || fr.path !== tr.path) return true;
       fm.push(fr);
     });
@@ -437,7 +438,7 @@ export default class ReactViewRouter {
           if (isLocation(ok)) {
             if (to.onAbort) ok.onAbort = to.onAbort;
             if (to.onComplete) ok.onComplete = to.onComplete;
-            return this.redirect(ok, null, null, to.onInit || (isInit ? callback : null), to);
+            return this.redirect(ok, undefined, undefined, to.onInit || (isInit ? callback : null), to);
           }
           if (to && isFunction(to.onAbort)) to.onAbort(ok, to);
           if (ok instanceof Error) this.errorCallback && this.errorCallback(ok);
@@ -496,15 +497,20 @@ export default class ReactViewRouter {
   }
 
   createMatchedRoute(route, match) {
-    let ret = { componentInstances: {}, viewInstances: {} };
-    Object.keys(route).forEach(key => ~[
-      'path', 'name', 'subpath', 'meta', 'redirect', 'depth'
-    ].indexOf(key) && (ret[key] = route[key]));
-    ret.config = route;
-    if (!match) match = {};
-    ret.url = match.url || '';
-    ret.params = match.params || {};
-    return ret;
+    let { url, params } = match || { url: '', params: {} };
+    let { path, subpath, meta, redirect, depth } = route;
+    return {
+      url,
+      path,
+      subpath,
+      depth,
+      meta,
+      redirect,
+      params,
+      componentInstances: {},
+      viewInstances: {},
+      config: route
+    };
   }
 
   getMatched(to, from, parent) {
@@ -539,12 +545,13 @@ export default class ReactViewRouter {
     const matched = this.getMatched(to, from);
     const last = matched.length ? matched[matched.length - 1] : { url: '', params: {}, meta: {} };
 
-    const { search, query, path, onAbort, onComplete } = to;
+    const { search = '', query, path = '', onAbort, onComplete } = to;
     const ret = {
       action: this.history.action,
       url: last.url,
       basename: this.basename,
       path,
+      search,
       fullPath: `${path}${search}`,
       isRedirect: Boolean(to.isRedirect),
       isReplace: Boolean(to.isReplace),
@@ -591,7 +598,7 @@ export default class ReactViewRouter {
 
     let tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, { count: 1 })[0];
     if (tm) {
-      Object.keys(tm.viewInstances).forEach(key => tm.viewInstances[key]._refreshCurrentRoute());
+      Object.keys(tm.viewInstances).forEach(key => tm && tm.viewInstances[key]._refreshCurrentRoute());
     } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute();
 
     this._callEvent('onRouteChange', this.currentRoute, this);
@@ -654,7 +661,8 @@ export default class ReactViewRouter {
     if (!routes) return;
     if (!Array.isArray(routes)) routes = [routes];
     routes = normalizeRoutes(routes, parentRoute);
-    const children = parentRoute ? parentRoute.children : this.routes;
+    let children = parentRoute ? parentRoute.children : this.routes;
+    if (isFunction(children)) children = children();
     if (!children) return;
     routes.forEach(r => {
       let i = children.findIndex(v => v.path === r.path);

@@ -25,6 +25,8 @@ require("core-js/modules/es6.object.keys");
 
 require("core-js/modules/es6.object.set-prototype-of");
 
+require("core-js/modules/es6.object.assign");
+
 require("core-js/modules/es6.string.starts-with");
 
 require("core-js/modules/es6.regexp.replace");
@@ -132,7 +134,10 @@ function createRouterLink(router) {
     }, {
       key: "componentWillUnmount",
       value: function componentWillUnmount() {
-        if (this.unplugin) this.unplugin();
+        if (this.unplugin) {
+          this.unplugin();
+          this.unplugin = undefined;
+        }
       }
     }, {
       key: "shouldComponentUpdate",
@@ -178,14 +183,15 @@ function createRouterLink(router) {
         }
 
         if (!Array.isArray(event)) event = [event];
+        var events = {};
         event.forEach(function (evt) {
-          remainProps[(0, _util.camelize)("on-".concat(evt))] = function (e) {
+          events[(0, _util.camelize)("on-".concat(evt))] = function (e) {
             guardEvent(e);
             if (replace) router.replace(to);else router.push(to);
           };
         });
         if (tag === 'a') remainProps.href = to.path;
-        return _react.default.createElement.apply(_react.default, [tag, remainProps].concat(_toConsumableArray(children)));
+        return _react.default.createElement.apply(_react.default, [tag, Object.assign(remainProps, events)].concat(_toConsumableArray(children)));
       }
     }]);
 

@@ -15,8 +15,6 @@ require("core-js/modules/es6.reflect.get");
 
 require("core-js/modules/es6.object.set-prototype-of");
 
-require("core-js/modules/es6.object.assign");
-
 require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.array.iterator");
@@ -24,6 +22,8 @@ require("core-js/modules/es6.array.iterator");
 require("core-js/modules/es6.object.to-string");
 
 require("core-js/modules/es6.object.keys");
+
+require("core-js/modules/es6.object.assign");
 
 var _react = _interopRequireDefault(require("react"));
 
@@ -78,9 +78,11 @@ function (_RouterViewComponent) {
     _classCallCheck(this, RouterDrawer);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(RouterDrawer).call(this, props));
-    _this.state.openDrawer = false;
-    _this.state.prevRoute = null;
-    _this.state._routerDrawer = true;
+    Object.assign(_this.state, {
+      openDrawer: false,
+      prevRoute: null,
+      _routerDrawer: true
+    });
     _this._handleClose = _this._handleClose.bind(_assertThisInitialized(_this));
     _this._handleAnimationEnd = _this._handleAnimationEnd.bind(_assertThisInitialized(_this));
     return _this;
@@ -100,7 +102,7 @@ function (_RouterViewComponent) {
       if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
         var r = state._routerParent && state._routerParent.state.currentRoute;
         r && Object.keys(r.componentInstances).forEach(function (key) {
-          var c = r.componentInstances[key];
+          var c = r && r.componentInstances[key];
           if (c && c.componentWillUnactivate) c.componentWillUnactivate();
         });
         openDrawer = true;
@@ -110,7 +112,7 @@ function (_RouterViewComponent) {
         var _r = state._routerParent && state._routerParent.state.currentRoute;
 
         _r && Object.keys(_r.componentInstances).forEach(function (key) {
-          var c = _r.componentInstances[key];
+          var c = _r && _r.componentInstances[key];
           if (c && c.componentDidActivate) c.componentDidActivate();
         });
         openDrawer = false;
@@ -138,7 +140,11 @@ function (_RouterViewComponent) {
       var _this$state = this.state,
           router = _this$state.router,
           parentRoute = _this$state.parentRoute;
-      if (parentRoute && router.currentRoute.path !== parentRoute.path) this.state.router.back();
+
+      if (router) {
+        if (parentRoute && router.currentRoute && router.currentRoute.path !== parentRoute.path) router.back();
+      }
+
       this.setState({
         openDrawer: false
       });
@@ -147,6 +153,7 @@ function (_RouterViewComponent) {
     key: "getZindex",
     value: function getZindex() {
       var currentRoute = this.state.currentRoute;
+      if (!currentRoute) return _reactViewRouter.config.zIndexStart;
       var zIndex = this.props.zIndex;
 
       if (zIndex !== undefined) {
@@ -171,7 +178,8 @@ function (_RouterViewComponent) {
     value: function renderCurrent(currentRoute) {
       var _this2 = this;
 
-      var routes = this.state.routes; // eslint-disable-next-line
+      var routes = this.state.routes;
+      if (!this.state.router) return null; // eslint-disable-next-line
 
       var _this$props = this.props,
           _updateRef = _this$props._updateRef,
@@ -206,7 +214,7 @@ function (_RouterViewComponent) {
         params: params,
         container: function container(comp) {
           if (oldContainer) comp = oldContainer(comp, currentRoute, props);
-          var hasPrev = !_this2.isNull(_this2.state.router.prevRoute);
+          var hasPrev = _this2.state.router && !_this2.isNull(_this2.state.router.prevRoute);
           comp = _react.default.createElement(_drawer.default, {
             ref: function ref(el) {
               return _this2.drawer = el;

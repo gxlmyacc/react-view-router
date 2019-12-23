@@ -22,7 +22,7 @@ function _parseQuery(query) {
 
   query.split('&').forEach(param => {
     const parts = param.replace(/\+/g, ' ').split('=');
-    const key = decode(parts.shift());
+    const key = decode(parts.shift() || '');
     let val = parts.length > 0
       ? decode(parts.join('='))
       : null;

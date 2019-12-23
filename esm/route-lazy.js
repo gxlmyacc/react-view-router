@@ -50,23 +50,11 @@ function () {
 
     this.$$typeof = _routeGuard.REACT_LAZY_TYPE;
     this._ctor = ctor;
-    this._status = -1;
     this._result = null;
     this.options = options;
-    this.defaultProps = undefined;
-    this.propTypes = undefined;
     this.render = this.render.bind(this);
-    Object.defineProperty(this, 'resolved', {
-      writable: true,
-      value: false
-    });
-    Object.defineProperty(this, 'updaters', {
-      writable: true,
-      value: []
-    });
-    Object.defineProperty(this, 'toResolve', {
-      value: this.toResolve
-    });
+    this.resolved = false;
+    this.updaters = [];
   }
 
   _createClass(RouteLazy, [{

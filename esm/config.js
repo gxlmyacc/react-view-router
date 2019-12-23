@@ -51,7 +51,7 @@ function _parseQuery(query) {
 
   query.split('&').forEach(function (param) {
     var parts = param.replace(/\+/g, ' ').split('=');
-    var key = decode(parts.shift());
+    var key = decode(parts.shift() || '');
     var val = parts.length > 0 ? decode(parts.join('=')) : null;
     if (val === 'true') val = true;else if (val === 'false') val = false;else if (val === 'null') val = null;else if (val === 'undefined') val = undefined;else if (val === 'NaN') val = NaN;else if (val.indexOf('[object ') !== 0 && /^(\{.*\})|(\[.*\])$/.test(val)) {
       try {

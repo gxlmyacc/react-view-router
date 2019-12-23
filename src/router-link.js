@@ -54,7 +54,10 @@ export default function createRouterLink(router) {
     }
 
     componentWillUnmount() {
-      if (this.unplugin) this.unplugin();
+      if (this.unplugin) {
+        this.unplugin();
+        this.unplugin = undefined;
+      }
     }
 
     shouldComponentUpdate(nextProps, nextState) {
@@ -94,8 +97,9 @@ export default function createRouterLink(router) {
       }
 
       if (!Array.isArray(event)) event = [event];
+    const events = {};
       event.forEach(evt => {
-        remainProps[camelize(`on-${evt}`)] = e => {
+        events[camelize(`on-${evt}`)] = e => {
           guardEvent(e);
           if (replace) router.replace(to);
           else router.push(to);
@@ -104,7 +108,7 @@ export default function createRouterLink(router) {
 
       if (tag === 'a') remainProps.href = to.path;
 
-      return React.createElement(tag, remainProps, ...children);
+      return React.createElement(tag, Object.assign(remainProps, events), ...children);
     }
 
   }
