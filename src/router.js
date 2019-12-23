@@ -247,7 +247,7 @@ export default class ReactViewRouter {
         'beforeRouteLeave',
         true,
         (fn, name, ci, r) => (function beforeRouteLeaveWraper(to, from, next) {
-          return fn(to, from, (cb, ...args) => {
+          return fn.call(ci, to, from, (cb, ...args) => {
             if (isFunction(cb)) {
               const _cb = cb;
               cb = (...as) => {
