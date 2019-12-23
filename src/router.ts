@@ -658,6 +658,13 @@ export default class ReactViewRouter {
       onAbort,
       onComplete
     };
+    // Object.defineProperty(ret, 'fullPath', {
+    //   enumerable: true,
+    //   configurable: true,
+    //   get() {
+    //     return `${to.path}${to.search}`;
+    //   }
+    // });
     Object.defineProperty(ret, 'origin', { configurable: true, value: to });
     if (to.isRedirect && from) {
       ret.redirectedFrom = from;
