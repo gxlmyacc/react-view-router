@@ -1,6 +1,6 @@
 import React from 'react';
 import { REACT_LAZY_TYPE } from './route-guard';
-import { RouteLazyUpdater } from './globals';
+import { RouteLazyUpdater, MatchedRoute, ConfigRoute } from './globals';
 
 export class RouteLazy {
 
@@ -12,14 +12,13 @@ export class RouteLazy {
 
   $$typeof: Symbol | number = REACT_LAZY_TYPE;
 
-  options: any;
+  options: Partial<any>;
 
   updaters: RouteLazyUpdater[] = [];
 
-
   constructor(
     ctor: any,
-    options?: any
+    options: Partial<any> = {}
   ) {
     this._ctor = ctor;
     this._result = null;
@@ -65,7 +64,7 @@ export class RouteLazy {
 
 }
 
-export function hasRouteLazy(route: any) {
+export function hasRouteLazy(route: MatchedRoute | ConfigRoute) {
   const config = route.config || route;
   if (config.components instanceof RouteLazy) return true;
   if (config.components) {
@@ -76,10 +75,10 @@ export function hasRouteLazy(route: any) {
   return false;
 }
 
-export function hasMatchedRouteLazy(matched: any[]) {
+export function hasMatchedRouteLazy(matched: MatchedRoute[]) {
   return matched && matched.some(r => hasRouteLazy(r));
 }
 
-export function lazyImport(importMethod: Function, options?: any) {
+export function lazyImport(importMethod: Function, options: Partial<any> = {}) {
   return new RouteLazy(importMethod, options || {});
 }

@@ -12,7 +12,7 @@ const encode = (str: string) => encodeURIComponent(str)
 const decode = decodeURIComponent;
 
 function _parseQuery(query: string) {
-  const res: any = {};
+  const res: Partial<any> = {};
 
   query = query.trim().replace(/^(\?|#|&)/, '');
 
@@ -23,9 +23,17 @@ function _parseQuery(query: string) {
   query.split('&').forEach((param: string) => {
     const parts: string[] = param.replace(/\+/g, ' ').split('=');
     const key: string = decode(parts.shift() || '');
-    const val: any = parts.length > 0
+    let val: any = parts.length > 0
       ? decode(parts.join('='))
       : null;
+    if (val === 'true') val = true;
+    else if (val === 'false') val = false;
+    else if (val === 'null') val = null;
+    else if (val === 'undefined') val = undefined;
+    else if (val === 'NaN') val = NaN;
+    else if (val.indexOf('[object ') !== 0 && /^(\{.*\})|(\[.*\])$/.test(val)) {
+      try { val = JSON.parse(val); } catch (e) { /* empty */ }
+    }
 
     if (res[key] === undefined) {
       res[key] = val;
@@ -39,36 +47,32 @@ function _parseQuery(query: string) {
   return res;
 }
 
-function _stringifyQuery(obj: { [key: string]: any }) {
+function _stringifyQuery(obj: Partial<any> | null | undefined, prefix = '?') {
   const res = obj ? Object.keys(obj).map((key: string) => {
-    const val: any = obj[key];
+    let val: any = obj[key];
 
-    if (val === undefined) {
-      return '';
-    }
+    if (val === undefined) return '';
 
-    if (val === null) {
-      return encode(key);
-    }
+    if (val === null || val === undefined) return encode(key);
 
     if (Array.isArray(val)) {
       const result: string[] = [];
       val.forEach(val2 => {
-        if (val2 === undefined) {
-          return;
-        }
+        if (val2 === undefined) return;
         if (val2 === null) {
           result.push(encode(key));
         } else {
+          if (typeof val2 === 'object') val2 = JSON.stringify(val2);
           result.push(encode(key) + '=' + encode(val2));
         }
       });
       return result.join('&');
     }
 
+    if (typeof val === 'object') val = JSON.stringify(val);
     return encode(key) + '=' + encode(val);
   }).filter((x: string) => x.length > 0).join('&') : null;
-  return res ? `?${res}` : '';
+  return res ? `${prefix}${res}` : '';
 }
 
 export default {

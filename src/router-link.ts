@@ -97,7 +97,7 @@ export default function createRouterLink(router: any): any {
       }
     }
 
-    shouldComponentUpdate(nextProps: any, nextState: any) {
+    shouldComponentUpdate(nextProps: RouterLinkProps, nextState: RouterLinkState) {
       if (this.props.to !== nextProps.to) return true;
       if (this.props.replace !== nextProps.replace) return true;
       if (this.props.tag !== nextProps.tag) return true;

@@ -4,7 +4,7 @@ import { RouteLazy } from './route-lazy';
 import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
 import { ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation } from './globals';
-import { ReactViewContainer } from './router-view';
+import { ReactViewContainer, RouterViewComponent as RouterView  } from './router-view';
 
 function nextTick(cb: () => void, ctx?: object) {
   if (!cb) return;
@@ -158,8 +158,21 @@ function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''
   if (!isAbsoluteUrl(to.pathname)) {
     to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
   }
-  to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
-  to.fullPath = `${to.path}${to.search ? to.search : ''}`;
+  Object.defineProperty(to, 'search', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      return config.stringifyQuery(this.query);
+    }
+  });
+  Object.defineProperty(to, 'fullPath', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      let s = this.search;
+      return `${this.path}${s || ''}` || '/';
+    }
+  });
   if (!to.query) to.query = {};
   return to;
 }
@@ -413,16 +426,17 @@ function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]) {
 function getHostRouterView(ctx: any, continueCb?: any) {
   let parent = ctx._reactInternalFiber.return;
   while (parent) {
-    if (continueCb && continueCb(parent) === false) return;
+    if (continueCb && continueCb(parent) === false) return null;
 
     const memoizedState = parent.memoizedState;
     // const memoizedProps = parent.memoizedProps;
-    if (memoizedState && memoizedState._routerView) return parent.stateNode;
+    if (memoizedState && memoizedState._routerView) return parent.stateNode as RouterView;
     parent = parent.return;
   }
+  return null;
 }
 
-function getParentRoute(ctx: any) {
+function getParentRoute(ctx: any): ConfigRoute | null {
   const view = getHostRouterView(ctx);
   return (view && view.state.currentRoute) || null;
 }

@@ -122,8 +122,7 @@ class RouterView<
   _getRouteMatch(state: RouterViewState, depth = 0) {
     if (!state) state = this.state;
     const matched = (state.router && state.router.currentRoute && state.router.currentRoute.matched) || [];
-    let route = matched.length > depth ? matched[depth] : null;
-    return route;
+    return matched.length > depth ? matched[depth] : null;
   }
 
   _refreshCurrentRoute(state?: S, newState?: S) {

@@ -3,9 +3,10 @@ import { getParentRoute } from './util';
 
 export default function withRouter(comp: React.FunctionComponent | React.ComponentClass) {
   return React.forwardRef((props, ref: any) => {
-    class WithRouter extends React.Component {
-
-      state: { inited: boolean, route: any };
+    class WithRouter extends React.Component<any, {
+      inited: boolean,
+      route: any
+    }> {
 
       constructor(props: object) {
         super(props);
@@ -26,7 +27,7 @@ export default function withRouter(comp: React.FunctionComponent | React.Compone
             ref,
             route: this.state.route
           } as any,
-          ...(props.children as React.ReactNode[] || [])
+          props.children
         );
       }
 
