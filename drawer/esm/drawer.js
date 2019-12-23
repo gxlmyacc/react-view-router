@@ -37,8 +37,6 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -55,6 +53,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var CAN_USE_DOM = !!(typeof window !== 'undefined' && window.document && window.document.createElement);
 
 var Drawer =
@@ -68,8 +68,19 @@ function (_React$Component) {
     _classCallCheck(this, Drawer);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(Drawer).call(this, props));
+
+    _defineProperty(_assertThisInitialized(_this), "closed", void 0);
+
+    _defineProperty(_assertThisInitialized(_this), "isTouching", void 0);
+
+    _defineProperty(_assertThisInitialized(_this), "drawerRef", void 0);
+
+    _defineProperty(_assertThisInitialized(_this), "container", void 0);
+
     _this.closed = false;
     _this.isTouching = null;
+    _this.container = null;
+    _this.drawerRef = null;
     _this.getContainer = _this.getContainer.bind(_assertThisInitialized(_this));
     _this.removeContainer = _this.removeContainer.bind(_assertThisInitialized(_this));
     _this.onAnimateAppear = _this.onAnimateAppear.bind(_assertThisInitialized(_this));
@@ -109,6 +120,7 @@ function (_React$Component) {
 
       if (this.isTouching && -event.deltaX > this.props.touchThreshold) {
         var drawerRef = this.drawerRef;
+        if (!drawerRef) return;
         var viewLength = drawerRef.getBoundingClientRect().width;
         drawerRef.classList.add('touched');
         var close = null;
@@ -139,7 +151,7 @@ function (_React$Component) {
     key: "removeContainer",
     value: function removeContainer() {
       if (!this.container) return;
-      this.container.parentNode.removeChild(this.container);
+      if (this.container.parentNode) this.container.parentNode.removeChild(this.container);
       this.container = null;
     }
   }, {
@@ -311,6 +323,8 @@ function (_React$Component) {
   return Drawer;
 }(_react.default.Component);
 
+_defineProperty(Drawer, "defaultProps", void 0);
+
 Drawer.defaultProps = {
   prefixCls: 'rvr-drawer',
   className: '',
@@ -323,3 +337,4 @@ Drawer.defaultProps = {
 };
 var _default = Drawer;
 exports.default = _default;
+//# sourceMappingURL=drawer.js.map

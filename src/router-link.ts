@@ -53,11 +53,16 @@ interface RouterLinkState {
 }
 
 export default function createRouterLink(router: any): any {
-
   class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
 
     static propTypes: any;
-    static defaultProps: any;
+
+    static defaultProps: {
+      tag: string,
+      activeClass: string,
+      exactActiveClass: string,
+      event: string
+    };
 
     private unplugin?: () => void;
 

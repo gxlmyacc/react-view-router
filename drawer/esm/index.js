@@ -1,11 +1,11 @@
 "use strict";
 
+require("core-js/modules/es7.object.get-own-property-descriptors");
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-
-require("core-js/modules/es7.object.get-own-property-descriptors");
 
 require("core-js/modules/es7.symbol.async-iterator");
 
@@ -15,8 +15,6 @@ require("core-js/modules/es6.reflect.get");
 
 require("core-js/modules/es6.object.set-prototype-of");
 
-require("core-js/modules/es6.object.assign");
-
 require("core-js/modules/web.dom.iterable");
 
 require("core-js/modules/es6.array.iterator");
@@ -24,6 +22,8 @@ require("core-js/modules/es6.array.iterator");
 require("core-js/modules/es6.object.to-string");
 
 require("core-js/modules/es6.object.keys");
+
+require("core-js/modules/es6.object.assign");
 
 var _react = _interopRequireDefault(require("react"));
 
@@ -38,8 +38,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
@@ -67,6 +65,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var RouterDrawer =
 /*#__PURE__*/
 function (_RouterViewComponent) {
@@ -78,9 +78,14 @@ function (_RouterViewComponent) {
     _classCallCheck(this, RouterDrawer);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(RouterDrawer).call(this, props));
-    _this.state.openDrawer = false;
-    _this.state.prevRoute = null;
-    _this.state._routerDrawer = true;
+
+    _defineProperty(_assertThisInitialized(_this), "drawer", void 0);
+
+    Object.assign(_this.state, {
+      openDrawer: false,
+      prevRoute: null,
+      _routerDrawer: true
+    });
     _this._handleClose = _this._handleClose.bind(_assertThisInitialized(_this));
     _this._handleAnimationEnd = _this._handleAnimationEnd.bind(_assertThisInitialized(_this));
     return _this;
@@ -91,7 +96,9 @@ function (_RouterViewComponent) {
     value: function _refreshCurrentRoute(state) {
       if (!state) state = this.state;
       var prevRoute = state.currentRoute;
-      var newState = {};
+      var newState = {
+        openDrawer: false
+      };
 
       var currentRoute = _get(_getPrototypeOf(RouterDrawer.prototype), "_refreshCurrentRoute", this).call(this, state, newState);
 
@@ -100,7 +107,7 @@ function (_RouterViewComponent) {
       if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
         var r = state._routerParent && state._routerParent.state.currentRoute;
         r && Object.keys(r.componentInstances).forEach(function (key) {
-          var c = r.componentInstances[key];
+          var c = r && r.componentInstances[key];
           if (c && c.componentWillUnactivate) c.componentWillUnactivate();
         });
         openDrawer = true;
@@ -110,7 +117,7 @@ function (_RouterViewComponent) {
         var _r = state._routerParent && state._routerParent.state.currentRoute;
 
         _r && Object.keys(_r.componentInstances).forEach(function (key) {
-          var c = _r.componentInstances[key];
+          var c = _r && _r.componentInstances[key];
           if (c && c.componentDidActivate) c.componentDidActivate();
         });
         openDrawer = false;
@@ -138,7 +145,11 @@ function (_RouterViewComponent) {
       var _this$state = this.state,
           router = _this$state.router,
           parentRoute = _this$state.parentRoute;
-      if (parentRoute && router.currentRoute.path !== parentRoute.path) this.state.router.back();
+
+      if (router) {
+        if (parentRoute && router.currentRoute && router.currentRoute.path !== parentRoute.path) router.back();
+      }
+
       this.setState({
         openDrawer: false
       });
@@ -147,6 +158,7 @@ function (_RouterViewComponent) {
     key: "getZindex",
     value: function getZindex() {
       var currentRoute = this.state.currentRoute;
+      if (!currentRoute) return _reactViewRouter.config.zIndexStart;
       var zIndex = this.props.zIndex;
 
       if (zIndex !== undefined) {
@@ -171,7 +183,8 @@ function (_RouterViewComponent) {
     value: function renderCurrent(currentRoute) {
       var _this2 = this;
 
-      var routes = this.state.routes; // eslint-disable-next-line
+      var routes = this.state.routes;
+      if (!this.state.router) return null; // eslint-disable-next-line
 
       var _this$props = this.props,
           _updateRef = _this$props._updateRef,
@@ -206,7 +219,7 @@ function (_RouterViewComponent) {
         params: params,
         container: function container(comp) {
           if (oldContainer) comp = oldContainer(comp, currentRoute, props);
-          var hasPrev = !_this2.isNull(_this2.state.router.prevRoute);
+          var hasPrev = _this2.state.router && !_this2.isNull(_this2.state.router.prevRoute);
           comp = _react.default.createElement(_drawer.default, {
             ref: function ref(el) {
               return _this2.drawer = el;
@@ -231,6 +244,8 @@ function (_RouterViewComponent) {
   return RouterDrawer;
 }(_reactViewRouter.RouterViewComponent);
 
+_defineProperty(RouterDrawer, "defaultProps", void 0);
+
 RouterDrawer.defaultProps = _objectSpread({}, _reactViewRouter.RouterViewComponent.defaultProps, {
   prefixCls: 'rvr-route-drawer',
   position: 'right',
@@ -244,3 +259,4 @@ var _default = _react.default.forwardRef(function (props, ref) {
 });
 
 exports.default = _default;
+//# sourceMappingURL=index.js.map

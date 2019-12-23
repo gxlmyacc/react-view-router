@@ -1,5 +1,5 @@
-import React, { lazy } from 'react';
-import { UseRouteGuardsInfo } from './types';
+import React from 'react';
+import { UseRouteGuardsInfo } from './globals';
 
 const hasSymbol = typeof Symbol === 'function' && Symbol.for;
 
@@ -9,11 +9,15 @@ export const REACT_LAZY_TYPE = hasSymbol ? Symbol.for('react.lazy') : 0xead4;
 export class RouteComponentGuards {
 
   $$typeof: Symbol | number;
+
   render: Function | null;
 
   __guards?: UseRouteGuardsInfo;
+
   __component?: React.FunctionComponent | React.ComponentClass | RouteComponentGuards;
+
   __componentClass?: React.FunctionComponent | React.ComponentClass;
+
   __children?: any;
 
   constructor() {
@@ -35,7 +39,7 @@ export function useRouteGuards(
   guards: UseRouteGuardsInfo = {},
   componentClass?: React.FunctionComponent | React.ComponentClass | null,
   children?: any
-  ) {
+) {
   const ret = new RouteComponentGuards();
   ret.render = function (props: any, ref: any) {
     return React.createElement(component, { ...props, ref });

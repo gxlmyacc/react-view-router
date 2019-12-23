@@ -1,15 +1,19 @@
 import React from 'react';
 import { REACT_LAZY_TYPE } from './route-guard';
-import { RouteLazyUpdater } from './types';
+import { RouteLazyUpdater } from './globals';
 
 export class RouteLazy {
 
   private _ctor: any
+
   private _result: any;
+
   private resolved: boolean;
 
   $$typeof: Symbol | number = REACT_LAZY_TYPE;
+
   options: any;
+
   updaters: RouteLazyUpdater[] = [];
 
 
@@ -33,8 +37,7 @@ export class RouteLazy {
 
       let _resolve = (v:
         (React.FunctionComponent | React.ComponentClass)
-        & { __esModule?: boolean; default: any }
-      ) => {
+        & { __esModule?: boolean; default: any }) => {
         v = (v && v.__esModule) ? v.default : v;
         this.updaters.forEach(updater => v = updater(v) as any || v);
         this._result = v;

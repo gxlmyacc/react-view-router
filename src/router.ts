@@ -11,11 +11,13 @@ import routeCache from './route-cache';
 import { RouteLazy, hasRouteLazy, hasMatchedRouteLazy } from './route-lazy';
 import { getGuardsComponent } from './route-guard';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray,
-  RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn,RouteHistoryLocation,
+import {
+  ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray,
+  RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation,
   RouteGuardInterceptor, RouteEvent, RouteChildrenFn,
   matchPathResult, ConfigRoute, RouteErrorCallback,
-  ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn } from './types';
+  ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn
+} from './globals';
 
 
 const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
@@ -27,22 +29,39 @@ export default class ReactViewRouter {
   private id: number;
 
   options: ReactVueRouterOptions;
+
   mode: ReactVueRouterMode;
+
   basename: string;
+
   routes: ConfigRouteArray;
+
   plugins: ReactViewRoutePlugin[];
+
   beforeEachGuards: RouteBeforeGuardFn[];
+
   afterEachGuards: RouteAfterGuardFn[];
+
   prevRoute: Route | null;
+
   currentRoute: Route | null;
+
   viewRoot: RouterView | null;
+
   errorCallback: RouteErrorCallback | null;
-  app: any;
-  getHostRouterView: any;
-  nextTick: any;
+
+  app: any; // React.ComponentClass | null;
+
+  getHostRouterView: typeof getHostRouterView;
+
+  nextTick: typeof nextTick;
+
   _history?: any;
-  _unlisten?: any;
-  __unblock?: any;
+
+  _unlisten?: () => void;
+
+  __unblock?: () => void;
+
   [key: string]: any;
 
   constructor({ mode = 'hash', basename = '', base = '', ...options  }: ReactVueRouterOptions = {}) {
@@ -234,7 +253,8 @@ export default class ReactViewRouter {
     matched: MatchedRoute[],
     guardName: string,
     reverse: boolean = false,
-    bindInstance: boolean | RouteBindInstanceFn = true) {
+    bindInstance: boolean | RouteBindInstanceFn = true
+  ) {
     let ret: RouteGuardInterceptor[] = [];
     if (reverse) matched = matched.reverse();
     matched.forEach(r => {
@@ -382,8 +402,9 @@ export default class ReactViewRouter {
   async _handleRouteInterceptor(
     location: null | string | RouteHistoryLocation,
     callback: (ok: boolean, route?: Route) => void,
-    ...args: any[]) {
-    if (typeof location === 'string') location = routeCache.flush(location)
+    ...args: any[]
+  ) {
+    if (typeof location === 'string') location = routeCache.flush(location);
     location = this._transformLocation(location as RouteHistoryLocation);
     if (!location) return callback(true);
     this._callEvent('onRouteing', true);
@@ -398,7 +419,8 @@ export default class ReactViewRouter {
     interceptors: RouteGuardInterceptor[],
     to: Route,
     from: Route | null,
-    next?: RouteNextFn) {
+    next?: RouteNextFn
+  ) {
     const isBlock = (v: any, interceptor: lazyResovleFn) => {
       let _isLocation = typeof v === 'string' || isLocation(v);
       if (_isLocation && interceptor) {
@@ -416,7 +438,8 @@ export default class ReactViewRouter {
       index: number,
       to: Route,
       from: Route | null,
-      next: RouteNextFn) {
+      next: RouteNextFn
+    ) {
       while (interceptor && (interceptor as lazyResovleFn).lazy) {
         interceptor = await (interceptor as lazyResovleFn)(interceptors, index);
       }
@@ -452,7 +475,8 @@ export default class ReactViewRouter {
   async _internalHandleRouteInterceptor(
     location: RouteHistoryLocation,
     callback: (ok: boolean, route?: Route) => void,
-    isInit = false) {
+    isInit = false
+  ) {
     let isContinue = false;
     try {
       const to = this.createRoute(location);
@@ -568,11 +592,17 @@ export default class ReactViewRouter {
     return this._go(to, onComplete, onAbort, onInit);
   }
 
-  createMatchedRoute(route: ConfigRoute, match: matchPathResult): MatchedRoute {
+  createMatchedRoute(route: ConfigRoute, match?: matchPathResult | null): MatchedRoute {
     let { url, params } = match || { url: '', params: {} };
     let { path, subpath, meta, redirect, depth } = route;
     return {
-      url, path, subpath, depth, meta, redirect, params,
+      url,
+      path,
+      subpath,
+      depth,
+      meta,
+      redirect,
+      params,
       componentInstances: {},
       viewInstances: {},
       config: route

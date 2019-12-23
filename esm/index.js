@@ -24,6 +24,9 @@ Object.defineProperty(exports, "__esModule", {
 var _exportNames = {
   RouterView: true,
   RouterViewComponent: true,
+  RouterViewProps: true,
+  RouterViewState: true,
+  RouterViewDefaultProps: true,
   withRouter: true,
   createRouterLink: true,
   config: true,
@@ -41,6 +44,24 @@ Object.defineProperty(exports, "RouterViewComponent", {
   enumerable: true,
   get: function get() {
     return _routerView.RouterViewComponent;
+  }
+});
+Object.defineProperty(exports, "RouterViewProps", {
+  enumerable: true,
+  get: function get() {
+    return _routerView.RouterViewProps;
+  }
+});
+Object.defineProperty(exports, "RouterViewState", {
+  enumerable: true,
+  get: function get() {
+    return _routerView.RouterViewState;
+  }
+});
+Object.defineProperty(exports, "RouterViewDefaultProps", {
+  enumerable: true,
+  get: function get() {
+    return _routerView.RouterViewDefaultProps;
   }
 });
 Object.defineProperty(exports, "withRouter", {
@@ -82,6 +103,19 @@ Object.defineProperty(exports, "lazyImport", {
 exports.default = void 0;
 
 var _router = _interopRequireDefault(require("./router"));
+
+var _globals = require("./globals");
+
+Object.keys(_globals).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _globals[key];
+    }
+  });
+});
 
 var _routerView = _interopRequireWildcard(require("./router-view"));
 

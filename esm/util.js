@@ -264,7 +264,8 @@ function matchRoutes(routes, to, parent) {
 
     if (match && route.index) {
       route = resloveIndex(route.index, routes);
-      if (!route) return;else to.pathname = to.path = route.path;
+      if (!route) return;
+      to.pathname = to.path = route.path;
     }
 
     if (match) {
@@ -587,11 +588,11 @@ function renderRoute(route, routes, props, children) {
   }
 
   var renderRoute = route;
-  if (route.redirect) return null;
-  if (route.index) renderRoute = resloveIndex(route.index, routes);
+  if (route && route.redirect) return null;
+  if (route && route.index) renderRoute = resloveIndex(route.index, routes);
   if (!renderRoute) return null;
   var result = createComp(renderRoute, props, children, options);
-  if (options.container) result = options.container(result, route, props);
+  if (route && options.container) result = options.container(result, route, props);
   return result;
 }
 

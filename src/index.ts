@@ -2,7 +2,15 @@
 
 import ReactViewRouter from './router';
 
-export { default as RouterView, RouterViewComponent }  from './router-view';
+export * from './globals';
+
+export {
+  default as RouterView,
+  RouterViewComponent,
+  RouterViewProps,
+  RouterViewState,
+  RouterViewDefaultProps
+}  from './router-view';
 export { default as withRouter }  from './with-router';
 export { default as createRouterLink } from './router-link';
 export { default as config } from './config';

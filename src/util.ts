@@ -1,9 +1,9 @@
 import React from 'react';
 import config from './config';
 import { RouteLazy } from './route-lazy';
-import { REACT_FORWARD_REF_TYPE, RouteComponentGuards, getGuardsComponent } from './route-guard';
+import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
-import { ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation } from './types';
+import { ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation } from './globals';
 import { ReactViewContainer } from './router-view';
 
 function nextTick(cb: () => void, ctx?: object) {
@@ -33,7 +33,7 @@ function normalizePath(path: string) {
   return paths.join('/');
 }
 
-function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any) {
+function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any): ConfigRoute {
   let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
   let r = { ...route, subpath: route.path, path, depth };
   if (parent) innumerable(r, 'parent', parent);
@@ -68,8 +68,6 @@ function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any)
   innumerable(r, '_pending', { afterEnterGuards: {}, completeCallbacks: {} });
   return r;
 }
-
-
 
 function normalizeRoutes(routes: ConfigRouteArray, parent?: any, depth = 0, force = false) {
   if (!routes) routes = [] as ConfigRouteArray;
@@ -134,7 +132,7 @@ function matchRoutes(
     if (match && route.index) {
       route = resloveIndex(route.index, routes as ConfigRouteArray);
       if (!route) return;
-      else to.pathname = to.path = route.path;
+      to.pathname = to.path = route.path;
     }
 
     if (match) {
@@ -265,7 +263,7 @@ type RenderRouteOption = {
 }
 
 function renderRoute(
-  route: ConfigRoute,
+  route: ConfigRoute | null | undefined,
   routes: ConfigRoute[],
   props: any,
   children: React.ReactNode | null,
@@ -364,12 +362,12 @@ function renderRoute(
   }
 
   let renderRoute = route;
-  if (route.redirect) return null;
-  if (route.index) renderRoute = resloveIndex(route.index, routes);
+  if (route && route.redirect) return null;
+  if (route && route.index) renderRoute = resloveIndex(route.index, routes);
   if (!renderRoute) return null;
 
   let result = createComp(renderRoute, props, children, options) as any;
-  if (options.container) result = options.container(result, route, props);
+  if (route && options.container) result = options.container(result, route, props);
   return result;
 }
 

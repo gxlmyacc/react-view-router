@@ -1,6 +1,7 @@
 class RouterCache {
 
   private cached: { [key: string]: any };
+
   private seed: number;
 
   constructor() {

@@ -13,6 +13,7 @@
   "sideEffects": false,
   "main": "dist/react-view-router.min.js",
   "module": "esm/index.js",
+  "typings": "src/index.ts",
   "engines": {
     "node": "> 6.9.1"
   },
@@ -41,8 +42,11 @@
   "dependencies": {
     "@types/react": "^16.9.16",
     "@types/react-dom": "^16.9.4",
+    "@typescript-eslint/eslint-plugin": "^2.12.0",
+    "@typescript-eslint/parser": "^2.12.0",
     "history-fix": "^4.10.1",
-    "path-to-regexp": "^3.0.0"
+    "path-to-regexp": "^3.0.0",
+    "tslib": "^1.10.0"
   },
   "peerDependencies": {
     "react": "^16.8.0",

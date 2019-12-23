@@ -1,30 +1,65 @@
 import React from 'react';
-import { RouterViewComponent, renderRoute, config, isFunction } from 'react-view-router';
+import {
+  RouterViewComponent,
+  RouterViewProps,
+  RouterViewState,
+  renderRoute,
+  config,
+  isFunction,
+  RouterViewDefaultProps,
+  ConfigRoute
+} from 'react-view-router';
 import Drawer from './drawer';
 
 import '../style/drawer.css';
 
-class RouterDrawer extends RouterViewComponent {
+export interface RouterDrawerProps extends RouterViewProps {
+  [key: string]: any
+}
 
-  constructor(props) {
+export interface RouterDrawerState extends RouterViewState {
+  openDrawer?: boolean,
+  _routerDrawer?: boolean,
+  prevRoute?: ConfigRoute | null,
+}
+
+export interface RouterDrawerDefaultProps extends RouterViewDefaultProps {
+  prefixCls: string,
+  position: string,
+  touch: boolean,
+}
+
+class RouterDrawer<
+  P extends RouterDrawerProps = RouterDrawerProps,
+  S extends RouterDrawerState = RouterDrawerState,
+  SS = any
+> extends RouterViewComponent<P, S, SS> {
+
+  drawer?: Drawer | null;
+
+  static defaultProps: RouterDrawerDefaultProps;
+
+  constructor(props: P) {
     super(props);
-    this.state.openDrawer = false;
-    this.state.prevRoute = null;
-    this.state._routerDrawer = true;
+    Object.assign(this.state, {
+      openDrawer: false,
+      prevRoute: null,
+      _routerDrawer: true
+    });
     this._handleClose = this._handleClose.bind(this);
     this._handleAnimationEnd = this._handleAnimationEnd.bind(this);
   }
 
-  _refreshCurrentRoute(state) {
+  _refreshCurrentRoute(state: S) {
     if (!state) state = this.state;
     const prevRoute = state.currentRoute;
-    const newState = {};
+    const newState: any = { openDrawer: false };
     const currentRoute = super._refreshCurrentRoute(state, newState);
     let openDrawer;
     if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
       let r = state._routerParent && state._routerParent.state.currentRoute;
       r && Object.keys(r.componentInstances).forEach(key => {
-        const c = r.componentInstances[key];
+        const c = r && r.componentInstances[key];
         if (c && c.componentWillUnactivate) c.componentWillUnactivate();
       });
       openDrawer = true;
@@ -32,7 +67,7 @@ class RouterDrawer extends RouterViewComponent {
     if (!this.isNull(prevRoute) && this.isNull(currentRoute)) {
       let r = state._routerParent && state._routerParent.state.currentRoute;
       r && Object.keys(r.componentInstances).forEach(key => {
-        const c = r.componentInstances[key];
+        const c = r && r.componentInstances[key];
         if (c && c.componentDidActivate) c.componentDidActivate();
       });
       openDrawer = false;
@@ -55,12 +90,15 @@ class RouterDrawer extends RouterViewComponent {
 
   _handleClose() {
     const { router, parentRoute } = this.state;
-    if (parentRoute && router.currentRoute.path !== parentRoute.path) this.state.router.back();
+    if (router) {
+      if (parentRoute && router.currentRoute && router.currentRoute.path !== parentRoute.path) router.back();
+    }
     this.setState({ openDrawer: false });
   }
 
   getZindex() {
     const currentRoute = this.state.currentRoute;
+    if (!currentRoute) return config.zIndexStart;
     const { zIndex } = this.props;
     if (zIndex !== undefined) {
       if (isFunction(zIndex)) return zIndex(currentRoute, { config, view: this });
@@ -69,14 +107,15 @@ class RouterDrawer extends RouterViewComponent {
     return config.zIndexStart + currentRoute.depth * config.zIndexStep;
   }
 
-  shouldComponentUpdate(nextProps, nextState) {
+  shouldComponentUpdate(nextProps: P, nextState: S) {
     if (this.state.openDrawer !== nextState.openDrawer) return true;
     if (this.state.prevRoute !== nextState.prevRoute) return true;
     return super.shouldComponentUpdate(nextProps, nextState);
   }
 
-  renderCurrent(currentRoute) {
+  renderCurrent(currentRoute: ConfigRoute) {
     const { routes } = this.state;
+    if (!this.state.router) return null;
     // eslint-disable-next-line
     const { _updateRef, router, container: oldContainer, prefixCls, position, zIndexStart, delay,
       drawerClassName, children, touch, ...props
@@ -91,17 +130,19 @@ class RouterDrawer extends RouterViewComponent {
       configurable: true
     });
 
-    let ret = renderRoute(!openDrawer ? prevRoute : currentRoute, routes, props,
+    let ret = renderRoute(
+      !openDrawer ? prevRoute : currentRoute,
+      routes, props,
       children,
       {
         name: this.name,
         query,
         params,
-        container: comp => {
-          if (oldContainer) comp = oldContainer(comp, currentRoute, props);
-          const hasPrev = !this.isNull(this.state.router.prevRoute);
+        container: (comp: any) => {
+          if (oldContainer) comp = oldContainer(comp, currentRoute, props as any);
+          const hasPrev = this.state.router && !this.isNull(this.state.router.prevRoute);
           comp = React.createElement(Drawer, {
-            ref: el => this.drawer = el,
+            ref: (el: Drawer | null) => this.drawer = el,
             prefixCls,
             className: drawerClassName,
             touch: touch && hasPrev,
@@ -110,11 +151,12 @@ class RouterDrawer extends RouterViewComponent {
             zIndex: this.getZindex(),
             onAnimateLeave: this._handleAnimationEnd,
             onClose: this._handleClose,
-          }, comp);
+          } as any, comp);
           return comp;
         },
         ref: this._updateRef
-      });
+      }
+    );
 
     return ret;
   }
@@ -128,7 +170,7 @@ RouterDrawer.defaultProps = {
   touch: true,
 };
 
-export default React.forwardRef((props, ref) => React.createElement(RouterDrawer, {
+export default React.forwardRef((props, ref) => React.createElement(RouterDrawer as any, {
   ...props,
   _updateRef: ref
 }));

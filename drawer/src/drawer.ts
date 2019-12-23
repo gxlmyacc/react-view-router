@@ -9,12 +9,42 @@ const CAN_USE_DOM = !!(
   && window.document.createElement
 );
 
-class Drawer extends React.Component {
+type DrawerProps = {
+  touchThreshold: number
+} & { [key: string]: any };
 
-  constructor(props) {
+type DrawerState = {
+
+};
+
+
+class Drawer extends React.Component<DrawerProps, DrawerState> {
+
+  closed: boolean;
+
+  isTouching: boolean | null;
+
+  drawerRef: HTMLElement | null;
+
+  container: HTMLElement | null;
+
+  static defaultProps: {
+    prefixCls: string,
+    className: string,
+    mask: boolean,
+    open: boolean,
+    maskClosable: boolean,
+    touch: boolean,
+    touchThreshold: number,
+    delay: number,
+  };
+
+  constructor(props: DrawerProps) {
     super(props);
     this.closed = false;
     this.isTouching = null;
+    this.container = null;
+    this.drawerRef = null;
     this.getContainer = this.getContainer.bind(this);
     this.removeContainer = this.removeContainer.bind(this);
     this.onAnimateAppear = this.onAnimateAppear.bind(this);
@@ -30,7 +60,7 @@ class Drawer extends React.Component {
     this.removeContainer();
   }
 
-  onTouchMove(event) {
+  onTouchMove(event: { dir: string, deltaX: number }) {
     if (!this.drawerRef) return;
     if (this.isTouching === null) {
       this.isTouching = event.dir === 'Right';
@@ -43,12 +73,13 @@ class Drawer extends React.Component {
     drawerRef.style.webkitTransform = drawerRef.style.transform = `translateX(${deltaX}px)`;
   }
 
-  onTouchEnd(event) {
+  onTouchEnd(event: { dir: string, deltaX: number }) {
     if (this.isTouching && -event.deltaX > this.props.touchThreshold) {
       const drawerRef = this.drawerRef;
+      if (!drawerRef) return;
       const viewLength = drawerRef.getBoundingClientRect().width;
       drawerRef.classList.add('touched');
-      let close = null;
+      let close: Function | null = null;
       let actionClass = '';
       if (-event.deltaX > (viewLength / 2)) {
         actionClass = 'touch-hide';
@@ -70,7 +101,7 @@ class Drawer extends React.Component {
 
   removeContainer() {
     if (!this.container) return;
-    this.container.parentNode.removeChild(this.container);
+    if (this.container.parentNode) this.container.parentNode.removeChild(this.container);
     this.container = null;
   }
 
@@ -86,7 +117,7 @@ class Drawer extends React.Component {
   }
 
   getZIndexStyle() {
-    const style = {};
+    const style: { zIndex?: number } = {};
     if (this.props.zIndex !== undefined) style.zIndex = this.props.zIndex;
     return style;
   }
@@ -130,7 +161,7 @@ class Drawer extends React.Component {
     let dialogElement = React.createElement('div', {
       key: 'drawer-element',
       role: 'document',
-      ref: el => this.drawerRef = el,
+      ref: (el: HTMLElement) => this.drawerRef = el,
       style: props.style || {},
       className: `${prefixCls} ${props.className || ''}`,
       open: props.open,
@@ -146,7 +177,7 @@ class Drawer extends React.Component {
         transitionName,
         component: '',
         transitionAppear: true,
-      }, dialogElement);
+      }, dialogElement) as any;
     }
 
     if (this.props.touch) {
@@ -154,7 +185,7 @@ class Drawer extends React.Component {
         className: `${props.prefixCls}-wrap`,
         onSwiping: this.onTouchMove,
         onSwiped: this.onTouchEnd,
-      }, dialogElement);
+      }, dialogElement) as any;
     }
 
     return dialogElement;
@@ -175,11 +206,11 @@ class Drawer extends React.Component {
     if (this.props.afterClose) this.props.afterClose();
   }
 
-  close(e) {
+  close(e?: any) {
     if (this.props.onClose) this.props.onClose(e);
   }
 
-  onMaskClick(e) {
+  onMaskClick(e: React.SyntheticEvent) {
     if (!this.props.maskClosable) return;
     if (e.target === e.currentTarget) this.close(e);
   }
@@ -210,7 +241,7 @@ class Drawer extends React.Component {
           transitionAppear: true,
           component: '',
           transitionName,
-        }, drawer);
+        }, drawer) as any;
       }
     }
     return ReactDOM.createPortal(drawer, this.getContainer());

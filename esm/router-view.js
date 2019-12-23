@@ -149,12 +149,13 @@ function (_React$Component) {
       if (!state) state = this.state;
       var matched = state.router && state.router.currentRoute && state.router.currentRoute.matched || [];
       var route = matched.length > depth ? matched[depth] : null;
-      return route ? route.config : null;
+      return route;
     }
   }, {
     key: "_refreshCurrentRoute",
     value: function _refreshCurrentRoute(state, newState) {
       if (!state) state = this.state;
+      if (!state.router) throw new Error('state.router is null!');
 
       var currentRoute = this._getRouteMatch(state, state._routerDepth);
 
@@ -171,11 +172,11 @@ function (_React$Component) {
         if (newState) Object.assign(newState, {
           currentRoute: currentRoute
         });else if (this._isMounted) this.setState({
-          currentRoute: currentRoute
+          currentRoute: currentRoute ? currentRoute.config : null
         });
       }
 
-      return currentRoute;
+      return currentRoute ? currentRoute.config : null;
     }
   }, {
     key: "_updateResolving",
@@ -212,7 +213,7 @@ function (_React$Component) {
     value: function componentDidMount() {
       var _this2 = this;
 
-      var state, parent;
+      var state, parent, parentMatchRoute;
       return regeneratorRuntime.async(function componentDidMount$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
@@ -266,7 +267,8 @@ function (_React$Component) {
               }
 
               if (state._routerDepth) {
-                state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
+                parentMatchRoute = this._getRouteMatch(state, state._routerDepth - 1);
+                state.parentRoute = parentMatchRoute ? parentMatchRoute.config : null;
                 state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
                 state.currentRoute = this._refreshCurrentRoute(state);
               } else console.error('[RouterView] cannot find root RouterView instance!', this);
@@ -408,7 +410,9 @@ function (_React$Component) {
   }, {
     key: "name",
     get: function get() {
-      return this.props.name || 'default';
+      var name = this.props.name;
+      if (!name) return 'default';
+      return name;
     }
   }]);
 
