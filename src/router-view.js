@@ -81,9 +81,9 @@ class RouterView extends React.Component {
     if (currentRoute) currentRoute.viewInstances[this.name] = this;
     if (this.state && this.state._routerInited) {
       if (newState) Object.assign(newState, { currentRoute });
-      else if (this._isMounted) this.setState({ currentRoute: currentRoute ? currentRoute.config : null });
+      else if (this._isMounted) this.setState({ currentRoute });
     }
-    return currentRoute ? currentRoute.config : null;
+    return currentRoute;
   }
 
   _updateResolving(resolving) {
@@ -140,9 +140,8 @@ class RouterView extends React.Component {
     }
 
     if (state._routerDepth) {
-      let parentMatchRoute = this._getRouteMatch(state, state._routerDepth - 1);
-      state.parentRoute = parentMatchRoute ? parentMatchRoute.config : null;
-      state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
+      state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
+      state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children as ConfigRoute[]) : [];
       state.currentRoute = this._refreshCurrentRoute(state);
     } else console.error('[RouterView] cannot find root RouterView instance!', this);
 

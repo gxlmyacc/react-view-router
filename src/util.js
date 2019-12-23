@@ -398,13 +398,14 @@ function isRoutesChanged(prevs, nexts) {
 function getHostRouterView(ctx, continueCb) {
   let parent = ctx._reactInternalFiber.return;
   while (parent) {
-    if (continueCb && continueCb(parent) === false) return;
+    if (continueCb && continueCb(parent) === false) return null;
 
     const memoizedState = parent.memoizedState;
     // const memoizedProps = parent.memoizedProps;
     if (memoizedState && memoizedState._routerView) return parent.stateNode;
     parent = parent.return;
   }
+  return null;
 }
 
 function getParentRoute(ctx) {

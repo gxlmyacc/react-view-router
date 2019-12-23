@@ -409,7 +409,7 @@ export default class ReactViewRouter {
         return;
       }
 
-      let fallbackView;
+      let fallbackView = null;
       if (hasMatchedRouteLazy(to.matched)) {
         fallbackView = this.viewRoot;
         this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(m => {
@@ -421,7 +421,7 @@ export default class ReactViewRouter {
       fallbackView && fallbackView._updateResolving(true);
       this._routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, ok => {
         this._nexting = null;
-        fallbackView && setTimeout(() => fallbackView._isMounted && fallbackView._updateResolving(false), 0);
+        fallbackView && setTimeout(() => fallbackView && fallbackView._isMounted && fallbackView._updateResolving(false), 0);
 
         if (ok && typeof ok === 'string') ok = { path: ok };
         isContinue = Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
@@ -498,13 +498,14 @@ export default class ReactViewRouter {
 
   createMatchedRoute(route, match) {
     let { url, params } = match || { url: '', params: {} };
-    let { path, subpath, meta, redirect, depth } = route;
+    let { path, subpath, meta, redirect, index, depth } = route;
     return {
       url,
       path,
       subpath,
       depth,
       meta,
+      index,
       redirect,
       params,
       componentInstances: {},
