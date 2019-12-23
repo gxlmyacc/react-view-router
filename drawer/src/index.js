@@ -20,7 +20,7 @@ class RouterDrawer extends RouterViewComponent {
   _refreshCurrentRoute(state) {
     if (!state) state = this.state;
     const prevRoute = state.currentRoute;
-    const newState = {};
+    const newState = { openDrawer: false };
     const currentRoute = super._refreshCurrentRoute(state, newState);
     let openDrawer;
     if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
@@ -82,7 +82,7 @@ class RouterDrawer extends RouterViewComponent {
 
   renderCurrent(currentRoute) {
     const { routes } = this.state;
-    if (!this.state.router) return null;
+    if (!this.state.router || !currentRoute) return null;
     // eslint-disable-next-line
     const { _updateRef, router, container: oldContainer, prefixCls, position, zIndexStart, delay,
       drawerClassName, children, touch, ...props

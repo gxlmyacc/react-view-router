@@ -141,7 +141,7 @@ class RouterView extends React.Component {
 
     if (state._routerDepth) {
       state.parentRoute = this._getRouteMatch(state, state._routerDepth - 1);
-      state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children as ConfigRoute[]) : [];
+      state.routes = state.parentRoute ? this._filterRoutes(state.parentRoute.config.children) : [];
       state.currentRoute = this._refreshCurrentRoute(state);
     } else console.error('[RouterView] cannot find root RouterView instance!', this);
 
