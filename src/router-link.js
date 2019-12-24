@@ -97,7 +97,7 @@ export default function createRouterLink(router) {
       }
 
       if (!Array.isArray(event)) event = [event];
-    const events = {};
+      const events = {};
       event.forEach(evt => {
         events[camelize(`on-${evt}`)] = e => {
           guardEvent(e);

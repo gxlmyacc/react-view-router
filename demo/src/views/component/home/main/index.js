@@ -30,9 +30,6 @@ export default useRouteGuards(HomeMainIndex, {
   beforeRouteUpdate(to, from) {
     console.log('HomeMainIndex beforeRouteUpdate', to, from);
   },
-  afterRouteEnter(to, from) {
-    console.log('HomeMainIndex afterRouteEnter', to, from);
-  },
   afterRouteLeave(to, from) {
     console.log('HomeMainIndex afterRouteLeave', to, from);
   },

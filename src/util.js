@@ -58,7 +58,7 @@ function normalizeRoute(route, parent, depth = 0, force) {
   if (r.props) innumerable(r, 'props', normalizeProps(r.props));
   if (r.paramsProps) innumerable(r, 'paramsProps', normalizeProps(r.paramsProps));
   if (r.queryProps) innumerable(r, 'queryProps', normalizeProps(r.queryProps));
-  innumerable(r, '_pending', { afterEnterGuards: {}, completeCallbacks: {} });
+  innumerable(r, '_pending', { completeCallbacks: {} });
   return r;
 }
 
@@ -231,25 +231,27 @@ function mergeFns(...fns) {
 }
 
 function resolveRedirect(to, route, from) {
-  if (isFunction(to)) to = to.call(route, from);
+  if (isFunction(to)) to = to.call(route.config, from);
   if (!to) return '';
-  to = normalizeLocation(to, route);
-  from && Object.assign(to.query, from.query);
-  to.isRedirect = true;
-  return to;
+  let ret = normalizeLocation(to, route);
+  from && Object.assign(ret.query, from.query);
+  ret.isRedirect = true;
+  return ret;
 }
 
 function warn(...args) {
   console.warn(...args);
 }
 
-async function afterInterceptors(interceptors, ...args) {
+async function afterInterceptors(interceptors, to, from) {
   for (let i = 0; i < interceptors.length; i++) {
     let interceptor = interceptors[i];
-    while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, i);
+    while (interceptor && interceptor.lazy) {
+      interceptor = await interceptor(interceptors, i);
+    }
     if (!interceptor) return;
 
-    interceptor && await interceptor.call(this, ...args, interceptor.route);
+    interceptor && await interceptor.call(this, to, from, interceptor.route);
   }
 }
 
@@ -283,6 +285,7 @@ function renderRoute(route, routes, props, children, options = {}) {
   function createComp(route, props, children, options) {
     let component = route.components && route.components[options.name || 'default'];
     if (!component) return null;
+    if (isMatchedRoute(route)) route = route.config;
 
     const _props = {};
     if (route.defaultProps) {
@@ -300,8 +303,7 @@ function renderRoute(route, routes, props, children, options = {}) {
       }
     }
     const _pending = route._pending;
-    const afterEnterGuards = _pending.afterEnterGuards[options.name] || [];
-    const completeCallback = _pending.completeCallbacks[options.name];
+    const completeCallback = _pending.completeCallbacks[options.name || 'default'];
     let refHandler = once((el, componentClass) => {
       if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
@@ -319,11 +321,9 @@ function renderRoute(route, routes, props, children, options = {}) {
           else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
         completeCallback && completeCallback(el);
-        afterEnterGuards && afterInterceptors.call(el, afterEnterGuards);
       }
     });
-    _pending.completeCallbacks[options.name] = null;
-    _pending.afterEnterGuards[options.name] = [];
+    _pending.completeCallbacks[options.name || 'default'] = null;
     if (ref) ref = mergeFns(ref, el => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
     let ret;

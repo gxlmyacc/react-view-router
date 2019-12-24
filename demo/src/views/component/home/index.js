@@ -23,9 +23,6 @@ export default useRouteGuards(HomeIndex, {
   beforeRouteUpdate(to, from) {
     console.log('HomeIndex beforeRouteUpdate', to, from);
   },
-  afterRouteEnter(to, from) {
-    console.log('HomeIndex afterRouteEnter', to, from);
-  },
   afterRouteLeave(to, from) {
     console.log('HomeIndex afterRouteLeave', to, from);
   },

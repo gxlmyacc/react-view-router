@@ -51,9 +51,6 @@ export default useRouteGuards(
     beforeRouteUpdate(to, from) {
       console.log('HomeMainSomeIndex beforeRouteUpdate', this, to, from);
     },
-    afterRouteEnter(to, from) {
-      console.log('HomeMainSomeIndex afterRouteEnter', this, to, from);
-    },
     afterRouteLeave(to, from) {
       console.log('HomeMainSomeIndex afterRouteLeave', this, to, from);
     },

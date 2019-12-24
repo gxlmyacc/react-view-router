@@ -169,11 +169,11 @@ export default class ReactViewRouter {
 
       const ci = componentInstances[key];
       if (bindInstance) {
-        if (isFunction(bindInstance)) ret = ret.map(v => bindInstance(v, key, ci, r)).filter(Boolean);
+        if (isFunction(bindInstance)) ret = ret.map(v => bindInstance(v, key, ci, mr)).filter(Boolean);
         else if (ci) ret = ret.map(v => v.bind(ci));
       }
       ret = flatten(ret);
-      ret.forEach(v => v.route = r);
+      ret.forEach(v => v.route = mr);
       return ret;
     };
 
@@ -191,7 +191,7 @@ export default class ReactViewRouter {
           return interceptors[index];
         };
         lazyResovle.lazy = true;
-        lazyResovle.route = r;
+        lazyResovle.route = mr;
         ret.push(lazyResovle);
       } else ret.push(...toResovle(c, key));
     });
@@ -284,24 +284,6 @@ export default class ReactViewRouter {
         );
         ret.push(...guards);
       });
-
-      if (from !== current) tm = this._getChangeMatched(to, current);
-      tm.forEach(r => {
-        const compGuards = {};
-        const allGuards = this._getComponentGurads(
-          r,
-          'afterRouteEnter',
-          (fn, name) => {
-            if (!compGuards[name]) compGuards[name] = [];
-            compGuards[name].push(function () {
-              return fn.call(this, to, current, r.config);
-            });
-            return null;
-          }
-        );
-        Object.keys(compGuards).forEach(name => compGuards[name].push(...allGuards));
-        r.config._pending.afterEnterGuards = compGuards;
-      });
     }
     return flatten(ret);
   }
@@ -352,6 +334,14 @@ export default class ReactViewRouter {
     }
   }
 
+  async _getInterceptor(interceptors, index) {
+    let interceptor = interceptors[index];
+    while (interceptor && interceptor.lazy) {
+      interceptor = await interceptor(interceptors, index);
+    }
+    return interceptor;
+  }
+
   async _routetInterceptors(interceptors, to, from, next) {
     const isBlock = (v, interceptor) => {
       let _isLocation = typeof v === 'string' || isLocation(v);
@@ -366,13 +356,12 @@ export default class ReactViewRouter {
     };
 
     async function beforeInterceptor(interceptor, index, to, from, next) {
-      while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, index);
       if (!interceptor) return next();
 
       const nextWrapper = this._nexting = once(async f1 => {
-        let nextInterceptor = interceptors[++index];
         if (isBlock.call(this, f1, interceptor)) return next(f1);
         if (f1 === true) f1 = undefined;
+        let nextInterceptor = await this._getInterceptor(interceptors, ++index);
         if (!nextInterceptor) return next(res => isFunction(f1) && f1(res));
         try {
           return await beforeInterceptor.call(this,
@@ -392,7 +381,7 @@ export default class ReactViewRouter {
       });
       return await interceptor(to, from, nextWrapper, interceptor.route);
     }
-    if (next) await beforeInterceptor.call(this, interceptors[0], 0, to, from, next);
+    if (next) await beforeInterceptor.call(this, await this._getInterceptor(interceptors, 0), 0, to, from, next);
     else afterInterceptors.call(this, interceptors, to, from);
   }
 
