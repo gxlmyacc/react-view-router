@@ -1,14 +1,15 @@
 import React from 'react';
 import { getParentRoute } from './util';
+import { MatchedRoute } from './globals';
 
 export default function withRouter(comp: React.FunctionComponent | React.ComponentClass) {
   return React.forwardRef((props, ref: any) => {
     class WithRouter extends React.Component<any, {
       inited: boolean,
-      route: any
+      route: MatchedRoute | null
     }> {
 
-      constructor(props: object) {
+      constructor(props: any) {
         super(props);
         this.state = { inited: false, route: null };
       }
