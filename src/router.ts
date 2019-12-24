@@ -15,7 +15,7 @@ import {
   ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray,
   RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation,
   RouteGuardInterceptor, RouteEvent, RouteChildrenFn,
-  matchPathResult, ConfigRoute, RouteErrorCallback,
+  matchPathResult, ConfigRoute, RouteErrorCallback, ConfigRoutePendingAfterEnterGuard,
   ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn
 } from './globals';
 
@@ -185,7 +185,7 @@ export default class ReactViewRouter {
 
   _getComponentGurads(mr: MatchedRoute, guardName: string,
     bindInstance: boolean | RouteBindInstanceFn = true) {
-    let ret = [];
+    let ret: RouteGuardInterceptor[] = [];
 
     const componentInstances = mr.componentInstances;
 
@@ -197,7 +197,7 @@ export default class ReactViewRouter {
     if (guards) ret.push(guards);
 
     const toResovle = (c: any, key: string) => {
-      let ret = [];
+      let ret: RouteGuardInterceptor[] = [];
       const cc = c.__component ? getGuardsComponent(c, true) : c;
 
       const cg = c.__guards && c.__guards[guardName];
@@ -219,11 +219,11 @@ export default class ReactViewRouter {
 
       const ci = componentInstances[key];
       if (bindInstance) {
-        if (isFunction(bindInstance)) ret = ret.map(v => bindInstance(v, key, ci, r)).filter(Boolean);
+        if (isFunction(bindInstance)) ret = ret.map(v => bindInstance(v, key, ci, mr)).filter(Boolean) as RouteGuardInterceptor[];
         else if (ci) ret = ret.map(v => v.bind(ci));
       }
       ret = flatten(ret);
-      ret.forEach(v => v.route = r);
+      ret.forEach(v => v.route = mr);
       return ret;
     };
 
@@ -241,7 +241,7 @@ export default class ReactViewRouter {
           return interceptors[index];
         };
         lazyResovle.lazy = true;
-        lazyResovle.route = r;
+        lazyResovle.route = mr;
         ret.push(lazyResovle);
       } else ret.push(...toResovle(c, key));
     });
@@ -337,27 +337,27 @@ export default class ReactViewRouter {
                 cb = undefined;
               }
               return next(cb, ...args);
-            }, r.config);
+            }, r);
           })
-        );
+        ) as RouteBeforeGuardFn[];
         ret.push(...guards);
       });
 
       if (from !== current) tm = this._getChangeMatched(to, current);
       tm.forEach(r => {
-        const compGuards: Partial<any> = {};
-        const allGuards = this._getComponentGurads(
+        const compGuards: { [name: string]: ConfigRoutePendingAfterEnterGuard } = {};
+        this._getComponentGurads(
           r,
           'afterRouteEnter',
           (fn, name) => {
             if (!compGuards[name]) compGuards[name] = [];
             compGuards[name].push(function () {
-              return (fn as RouteAfterGuardFn).call(this, to, current, r.config);
+              return (fn as RouteAfterGuardFn).call(this, to, current, r);
             });
             return null;
           }
         );
-        Object.keys(compGuards).forEach(name => compGuards[name].push(...allGuards));
+        // Object.keys(compGuards).forEach(name => compGuards[name].push(...allGuards));
         r.config._pending.afterEnterGuards = compGuards;
       });
     }
@@ -465,7 +465,7 @@ export default class ReactViewRouter {
           next(typeof ex === 'string' ? new Error(ex) : ex);
         }
       });
-      return await (interceptor as RouteBeforeGuardFn)(to, from, nextWrapper, (interceptor as lazyResovleFn).route);
+      return await (interceptor as RouteBeforeGuardFn)(to, from, nextWrapper, interceptor.route);
     }
     if (next) await beforeInterceptor.call(this, interceptors[0] as RouteBeforeGuardFn, 0, to, from, next);
     else afterInterceptors.call(this, interceptors, to, from);

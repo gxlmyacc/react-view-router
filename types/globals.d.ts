@@ -15,15 +15,15 @@ export declare type RouteNextFn = (ok?: any, ...args: any[]) => void;
 export declare type RouteChildrenFn = () => ConfigRoute[];
 export declare type RouteErrorCallback = (error: Error) => void;
 export interface RouteBeforeGuardFn {
-    (to: Route, from: Route | null, next: RouteNextFn, route?: ConfigRoute): void;
+    (to: Route, from: Route | null, next: RouteNextFn, route?: MatchedRoute): void;
     global?: boolean;
 }
 export interface RouteAfterGuardFn {
-    (to: Route, from: Route | null, route?: ConfigRoute): void;
+    (to: Route, from: Route | null, route?: MatchedRoute): void;
     global?: boolean;
 }
 export declare type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | lazyResovleFn;
-export declare type RouteBindInstanceFn = (fn: RouteGuardInterceptor, name: string, ci?: any, r?: ConfigRoute) => RouteGuardInterceptor | null;
+export declare type RouteBindInstanceFn = (fn: RouteGuardInterceptor, name: string, ci?: any, r?: MatchedRoute) => RouteGuardInterceptor | null;
 export interface RouteHistoryLocation {
     path?: string;
     pathname: string;
@@ -136,5 +136,7 @@ export interface ReactViewRoutePlugin {
 export interface lazyResovleFn {
     (interceptors: RouteGuardInterceptor[], index: number): Promise<RouteBeforeGuardFn>;
     lazy?: boolean;
-    route?: ConfigRoute;
+    route?: MatchedRoute;
+}
+declare global {
 }

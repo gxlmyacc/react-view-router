@@ -3,7 +3,10 @@ import config from './config';
 import { RouteLazy } from './route-lazy';
 import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
-import { ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation } from './globals';
+import {
+  ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route,
+  RouteAfterGuardFn, RouteGuardInterceptor, lazyResovleFn, RouteRedirectFn
+} from './globals';
 import { ReactViewContainer, RouterViewComponent as RouterView  } from './router-view';
 
 function nextTick(cb: () => void, ctx?: object) {
@@ -92,7 +95,7 @@ function normalizeRoutePath(path: string, route?: any, append?: boolean, basenam
 }
 
 function resloveIndex(index: string | RouteIndexFn, routes: ConfigRouteArray): any {
-  index = isFunction(index) ? (index as RouteIndexFn)() : index;
+  index = isFunction(index) ? (index as RouteIndexFn)(routes) : index;
   let r = routes.find((r: ConfigRoute) => r.subpath === index);
   if (r && r.index) {
     if (r.index === index) return null;
@@ -244,26 +247,28 @@ function mergeFns(...fns: any[]) {
   };
 }
 
-function resolveRedirect(to: any, route: any, from?: any) {
-  if (isFunction(to)) to = to.call(route, from);
+function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, from?: Route) {
+  if (isFunction(to)) to = (to as RouteRedirectFn).call(route.config, from);
   if (!to) return '';
-  to = normalizeLocation(to, route);
-  from && Object.assign(to.query, from.query);
-  to.isRedirect = true;
-  return to;
+  let ret = normalizeLocation(to, route);
+  from && Object.assign(ret.query, from.query);
+  ret.isRedirect = true;
+  return ret;
 }
 
 function warn(...args: any) {
   console.warn(...args);
 }
 
-async function afterInterceptors(interceptors: any[], ...args: any) {
+async function afterInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null) {
   for (let i = 0; i < interceptors.length; i++) {
     let interceptor = interceptors[i];
-    while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, i);
+    while (interceptor && (interceptor as lazyResovleFn).lazy) {
+      interceptor = await (interceptor as lazyResovleFn)(interceptors, i);
+    }
     if (!interceptor) return;
 
-    interceptor && await interceptor.call(this, ...args, interceptor.route);
+    interceptor && await (interceptor as RouteAfterGuardFn).call(this, to, from, interceptor.route);
   }
 }
 
@@ -280,7 +285,7 @@ function renderRoute(
   routes: ConfigRoute[],
   props: any,
   children: React.ReactNode | null,
-  options: RenderRouteOption = {}
+  options: RenderRouteOption = { }
 ) {
   if (props === undefined) props = {};
   if (!route) return null;
@@ -311,6 +316,7 @@ function renderRoute(
   function createComp(route: ConfigRoute | MatchedRoute, props: any, children: React.ReactNode, options: RenderRouteOption) {
     let component = route.components && route.components[options.name || 'default'];
     if (!component) return null;
+    if (isMatchedRoute(route)) route = route.config;
 
     const _props = {};
     if (route.defaultProps) {
@@ -328,8 +334,8 @@ function renderRoute(
       }
     }
     const _pending = route._pending;
-    const afterEnterGuards = _pending.afterEnterGuards[options.name as string] || [];
-    const completeCallback = _pending.completeCallbacks[options.name as string];
+    const afterEnterGuards = _pending.afterEnterGuards[options.name || 'default'] || [];
+    const completeCallback = _pending.completeCallbacks[options.name || 'default'];
     let refHandler = once((el, componentClass) => {
       if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
@@ -347,11 +353,11 @@ function renderRoute(
           else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
         completeCallback && completeCallback(el);
-        afterEnterGuards && afterInterceptors.call(el, afterEnterGuards);
+        afterEnterGuards && afterEnterGuards.forEach(v => v && v());
       }
     });
-    _pending.completeCallbacks[options.name as string] = null;
-    _pending.afterEnterGuards[options.name as string] = [];
+    _pending.completeCallbacks[options.name || 'default'] = null;
+    _pending.afterEnterGuards[options.name || 'default'] = [];
     if (ref) ref = mergeFns(ref, (el: any) => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
     let ret;

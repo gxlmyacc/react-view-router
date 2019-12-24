@@ -14,22 +14,24 @@ export type ReactVueRouterOptions = {
   [key: string]: any
 }
 
-export type RouteRedirectFn = (route: MatchedRoute, from: Route) => string;
-export type RouteIndexFn = () => string;
+export type RouteRedirectFn = (this: ConfigRoute, from?: Route) => string;
+export type RouteIndexFn = (routes: ConfigRouteArray) => string;
 export type RouteNextFn = (ok?: any, ...args: any[]) => void;
 export type RouteChildrenFn = () => ConfigRoute[];
 export type RouteErrorCallback = (error: Error) => void;
 
 export interface RouteBeforeGuardFn {
-  (to: Route, from: Route | null, next: RouteNextFn, route?: ConfigRoute): void;
+  (to: Route, from: Route | null, next: RouteNextFn, route?: MatchedRoute): void;
+  route?: MatchedRoute;
   global?: boolean;
 }
 export interface RouteAfterGuardFn {
-  (to: Route, from: Route | null, route?: ConfigRoute): void;
+  (to: Route, from: Route | null, route?: MatchedRoute): void;
+  route?: MatchedRoute;
   global?: boolean;
 }
 export type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | lazyResovleFn;
-export type RouteBindInstanceFn = (fn: RouteGuardInterceptor, name: string, ci?: any, r?: ConfigRoute)
+export type RouteBindInstanceFn = (fn: RouteGuardInterceptor, name: string, ci?: any, r?: MatchedRoute)
   => RouteGuardInterceptor | null;
 
 export interface RouteHistoryLocation {
@@ -72,6 +74,8 @@ export type matchPathResult = {
   params: Partial<any>,
 }
 
+export type ConfigRoutePendingAfterEnterGuard = (() => void)[];
+
 export interface ConfigRoute {
   path: string,
   subpath: string,
@@ -93,7 +97,7 @@ export interface ConfigRoute {
 
   _pending: {
     afterEnterGuards: {
-      [key: string]: RouteAfterGuardFn[] | null
+      [key: string]: ConfigRoutePendingAfterEnterGuard;
     }
     completeCallbacks: {
       [key: string]: ((ci: any) => any) | null;
@@ -163,7 +167,7 @@ export interface ReactViewRoutePlugin {
 export interface lazyResovleFn {
   (interceptors: RouteGuardInterceptor[], index: number): Promise<RouteBeforeGuardFn>,
   lazy?: boolean,
-  route?: ConfigRoute
+  route?: MatchedRoute
 }
 
 declare global {
