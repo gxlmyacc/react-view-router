@@ -28,7 +28,7 @@ export default class ReactViewRouter {
     use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions): void;
     plugin(plugin: ReactViewRoutePlugin): (() => void) | undefined;
     _callEvent(event: string, ...args: any[]): any;
-    _getComponentGurads(mr: MatchedRoute, guardName: string, bindInstance?: boolean | RouteBindInstanceFn): any[];
+    _getComponentGurads(mr: MatchedRoute, guardName: string, bindInstance?: boolean | RouteBindInstanceFn): RouteGuardInterceptor[];
     _getRouteComponentGurads(matched: MatchedRoute[], guardName: string, reverse?: boolean, bindInstance?: boolean | RouteBindInstanceFn): RouteGuardInterceptor[];
     _getSameMatched(route: Route | null, compare?: Route): MatchedRoute[];
     _getChangeMatched(route: Route, compare?: Route | null, options?: {
@@ -40,6 +40,7 @@ export default class ReactViewRouter {
     _getAfterEachGuards(to: Route, from: Route | null): any[];
     _transformLocation(location: RouteHistoryLocation): RouteHistoryLocation | null;
     _handleRouteInterceptor(location: null | string | RouteHistoryLocation, callback: (ok: boolean, route?: Route) => void, ...args: any[]): Promise<void>;
+    _getInterceptor(interceptors: RouteGuardInterceptor[], index: number): Promise<RouteBeforeGuardFn>;
     _routetInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn): Promise<void>;
     _internalHandleRouteInterceptor(location: RouteHistoryLocation, callback: (ok: boolean, route?: Route) => void, isInit?: boolean): Promise<void>;
     _go(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, replace?: boolean): Promise<unknown>;

@@ -1,6 +1,6 @@
 import React from 'react';
 import matchPath from './match-path';
-import { ConfigRouteArray, ConfigRoute, MatchedRoute, RouteHistoryLocation } from './globals';
+import { ConfigRouteArray, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route, RouteGuardInterceptor, RouteRedirectFn } from './globals';
 import { ReactViewContainer, RouterViewComponent as RouterView } from './router-view';
 declare function nextTick(cb: () => void, ctx?: object): Promise<unknown> | undefined;
 declare function innumerable(obj: object, key: string, value: any, options?: PropertyDescriptor): object;
@@ -31,9 +31,9 @@ declare function normalizeProps(props: {
 declare function once(fn: ((...args: any) => any) | null, ctx?: any): (...args: any[]) => any;
 declare function isAcceptRef(v: any): boolean;
 declare function mergeFns(...fns: any[]): (...args: any) => undefined;
-declare function resolveRedirect(to: any, route: any, from?: any): any;
+declare function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, from?: Route): "" | RouteHistoryLocation;
 declare function warn(...args: any): void;
-declare function afterInterceptors(interceptors: any[], ...args: any): Promise<void>;
+declare function afterInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null): Promise<void>;
 declare type RenderRouteOption = {
     container?: ReactViewContainer;
     name?: string;

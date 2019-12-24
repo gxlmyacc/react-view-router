@@ -140,9 +140,6 @@ export default useRouteGuards(HomeMainSomeIndex, {
   beforeRouteUpdate(to, from) {
 
   },
-  afterRouteEnter(to, from) {
-
-  },
   afterRouteLeave(to, from) {
 
   },
@@ -225,7 +222,6 @@ const routes = normalizeRoutes([
             beforeEnter(to, from, next) { next(); }
             beforeLeave(to, from, next) { next(); }
             beforeUpdate(to, from) {}
-            afterEnter(to, from) {}
             afterLeave(to, from) {}
           }
         ]
@@ -405,7 +401,7 @@ function isLocation(v) {}
 ``` 
 otherwise, webpack will package both `history` and `history-fix` into the target js file.
 
-2. if route component is `Class Component` (not `Function Component`), then `this` variable in `afterRouteEnter`, `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards will be that component instance;
+2. if route component is `Class Component` (not `Function Component`), then `this` variable in `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards will be that component instance;
 
 ## License
 

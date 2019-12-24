@@ -68,7 +68,7 @@ function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any)
   if (r.props) innumerable(r, 'props', normalizeProps(r.props));
   if (r.paramsProps) innumerable(r, 'paramsProps', normalizeProps(r.paramsProps));
   if (r.queryProps) innumerable(r, 'queryProps', normalizeProps(r.queryProps));
-  innumerable(r, '_pending', { afterEnterGuards: {}, completeCallbacks: {} });
+  innumerable(r, '_pending', { completeCallbacks: {} });
   return r;
 }
 
@@ -334,7 +334,6 @@ function renderRoute(
       }
     }
     const _pending = route._pending;
-    const afterEnterGuards = _pending.afterEnterGuards[options.name || 'default'] || [];
     const completeCallback = _pending.completeCallbacks[options.name || 'default'];
     let refHandler = once((el, componentClass) => {
       if (el || !ref) {
@@ -353,11 +352,9 @@ function renderRoute(
           else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
         completeCallback && completeCallback(el);
-        afterEnterGuards && afterEnterGuards.forEach(v => v && v());
       }
     });
     _pending.completeCallbacks[options.name || 'default'] = null;
-    _pending.afterEnterGuards[options.name || 'default'] = [];
     if (ref) ref = mergeFns(ref, (el: any) => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
     let ret;

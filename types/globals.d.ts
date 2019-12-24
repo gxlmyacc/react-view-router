@@ -9,17 +9,19 @@ export declare type ReactVueRouterOptions = {
     history?: any;
     [key: string]: any;
 };
-export declare type RouteRedirectFn = (route: MatchedRoute, from: Route) => string;
-export declare type RouteIndexFn = () => string;
+export declare type RouteRedirectFn = (this: ConfigRoute, from?: Route) => string;
+export declare type RouteIndexFn = (routes: ConfigRouteArray) => string;
 export declare type RouteNextFn = (ok?: any, ...args: any[]) => void;
 export declare type RouteChildrenFn = () => ConfigRoute[];
 export declare type RouteErrorCallback = (error: Error) => void;
 export interface RouteBeforeGuardFn {
     (to: Route, from: Route | null, next: RouteNextFn, route?: MatchedRoute): void;
+    route?: MatchedRoute;
     global?: boolean;
 }
 export interface RouteAfterGuardFn {
     (to: Route, from: Route | null, route?: MatchedRoute): void;
+    route?: MatchedRoute;
     global?: boolean;
 }
 export declare type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | lazyResovleFn;
@@ -76,9 +78,6 @@ export interface ConfigRoute {
     redirect?: string | RouteRedirectFn;
     index?: string | RouteIndexFn;
     _pending: {
-        afterEnterGuards: {
-            [key: string]: RouteAfterGuardFn[] | null;
-        };
         completeCallbacks: {
             [key: string]: ((ci: any) => any) | null;
         };

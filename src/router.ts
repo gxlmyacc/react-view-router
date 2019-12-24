@@ -15,7 +15,7 @@ import {
   ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray,
   RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation,
   RouteGuardInterceptor, RouteEvent, RouteChildrenFn,
-  matchPathResult, ConfigRoute, RouteErrorCallback, ConfigRoutePendingAfterEnterGuard,
+  matchPathResult, ConfigRoute, RouteErrorCallback,
   ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn
 } from './globals';
 
@@ -342,24 +342,6 @@ export default class ReactViewRouter {
         ) as RouteBeforeGuardFn[];
         ret.push(...guards);
       });
-
-      if (from !== current) tm = this._getChangeMatched(to, current);
-      tm.forEach(r => {
-        const compGuards: { [name: string]: ConfigRoutePendingAfterEnterGuard } = {};
-        this._getComponentGurads(
-          r,
-          'afterRouteEnter',
-          (fn, name) => {
-            if (!compGuards[name]) compGuards[name] = [];
-            compGuards[name].push(function () {
-              return (fn as RouteAfterGuardFn).call(this, to, current, r);
-            });
-            return null;
-          }
-        );
-        // Object.keys(compGuards).forEach(name => compGuards[name].push(...allGuards));
-        r.config._pending.afterEnterGuards = compGuards;
-      });
     }
     return flatten(ret);
   }
@@ -414,13 +396,22 @@ export default class ReactViewRouter {
     }
   }
 
+  async _getInterceptor(interceptors: RouteGuardInterceptor[], index: number) {
+    let interceptor = interceptors[index];
+    while (interceptor && (interceptor as lazyResovleFn).lazy) {
+      interceptor = await (interceptor as lazyResovleFn)(interceptors, index);
+    }
+    return interceptor as RouteBeforeGuardFn;
+  }
+
+
   async _routetInterceptors(
     interceptors: RouteGuardInterceptor[],
     to: Route,
     from: Route | null,
     next?: RouteNextFn
   ) {
-    const isBlock = (v: any, interceptor: lazyResovleFn) => {
+    const isBlock = (v: any, interceptor: RouteBeforeGuardFn) => {
       let _isLocation = typeof v === 'string' || isLocation(v);
       if (_isLocation && interceptor) {
         v = this.createRoute(normalizeLocation(v, interceptor.route));
@@ -433,21 +424,18 @@ export default class ReactViewRouter {
     };
 
     async function beforeInterceptor(
-      interceptor: RouteBeforeGuardFn | lazyResovleFn,
+      interceptor: RouteBeforeGuardFn,
       index: number,
       to: Route,
       from: Route | null,
       next: RouteNextFn
     ) {
-      while (interceptor && (interceptor as lazyResovleFn).lazy) {
-        interceptor = await (interceptor as lazyResovleFn)(interceptors, index);
-      }
       if (!interceptor) return next();
 
       const nextWrapper: RouteNextFn = this._nexting = once(async f1 => {
-        let nextInterceptor = interceptors[++index] as RouteBeforeGuardFn;
-        if (isBlock.call(this, f1, interceptor as lazyResovleFn)) return next(f1);
+        if (isBlock.call(this, f1, interceptor)) return next(f1);
         if (f1 === true) f1 = undefined;
+        let nextInterceptor = await this._getInterceptor(interceptors, ++index);
         if (!nextInterceptor) return next((res: any) => isFunction(f1) && f1(res));
         try {
           return await beforeInterceptor.call(this,
@@ -467,7 +455,7 @@ export default class ReactViewRouter {
       });
       return await (interceptor as RouteBeforeGuardFn)(to, from, nextWrapper, interceptor.route);
     }
-    if (next) await beforeInterceptor.call(this, interceptors[0] as RouteBeforeGuardFn, 0, to, from, next);
+    if (next) await beforeInterceptor.call(this, await this._getInterceptor(interceptors, 0), 0, to, from, next);
     else afterInterceptors.call(this, interceptors, to, from);
   }
 

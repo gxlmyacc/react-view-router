@@ -74,8 +74,6 @@ export type matchPathResult = {
   params: Partial<any>,
 }
 
-export type ConfigRoutePendingAfterEnterGuard = (() => void)[];
-
 export interface ConfigRoute {
   path: string,
   subpath: string,
@@ -96,9 +94,6 @@ export interface ConfigRoute {
   index?: string | RouteIndexFn,
 
   _pending: {
-    afterEnterGuards: {
-      [key: string]: ConfigRoutePendingAfterEnterGuard;
-    }
     completeCallbacks: {
       [key: string]: ((ci: any) => any) | null;
     },
