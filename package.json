@@ -1,6 +1,6 @@
 {
   "name": "react-view-router",
-  "version": "2.1.0-alpha.1",
+  "version": "2.1.0-alpha.2",
   "description": "react-view-router",
   "keywords": [
     "react-view-router",
@@ -22,6 +22,7 @@
     "esm",
     "src",
     "build",
+    "types",
     "drawer"
   ],
   "scripts": {
