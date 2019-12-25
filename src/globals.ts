@@ -74,12 +74,19 @@ export type matchPathResult = {
   params: Partial<any>,
 }
 
-export interface ConfigRoute {
+export interface CommonRoute {
   path: string,
   subpath: string,
   depth: number,
-  exact: boolean,
   meta: Partial<any>,
+  index?: string | RouteIndexFn,
+  redirect?: string | RouteRedirectFn,
+  [key: string]: any
+}
+
+export interface ConfigRoute extends CommonRoute {
+  exact: boolean,
+
   parent?: ConfigRoute,
   children?: ConfigRoute[] | RouteChildrenFn,
   component?: React.Component,
@@ -90,8 +97,6 @@ export interface ConfigRoute {
   props?: Partial<any>,
   paramsProps?: Partial<any>,
   queryProps?: Partial<any>,
-  redirect?: string | RouteRedirectFn,
-  index?: string | RouteIndexFn,
 
   _pending: {
     completeCallbacks: {
@@ -108,13 +113,7 @@ export type matchRoutesResult = {
 };
 
 
-export type MatchedRoute = {
-  path: string,
-  subpath: string,
-  depth: number,
-  meta: Partial<any>,
-  index?: string | RouteIndexFn,
-  redirect?: string | RouteRedirectFn,
+export interface MatchedRoute extends CommonRoute {
   config: ConfigRoute,
   params: Partial<any>,
   componentInstances: {
@@ -123,7 +122,6 @@ export type MatchedRoute = {
   viewInstances: {
     [key: string]: any
   }
-  [key: string]: any
 }
 
 export interface Route {
