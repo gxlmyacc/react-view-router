@@ -300,7 +300,9 @@ const routes = normalizeRoutes([
         /* others: React.Component */
       }
       // the RouterView instance that matched this route config if found.
-      viewInstance: RouterView
+      viewInstances: {
+        default: RouterView
+      }
     }
     ..., 
     routeN
