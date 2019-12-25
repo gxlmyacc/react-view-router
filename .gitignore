@@ -9,5 +9,7 @@ analyzer/
 */.DS_Store
 plugin/
 esm
+es
 drawer/esm
+drawer/es
 
