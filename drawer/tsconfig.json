@@ -74,6 +74,8 @@
   ],
   "exclude": [
     "types",
-    "style"
+    "style",
+    "esm",
+    "es"
   ]
 }

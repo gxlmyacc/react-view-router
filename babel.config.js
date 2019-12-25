@@ -1,4 +1,4 @@
-module.exports = {
+const config = {
   presets: [
     [
       '@babel/preset-env',
@@ -29,3 +29,15 @@ module.exports = {
     '@babel/plugin-transform-arrow-functions'
   ]
 };
+
+module.exports = process.env.BUILD_ENV === 'es'
+  ? {
+    presets: [
+      '@babel/typescript',
+    ],
+    plugins: [
+      '@babel/proposal-class-properties',
+      '@babel/proposal-object-rest-spread'
+    ]
+  }
+  : config;

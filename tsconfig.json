@@ -72,7 +72,8 @@
     "node_modules",
     "types",
     "demo",
-    "dist",
+    "esm",
+    "es",
     "build"
   ]
 }

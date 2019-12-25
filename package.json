@@ -1,6 +1,6 @@
 {
   "name": "react-view-router",
-  "version": "2.1.0-alpha.2",
+  "version": "2.1.0-alpha.3",
   "description": "react-view-router",
   "keywords": [
     "react-view-router",
@@ -11,7 +11,7 @@
     "react-router-dom"
   ],
   "sideEffects": false,
-  "main": "dist/react-view-router.min.js",
+  "main": "es/index.js",
   "module": "esm/index.js",
   "typings": "types/index.d.ts",
   "engines": {
@@ -20,18 +20,20 @@
   "files": [
     "dist",
     "esm",
+    "es",
     "src",
-    "build",
     "types",
     "drawer"
   ],
   "scripts": {
-    "build-drawer": "npm run build-drawer:types && npm run build-drawer:js",
+    "build-drawer": "npm run build-drawer:types && npm run build-drawer:js && npm run build-drawer:es",
     "build-drawer:types": "tsc -p drawer --emitDeclarationOnly",
-    "build-drawer:js": "babel drawer/src -d drawer/esm --extensions \".ts,.tsx\" --source-maps",
-    "build-src": "npm run build:types && npm run build:js",
+    "build-drawer:js": "cross-env BUILD_ENV=js babel drawer/src -d drawer/esm --extensions \".ts,.tsx\" --source-maps",
+    "build-drawer:es": "cross-env BUILD_ENV=es babel drawer/src -d drawer/es --extensions \".ts,.tsx\"",
+    "build-src": "npm run build:types && npm run build:js && npm run build:es",
     "build:types": "tsc --emitDeclarationOnly",
-    "build:js": "babel src -d esm --extensions \".ts,.tsx\" --source-maps",
+    "build:js": "cross-env BUILD_ENV=js babel src -d esm --extensions \".ts,.tsx\" --source-maps",
+    "build:es": "cross-env BUILD_ENV=es babel src -d es --extensions \".ts,.tsx\"",
     "build": "npm run build-src && npm run build-drawer",
     "prepare": "npm run build"
   },
