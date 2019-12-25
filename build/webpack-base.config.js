@@ -68,12 +68,12 @@ module.exports = function (options) {
       ]
     },
     externals: [
+      'history-fix',
       'react',
-      'mini-create-react-context',
-      'prop-types',
       'react-is',
-      'regenerator-runtime',
-      'hoist-non-react-statics'
+      'path-to-regexp',
+      'prop-types',
+      'regenerator-runtime'
     ],
     resolve: {
       symlinks: false,

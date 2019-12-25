@@ -1,8 +1,8 @@
-import { matchPath, withRouter, Router, Route, /* Redirect, */ Switch } from 'react-router-dom';
 import React from 'react';
 import config from './config';
 import { RouteLazy } from './route-lazy';
 import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
+import matchPath, { computeRootMatch } from './match-path';
 
 function nextTick(cb, ctx) {
   if (!cb) return;
@@ -11,8 +11,8 @@ function nextTick(cb, ctx) {
   });
 }
 
-function innumerable(obj, key, value, options = { configurable: true, writable: true }) {
-  Object.defineProperty(obj, key, Object.assign({ value }, options));
+function innumerable(obj, key, value, options = { configurable: true }) {
+  Object.defineProperty(obj, key, { value, ...options });
   return obj;
 }
 
@@ -26,14 +26,15 @@ function normalizePath(path) {
   return paths.join('/');
 }
 
-function normalizeRoute(route, parent, depth, force) {
+function normalizeRoute(route, parent, depth = 0, force) {
   let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
   let r = { ...route, subpath: route.path, path, depth };
   if (parent) innumerable(r, 'parent', parent);
-  if (r.children && !isFunction(r.children)) r.children = normalizeRoutes(r.children, r, depth + 1, force);
-  r.exact = r.exact === undefined
-    ? Boolean(!r.children || !r.children.length)
-    : r.exact;
+  if (r.children && !isFunction(r.children)) {
+    innumerable(r, 'children', normalizeRoutes(r.children, r, depth + 1, force));
+  }
+  r.depth = depth;
+  r.exact = r.exact !== undefined ? r.exact : Boolean(r.redirect || r.index);
   if (!r.components) r.components = {};
   if (r.component) {
     r.components.default = r.component;
@@ -46,7 +47,7 @@ function normalizeRoute(route, parent, depth, force) {
         if (c.__children) {
           let children = c.__children || [];
           if (isFunction(children)) children = children(r) || [];
-          r.children = normalizeRoutes(children, r, depth + 1);
+          innumerable(r, 'children', normalizeRoutes(children, r, depth + 1));
           r.exact = !r.children.length;
         }
         return r.components[key] = c;
@@ -57,32 +58,40 @@ function normalizeRoute(route, parent, depth, force) {
   if (r.props) innumerable(r, 'props', normalizeProps(r.props));
   if (r.paramsProps) innumerable(r, 'paramsProps', normalizeProps(r.paramsProps));
   if (r.queryProps) innumerable(r, 'queryProps', normalizeProps(r.queryProps));
-  innumerable(r, '_pending', { afterEnterGuards: {}, completeCallbacks: {} });
+  innumerable(r, '_pending', { completeCallbacks: {} });
   return r;
 }
 
-function normalizeRoutes(routes, parent, depth, force = false) {
+function normalizeRoutes(routes, parent, depth = 0, force = false) {
   if (!routes) routes = [];
   if (!force && routes._normalized) return routes;
-  routes = routes.map(route => normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
+  routes = routes.map(route => route && normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
   Object.defineProperty(routes, '_normalized', { value: true });
   return routes;
 }
 
-function normalizeRoutePath(path, route) {
-  if (!path || path[0] === '/' || !route) return path || '';
+function normalizeRoutePath(path, route, append, basename = '') {
+  if (isAbsoluteUrl(path)) return path;
+  if (route && route.matched) route = route.matched[route.matched.length - 1];
+  if (!path || path[0] === '/' || !route) return basename + (path || '');
   if (route.config) route = route.config;
-  let parent = route.parent;
+  let parent = (append || /^\.\//.test(path)) ? route : route.parent;
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
     parent = route.parent;
   }
+  if (basename && path[0] === '/') path = basename + path;
   return normalizePath(path);
 }
 
 function resloveIndex(index, routes) {
   index = isFunction(index) ? index() : index;
-  return routes.find(r => r.subpath === index);
+  let r = routes.find(r => r.subpath === index);
+  if (r && r.index) {
+    if (r.index === index) return null;
+    return resloveIndex(r.index, routes);
+  }
+  return r;
 }
 
 function matchRoutes(routes, to, parent, branch) {
@@ -99,16 +108,17 @@ function matchRoutes(routes, to, parent, branch) {
     if (parent) parent.prevChildren = routes;
   }
 
-  for (let route of routes) {
+  routes.some(route => {
     let match = route.path
       ? matchPath(to.path, route)
       : branch.length
         ? branch[branch.length - 1].match // use parent match
-        : Router.computeRootMatch(to.path); // use default "root" match
+        : computeRootMatch(to.path); // use default "root" match
 
     if (match && route.index) {
       route = resloveIndex(route.index, routes);
-      if (!route) continue;
+      if (!route) return;
+      to.pathname = to.path = route.path;
     }
 
     if (match) {
@@ -116,22 +126,39 @@ function matchRoutes(routes, to, parent, branch) {
 
       if (route.children) matchRoutes(route.children, to, route, branch);
     }
-    if (match) break;
-  }
+    if (match) return true;
+  });
+
   return branch;
 }
 
-function normalizeLocation(to, route) {
+function normalizeLocation(to, route, append, basename = '') {
   if (!to) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
-    to = { pathname, search: search ? `?${search}` : '' };
+    to = { pathname, path: pathname, search: search ? `?${search}` : '', fullPath: to };
   }
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search.substr(1));
 
-  to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route);
-  to.search = to.search || (to.query ? config.stringifyQuery(to.query) : '');
+  if (!isAbsoluteUrl(to.pathname)) {
+    to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
+  }
+  Object.defineProperty(to, 'search', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      return config.stringifyQuery(this.query);
+    }
+  });
+  Object.defineProperty(to, 'fullPath', {
+    enumerable: true,
+    configurable: true,
+    get() {
+      let s = this.search;
+      return `${this.path}${s || ''}` || '/';
+    }
+  });
   if (!to.query) to.query = {};
   return to;
 }
@@ -142,6 +169,10 @@ function isPlainObject(obj) {
 }
 function isFunction(value) {
   return typeof value === 'function';
+}
+
+function isMatchedRoute(value) {
+  return Boolean(value.config);
 }
 
 function isLocation(v) {
@@ -167,7 +198,7 @@ function normalizeProps(props) {
 
 function once(fn, ctx) {
   let ret;
-  return function (...args) {
+  return function _once(...args) {
     if (!fn) return ret;
     const _fn = fn;
     fn = null;
@@ -200,33 +231,35 @@ function mergeFns(...fns) {
 }
 
 function resolveRedirect(to, route, from) {
-  if (isFunction(to)) to = to.call(route, from);
+  if (isFunction(to)) to = to.call(route.config, from);
   if (!to) return '';
-  to = normalizeLocation(to, route);
-  from && Object.assign(to.query, from.query);
-  to.isRedirect = true;
-  return to;
+  let ret = normalizeLocation(to, route);
+  from && Object.assign(ret.query, from.query);
+  ret.isRedirect = true;
+  return ret;
 }
 
 function warn(...args) {
   console.warn(...args);
 }
 
-async function afterInterceptors(interceptors, ...args) {
+async function afterInterceptors(interceptors, to, from) {
   for (let i = 0; i < interceptors.length; i++) {
     let interceptor = interceptors[i];
-    while (interceptor && interceptor.lazy) interceptor = await interceptor(interceptors, i);
+    while (interceptor && interceptor.lazy) {
+      interceptor = await interceptor(interceptors, i);
+    }
     if (!interceptor) return;
 
-    interceptor && await interceptor.call(this, ...args);
+    interceptor && await interceptor.call(this, to, from, interceptor.route);
   }
 }
 
-function renderRoutes(routes, extraProps, switchProps, options = {}) {
-  if (!routes) return null;
-
-  if (extraProps === undefined) extraProps = {};
-  if (switchProps === undefined) switchProps = {};
+function renderRoute(route, routes, props, children, options = {}) {
+  if (props === undefined) props = {};
+  if (!route) return null;
+  if (React.isValidElement(route)) return route;
+  if (route.config) route = route.config;
 
   function configProps(_props, configs, obj, name) {
     if (!obj) return;
@@ -249,19 +282,18 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       });
     }
   }
-  function renderComp(route, component, routeProps, options) {
+  function createComp(route, props, children, options) {
+    let component = route.components && route.components[options.name || 'default'];
     if (!component) return null;
+    if (isMatchedRoute(route)) route = route.config;
+
     const _props = {};
     if (route.defaultProps) {
-      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(routeProps) : route.defaultProps);
+      Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
     }
     if (route.props) configProps(_props, route.props, options.params, options.name);
     if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
     if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
-    if (route.render) return route.render(Object.assign(_props,
-      config.inheritProps ? routeProps : null,
-      extraProps,
-      config.inheritProps ? { route } : null));
 
     let ref = null;
     if (component) {
@@ -271,8 +303,7 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
       }
     }
     const _pending = route._pending;
-    const afterEnterGuards = _pending.afterEnterGuards[options.name] || [];
-    const completeCallback = _pending.completeCallbacks[options.name];
+    const completeCallback = _pending.completeCallbacks[options.name || 'default'];
     let refHandler = once((el, componentClass) => {
       if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
@@ -290,43 +321,39 @@ function renderRoutes(routes, extraProps, switchProps, options = {}) {
           else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
         completeCallback && completeCallback(el);
-        afterEnterGuards && afterInterceptors.call(el, afterEnterGuards);
       }
     });
-    _pending.completeCallbacks[options.name] = null;
-    _pending.afterEnterGuards[options.name] = [];
+    _pending.completeCallbacks[options.name || 'default'] = null;
     if (ref) ref = mergeFns(ref, el => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
-    const ret = React.createElement(
-      component,
-      Object.assign(_props,
-        config.inheritProps ? routeProps : null,
-        extraProps,
-        config.inheritProps ? { route } : null,
-        { ref })
-    );
+    let ret;
+    if (component instanceof RouteLazy) {
+      ret = null;
+      warn(`route [${route.path}] component should not be RouteLazy instance!`);
+    } else {
+      ret = React.createElement(
+        component,
+        Object.assign(
+          _props,
+          props,
+          config.inheritProps ? { route } : null,
+          { ref }
+        ),
+        ...(Array.isArray(children) ? children : [children])
+      );
+    }
     if (!ref) nextTick(refHandler);
     return ret;
   }
 
-  // const currentRoute = options.router && options.router.currentRoute;
-  let children = routes.map(function (route, i) {
-    let renderRoute = route;
-    if (route.redirect) return;
-    if (route.index) renderRoute = resloveIndex(route.index, routes);
-    if (!renderRoute) return;
+  let renderRoute = route;
+  if (route && route.redirect) return null;
+  if (route && route.index) renderRoute = resloveIndex(route.index, routes);
+  if (!renderRoute) return null;
 
-    return React.createElement(Route, {
-      key: route.key || i,
-      path: route.path,
-      exact: route.exact,
-      strict: route.strict,
-      render: props => renderComp(renderRoute, renderRoute.components[options.name || 'default'], props, options)
-    });
-  }).filter(Boolean);
-  if (options.container) children = options.container(children);
-  const ret = React.createElement(Switch, switchProps, children);
-  return ret;
+  let result = createComp(renderRoute, props, children, options);
+  if (route && options.container) result = options.container(result, route, props);
+  return result;
 }
 
 function flatten(array) {
@@ -340,7 +367,58 @@ function flatten(array) {
   return flattend;
 }
 
+function camelize(str) {
+  let ret = str.replace(/[-|:](\w)/g, function (_, c) { return c ? c.toUpperCase() : ''; });
+  if (/^[A-Z]/.test(ret)) ret = ret.charAt(0).toLowerCase() + ret.substr(1);
+  return ret;
+}
+
+function isPropChanged(prev, next) {
+  if ((!prev || !next) && prev !== next) return true;
+  return Object.keys(next).some(key => next[key] !== prev[key]);
+}
+
+function isRouteChanged(prev, next) {
+  if (prev && next) return prev.path !== next.path && prev.subpath !== next.subpath;
+  if ((!prev || !next) && prev !== next) return true;
+  return false;
+}
+
+function isRoutesChanged(prevs, nexts) {
+  if (!prevs || !nexts) return true;
+  if (prevs.length !== nexts.length) return true;
+  let changed = false;
+  prevs.some((prev, i) => {
+    changed = isRouteChanged(prev, nexts[i]);
+    return changed;
+  });
+  return changed;
+}
+
+function getHostRouterView(ctx, continueCb) {
+  let parent = ctx._reactInternalFiber.return;
+  while (parent) {
+    if (continueCb && continueCb(parent) === false) return null;
+
+    const memoizedState = parent.memoizedState;
+    // const memoizedProps = parent.memoizedProps;
+    if (memoizedState && memoizedState._routerView) return parent.stateNode;
+    parent = parent.return;
+  }
+  return null;
+}
+
+function getParentRoute(ctx) {
+  const view = getHostRouterView(ctx);
+  return (view && view.state.currentRoute) || null;
+}
+
+function isAbsoluteUrl(to) {
+  return typeof to === 'string' && /^(https?:)?\/\/.+/.test(to);
+}
+
 export {
+  camelize,
   flatten,
   warn,
   once,
@@ -349,8 +427,12 @@ export {
   nextTick,
   isPlainObject,
   isFunction,
+  isMatchedRoute,
   isLocation,
-  withRouter,
+  isPropChanged,
+  isRouteChanged,
+  isRoutesChanged,
+  isAbsoluteUrl,
   resolveRedirect,
   normalizePath,
   normalizeRoute,
@@ -360,7 +442,9 @@ export {
   normalizeProps,
   matchPath,
   matchRoutes,
-  renderRoutes,
+  renderRoute,
   innumerable,
   afterInterceptors,
+  getParentRoute,
+  getHostRouterView
 };

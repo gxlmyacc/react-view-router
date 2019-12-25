@@ -3,19 +3,16 @@ import { REACT_LAZY_TYPE } from './route-guard';
 
 export class RouteLazy {
 
-  constructor(ctor) {
+  constructor(ctor, options) {
     this.$$typeof = REACT_LAZY_TYPE;
     this._ctor = ctor;
-    this._status = -1;
     this._result = null;
 
-    this.defaultProps = undefined;
-    this.propTypes = undefined;
+    this.options = options;
     this.render = this.render.bind(this);
 
-    Object.defineProperty(this, 'resolved', { writable: true, value: false });
-    Object.defineProperty(this, 'updaters', { writable: true, value: [] });
-    Object.defineProperty(this, 'toResolve', { value: this.toResolve });
+    this.resolved = false;
+    this.updaters = [];
   }
 
   toResolve(...args) {
@@ -65,6 +62,6 @@ export function hasMatchedRouteLazy(matched) {
   return matched && matched.some(r => hasRouteLazy(r));
 }
 
-export function lazyImport(importMethod) {
-  return new RouteLazy(importMethod);
+export function lazyImport(importMethod, options) {
+  return new RouteLazy(importMethod, options || {});
 }

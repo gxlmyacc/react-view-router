@@ -1,9 +1,13 @@
-# `react-view-router`
+# react-view-router@2.x
 
 [![NPM version](https://img.shields.io/npm/v/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 [![NPM downloads](https://img.shields.io/npm/dm/react-view-router.svg?style=flat)](https://npmjs.com/package/react-view-router)
 
-> Route configuration component for `react-router-dom`. `react-view-router` is just a `react-router-dom@5` wrapper that can write routing configuration like [vue-router](https://router.vuejs.org/guide/#javascript) in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
+> A Route manager for `react` can write routing configuration like [vue-router](https://router.vuejs.org/guide/#javascript) in react. see: [Nested Routes](https://router.vuejs.org/guide/essentials/nested-routes.html)
+
+> Unlike 1.x, `react-view-router@2.x` does not depend on the [react-router](https://github.com/ReactTraining/react-router) Library
+
+> see [react-view-router@1.x](https://github.com/gxlmyacc/react-view-router/tree/1.x)
 
 ## Installation
 
@@ -136,9 +140,6 @@ export default useRouteGuards(HomeMainSomeIndex, {
   beforeRouteUpdate(to, from) {
 
   },
-  afterRouteEnter(to, from) {
-
-  },
   afterRouteLeave(to, from) {
 
   },
@@ -221,7 +222,6 @@ const routes = normalizeRoutes([
             beforeEnter(to, from, next) { next(); }
             beforeLeave(to, from, next) { next(); }
             beforeUpdate(to, from) {}
-            afterEnter(to, from) {}
             afterLeave(to, from) {}
           }
         ]
@@ -256,13 +256,6 @@ const routes = normalizeRoutes([
 - `queryProps` boolean or object `{ aa: Number, bb: String, cc: Boolean }`, Pass url query as props into route component.
 - `guards` the route guards, see:[Per-Route Guard](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 
-### Route Component Props
-
-Includes all props from `react-router-dom` and the following props.
-
-- `route` current route infos.
-- `parent` the RouterView instance.
-
 ### RouterView Props
 
 - `name` Use for `Named Views`, see [vue-router instructions](https://router.vuejs.org/guide/essentials/named-views.html#nested-named-views)
@@ -274,9 +267,6 @@ Includes all props from `react-router-dom` and the following props.
 - `RouterView.splice(start[, deleteCount[, item1[, item2[, ...]]]]): Array` delete routes in RouterView instance, like `Array.splice`;
 - `RouterView.indexOf(route: String|Object): Number` check `route` is in RouterView, like `Array.indexOf`
 - `RouterView.remove(route: String|Object): Object` remove `route` from RouterView, return `removed route` or `undefined`
-
-### RouterLink Component
-- `RouterLink` is `NavLink` component that in `react-router-dom`, just re-exported.
 
 ### ReactViewRouter Props
 - `currentRoute` current matched route infos:
@@ -310,7 +300,9 @@ Includes all props from `react-router-dom` and the following props.
         /* others: React.Component */
       }
       // the RouterView instance that matched this route config if found.
-      viewInstance: RouterView
+      viewInstances: {
+        default: RouterView
+      }
     }
     ..., 
     routeN
@@ -328,6 +320,9 @@ Includes all props from `react-router-dom` and the following props.
 }
 ```
 see: [Route Object Properties](https://router.vuejs.org/api/#route-object-properties)
+
+### ReactViewRouter instance Props
+- `RouterLink` a `NavLink` component like `route-link` in `vue-router`.
 
 ### ReactViewRouter instance Methods
 - `beforeEach` [global Before Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
@@ -390,7 +385,6 @@ function normalizeLocation(to, route?) {}
 function isLocation(v) {}
 ```
 
-- `withRouter` just re-export, see: [withRouter](https://reacttraining.com/react-router/web/api/withRouter)
 - `matchPath` just re-export, see: [matchPath](https://reacttraining.com/react-router/web/api/matchPath)
 
 ## NOTE
@@ -409,7 +403,7 @@ function isLocation(v) {}
 ``` 
 otherwise, webpack will package both `history` and `history-fix` into the target js file.
 
-2. if route component is `Class Component` (not `Function Component`), then `this` variable in `afterRouteEnter`, `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards will be that component instance;
+2. if route component is `Class Component` (not `Function Component`), then `this` variable in `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards will be that component instance;
 
 ## License
 

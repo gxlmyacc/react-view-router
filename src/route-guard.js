@@ -10,6 +10,7 @@ class RouteComponentGuards {
 
   constructor() {
     this.$$typeof = REACT_FORWARD_REF_TYPE;
+    this.render = null;
   }
 
 }

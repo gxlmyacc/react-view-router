@@ -1,6 +1,6 @@
 {
   "name": "react-view-router",
-  "version": "1.1.20",
+  "version": "2.0.14",
   "description": "react-view-router",
   "keywords": [
     "react-view-router",
@@ -20,34 +20,30 @@
     "dist",
     "esm",
     "src",
-    "build"
+    "build",
+    "drawer"
   ],
   "scripts": {
     "build-dev": "cross-env NODE_ENV=development webpack --progresss  --config build/webpack-dev.config.js",
     "build-prod": "cross-env NODE_ENV=production webpack --progresss  --config build/webpack-prod.config.js",
-    "build": "babel src -d esm",
+    "build-src": "babel src -d esm",
+    "build-drawer": "babel drawer/src -d drawer/esm",
+    "build": "npm run build-src && npm run build-drawer",
     "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gxlmyacc/react-view-router.git"
+    "url": "https://github.com/gxlmyacc/react-view-router/tree/2.x"
   },
   "author": "gxlmyacc",
   "dependencies": {
-    "history-fix": "^1.0.1",
-    "path-to-regexp": "^3.0.0",
-    "react": "^16.9.0",
-    "react-router-dom": "^5.0.1"
+    "history-fix": "^4.10.1",
+    "path-to-regexp": "^3.0.0"
   },
   "peerDependencies": {
-    "core-js": ">=2",
-    "history-fix": ">=1",
-    "mini-create-react-context": ">= 0.3",
-    "prop-types": ">=15",
-    "react": ">=16",
-    "react-is": ">=16",
-    "react-router-dom": ">=5",
-    "path-to-regexp": ">=3"
+    "react": "^16.8.0",
+    "react-dom": "^16.8.0",
+    "react-swipeable": "^5.4.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.2.3",
