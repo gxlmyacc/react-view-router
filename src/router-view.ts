@@ -12,7 +12,7 @@ type RouterViewUpdateRef = (vm: React.Component | null) => void;
 export interface RouterViewProps {
   name?: string,
   filter?: RouterViewFilter,
-  fallback?: ReactViewFallback,
+  fallback?: ReactViewFallback | React.Component,
   container?: ReactViewContainer,
   router?: ReactViewRouter,
   depth?: number,
@@ -161,7 +161,7 @@ class RouterView<
         resolving: this.state._routerResolving,
         depth: this.state._routerDepth
       });
-    }
+    } else if (React.isValidElement(fallback)) ret = fallback;
     return ret || null;
   }
 

@@ -1,4 +1,5 @@
 /// <reference types="react" />
+import ReactViewRouter from './router';
 export declare type RouteEvent = (ok: boolean, to: Route) => void;
 export declare type ReactVueRouterMode = 'hash' | 'browser' | 'history' | 'memory' | 'abstract';
 export declare type ReactVueRouterOptions = {
@@ -59,12 +60,17 @@ export declare type matchPathResult = {
     isExact?: boolean;
     params: Partial<any>;
 };
-export interface ConfigRoute {
+export interface CommonRoute {
     path: string;
     subpath: string;
     depth: number;
-    exact: boolean;
     meta: Partial<any>;
+    index?: string | RouteIndexFn;
+    redirect?: string | RouteRedirectFn;
+    [key: string]: any;
+}
+export interface ConfigRoute extends CommonRoute {
+    exact: boolean;
     parent?: ConfigRoute;
     children?: ConfigRoute[] | RouteChildrenFn;
     component?: React.Component;
@@ -75,8 +81,6 @@ export interface ConfigRoute {
     props?: Partial<any>;
     paramsProps?: Partial<any>;
     queryProps?: Partial<any>;
-    redirect?: string | RouteRedirectFn;
-    index?: string | RouteIndexFn;
     _pending: {
         completeCallbacks: {
             [key: string]: ((ci: any) => any) | null;
@@ -88,13 +92,7 @@ export declare type matchRoutesResult = {
     match: matchPathResult;
     route: ConfigRoute;
 };
-export declare type MatchedRoute = {
-    path: string;
-    subpath: string;
-    depth: number;
-    meta: Partial<any>;
-    index?: string | RouteIndexFn;
-    redirect?: string | RouteRedirectFn;
+export interface MatchedRoute extends CommonRoute {
     config: ConfigRoute;
     params: Partial<any>;
     componentInstances: {
@@ -103,8 +101,7 @@ export declare type MatchedRoute = {
     viewInstances: {
         [key: string]: any;
     };
-    [key: string]: any;
-};
+}
 export interface Route {
     action: string;
     url: string;
@@ -127,9 +124,14 @@ export interface ConfigRouteArray extends Array<ConfigRoute> {
     _normalized?: boolean;
 }
 export interface ReactViewRoutePlugin {
-    name?: string;
+    name: string;
     install?(router: any): void;
     uninstall?(router: any): void;
+    onRouteEnterNext?(route: MatchedRoute, ci: React.Component, prevRes: any): any;
+    onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, prevRes: any): any;
+    onRouteing?(isRouting: boolean): void;
+    onRouteChange?(route: Route, router: ReactViewRouter): void;
+    onResolveComponent?(nc: React.FunctionComponent | React.ComponentClass, route: ConfigRoute): React.FunctionComponent | React.ComponentClass | undefined;
     [event: string]: any | ((...args: any[]) => any);
 }
 export interface lazyResovleFn {

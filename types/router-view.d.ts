@@ -5,7 +5,7 @@ declare type RouterViewUpdateRef = (vm: React.Component | null) => void;
 export interface RouterViewProps {
     name?: string;
     filter?: RouterViewFilter;
-    fallback?: ReactViewFallback;
+    fallback?: ReactViewFallback | React.Component;
     container?: ReactViewContainer;
     router?: ReactViewRouter;
     depth?: number;
