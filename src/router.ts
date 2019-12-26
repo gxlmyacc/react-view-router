@@ -690,7 +690,7 @@ export default class ReactViewRouter {
     if (tm) {
       let keys = Object.keys(tm.viewInstances);
       keys.forEach((key, i) => {
-        tm && tm.viewInstances[key]._refreshCurrentRoute(undefined, undefined, 
+        tm && tm.viewInstances[key]._refreshCurrentRoute(undefined, undefined,
           i === keys.length - 1  ? callback : undefined);
       });
     } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute(undefined, undefined, callback);
