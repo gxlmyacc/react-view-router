@@ -1,4 +1,5 @@
 
+import ReactViewRouter from './router';
 
 export type RouteEvent = (ok: boolean, to: Route) => void;
 
@@ -150,9 +151,18 @@ export interface ConfigRouteArray extends Array<ConfigRoute> {
 }
 
 export interface ReactViewRoutePlugin {
-  name?: string;
+  name: string;
   install?(router: any): void;
   uninstall?(router: any): void;
+
+  onRouteEnterNext?(route: MatchedRoute, ci: React.Component, prevRes: any): any;
+  onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, prevRes: any): any;
+  onRouteing?(isRouting: boolean): void;
+  onRouteChange?(route: Route, router: ReactViewRouter): void;
+  onResolveComponent?(
+    nc: React.FunctionComponent | React.ComponentClass,
+    route: ConfigRoute
+  ): React.FunctionComponent | React.ComponentClass | undefined;
 
   [event: string]: any | ((...args: any[]) => any);
 }
