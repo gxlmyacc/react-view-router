@@ -150,7 +150,7 @@ function matchRoutes(
 }
 
 function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''): RouteHistoryLocation {
-  if (!to) return to;
+  if (!to || (!to.path && !to.pathname)) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
     to = { pathname, path: pathname, search: search ? `?${search}` : '', fullPath: to };
