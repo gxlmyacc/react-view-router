@@ -682,12 +682,19 @@ export default class ReactViewRouter {
     //   this.states.push(this.currentRoute.state);
     // }
 
-    let tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, { count: 1 })[0];
-    if (tm) {
-      Object.keys(tm.viewInstances).forEach(key => tm && tm.viewInstances[key]._refreshCurrentRoute());
-    } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute();
+    let tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, {
+      count: 1
+    })[0];
 
-    this._callEvent('onRouteChange', this.currentRoute, this);
+    let callback = () => this._callEvent('onRouteChange', this.currentRoute, this);
+    if (tm) {
+      let keys = Object.keys(tm.viewInstances);
+      keys.forEach((key, i) => {
+        tm && tm.viewInstances[key]._refreshCurrentRoute(undefined, undefined, 
+          i === keys.length - 1  ? callback : undefined);
+      });
+    } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute(undefined, undefined, callback);
+    else callback();
   }
 
   push(

@@ -44,10 +44,11 @@ declare class RouterView<P extends RouterViewProps = RouterViewProps, S extends 
     static defaultProps: RouterViewDefaultProps;
     constructor(props: RouterViewProps);
     get name(): string;
+    get currentRef(): any;
     _updateRef(ref: React.Component): void;
     _filterRoutes(routes: ConfigRoute[], state?: RouterViewState): ConfigRoute[];
     _getRouteMatch(state: RouterViewState, depth?: number): MatchedRoute | null;
-    _refreshCurrentRoute(state?: S, newState?: S): MatchedRoute | null;
+    _refreshCurrentRoute(state?: S, newState?: S, callback?: () => void): MatchedRoute | null;
     _updateResolving(resolving: any): void;
     _resolveFallback(): React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)> | null) | (new (props: any) => React.Component<any, any, any>)> | null;
     isNull(route: any): boolean;

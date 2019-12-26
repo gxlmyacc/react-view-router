@@ -98,6 +98,11 @@ class RouterView<
     return name as string;
   }
 
+  get currentRef() {
+    let currentRoute = this.state.currentRoute;
+    return currentRoute && currentRoute.componentInstances[this.name];
+  }
+
   _updateRef(ref: React.Component) {
     let currentRoute = this.state.currentRoute;
     if (currentRoute) currentRoute.componentInstances[this.name] = ref;
@@ -125,23 +130,32 @@ class RouterView<
     return matched.length > depth ? matched[depth] : null;
   }
 
-  _refreshCurrentRoute(state?: S, newState?: S) {
+  _refreshCurrentRoute(state?: S, newState?: S, callback?: () => void) {
     if (!state) state = this.state;
-    if (!state.router) throw new Error('state.router is null!');
+    const router = state.router;
+    if (!router) throw new Error('state.router is null!');
     let currentRoute = this._getRouteMatch(state, state._routerDepth);
 
     if (!currentRoute) {
-      currentRoute = state.router.createMatchedRoute(
+      currentRoute = router.createMatchedRoute(
         normalizeRoute({ path: '' }, state.parentRoute, state._routerDepth),
         state.parentRoute as any
       );
-      state.router.currentRoute && state.router.currentRoute.matched.push(currentRoute);
+      router.currentRoute && router.currentRoute.matched.push(currentRoute);
     } else if (!currentRoute || currentRoute.redirect) currentRoute = null;
 
     if (currentRoute) currentRoute.viewInstances[this.name] = this;
     if (this.state && this.state._routerInited) {
       if (newState) Object.assign(newState, { currentRoute });
-      else if (this._isMounted) this.setState({ currentRoute });
+      else if (this._isMounted) {
+        if (router.ReactVueLike
+          && (this.currentRef instanceof router.ReactVueLike)
+          && isRouteChanged(this.state.currentRoute, currentRoute)) {
+          this.currentRef._willUnmount && this.currentRef._willUnmount();
+          callback && callback();
+        }
+        this.setState({ currentRoute });
+      }
     }
     return currentRoute;
   }
