@@ -547,7 +547,7 @@ export default class ReactViewRouter {
         reject(res);
       }
       if (!to) return doAbort(false, to);
-  
+
       if (isFunction(onComplete)) to.onComplete = once(doComplete);
       if (isFunction(onAbort)) to.onAbort = once(doAbort);
       if (onInit) to.onInit = onInit;
