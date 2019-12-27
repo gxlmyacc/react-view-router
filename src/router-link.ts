@@ -125,8 +125,8 @@ export default function createRouterLink(router: any): any {
       if (router.linkExactActiveClass) exactActiveClass = router.linkExactActiveClass;
 
       const fallbackClass = exact
-        ? to.path === current.path ? exactActiveClass : ''
-        : current.path.startsWith(to.path) ? activeClass : '';
+        ? to && (to.path === current.path) ? exactActiveClass : ''
+        : (to && current.path.startsWith(to.path)) ? activeClass : '';
 
       if (fallbackClass) {
         if (remainProps.className) remainProps.className = `${fallbackClass} ${remainProps.className}`;
@@ -139,12 +139,13 @@ export default function createRouterLink(router: any): any {
       event.forEach(evt => {
         events[camelize(`on-${evt}`)] = (e: any) => {
           guardEvent(e);
+          if (!to) return;
           if (replace) router.replace(to);
           else router.push(to);
         };
       });
 
-      if (tag === 'a') remainProps.href = to.path;
+      if (to && tag === 'a') remainProps.href = to.path;
 
       return React.createElement(tag, Object.assign(remainProps, events), ...children);
     }

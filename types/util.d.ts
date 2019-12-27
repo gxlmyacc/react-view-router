@@ -16,7 +16,7 @@ declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: any, 
     route: any;
     match: any;
 }[];
-declare function normalizeLocation(to: any, route?: any, append?: boolean, basename?: string): RouteHistoryLocation;
+declare function normalizeLocation(to: any, route?: any, append?: boolean, basename?: string): RouteHistoryLocation | null;
 declare function isPlainObject(obj: any): obj is {
     [key: string]: any;
 };
@@ -32,7 +32,7 @@ declare function once(fn: ((...args: any) => any) | null, ctx?: any): (...args: 
 declare function isAcceptRef(v: any): boolean;
 declare function mergeFns(...fns: any[]): (...args: any) => undefined;
 declare function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, from?: Route): "" | RouteHistoryLocation;
-declare function warn(...args: any): void;
+declare function warn(...args: any[]): void;
 declare function afterInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null): Promise<void>;
 declare type RenderRouteOption = {
     container?: ReactViewContainer;

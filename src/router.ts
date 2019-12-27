@@ -382,7 +382,7 @@ export default class ReactViewRouter {
 
   async _handleRouteInterceptor(
     location: null | string | RouteHistoryLocation,
-    callback: (ok: boolean, route?: Route) => void,
+    callback: (ok: boolean, route?: Route | null) => void,
     ...args: any[]
   ) {
     if (typeof location === 'string') location = routeCache.flush(location);
@@ -414,8 +414,9 @@ export default class ReactViewRouter {
     const isBlock = (v: any, interceptor: RouteBeforeGuardFn) => {
       let _isLocation = typeof v === 'string' || isLocation(v);
       if (_isLocation && interceptor) {
-        v = this.createRoute(normalizeLocation(v, interceptor.route));
-        if (v.fullPath === to.fullPath) {
+        let _to = normalizeLocation(v, interceptor.route);
+        v = _to && this.createRoute(_to);
+        if (v && v.fullPath === to.fullPath) {
           v = undefined;
           _isLocation = false;
         }
@@ -461,7 +462,7 @@ export default class ReactViewRouter {
 
   async _internalHandleRouteInterceptor(
     location: RouteHistoryLocation,
-    callback: (ok: boolean, route?: Route) => void,
+    callback: (ok: boolean, route: Route | null) => void,
     isInit = false
   ) {
     let isContinue = false;
@@ -470,8 +471,10 @@ export default class ReactViewRouter {
       const from = isInit ? null : to.redirectedFrom || this.currentRoute;
       const current = this.currentRoute;
 
-      if (to && from && to.fullPath === from.fullPath) {
-        callback(true);
+      if (!to) return;
+
+      if (from && to.fullPath === from.fullPath) {
+        callback(true, null);
         if (to.onInit) to.onInit(Boolean(to), to);
         return;
       }
@@ -525,12 +528,12 @@ export default class ReactViewRouter {
       });
     } catch (ex) {
       console.error(ex);
-      if (!isContinue) callback(isContinue);
+      if (!isContinue) callback(isContinue, null);
     }
   }
 
   _go(
-    to: string | RouteHistoryLocation | Route,
+    to: string | RouteHistoryLocation | Route | null,
     onComplete?: RouteEvent,
     onAbort?: RouteEvent,
     onInit?: RouteEvent | null,
@@ -538,15 +541,15 @@ export default class ReactViewRouter {
   ) {
     return new Promise((resolve, reject) => {
       to = normalizeLocation(to, this.currentRoute, false, this.basename);
-      function doComplete(res: any, _to: Route) {
+      function doComplete(res: any, _to: Route | null) {
         onComplete && onComplete(res, _to);
         resolve(res);
       }
-      function doAbort(res: any, _to: Route) {
+      function doAbort(res: any, _to: Route | null) {
         onAbort && onAbort(res, _to);
-        reject(res);
+        reject(res === false && _to === null ? new Error('to path cannot be empty!') : res);
       }
-      if (!to) return doAbort(false, to);
+      if (!to) return doAbort(false, null);
 
       if (isFunction(onComplete)) to.onComplete = once(doComplete);
       if (isFunction(onAbort)) to.onAbort = once(doAbort);
@@ -714,13 +717,14 @@ export default class ReactViewRouter {
   }
 
   redirect(
-    to: string | RouteHistoryLocation | Route,
+    to: string | RouteHistoryLocation | Route | null,
     onComplete?: RouteEvent,
     onAbort?: RouteEvent,
     onInit?: RouteEvent | null,
-    from?: Route
+    from?: Route | null
   ) {
     to = normalizeLocation(to);
+    if (!to) return;
     to.isRedirect = true;
     to.redirectedFrom = from || this.currentRoute;
     return to.isReplace

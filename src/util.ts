@@ -149,8 +149,8 @@ function matchRoutes(
   return branch;
 }
 
-function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''): RouteHistoryLocation {
-  if (!to || (!to.path && !to.pathname)) return to;
+function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''): RouteHistoryLocation | null {
+  if (!to || (isPlainObject(to) && !to.path && !to.pathname)) return null;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
     to = { pathname, path: pathname, search: search ? `?${search}` : '', fullPath: to };
@@ -251,12 +251,13 @@ function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, from
   if (isFunction(to)) to = (to as RouteRedirectFn).call(route.config, from);
   if (!to) return '';
   let ret = normalizeLocation(to, route);
+  if (!ret) return '';
   from && Object.assign(ret.query, from.query);
   ret.isRedirect = true;
   return ret;
 }
 
-function warn(...args: any) {
+function warn(...args: any[]) {
   console.warn(...args);
 }
 

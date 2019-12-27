@@ -39,11 +39,11 @@ export default class ReactViewRouter {
     _getRouteUpdateGuards(to: Route, from: Route | null): RouteGuardInterceptor[];
     _getAfterEachGuards(to: Route, from: Route | null): any[];
     _transformLocation(location: RouteHistoryLocation): RouteHistoryLocation | null;
-    _handleRouteInterceptor(location: null | string | RouteHistoryLocation, callback: (ok: boolean, route?: Route) => void, ...args: any[]): Promise<void>;
+    _handleRouteInterceptor(location: null | string | RouteHistoryLocation, callback: (ok: boolean, route?: Route | null) => void, ...args: any[]): Promise<void>;
     _getInterceptor(interceptors: RouteGuardInterceptor[], index: number): Promise<RouteBeforeGuardFn>;
     _routetInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn): Promise<void>;
-    _internalHandleRouteInterceptor(location: RouteHistoryLocation, callback: (ok: boolean, route?: Route) => void, isInit?: boolean): Promise<void>;
-    _go(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, replace?: boolean): Promise<unknown>;
+    _internalHandleRouteInterceptor(location: RouteHistoryLocation, callback: (ok: boolean, route: Route | null) => void, isInit?: boolean): Promise<void>;
+    _go(to: string | RouteHistoryLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, replace?: boolean): Promise<unknown>;
     _replace(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
     _push(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
     createMatchedRoute(route: ConfigRoute, match?: matchPathResult | null): MatchedRoute;
@@ -54,7 +54,7 @@ export default class ReactViewRouter {
     updateRoute(location: RouteHistoryLocation | null): void;
     push(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;
     replace(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;
-    redirect(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, from?: Route): Promise<unknown>;
+    redirect(to: string | RouteHistoryLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, from?: Route | null): Promise<unknown> | undefined;
     go(n: number): any;
     back(): any;
     goBack(): any;

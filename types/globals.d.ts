@@ -1,6 +1,6 @@
 /// <reference types="react" />
 import ReactViewRouter from './router';
-export declare type RouteEvent = (ok: boolean, to: Route) => void;
+export declare type RouteEvent = (ok: boolean, to: Route | null) => void;
 export declare type ReactVueRouterMode = 'hash' | 'browser' | 'history' | 'memory' | 'abstract';
 export declare type ReactVueRouterOptions = {
     basename?: string;

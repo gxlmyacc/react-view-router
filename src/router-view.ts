@@ -156,7 +156,7 @@ class RouterView<
         }
         this.setState({ currentRoute });
       }
-    }
+    } else callback && callback();
     return currentRoute;
   }
 
