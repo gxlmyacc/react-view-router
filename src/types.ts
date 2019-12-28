@@ -1,4 +1,5 @@
 
+import { Location } from 'history-fix';
 import ReactViewRouter from './router';
 
 export type RouteEvent = (ok: boolean, to: Route | null) => void;
@@ -6,12 +7,15 @@ export type RouteEvent = (ok: boolean, to: Route | null) => void;
 export type ReactVueRouterMode = 'hash' | 'browser' | 'history' | 'memory' | 'abstract';
 
 
-export type ReactVueRouterOptions = {
+export interface ReactVueRouterOptions {
   basename?: string,
   base?: string,
   mode?: ReactVueRouterMode,
   manual?: boolean,
   history?: any,
+  initialEntries?: string[];
+  initialIndex?: number;
+  keyLength?: number;
   [key: string]: any
 }
 
@@ -35,10 +39,8 @@ export type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | laz
 export type RouteBindInstanceFn = (fn: RouteGuardInterceptor, name: string, ci?: any, r?: MatchedRoute)
   => RouteGuardInterceptor | null;
 
-export interface RouteHistoryLocation {
+export interface RouteHistoryLocation extends Location {
   path?: string,
-  pathname: string,
-  search: string,
   fullPath: string,
   query: Partial<any>,
   isReplace: boolean,
@@ -48,7 +50,6 @@ export interface RouteHistoryLocation {
   onInit?: RouteEvent,
   redirectedFrom?: Route | null
 }
-
 
 export interface UseRouteGuardsInfo {
   componentClass?: React.FunctionComponent | React.ComponentClass,
@@ -173,5 +174,21 @@ export interface lazyResovleFn {
   route?: MatchedRoute
 }
 
+
 declare global {
+
+}
+
+export interface ReactVueLike  {
+  _willUnmount(): void;
+
+  readonly $route: Route | null;
+  readonly $routeIndex: number;
+  readonly $matchedRoute: MatchedRoute | null;
+}
+
+export interface ReactVueLikeClass {
+  new (props: any): ReactVueLike;
+
+  flow(fn: Function): Function;
 }

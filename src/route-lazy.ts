@@ -1,6 +1,6 @@
 import React from 'react';
 import { REACT_LAZY_TYPE } from './route-guard';
-import { RouteLazyUpdater, MatchedRoute, ConfigRoute } from './globals';
+import { RouteLazyUpdater, MatchedRoute, ConfigRoute } from './types';
 
 export class RouteLazy {
 

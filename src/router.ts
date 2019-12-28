@@ -1,4 +1,4 @@
-import { createHashHistory, createBrowserHistory, createMemoryHistory } from 'history-fix';
+import { createHashHistory, createBrowserHistory, createMemoryHistory, History, LocationState } from 'history-fix';
 import config from './config';
 import {
   flatten, isAbsoluteUrl,
@@ -16,8 +16,9 @@ import {
   RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation,
   RouteGuardInterceptor, RouteEvent, RouteChildrenFn,
   matchPathResult, ConfigRoute, RouteErrorCallback,
-  ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn
-} from './globals';
+  ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn,
+  ReactVueLikeClass
+} from './types';
 
 
 const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
@@ -25,8 +26,6 @@ const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'go
 let idSeed = 1;
 
 export default class ReactViewRouter {
-
-  private id: number;
 
   options: ReactVueRouterOptions;
 
@@ -52,15 +51,21 @@ export default class ReactViewRouter {
 
   app: any; // React.ComponentClass | null;
 
+  ReactVueLike?: ReactVueLikeClass;
+
   getHostRouterView: typeof getHostRouterView;
 
   nextTick: typeof nextTick;
 
-  _history?: any;
+  protected _history: History | null;
 
-  _unlisten?: () => void;
+  protected _unlisten?: () => void;
 
-  __unblock?: () => void;
+  protected __unblock?: () => void;
+
+  protected id: number;
+
+  protected _nexting: RouteNextFn | null;
 
   [key: string]: any;
 
@@ -80,17 +85,21 @@ export default class ReactViewRouter {
     this.viewRoot = null;
     this.errorCallback = null;
     this.app = null;
+    this._nexting = null;
+    this._history = null;
+
     this.getHostRouterView = getHostRouterView;
+    this.nextTick = nextTick.bind(this);
+
     // this.states = [];
     // this.stateOrigin = this.history.length;
 
     this.use(options);
-    this.nextTick = nextTick.bind(this);
 
     if (!options.manual) this.start();
   }
 
-  get history() {
+  get history(): History {
     if (this._history) return this._history;
 
     const options = this.options;
@@ -112,10 +121,9 @@ export default class ReactViewRouter {
         default: this._history = createHashHistory(this.options);
       }
     }
-    Object.keys(this._history).forEach(key => !~HISTORY_METHS.indexOf(key) && (this[key] = this._history[key]));
     HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
 
-    return this._history;
+    return this._history as History<LocationState>;
   }
 
   start({ mode, basename, base, ...options  }: ReactVueRouterOptions = {}) {
@@ -129,7 +137,7 @@ export default class ReactViewRouter {
     this._unlisten = this.history.listen((location: any) => this.updateRoute(location));
     this._unblock = this.history.block((location: any) => routeCache.create(location, this.id));
 
-    if (this.routes.length) this.updateRoute(this.history.location);
+    if (this.routes.length) this.updateRoute(this.history.location as RouteHistoryLocation);
   }
 
   stop() {
@@ -142,7 +150,7 @@ export default class ReactViewRouter {
   use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions) {
     if (routes) {
       this.routes = routes ? normalizeRoutes(routes) : [];
-      this._history && this.updateRoute(this._history.location);
+      this._history && this.updateRoute(this._history.location as RouteHistoryLocation);
     }
 
     if (inheritProps !== undefined) config.inheritProps = inheritProps;
@@ -212,7 +220,7 @@ export default class ReactViewRouter {
         cc.mixins.forEach((m: any) => {
           let ccg = m[guardName] || (m.prototype && m.prototype[guardName]);
           if (!ccg) return;
-          if (!ccg.isMobxFlow && m.__flows && ~m.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
+          if (this.ReactVueLike && !ccg.isMobxFlow && m.__flows && ~m.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
           ret.push(ccg);
         });
       }

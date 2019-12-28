@@ -1,11 +1,11 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import {
   renderRoute, normalizeRoute, normalizeRoutes, isFunction,
   isRouteChanged, isRoutesChanged, isPropChanged,
   getHostRouterView
 } from './util';
 import ReactViewRouter from './router';
-import { MatchedRoute, ConfigRoute } from './globals';
+import { MatchedRoute, ConfigRoute, RouteHistoryLocation } from './types';
 
 type RouterViewUpdateRef = (vm: React.Component | null) => void;
 
@@ -191,7 +191,7 @@ class RouterView<
     if (state._routerRoot && state.router) {
       state.router.viewRoot = this;
       state.router._handleRouteInterceptor(
-        state.router.history.location,
+        state.router.history.location as RouteHistoryLocation,
         (ok, to) => {
           if (!ok) return;
           // this.state.router && (this.state.router.currentRoute = to);

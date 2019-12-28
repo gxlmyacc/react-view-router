@@ -2,7 +2,7 @@
 
 import ReactViewRouter from './router';
 
-export * from './globals';
+export * from './types';
 
 export {
   default as RouterView,

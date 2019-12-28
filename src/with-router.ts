@@ -1,6 +1,6 @@
 import React from 'react';
 import { getParentRoute } from './util';
-import { MatchedRoute } from './globals';
+import { MatchedRoute } from './types';
 
 export default function withRouter(comp: React.FunctionComponent | React.ComponentClass) {
   return React.forwardRef((props, ref: any) => {

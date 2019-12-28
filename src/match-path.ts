@@ -1,5 +1,5 @@
 import pathToRegexp from 'path-to-regexp';
-import { matchPathResult } from './globals';
+import { matchPathResult } from './types';
 
 const cache: { [key: string]: any } = {};
 const cacheLimit = 10000;

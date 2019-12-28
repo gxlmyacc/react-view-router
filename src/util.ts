@@ -6,7 +6,7 @@ import matchPath, { computeRootMatch } from './match-path';
 import {
   ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route,
   RouteAfterGuardFn, RouteGuardInterceptor, lazyResovleFn, RouteRedirectFn
-} from './globals';
+} from './types';
 import { ReactViewContainer, RouterViewComponent as RouterView  } from './router-view';
 
 function nextTick(cb: () => void, ctx?: object) {
@@ -187,11 +187,12 @@ function isPlainObject(obj: any): obj is { [key: string]: any } {
 function isFunction(value: any): value is Function {
   return typeof value === 'function';
 }
-
+function isNull(value: any): value is (null | undefined) {
+  return value === null || value === undefined;
+}
 function isMatchedRoute(value: any): value is MatchedRoute {
   return Boolean(value.config);
 }
-
 function isLocation(v: any) {
   return isPlainObject(v) && (v.path || v.pathname);
 }
@@ -457,6 +458,7 @@ export {
   mergeFns,
   isAcceptRef,
   nextTick,
+  isNull,
   isPlainObject,
   isFunction,
   isMatchedRoute,

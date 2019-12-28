@@ -1,6 +1,6 @@
 import React from 'react';
 import matchPath from './match-path';
-import { ConfigRouteArray, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route, RouteGuardInterceptor, RouteRedirectFn } from './globals';
+import { ConfigRouteArray, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route, RouteGuardInterceptor, RouteRedirectFn } from './types';
 import { ReactViewContainer, RouterViewComponent as RouterView } from './router-view';
 declare function nextTick(cb: () => void, ctx?: object): Promise<unknown> | undefined;
 declare function innumerable(obj: object, key: string, value: any, options?: PropertyDescriptor): object;
@@ -21,6 +21,7 @@ declare function isPlainObject(obj: any): obj is {
     [key: string]: any;
 };
 declare function isFunction(value: any): value is Function;
+declare function isNull(value: any): value is (null | undefined);
 declare function isMatchedRoute(value: any): value is MatchedRoute;
 declare function isLocation(v: any): any;
 declare function normalizeProps(props: {
@@ -54,4 +55,4 @@ declare function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]): bo
 declare function getHostRouterView(ctx: any, continueCb?: any): RouterView<import("./router-view").RouterViewProps, import("./router-view").RouterViewState, any> | null;
 declare function getParentRoute(ctx: any): MatchedRoute | null;
 declare function isAbsoluteUrl(to: any): boolean;
-export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isPlainObject, isFunction, isMatchedRoute, isLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, afterInterceptors, getParentRoute, getHostRouterView };
+export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, afterInterceptors, getParentRoute, getHostRouterView };

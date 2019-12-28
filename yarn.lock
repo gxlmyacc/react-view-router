@@ -3536,10 +3536,10 @@ hash.js@^1.0.0, hash.js@^1.0.3:
     inherits "^2.0.3"
     minimalistic-assert "^1.0.1"
 
-history-fix@^4.10.1:
-  version "4.10.1"
-  resolved "https://registry.yarnpkg.com/history-fix/-/history-fix-4.10.1.tgz#b7be40e3480e9e7c19bcdc6579d65a6bd88be537"
-  integrity sha512-WIKszOjLYR74WSQlwz0Mqpdhj92v9r49ZltlUKmWatZmQLbkXVGzZQf05aSmBPXdQCMw63QZjAa0dsqFUiT7Qw==
+history-fix@^4.10.2:
+  version "4.10.2"
+  resolved "https://registry.yarnpkg.com/history-fix/-/history-fix-4.10.2.tgz#f1a34a5b73f3750c22dc31b213031e731d9dade2"
+  integrity sha512-64H68Fg5EK+hLBYxlLstDJlMMNkpIxh5dnGjWLfVDLdf99JwGvyWGyj5z90BjeNM84JN1XHOx/ExbN2Xq3ySeg==
   dependencies:
     "@babel/runtime" "^7.1.2"
     loose-envify "^1.2.0"

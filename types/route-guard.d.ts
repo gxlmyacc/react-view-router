@@ -1,5 +1,5 @@
 import React from 'react';
-import { UseRouteGuardsInfo } from './globals';
+import { UseRouteGuardsInfo } from './types';
 export declare const REACT_FORWARD_REF_TYPE: number | symbol;
 export declare const REACT_LAZY_TYPE: number | symbol;
 export declare class RouteComponentGuards {
@@ -11,5 +11,5 @@ export declare class RouteComponentGuards {
     __children?: any;
     constructor();
 }
-export declare function getGuardsComponent(v: RouteComponentGuards, useComponentClass?: boolean): RouteComponentGuards | React.FunctionComponent<{}> | React.ComponentClass<{}, any>;
+export declare function getGuardsComponent(v: RouteComponentGuards, useComponentClass?: boolean): React.FunctionComponent<{}> | React.ComponentClass<{}, any> | RouteComponentGuards;
 export declare function useRouteGuards(component: React.FunctionComponent | React.ComponentClass, guards?: UseRouteGuardsInfo, componentClass?: React.FunctionComponent | React.ComponentClass | null, children?: any): RouteComponentGuards;

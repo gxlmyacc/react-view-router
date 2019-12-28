@@ -1,5 +1,5 @@
 import React from 'react';
-import { UseRouteGuardsInfo } from './globals';
+import { UseRouteGuardsInfo } from './types';
 
 const hasSymbol = typeof Symbol === 'function' && Symbol.for;
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactViewRouter from './router';
-import { MatchedRoute, ConfigRoute } from './globals';
+import { MatchedRoute, ConfigRoute } from './types';
 declare type RouterViewUpdateRef = (vm: React.Component | null) => void;
 export interface RouterViewProps {
     name?: string;

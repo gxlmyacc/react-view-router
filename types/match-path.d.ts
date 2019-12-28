@@ -1,5 +1,5 @@
 import pathToRegexp from 'path-to-regexp';
-import { matchPathResult } from './globals';
+import { matchPathResult } from './types';
 interface matchPathOptions {
     path?: string;
     exact?: boolean;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouteLazyUpdater, MatchedRoute, ConfigRoute } from './globals';
+import { RouteLazyUpdater, MatchedRoute, ConfigRoute } from './types';
 export declare class RouteLazy {
     private _ctor;
     private _result;
