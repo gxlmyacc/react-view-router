@@ -41,7 +41,7 @@ export interface RouteHistoryLocation {
     redirectedFrom?: Route | null;
 }
 export interface UseRouteGuardsInfo {
-    componentClass?: React.FunctionComponent | React.ComponentClass;
+    componentClass?: React.ComponentType;
     children?: any;
     beforeRouteEnter?: RouteBeforeGuardFn;
     beforeRouteLeave?: RouteBeforeGuardFn;
@@ -50,9 +50,9 @@ export interface UseRouteGuardsInfo {
     beforeRouteUpdate?: RouteAfterGuardFn;
 }
 export interface RouteLazyUpdater {
-    (component: (React.FunctionComponent | React.ComponentClass) & {
+    (component: (React.ComponentType) & {
         __children?: any[] | ((r: any) => any[]);
-    }): React.FunctionComponent | React.ComponentClass | undefined;
+    }): React.ComponentType | undefined;
 }
 export declare type matchPathResult = {
     path?: string;
@@ -131,7 +131,7 @@ export interface ReactViewRoutePlugin {
     onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, prevRes: any): any;
     onRouteing?(isRouting: boolean): void;
     onRouteChange?(route: Route, router: ReactViewRouter): void;
-    onResolveComponent?(nc: React.FunctionComponent | React.ComponentClass, route: ConfigRoute): React.FunctionComponent | React.ComponentClass | undefined;
+    onResolveComponent?(nc: React.ComponentType, route: ConfigRoute): React.ComponentType | undefined;
     [event: string]: any | ((...args: any[]) => any);
 }
 export interface lazyResovleFn {

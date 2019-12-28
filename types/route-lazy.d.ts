@@ -8,7 +8,7 @@ export declare class RouteLazy {
     options: Partial<any>;
     updaters: RouteLazyUpdater[];
     constructor(ctor: any, options?: Partial<any>);
-    toResolve(...args: any[]): Promise<React.FunctionComponent | React.ComponentClass>;
+    toResolve(...args: any[]): Promise<React.ComponentType>;
     render(props: object, ref: any): React.DetailedReactHTMLElement<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement> | null;
 }
 export declare function hasRouteLazy(route: MatchedRoute | ConfigRoute): boolean;

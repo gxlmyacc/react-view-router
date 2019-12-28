@@ -2,7 +2,7 @@ import React from 'react';
 import { getParentRoute } from './util';
 import { MatchedRoute } from './types';
 
-export default function withRouter(comp: React.FunctionComponent | React.ComponentClass) {
+export default function withRouter(comp: React.ComponentType) {
   return React.forwardRef((props, ref: any) => {
     class WithRouter extends React.Component<any, {
       inited: boolean,

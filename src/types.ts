@@ -1,5 +1,5 @@
 
-import { Location } from 'history-fix';
+import { Location, History } from 'history-fix';
 import ReactViewRouter from './router';
 
 export type RouteEvent = (ok: boolean, to: Route | null) => void;
@@ -7,16 +7,15 @@ export type RouteEvent = (ok: boolean, to: Route | null) => void;
 export type ReactVueRouterMode = 'hash' | 'browser' | 'history' | 'memory' | 'abstract';
 
 
-export interface ReactVueRouterOptions {
+export interface ReactVueRouterOptions extends Partial<any> {
   basename?: string,
   base?: string,
   mode?: ReactVueRouterMode,
   manual?: boolean,
-  history?: any,
+  history?: History,
   initialEntries?: string[];
   initialIndex?: number;
   keyLength?: number;
-  [key: string]: any
 }
 
 export type RouteRedirectFn = (this: ConfigRoute, from?: Route) => string;
@@ -52,7 +51,7 @@ export interface RouteHistoryLocation extends Location {
 }
 
 export interface UseRouteGuardsInfo {
-  componentClass?: React.FunctionComponent | React.ComponentClass,
+  componentClass?: React.ComponentType,
   children?: any,
 
   beforeRouteEnter?: RouteBeforeGuardFn,
@@ -63,10 +62,10 @@ export interface UseRouteGuardsInfo {
 }
 
 export interface RouteLazyUpdater {
-  (component: (React.FunctionComponent | React.ComponentClass) & {
+  (component: (React.ComponentType) & {
     __children?: any[] | ((r: any) => any[])
   }):
-    React.FunctionComponent | React.ComponentClass | undefined;
+    React.ComponentType | undefined;
 }
 
 export type matchPathResult = {
@@ -161,9 +160,9 @@ export interface ReactViewRoutePlugin {
   onRouteing?(isRouting: boolean): void;
   onRouteChange?(route: Route, router: ReactViewRouter): void;
   onResolveComponent?(
-    nc: React.FunctionComponent | React.ComponentClass,
+    nc: React.ComponentType,
     route: ConfigRoute
-  ): React.FunctionComponent | React.ComponentClass | undefined;
+  ): React.ComponentType | undefined;
 
   [event: string]: any | ((...args: any[]) => any);
 }
@@ -172,11 +171,6 @@ export interface lazyResovleFn {
   (interceptors: RouteGuardInterceptor[], index: number): Promise<RouteBeforeGuardFn>,
   lazy?: boolean,
   route?: MatchedRoute
-}
-
-
-declare global {
-
 }
 
 export interface ReactVueLike  {
@@ -191,4 +185,11 @@ export interface ReactVueLikeClass {
   new (props: any): ReactVueLike;
 
   flow(fn: Function): Function;
+}
+
+declare global {
+  interface EsModule extends NodeModule {
+    __esModule?: boolean;
+    default: any
+  }
 }

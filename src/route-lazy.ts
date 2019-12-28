@@ -2,11 +2,12 @@ import React from 'react';
 import { REACT_LAZY_TYPE } from './route-guard';
 import { RouteLazyUpdater, MatchedRoute, ConfigRoute } from './types';
 
+
 export class RouteLazy {
 
-  private _ctor: any
+  private _ctor: React.ComponentType | Function | Promise<React.ComponentType>;
 
-  private _result: any;
+  private _result: React.ComponentType | null;
 
   private resolved: boolean;
 
@@ -17,7 +18,7 @@ export class RouteLazy {
   updaters: RouteLazyUpdater[] = [];
 
   constructor(
-    ctor: any,
+    ctor: React.ComponentType | Function | Promise<React.ComponentType>,
     options: Partial<any> = {}
   ) {
     this._ctor = ctor;
@@ -30,24 +31,24 @@ export class RouteLazy {
     this.updaters = [];
   }
 
-  toResolve(...args: any[]): Promise<React.FunctionComponent | React.ComponentClass> {
+  toResolve(...args: any[]): Promise<React.ComponentType | null> {
     return new Promise(async (resolve, reject) => {
       if (this.resolved) return resolve(this._result);
 
       let _resolve = (v:
-        (React.FunctionComponent | React.ComponentClass)
-        & { __esModule?: boolean; default: any }) => {
+        (React.ComponentType)
+        & EsModule) => {
         v = (v && v.__esModule) ? v.default : v;
         this.updaters.forEach(updater => v = updater(v) as any || v);
         this._result = v;
         this.resolved = true;
         resolve(v);
       };
-      let component = this._ctor.prototype instanceof React.Component
+      let component = (this._ctor as React.ComponentType).prototype instanceof React.Component
         ? this._ctor
         : this._ctor instanceof Promise
           ? await this._ctor
-          : this._ctor(...args);
+          : (this._ctor as Function)(...args);
 
       if (!component) throw new Error('component should not null!');
 
@@ -57,7 +58,7 @@ export class RouteLazy {
     });
   }
 
-  render(props: object, ref: any) {
+  render(props: any, ref: any) {
     if (!this.resolved || !this._result) return null;
     return React.createElement(this._result, { ...props, ref });
   }

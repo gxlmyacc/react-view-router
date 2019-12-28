@@ -14,9 +14,9 @@ export class RouteComponentGuards {
 
   __guards?: UseRouteGuardsInfo;
 
-  __component?: React.FunctionComponent | React.ComponentClass | RouteComponentGuards;
+  __component?: React.ComponentType | RouteComponentGuards;
 
-  __componentClass?: React.FunctionComponent | React.ComponentClass;
+  __componentClass?: React.ComponentType;
 
   __children?: any;
 
@@ -35,9 +35,9 @@ export function getGuardsComponent(v: RouteComponentGuards, useComponentClass = 
 }
 
 export function useRouteGuards(
-  component: React.FunctionComponent | React.ComponentClass,
+  component: React.ComponentType,
   guards: UseRouteGuardsInfo = {},
-  componentClass?: React.FunctionComponent | React.ComponentClass | null,
+  componentClass?: React.ComponentType | null,
   children?: any
 ) {
   const ret = new RouteComponentGuards();
