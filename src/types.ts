@@ -18,9 +18,11 @@ export interface ReactVueRouterOptions extends Partial<any> {
   keyLength?: number;
 }
 
+export type RouteNextResult = boolean | Error | Function | string | null | RouteLocation;
+
 export type RouteRedirectFn = (this: ConfigRoute, from?: Route) => string;
 export type RouteIndexFn = (routes: ConfigRouteArray) => string;
-export type RouteNextFn = (ok?: any, ...args: any[]) => void;
+export type RouteNextFn = (ok?: RouteNextResult, ...args: any[]) => void;
 export type RouteChildrenFn = () => ConfigRoute[];
 export type RouteErrorCallback = (error: Error) => void;
 
@@ -38,8 +40,16 @@ export type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | laz
 export type RouteBindInstanceFn = (fn: RouteGuardInterceptor, name: string, ci?: any, r?: MatchedRoute)
   => RouteGuardInterceptor | null;
 
-export interface RouteHistoryLocation extends Location {
+export type RouteLocation = {
   path?: string,
+  query?: Partial<any>,
+  params?: Partial<any>,
+  append?: boolean,
+  _routeNormalized?: boolean;
+}
+
+export interface RouteHistoryLocation extends Location {
+  path: string,
   fullPath: string,
   query: Partial<any>,
   isReplace: boolean,
@@ -47,7 +57,8 @@ export interface RouteHistoryLocation extends Location {
   onComplete?: RouteEvent,
   onAbort?: RouteEvent,
   onInit?: RouteEvent,
-  redirectedFrom?: Route | null
+  redirectedFrom?: Route | null,
+  _routeNormalized?: boolean;
 }
 
 export interface UseRouteGuardsInfo {

@@ -5,7 +5,7 @@ import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
 import {
   ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route,
-  RouteAfterGuardFn, RouteGuardInterceptor, lazyResovleFn, RouteRedirectFn
+  RouteAfterGuardFn, RouteGuardInterceptor, lazyResovleFn, RouteRedirectFn, RouteLocation
 } from './types';
 import { ReactViewContainer, RouterViewComponent as RouterView  } from './router-view';
 
@@ -151,6 +151,7 @@ function matchRoutes(
 
 function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''): RouteHistoryLocation | null {
   if (!to || (isPlainObject(to) && !to.path && !to.pathname)) return null;
+  if (to._routeNormalized) return to;
   if (typeof to === 'string') {
     const [pathname, search] = to.split('?');
     to = { pathname, path: pathname, search: search ? `?${search}` : '', fullPath: to };
@@ -177,6 +178,7 @@ function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''
     }
   });
   if (!to.query) to.query = {};
+  innumerable(to, '_normalized', true);
   return to;
 }
 
@@ -193,8 +195,11 @@ function isNull(value: any): value is (null | undefined) {
 function isMatchedRoute(value: any): value is MatchedRoute {
   return Boolean(value.config);
 }
-function isLocation(v: any) {
+function isLocation(v: any): v is RouteLocation {
   return isPlainObject(v) && (v.path || v.pathname);
+}
+function isHistoryLocation(v: any): v is RouteHistoryLocation {
+  return isLocation(v) && Boolean(v._routeNormalized);
 }
 
 function normalizeProps(props: { [key: string]: any } | any[]) {
@@ -463,6 +468,7 @@ export {
   isFunction,
   isMatchedRoute,
   isLocation,
+  isHistoryLocation,
   isPropChanged,
   isRouteChanged,
   isRoutesChanged,

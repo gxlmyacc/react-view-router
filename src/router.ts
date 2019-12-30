@@ -14,7 +14,7 @@ import { RouterViewComponent as RouterView } from './router-view';
 import {
   ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray,
   RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation,
-  RouteGuardInterceptor, RouteEvent, RouteChildrenFn,
+  RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteNextResult, RouteLocation,
   matchPathResult, ConfigRoute, RouteErrorCallback,
   ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn,
   ReactVueLikeClass
@@ -313,10 +313,10 @@ export default class ReactViewRouter {
         'beforeRouteLeave',
         true,
         (fn, name, ci, r) => (function beforeRouteLeaveWraper(to: Route, from: Route | null, next: RouteNextFn) {
-          return (fn as RouteBeforeGuardFn).call(ci, to, from, (cb: (...args: any) => any, ...args: any[]) => {
+          return (fn as RouteBeforeGuardFn).call(ci, to, from, (cb?: RouteNextResult, ...args: any[]) => {
             if (isFunction(cb)) {
               const _cb = cb;
-              cb = (...as) => {
+              cb = (...as: any[]) => {
                 const res = _cb(...as);
                 view._callEvent('onRouteLeaveNext', r, ci, res);
                 return res;
@@ -514,11 +514,9 @@ export default class ReactViewRouter {
 
         if (!isContinue) {
           if (isLocation(ok)) {
-            if (to.onAbort) ok.onAbort = to.onAbort;
-            if (to.onComplete) ok.onComplete = to.onComplete;
-            return this.redirect(ok, undefined, undefined, to.onInit || (isInit ? callback : null), to);
+            return this.redirect(ok, to.onComplete, to.onAbort, to.onInit || (isInit ? callback : null), to);
           }
-          if (to && isFunction(to.onAbort)) to.onAbort(ok, to);
+          if (to && isFunction(to.onAbort)) to.onAbort(Boolean(ok), to);
           if (ok instanceof Error) this.errorCallback && this.errorCallback(ok);
           return;
         }
@@ -530,7 +528,7 @@ export default class ReactViewRouter {
           if (!isInit && (!current || current.fullPath !== to.fullPath)) {
             this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
           }
-          if (to && isFunction(to.onComplete)) to.onComplete(ok, to);
+          if (to && isFunction(to.onComplete)) to.onComplete(Boolean(ok), to);
           this._routetInterceptors(this._getAfterEachGuards(to, current), to, current);
         });
       });
@@ -541,14 +539,14 @@ export default class ReactViewRouter {
   }
 
   _go(
-    to: string | RouteHistoryLocation | Route | null,
+    to: string | RouteLocation | Route | null,
     onComplete?: RouteEvent,
     onAbort?: RouteEvent,
     onInit?: RouteEvent | null,
     replace?: boolean
   ) {
     return new Promise((resolve, reject) => {
-      to = normalizeLocation(to, this.currentRoute, false, this.basename);
+      let _to = normalizeLocation(to, this.currentRoute, false, this.basename);
       function doComplete(res: any, _to: Route | null) {
         onComplete && onComplete(res, _to);
         resolve(res);
@@ -557,25 +555,25 @@ export default class ReactViewRouter {
         onAbort && onAbort(res, _to);
         reject(res === false && _to === null ? new Error('to path cannot be empty!') : res);
       }
-      if (!to) return doAbort(false, null);
+      if (!_to) return doAbort(false, null);
 
-      if (isFunction(onComplete)) to.onComplete = once(doComplete);
-      if (isFunction(onAbort)) to.onAbort = once(doAbort);
-      if (onInit) to.onInit = onInit;
-      if (this._nexting) return this._nexting(to);
+      if (isFunction(onComplete)) _to.onComplete = once(doComplete);
+      if (isFunction(onAbort)) _to.onAbort = once(doAbort);
+      if (onInit) _to.onInit = onInit;
+      if (this._nexting) return this._nexting(_to);
       if (replace) {
-        to.isReplace = true;
-        if (to.fullPath && isAbsoluteUrl(to.fullPath)) location.replace(to.fullPath);
-        else this.history.replace(to);
+        _to.isReplace = true;
+        if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) location.replace(_to.fullPath);
+        else this.history.replace(_to);
       } else {
-        if (to.fullPath && isAbsoluteUrl(to.fullPath)) location.href = to.fullPath;
-        else this.history.push(to);
+        if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) location.href = _to.fullPath;
+        else this.history.push(_to);
       }
     });
   }
 
   _replace(
-    to: string | RouteHistoryLocation | Route,
+    to: string | RouteLocation | Route,
     onComplete?: RouteEvent,
     onAbort?: RouteEvent,
     onInit?: RouteEvent | null
@@ -584,7 +582,7 @@ export default class ReactViewRouter {
   }
 
   _push(
-    to: string | RouteHistoryLocation | Route,
+    to: string | RouteLocation | Route,
     onComplete?: RouteEvent,
     onAbort?: RouteEvent,
     onInit?: RouteEvent | null
@@ -709,7 +707,7 @@ export default class ReactViewRouter {
   }
 
   push(
-    to: string | RouteHistoryLocation | Route,
+    to: string | RouteLocation | Route,
     onComplete?: RouteEvent,
     onAbort?: RouteEvent
   ) {
@@ -717,7 +715,7 @@ export default class ReactViewRouter {
   }
 
   replace(
-    to: string | RouteHistoryLocation | Route,
+    to: string | RouteLocation | Route,
     onComplete?: RouteEvent,
     onAbort?: RouteEvent
   ) {
@@ -725,19 +723,19 @@ export default class ReactViewRouter {
   }
 
   redirect(
-    to: string | RouteHistoryLocation | Route | null,
+    to: string | RouteLocation | Route | null,
     onComplete?: RouteEvent,
     onAbort?: RouteEvent,
     onInit?: RouteEvent | null,
     from?: Route | null
   ) {
-    to = normalizeLocation(to);
-    if (!to) return;
-    to.isRedirect = true;
-    to.redirectedFrom = from || this.currentRoute;
-    return to.isReplace
-      ? this._replace(to, onComplete, onAbort, onInit)
-      : this._push(to, onComplete, onAbort, onInit);
+    let _to = normalizeLocation(to);
+    if (!_to) return;
+    _to.isRedirect = true;
+    _to.redirectedFrom = from || this.currentRoute;
+    return _to.isReplace
+      ? this._replace(_to, onComplete, onAbort, onInit)
+      : this._push(_to, onComplete, onAbort, onInit);
   }
 
   go(n: number) {
