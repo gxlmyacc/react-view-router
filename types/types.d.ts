@@ -1,22 +1,23 @@
 /// <reference types="react" />
-import { Location } from 'history-fix';
+/// <reference types="node" />
+import { Location, History } from 'history-fix';
 import ReactViewRouter from './router';
 export declare type RouteEvent = (ok: boolean, to: Route | null) => void;
 export declare type ReactVueRouterMode = 'hash' | 'browser' | 'history' | 'memory' | 'abstract';
-export interface ReactVueRouterOptions {
+export interface ReactVueRouterOptions extends Partial<any> {
     basename?: string;
     base?: string;
     mode?: ReactVueRouterMode;
     manual?: boolean;
-    history?: any;
+    history?: History;
     initialEntries?: string[];
     initialIndex?: number;
     keyLength?: number;
-    [key: string]: any;
 }
+export declare type RouteNextResult = boolean | Error | Function | string | null | RouteLocation;
 export declare type RouteRedirectFn = (this: ConfigRoute, from?: Route) => string;
 export declare type RouteIndexFn = (routes: ConfigRouteArray) => string;
-export declare type RouteNextFn = (ok?: any, ...args: any[]) => void;
+export declare type RouteNextFn = (ok?: RouteNextResult, ...args: any[]) => void;
 export declare type RouteChildrenFn = () => ConfigRoute[];
 export declare type RouteErrorCallback = (error: Error) => void;
 export interface RouteBeforeGuardFn {
@@ -31,8 +32,15 @@ export interface RouteAfterGuardFn {
 }
 export declare type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | lazyResovleFn;
 export declare type RouteBindInstanceFn = (fn: RouteGuardInterceptor, name: string, ci?: any, r?: MatchedRoute) => RouteGuardInterceptor | null;
-export interface RouteHistoryLocation extends Location {
+export declare type RouteLocation = {
     path?: string;
+    query?: Partial<any>;
+    params?: Partial<any>;
+    append?: boolean;
+    _routeNormalized?: boolean;
+};
+export interface RouteHistoryLocation extends Location {
+    path: string;
     fullPath: string;
     query: Partial<any>;
     isReplace: boolean;
@@ -41,6 +49,7 @@ export interface RouteHistoryLocation extends Location {
     onAbort?: RouteEvent;
     onInit?: RouteEvent;
     redirectedFrom?: Route | null;
+    _routeNormalized?: boolean;
 }
 export interface UseRouteGuardsInfo {
     componentClass?: React.ComponentType;
@@ -141,8 +150,6 @@ export interface lazyResovleFn {
     lazy?: boolean;
     route?: MatchedRoute;
 }
-declare global {
-}
 export interface ReactVueLike {
     _willUnmount(): void;
     readonly $route: Route | null;
@@ -152,4 +159,10 @@ export interface ReactVueLike {
 export interface ReactVueLikeClass {
     new (props: any): ReactVueLike;
     flow(fn: Function): Function;
+}
+declare global {
+    interface EsModule extends NodeModule {
+        __esModule?: boolean;
+        default: any;
+    }
 }

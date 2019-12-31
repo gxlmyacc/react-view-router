@@ -7,9 +7,9 @@ export declare class RouteLazy {
     $$typeof: Symbol | number;
     options: Partial<any>;
     updaters: RouteLazyUpdater[];
-    constructor(ctor: any, options?: Partial<any>);
-    toResolve(...args: any[]): Promise<React.ComponentType>;
-    render(props: object, ref: any): React.DetailedReactHTMLElement<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement> | null;
+    constructor(ctor: React.ComponentType | Function | Promise<React.ComponentType>, options?: Partial<any>);
+    toResolve(...args: any[]): Promise<React.ComponentType | null>;
+    render(props: any, ref: any): React.ReactElement<{}, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)> | null) | (new (props: any) => React.Component<any, any, any>)> | null;
 }
 export declare function hasRouteLazy(route: MatchedRoute | ConfigRoute): boolean;
 export declare function hasMatchedRouteLazy(matched: MatchedRoute[]): boolean;

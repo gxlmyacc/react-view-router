@@ -11,5 +11,5 @@ export declare class RouteComponentGuards {
     __children?: any;
     constructor();
 }
-export declare function getGuardsComponent(v: RouteComponentGuards, useComponentClass?: boolean): React.FunctionComponent<{}> | React.ComponentClass<{}, any> | RouteComponentGuards;
+export declare function getGuardsComponent(v: RouteComponentGuards, useComponentClass?: boolean): React.ComponentClass<{}, any> | React.FunctionComponent<{}> | RouteComponentGuards;
 export declare function useRouteGuards(component: React.ComponentType, guards?: UseRouteGuardsInfo, componentClass?: React.ComponentType | null, children?: any): RouteComponentGuards;

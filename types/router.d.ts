@@ -1,7 +1,7 @@
 import { History } from 'history-fix';
 import { nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, RouteBindInstanceFn, ReactVueLikeClass } from './types';
+import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, RouteBindInstanceFn, ReactVueLikeClass } from './types';
 export default class ReactViewRouter {
     options: ReactVueRouterOptions;
     mode: ReactVueRouterMode;
@@ -46,18 +46,18 @@ export default class ReactViewRouter {
     _getInterceptor(interceptors: RouteGuardInterceptor[], index: number): Promise<RouteBeforeGuardFn>;
     _routetInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn): Promise<void>;
     _internalHandleRouteInterceptor(location: RouteHistoryLocation, callback: (ok: boolean, route: Route | null) => void, isInit?: boolean): Promise<void>;
-    _go(to: string | RouteHistoryLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, replace?: boolean): Promise<unknown>;
-    _replace(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
-    _push(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
+    _go(to: string | RouteLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, replace?: boolean): Promise<unknown>;
+    _replace(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
+    _push(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
     createMatchedRoute(route: ConfigRoute, match?: matchPathResult | null): MatchedRoute;
     getMatched(to: Route, from: Route | null, parent?: ConfigRoute | null): MatchedRoute[];
     getMatchedComponents(to: Route, from: Route | null, parent: ConfigRoute | null): any[];
     getMatchedViews(to: Route, from: Route | null, parent: ConfigRoute | null): any[];
     createRoute(to: RouteHistoryLocation | Route, from?: Route | null): Route;
     updateRoute(location: RouteHistoryLocation | null): void;
-    push(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;
-    replace(to: string | RouteHistoryLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;
-    redirect(to: string | RouteHistoryLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, from?: Route | null): Promise<unknown> | undefined;
+    push(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;
+    replace(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;
+    redirect(to: string | RouteLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, from?: Route | null): Promise<unknown> | undefined;
     go(n: number): void;
     back(): void;
     goBack(): void;
