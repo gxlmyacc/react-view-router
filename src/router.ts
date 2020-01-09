@@ -1,4 +1,4 @@
-import { createHashHistory, createBrowserHistory, createMemoryHistory } from 'history-fix';
+import { createHashHistory, createBrowserHistory, createMemoryHistory, History, LocationState } from 'history-fix';
 import config from './config';
 import {
   flatten, isAbsoluteUrl,
@@ -10,6 +10,15 @@ import {
 import routeCache from './route-cache';
 import { RouteLazy, hasRouteLazy, hasMatchedRouteLazy } from './route-lazy';
 import { getGuardsComponent } from './route-guard';
+import { RouterViewComponent as RouterView } from './router-view';
+import {
+  ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray,
+  RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation,
+  RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteNextResult, RouteLocation,
+  matchPathResult, ConfigRoute, RouteErrorCallback,
+  ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn,
+  ReactVueLikeClass
+} from './types';
 
 
 const HISTORY_METHS = ['push', 'replace', 'go', 'back', 'goBack', 'forward', 'goForward', 'block'];
@@ -18,7 +27,49 @@ let idSeed = 1;
 
 export default class ReactViewRouter {
 
-  constructor({ mode = 'hash', basename = '', base = '', ...options  } = {}) {
+  options: ReactVueRouterOptions;
+
+  mode: ReactVueRouterMode;
+
+  basename: string;
+
+  routes: ConfigRouteArray;
+
+  plugins: ReactViewRoutePlugin[];
+
+  beforeEachGuards: RouteBeforeGuardFn[];
+
+  afterEachGuards: RouteAfterGuardFn[];
+
+  prevRoute: Route | null;
+
+  currentRoute: Route | null;
+
+  viewRoot: RouterView | null;
+
+  errorCallback: RouteErrorCallback | null;
+
+  app: any; // React.ComponentClass | null;
+
+  ReactVueLike?: ReactVueLikeClass;
+
+  getHostRouterView: typeof getHostRouterView;
+
+  nextTick: typeof nextTick;
+
+  protected _history: History | null;
+
+  protected _unlisten?: () => void;
+
+  protected __unblock?: () => void;
+
+  protected id: number;
+
+  protected _nexting: RouteNextFn | null;
+
+  [key: string]: any;
+
+  constructor({ mode = 'hash', basename = '', base = '', ...options  }: ReactVueRouterOptions = {}) {
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
     this.id = idSeed++;
@@ -34,17 +85,21 @@ export default class ReactViewRouter {
     this.viewRoot = null;
     this.errorCallback = null;
     this.app = null;
+    this._nexting = null;
+    this._history = null;
+
     this.getHostRouterView = getHostRouterView;
+    this.nextTick = nextTick.bind(this);
+
     // this.states = [];
     // this.stateOrigin = this.history.length;
 
     this.use(options);
-    this.nextTick = nextTick.bind(this);
 
     if (!options.manual) this.start();
   }
 
-  get history() {
+  get history(): History {
     if (this._history) return this._history;
 
     const options = this.options;
@@ -66,13 +121,12 @@ export default class ReactViewRouter {
         default: this._history = createHashHistory(this.options);
       }
     }
-    Object.keys(this._history).forEach(key => !~HISTORY_METHS.indexOf(key) && (this[key] = this._history[key]));
     HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
 
-    return this._history;
+    return this._history as History<LocationState>;
   }
 
-  start({ mode, basename, base, ...options  } = {}) {
+  start({ mode, basename, base, ...options  }: ReactVueRouterOptions = {}) {
     this.stop();
 
     Object.assign(this.options, options);
@@ -80,10 +134,10 @@ export default class ReactViewRouter {
     if (base !== undefined) this.basename = base;
     if (mode !== undefined) this.mode = mode;
 
-    this._unlisten = this.history.listen(location => this.updateRoute(location));
-    this._unblock = this.history.block(location => routeCache.create(location, this.id));
+    this._unlisten = this.history.listen((location: any) => this.updateRoute(location));
+    this._unblock = this.history.block((location: any) => routeCache.create(location, this.id));
 
-    if (this.routes.length) this.updateRoute(this.history.location);
+    if (this.routes.length) this.updateRoute(this.history.location as RouteHistoryLocation);
   }
 
   stop() {
@@ -93,10 +147,10 @@ export default class ReactViewRouter {
     this.app = null;
   }
 
-  use({ routes, inheritProps, install, ...restOptions }) {
+  use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions) {
     if (routes) {
       this.routes = routes ? normalizeRoutes(routes) : [];
-      this._history && this.updateRoute(this._history.location);
+      this._history && this.updateRoute(this._history.location as RouteHistoryLocation);
     }
 
     if (inheritProps !== undefined) config.inheritProps = inheritProps;
@@ -106,7 +160,7 @@ export default class ReactViewRouter {
     if (install) this.install = install.bind(this);
   }
 
-  plugin(plugin) {
+  plugin(plugin: ReactViewRoutePlugin) {
     if (~this.plugins.indexOf(plugin)) return;
     this.plugins.push(plugin);
     if (plugin.install) plugin.install(this);
@@ -119,10 +173,10 @@ export default class ReactViewRouter {
     };
   }
 
-  _callEvent(event, ...args) {
-    let plugin = null;
+  _callEvent(event: string, ...args: any[]) {
+    let plugin: ReactViewRoutePlugin | null = null;
     try {
-      let ret;
+      let ret: any;
       this.plugins.forEach(p => {
         plugin = p;
         const newRet = p[event] && p[event].call(p, ...args, ret);
@@ -130,13 +184,17 @@ export default class ReactViewRouter {
       });
       return ret;
     } catch (ex) {
-      if (plugin && plugin.name && ex && ex.message) ex.message = `[${plugin.name}:${event}]${ex.message}`;
+      if (plugin && (plugin as ReactViewRoutePlugin).name && ex && ex.message) {
+        ex.message = `[${(plugin as ReactViewRoutePlugin).name}:${event}]${ex.message}`;
+      }
       throw ex;
     }
   }
 
-  _getComponentGurads(mr, guardName, bindInstance = true) {
-    let ret = [];
+  _getComponentGurads(mr: MatchedRoute, guardName: string,
+    bindInstance: boolean | RouteBindInstanceFn = true) {
+    let ret: RouteGuardInterceptor[] = [];
+
     const componentInstances = mr.componentInstances;
 
     // route config
@@ -146,8 +204,8 @@ export default class ReactViewRouter {
     const guards = r[routeGuardName];
     if (guards) ret.push(guards);
 
-    const toResovle = (c, key) => {
-      let ret = [];
+    const toResovle = (c: any, key: string) => {
+      let ret: RouteGuardInterceptor[] = [];
       const cc = c.__component ? getGuardsComponent(c, true) : c;
 
       const cg = c.__guards && c.__guards[guardName];
@@ -159,17 +217,17 @@ export default class ReactViewRouter {
         ret.push(ccg);
       }
       if (cc && this.ReactVueLike && cc.prototype instanceof this.ReactVueLike && Array.isArray(cc.mixins)) {
-        cc.mixins.forEach(m => {
+        cc.mixins.forEach((m: any) => {
           let ccg = m[guardName] || (m.prototype && m.prototype[guardName]);
           if (!ccg) return;
-          if (!ccg.isMobxFlow && m.__flows && ~m.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
+          if (this.ReactVueLike && !ccg.isMobxFlow && m.__flows && ~m.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
           ret.push(ccg);
         });
       }
 
       const ci = componentInstances[key];
       if (bindInstance) {
-        if (isFunction(bindInstance)) ret = ret.map(v => bindInstance(v, key, ci, mr)).filter(Boolean);
+        if (isFunction(bindInstance)) ret = ret.map(v => bindInstance(v, key, ci, mr)).filter(Boolean) as RouteGuardInterceptor[];
         else if (ci) ret = ret.map(v => v.bind(ci));
       }
       ret = flatten(ret);
@@ -183,7 +241,7 @@ export default class ReactViewRouter {
       if (!c) return;
 
       if (c instanceof RouteLazy) {
-        const lazyResovle = async (interceptors, index) => {
+        const lazyResovle: lazyResovleFn = async (interceptors: any[], index: number) => {
           let nc = await c.toResolve(r, key);
           nc = this._callEvent('onResolveComponent', nc, r) || nc;
           let ret = toResovle(nc, key);
@@ -199,8 +257,13 @@ export default class ReactViewRouter {
     return ret;
   }
 
-  _getRouteComponentGurads(matched, guardName, reverse = false, bindInstance = true) {
-    let ret = [];
+  _getRouteComponentGurads(
+    matched: MatchedRoute[],
+    guardName: string,
+    reverse: boolean = false,
+    bindInstance: boolean | RouteBindInstanceFn = true
+  ) {
+    let ret: RouteGuardInterceptor[] = [];
     if (reverse) matched = matched.reverse();
     matched.forEach(r => {
       let guards = this._getComponentGurads(r, guardName, bindInstance);
@@ -209,8 +272,8 @@ export default class ReactViewRouter {
     return ret;
   }
 
-  _getSameMatched(route, compare) {
-    const ret = [];
+  _getSameMatched(route: Route | null, compare?: Route) {
+    const ret: MatchedRoute[] = [];
     if (!compare) return [];
     route && route.matched.some((tr, i) => {
       let fr = compare.matched[i];
@@ -220,8 +283,11 @@ export default class ReactViewRouter {
     return ret.filter(r => !r.redirect);
   }
 
-  _getChangeMatched(route, compare, options = {}) {
-    const ret = [];
+  _getChangeMatched(route: Route, compare?: Route | null, options: {
+    containLazy?: boolean
+    count?: number
+  } = {}) {
+    const ret: MatchedRoute[] = [];
     if (!compare) return [...route.matched];
     let start = false;
     route && route.matched.some((tr, i) => {
@@ -236,21 +302,21 @@ export default class ReactViewRouter {
     return ret.filter(r => !r.redirect);
   }
 
-  _getBeforeEachGuards(to, from, current) {
+  _getBeforeEachGuards(to: Route, from: Route | null, current: Route | null = null) {
     const ret = [...this.beforeEachGuards];
     const view = this;
     if (from) {
       const fm = this._getChangeMatched(from, to)
         .filter(r => Object.keys(r.componentInstances).some(key => r.componentInstances[key]));
-      ret.push(...this._getRouteComponentGurads(
+      ret.push(...(this._getRouteComponentGurads(
         fm,
         'beforeRouteLeave',
         true,
-        (fn, name, ci, r) => (function beforeRouteLeaveWraper(to, from, next) {
-          return fn.call(ci, to, from, (cb, ...args) => {
+        (fn, name, ci, r) => (function beforeRouteLeaveWraper(to: Route, from: Route | null, next: RouteNextFn) {
+          return (fn as RouteBeforeGuardFn).call(ci, to, from, (cb?: RouteNextResult, ...args: any[]) => {
             if (isFunction(cb)) {
               const _cb = cb;
-              cb = (...as) => {
+              cb = (...as: any[]) => {
                 const res = _cb(...as);
                 view._callEvent('onRouteLeaveNext', r, ci, res);
                 return res;
@@ -259,7 +325,7 @@ export default class ReactViewRouter {
             return next(cb, ...args);
           }, r);
         })
-      ));
+      ) as RouteBeforeGuardFn[]));
     }
     if (to) {
       let tm = this._getChangeMatched(to, from, { containLazy: true });
@@ -267,8 +333,8 @@ export default class ReactViewRouter {
         let guards = this._getComponentGurads(
           r,
           'beforeRouteEnter',
-          (fn, name) => (function beforeRouteEnterWraper(to, from, next) {
-            return fn(to, from, (cb, ...args) => {
+          (fn, name) => (function beforeRouteEnterWraper(to: Route, from: Route | null, next: RouteNextFn) {
+            return (fn as RouteBeforeGuardFn)(to, from, (cb, ...args) => {
               if (isFunction(cb)) {
                 const _cb = cb;
                 r.config._pending.completeCallbacks[name] = ci => {
@@ -279,18 +345,18 @@ export default class ReactViewRouter {
                 cb = undefined;
               }
               return next(cb, ...args);
-            }, r.config);
+            }, r);
           })
-        );
+        ) as RouteBeforeGuardFn[];
         ret.push(...guards);
       });
     }
     return flatten(ret);
   }
 
-  _getRouteUpdateGuards(to, from) {
+  _getRouteUpdateGuards(to: Route, from: Route | null) {
     const ret = [];
-    const fm = [];
+    const fm: MatchedRoute[] = [];
     to && to.matched.some((tr, i) => {
       let fr = from && from.matched[i];
       if (!fr || fr.path !== tr.path) return true;
@@ -300,7 +366,7 @@ export default class ReactViewRouter {
     return ret;
   }
 
-  _getAfterEachGuards(to, from) {
+  _getAfterEachGuards(to: Route, from: Route | null) {
     const ret = [];
     if (from) {
       const fm = this._getChangeMatched(from, to).filter(r => Object.keys(r.componentInstances)
@@ -311,7 +377,7 @@ export default class ReactViewRouter {
     return flatten(ret);
   }
 
-  _transformLocation(location) {
+  _transformLocation(location: RouteHistoryLocation) {
     if (!location) return location;
     if (this.basename) {
       if (location.pathname.indexOf(this.basename) !== 0) return null;
@@ -322,9 +388,13 @@ export default class ReactViewRouter {
     return location;
   }
 
-  async _handleRouteInterceptor(location, callback, ...args) {
+  async _handleRouteInterceptor(
+    location: null | string | RouteHistoryLocation,
+    callback: (ok: boolean, route?: Route | null) => void,
+    ...args: any[]
+  ) {
     if (typeof location === 'string') location = routeCache.flush(location);
-    location = this._transformLocation(location);
+    location = this._transformLocation(location as RouteHistoryLocation);
     if (!location) return callback(true);
     this._callEvent('onRouteing', true);
     try {
@@ -334,20 +404,27 @@ export default class ReactViewRouter {
     }
   }
 
-  async _getInterceptor(interceptors, index) {
+  async _getInterceptor(interceptors: RouteGuardInterceptor[], index: number) {
     let interceptor = interceptors[index];
-    while (interceptor && interceptor.lazy) {
-      interceptor = await interceptor(interceptors, index);
+    while (interceptor && (interceptor as lazyResovleFn).lazy) {
+      interceptor = await (interceptor as lazyResovleFn)(interceptors, index);
     }
-    return interceptor;
+    return interceptor as RouteBeforeGuardFn;
   }
 
-  async _routetInterceptors(interceptors, to, from, next) {
-    const isBlock = (v, interceptor) => {
+
+  async _routetInterceptors(
+    interceptors: RouteGuardInterceptor[],
+    to: Route,
+    from: Route | null,
+    next?: RouteNextFn
+  ) {
+    const isBlock = (v: any, interceptor: RouteBeforeGuardFn) => {
       let _isLocation = typeof v === 'string' || isLocation(v);
       if (_isLocation && interceptor) {
-        v = this.createRoute(normalizeLocation(v, interceptor.route));
-        if (v.fullPath === to.fullPath) {
+        let _to = normalizeLocation(v, interceptor.route);
+        v = _to && this.createRoute(_to);
+        if (v && v.fullPath === to.fullPath) {
           v = undefined;
           _isLocation = false;
         }
@@ -355,14 +432,20 @@ export default class ReactViewRouter {
       return !this._history || v === false || _isLocation || v instanceof Error;
     };
 
-    async function beforeInterceptor(interceptor, index, to, from, next) {
+    async function beforeInterceptor(
+      interceptor: RouteBeforeGuardFn,
+      index: number,
+      to: Route,
+      from: Route | null,
+      next: RouteNextFn
+    ) {
       if (!interceptor) return next();
 
-      const nextWrapper = this._nexting = once(async f1 => {
+      const nextWrapper: RouteNextFn = this._nexting = once(async f1 => {
         if (isBlock.call(this, f1, interceptor)) return next(f1);
         if (f1 === true) f1 = undefined;
         let nextInterceptor = await this._getInterceptor(interceptors, ++index);
-        if (!nextInterceptor) return next(res => isFunction(f1) && f1(res));
+        if (!nextInterceptor) return next((res: any) => isFunction(f1) && f1(res));
         try {
           return await beforeInterceptor.call(this,
             nextInterceptor,
@@ -371,7 +454,7 @@ export default class ReactViewRouter {
             from,
             res => {
               let ret = next(res);
-              if (interceptor.global) isFunction(f1) && f1(res);
+              if ((interceptor as RouteBeforeGuardFn).global) isFunction(f1) && f1(res);
               return ret;
             });
         } catch (ex) {
@@ -379,26 +462,32 @@ export default class ReactViewRouter {
           next(typeof ex === 'string' ? new Error(ex) : ex);
         }
       });
-      return await interceptor(to, from, nextWrapper, interceptor.route);
+      return await (interceptor as RouteBeforeGuardFn)(to, from, nextWrapper, interceptor.route);
     }
     if (next) await beforeInterceptor.call(this, await this._getInterceptor(interceptors, 0), 0, to, from, next);
     else afterInterceptors.call(this, interceptors, to, from);
   }
 
-  async _internalHandleRouteInterceptor(location, callback, isInit = false) {
+  async _internalHandleRouteInterceptor(
+    location: RouteHistoryLocation,
+    callback: (ok: boolean, route: Route | null) => void,
+    isInit = false
+  ) {
     let isContinue = false;
     try {
       const to = this.createRoute(location);
       const from = isInit ? null : to.redirectedFrom || this.currentRoute;
       const current = this.currentRoute;
 
-      if (to && from && to.fullPath === from.fullPath) {
-        callback(true);
+      if (!to) return;
+
+      if (from && to.fullPath === from.fullPath) {
+        callback(true, null);
         if (to.onInit) to.onInit(Boolean(to), to);
         return;
       }
 
-      let fallbackView = null;
+      let fallbackView: RouterView | null = null;
       if (hasMatchedRouteLazy(to.matched)) {
         fallbackView = this.viewRoot;
         this._getSameMatched(isInit ? null : this.currentRoute, to).reverse().some(m => {
@@ -425,11 +514,9 @@ export default class ReactViewRouter {
 
         if (!isContinue) {
           if (isLocation(ok)) {
-            if (to.onAbort) ok.onAbort = to.onAbort;
-            if (to.onComplete) ok.onComplete = to.onComplete;
-            return this.redirect(ok, undefined, undefined, to.onInit || (isInit ? callback : null), to);
+            return this.redirect(ok, to.onComplete, to.onAbort, to.onInit || (isInit ? callback : null), to);
           }
-          if (to && isFunction(to.onAbort)) to.onAbort(ok, to);
+          if (to && isFunction(to.onAbort)) to.onAbort(Boolean(ok), to);
           if (ok instanceof Error) this.errorCallback && this.errorCallback(ok);
           return;
         }
@@ -441,51 +528,69 @@ export default class ReactViewRouter {
           if (!isInit && (!current || current.fullPath !== to.fullPath)) {
             this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
           }
-          if (to && isFunction(to.onComplete)) to.onComplete(ok, to);
+          if (to && isFunction(to.onComplete)) to.onComplete(Boolean(ok), to);
           this._routetInterceptors(this._getAfterEachGuards(to, current), to, current);
         });
       });
     } catch (ex) {
       console.error(ex);
-      if (!isContinue) callback(isContinue);
+      if (!isContinue) callback(isContinue, null);
     }
   }
 
-  _go(to, onComplete, onAbort, onInit, replace) {
+  _go(
+    to: string | RouteLocation | Route | null,
+    onComplete?: RouteEvent,
+    onAbort?: RouteEvent,
+    onInit?: RouteEvent | null,
+    replace?: boolean
+  ) {
     return new Promise((resolve, reject) => {
-      to = normalizeLocation(to, this.currentRoute, false, this.basename);
-      function doComplete(res, _to) {
+      let _to = normalizeLocation(to, this.currentRoute, false, this.basename);
+      function doComplete(res: any, _to: Route | null) {
         onComplete && onComplete(res, _to);
         resolve(res);
       }
-      function doAbort(res, _to) {
+      function doAbort(res: any, _to: Route | null) {
         onAbort && onAbort(res, _to);
-        reject(res);
+        reject(res === false && _to === null ? new Error('to path cannot be empty!') : res);
       }
-      if (isFunction(onComplete)) to.onComplete = once(doComplete);
-      if (isFunction(onAbort)) to.onAbort = once(doAbort);
-      if (onInit) to.onInit = onInit;
-      if (this._nexting) return this._nexting(to);
+      if (!_to) return doAbort(false, null);
+
+      if (isFunction(onComplete)) _to.onComplete = once(doComplete);
+      if (isFunction(onAbort)) _to.onAbort = once(doAbort);
+      if (onInit) _to.onInit = onInit;
+      if (this._nexting) return this._nexting(_to);
       if (replace) {
-        to.isReplace = true;
-        if (to.fullPath && isAbsoluteUrl(to.fullPath)) location.replace(to.fullPath);
-        else this.history.replace(to);
+        _to.isReplace = true;
+        if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) location.replace(_to.fullPath);
+        else this.history.replace(_to);
       } else {
-        if (to.fullPath && isAbsoluteUrl(to.fullPath)) location.href = to.fullPath;
-        else this.history.push(to);
+        if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) location.href = _to.fullPath;
+        else this.history.push(_to);
       }
     });
   }
 
-  _replace(to, onComplete, onAbort, onInit) {
+  _replace(
+    to: string | RouteLocation | Route,
+    onComplete?: RouteEvent,
+    onAbort?: RouteEvent,
+    onInit?: RouteEvent | null
+  ) {
     return this._go(to, onComplete, onAbort, onInit, true);
   }
 
-  _push(to, onComplete, onAbort, onInit) {
+  _push(
+    to: string | RouteLocation | Route,
+    onComplete?: RouteEvent,
+    onAbort?: RouteEvent,
+    onInit?: RouteEvent | null
+  ) {
     return this._go(to, onComplete, onAbort, onInit);
   }
 
-  createMatchedRoute(route, match) {
+  createMatchedRoute(route: ConfigRoute, match?: matchPathResult | null): MatchedRoute {
     let { url, params } = match || { url: '', params: {} };
     let { path, subpath, meta, redirect, index, depth } = route;
     return {
@@ -503,9 +608,9 @@ export default class ReactViewRouter {
     };
   }
 
-  getMatched(to, from, parent) {
+  getMatched(to: Route, from: Route | null, parent: ConfigRoute | null = null) {
     if (!from) from = this.currentRoute;
-    function copyInstance(to, from) {
+    function copyInstance(to: MatchedRoute, from: MatchedRoute | null) {
       if (!from) return;
       if (from.componentInstances) to.componentInstances = from.componentInstances;
       if (from.viewInstances) to.viewInstances = from.viewInstances;
@@ -522,21 +627,21 @@ export default class ReactViewRouter {
     });
   }
 
-  getMatchedComponents(to, from, parent) {
+  getMatchedComponents(to: Route, from: Route | null, parent: ConfigRoute | null) {
     return this.getMatched(to, from, parent).map(r => r.componentInstances.default).filter(Boolean);
   }
 
-  getMatchedViews(to, from, parent) {
+  getMatchedViews(to: Route, from: Route | null, parent: ConfigRoute | null) {
     return this.getMatched(to, from, parent).map(r => r.viewInstances.default).filter(Boolean);
   }
 
-  createRoute(to, from) {
-    if (!from) from = (to.redirectedFrom) || this.currentRoute;
-    const matched = this.getMatched(to, from);
+  createRoute(to: RouteHistoryLocation | Route, from: Route | null = null): Route {
+    if (!from) from = (to as Route).redirectedFrom || this.currentRoute;
+    const matched = this.getMatched(to as Route, from);
     const last = matched.length ? matched[matched.length - 1] : { url: '', params: {}, meta: {} };
 
     const { search = '', query, path = '', onAbort, onComplete } = to;
-    const ret = {
+    const ret: Route = {
       action: this.history.action,
       url: last.url,
       basename: this.basename,
@@ -569,7 +674,7 @@ export default class ReactViewRouter {
     return ret;
   }
 
-  updateRoute(location) {
+  updateRoute(location: RouteHistoryLocation | null) {
     location = location && this._transformLocation(location);
     if (!location) return;
 
@@ -586,32 +691,56 @@ export default class ReactViewRouter {
     //   this.states.push(this.currentRoute.state);
     // }
 
-    let tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, { count: 1 })[0];
-    if (tm) {
-      Object.keys(tm.viewInstances).forEach(key => tm && tm.viewInstances[key]._refreshCurrentRoute());
-    } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute();
+    let tm = this.prevRoute && this._getChangeMatched(this.prevRoute, this.currentRoute, {
+      count: 1
+    })[0];
 
-    this._callEvent('onRouteChange', this.currentRoute, this);
+    let callback = () => this._callEvent('onRouteChange', this.currentRoute, this);
+    if (tm) {
+      let keys = Object.keys(tm.viewInstances);
+      if (keys.length) {
+        keys.forEach((key, i) => {
+          tm && tm.viewInstances[key]._refreshCurrentRoute(undefined, undefined,
+            i === keys.length - 1  ? callback : undefined);
+        });
+      } else callback();
+    } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute(undefined, undefined, callback);
+    else callback();
   }
 
-  push(to, onComplete, onAbort) {
+  push(
+    to: string | RouteLocation | Route,
+    onComplete?: RouteEvent,
+    onAbort?: RouteEvent
+  ) {
     return this._push(to, onComplete, onAbort);
   }
 
-  replace(to, onComplete, onAbort) {
+  replace(
+    to: string | RouteLocation | Route,
+    onComplete?: RouteEvent,
+    onAbort?: RouteEvent
+  ) {
     return this._replace(to, onComplete, onAbort);
   }
 
-  redirect(to, onComplete, onAbort, onInit, from) {
-    to = normalizeLocation(to);
-    to.isRedirect = true;
-    to.redirectedFrom = from || this.currentRoute;
-    return to.isReplace
-      ? this._replace(to, onComplete, onAbort, onInit)
-      : this._push(to, onComplete, onAbort, onInit);
+  redirect(
+    to: string | RouteLocation | Route | null,
+    onComplete?: RouteEvent,
+    onAbort?: RouteEvent,
+    onInit?: RouteEvent | null,
+    from?: Route | null
+  ) {
+    let _to = normalizeLocation(to);
+    if (!_to) return;
+    _to.isRedirect = true;
+    _to.redirectedFrom = from || this.currentRoute;
+    return _to.isReplace
+      ? this._replace(_to, onComplete, onAbort, onInit)
+      : this._push(_to, onComplete, onAbort, onInit);
   }
 
-  go(n) {
+  go(n: number) {
     return this.history.go(n);
   }
 
@@ -631,7 +760,7 @@ export default class ReactViewRouter {
     return this.history.goForward();
   }
 
-  beforeEach(guard) {
+  beforeEach(guard: RouteBeforeGuardFn) {
     if (!guard || typeof guard !== 'function') return;
     let i = this.beforeEachGuards.indexOf(guard);
     if (~i) this.beforeEachGuards.splice(i, 1);
@@ -639,7 +768,7 @@ export default class ReactViewRouter {
     this.beforeEachGuards.push(guard);
   }
 
-  afterEach(guard) {
+  afterEach(guard: RouteAfterGuardFn) {
     if (!guard || typeof guard !== 'function') return;
     let i = this.afterEachGuards.indexOf(guard);
     if (~i) this.afterEachGuards.splice(i, 1);
@@ -647,35 +776,35 @@ export default class ReactViewRouter {
     this.afterEachGuards.push(guard);
   }
 
-  addRoutes(routes, parentRoute, name = 'default') {
+  addRoutes(routes: ConfigRoute[], parentRoute: ConfigRoute, name = 'default') {
     if (!routes) return;
     if (!Array.isArray(routes)) routes = [routes];
     routes = normalizeRoutes(routes, parentRoute);
     let children = parentRoute ? parentRoute.children : this.routes;
-    if (isFunction(children)) children = children();
+    if (isFunction(children)) children = (children as RouteChildrenFn)();
     if (!children) return;
     routes.forEach(r => {
-      let i = children.findIndex(v => v.path === r.path);
-      if (~i) children.splice(i, 1, r);
-      else children.push(r);
+      let i = (children as  ConfigRoute[]).findIndex(v => v.path === r.path);
+      if (~i) (children as  ConfigRoute[]).splice(i, 1, r);
+      else (children as  ConfigRoute[]).push(r);
     });
     if (parentRoute && parentRoute.viewInstances[name]) parentRoute.viewInstances[name].setState({ routes });
     else if (this.state.viewRoot) this.state.viewRoot.setState({ routes });
   }
 
-  parseQuery(query) {
+  parseQuery(query: string) {
     return config.parseQuery(query);
   }
 
-  stringifyQuery(obj) {
+  stringifyQuery(obj:  Partial<any>) {
     return config.stringifyQuery(obj);
   }
 
-  onError(callback) {
+  onError(callback: RouteErrorCallback) {
     this.errorCallback = callback;
   }
 
-  install(ReactVueLike, { App }) {
+  install(ReactVueLike: any, { App }: { App: any }) {
     this.ReactVueLike = ReactVueLike;
     this.App = App;
 
@@ -692,7 +821,7 @@ export default class ReactViewRouter {
     const router = this;
     this.plugin({
       name: 'react-view-router-vue-like-plugin',
-      onRouteChange: ReactVueLike.action(`[react-view-router][${this.id}]onRouteChange`, function (newVal) {
+      onRouteChange: ReactVueLike.action(`[react-view-router][${this.id}]onRouteChange`, function (newVal: any) {
         if (router.app) {
           router.app.$route = ReactVueLike.observable(newVal, {}, { deep: false });
         } else {

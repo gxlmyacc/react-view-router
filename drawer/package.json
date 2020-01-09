@@ -1,5 +1,13 @@
 {
   "name": "react-view-router-drawer",
-  "main": "src/index.js",
-  "module": "esm/index.js"
+  "version": "1.0.0",
+  "main": "es/index.js",
+  "module": "esm/index.js",
+  "typings": "types/index.d.ts",
+  "files": [
+    "esm",
+    "src",
+    "types",
+    "style"
+  ]
 }

@@ -7,7 +7,7 @@ import {
   getHostRouterView
 } from './util';
 
-function guardEvent(e) {
+function guardEvent(e: any) {
   // don't redirect with control keys
   if (e.metaKey || e.altKey || e.ctrlKey || e.shiftKey) return;
   // don't redirect when preventDefault called
@@ -26,10 +26,47 @@ function guardEvent(e) {
   return true;
 }
 
-export default function createRouterLink(router) {
-  class RouterLink extends React.Component {
+interface RouterLinkProps {
+  tag: string,
+  event: string | string[],
+  activeClass: string,
+  exactActiveClass: string,
+  to: string | { path: string },
 
-    constructor(props) {
+  exact?: boolean,
+  replace?: boolean,
+  append?: boolean,
+
+  children: React.ReactNode[],
+
+  className?: string;
+  href?: string;
+  onRouteChange?: (route: any) => void;
+
+  [key: string]: any;
+}
+
+interface RouterLinkState {
+  inited: boolean;
+  currentRoute: any;
+  parentRoute: any;
+}
+
+export default function createRouterLink(router: any): any {
+  class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
+
+    static propTypes: any;
+
+    static defaultProps: {
+      tag: string,
+      activeClass: string,
+      exactActiveClass: string,
+      event: string
+    };
+
+    private unplugin?: () => void;
+
+    constructor(props: RouterLinkProps) {
       super(props);
       this.state = {
         inited: false,
@@ -41,7 +78,7 @@ export default function createRouterLink(router) {
     componentDidMount() {
       this.unplugin = router.plugin({
         name: 'router-link-plugin',
-        onRouteChange: currentRoute => {
+        onRouteChange: (currentRoute: any) => {
           this.setState({ currentRoute });
           if (this.props.onRouteChange) this.props.onRouteChange(currentRoute);
         }
@@ -60,7 +97,7 @@ export default function createRouterLink(router) {
       }
     }
 
-    shouldComponentUpdate(nextProps, nextState) {
+    shouldComponentUpdate(nextProps: RouterLinkProps, nextState: RouterLinkState) {
       if (this.props.to !== nextProps.to) return true;
       if (this.props.replace !== nextProps.replace) return true;
       if (this.props.tag !== nextProps.tag) return true;
@@ -82,14 +119,14 @@ export default function createRouterLink(router) {
         children = [], activeClass, exactActiveClass, ...remainProps
       } = this.props;
       const current = this.state.currentRoute;
-      to = normalizeLocation(to, this.state.parentRoute, append);
+      to = normalizeLocation(to, this.state.parentRoute, append) as { path: string };
 
       if (router.linkActiveClass) activeClass = router.linkActiveClass;
       if (router.linkExactActiveClass) exactActiveClass = router.linkExactActiveClass;
 
       const fallbackClass = exact
-        ? to.path === current.path ? exactActiveClass : ''
-        : current.path.startsWith(to.path) ? activeClass : '';
+        ? to && (to.path === current.path) ? exactActiveClass : ''
+        : (to && current.path.startsWith(to.path)) ? activeClass : '';
 
       if (fallbackClass) {
         if (remainProps.className) remainProps.className = `${fallbackClass} ${remainProps.className}`;
@@ -97,16 +134,18 @@ export default function createRouterLink(router) {
       }
 
       if (!Array.isArray(event)) event = [event];
-      const events = {};
+
+      const events: { [key: string]: (e: any) => void; } = {};
       event.forEach(evt => {
-        events[camelize(`on-${evt}`)] = e => {
+        events[camelize(`on-${evt}`)] = (e: any) => {
           guardEvent(e);
+          if (!to) return;
           if (replace) router.replace(to);
           else router.push(to);
         };
       });
 
-      if (tag === 'a') remainProps.href = to.path;
+      if (to && tag === 'a') remainProps.href = to.path;
 
       return React.createElement(tag, Object.assign(remainProps, events), ...children);
     }

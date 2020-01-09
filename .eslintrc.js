@@ -71,6 +71,7 @@ module.exports = {
     'func-names': 0,
     // 要求 require() 出现在顶层模块作用域中
     'global-require': 0,
+    'implicit-arrow-linebreak': 0,
     // 禁止使用动态require语句
     'import/no-dynamic-require': 0,
     'import/no-extraneous-dependencies': 0,
@@ -87,6 +88,8 @@ module.exports = {
     'linebreak-style': 0,
     // 强制一行的最大长度
     'max-len': [2, { code: 150, tabWidth: 2, ignoreRegExpLiterals: true }],
+    // 禁止promise使用async函数
+    'no-async-promise-executor': 0,
     // 禁止在循环中使用await
     'no-await-in-loop': 0,
     // 禁用按位运算符
