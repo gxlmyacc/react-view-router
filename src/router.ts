@@ -27,6 +27,8 @@ let idSeed = 1;
 
 export default class ReactViewRouter {
 
+  parent: ReactViewRouter | null;
+
   options: ReactVueRouterOptions;
 
   mode: ReactVueRouterMode;
@@ -69,9 +71,10 @@ export default class ReactViewRouter {
 
   [key: string]: any;
 
-  constructor({ mode = 'hash', basename = '', base = '', ...options  }: ReactVueRouterOptions = {}) {
+  constructor({ parent = null, mode = 'hash', basename = '', base = '', ...options  }: ReactVueRouterOptions = {}) {
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
+    this.parent = parent;
     this.id = idSeed++;
     this.options = options;
     this.mode = mode;
@@ -126,10 +129,11 @@ export default class ReactViewRouter {
     return this._history as History<LocationState>;
   }
 
-  start({ mode, basename, base, ...options  }: ReactVueRouterOptions = {}) {
+  start({ parent, mode, basename, base, ...options  }: ReactVueRouterOptions = {}) {
     this.stop();
 
     Object.assign(this.options, options);
+    if (parent !== undefined) this.parent = parent;
     if (basename !== undefined) this.basename = basename;
     if (base !== undefined) this.basename = base;
     if (mode !== undefined) this.mode = mode;

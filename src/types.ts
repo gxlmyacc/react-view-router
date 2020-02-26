@@ -8,6 +8,7 @@ export type ReactVueRouterMode = 'hash' | 'browser' | 'history' | 'memory' | 'ab
 
 
 export interface ReactVueRouterOptions extends Partial<any> {
+  parent?: ReactViewRouter | null,
   basename?: string,
   base?: string,
   mode?: ReactVueRouterMode,
