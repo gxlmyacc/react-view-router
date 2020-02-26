@@ -195,6 +195,10 @@ export default class ReactViewRouter {
     }
   }
 
+  _isReactVueLike(comp: any) {
+    return comp && this.ReactVueLike && (comp.__vuelike || comp.prototype instanceof this.ReactVueLike);
+  }
+
   _getComponentGurads(mr: MatchedRoute, guardName: string,
     bindInstance: boolean | RouteBindInstanceFn = true) {
     let ret: RouteGuardInterceptor[] = [];
@@ -220,7 +224,7 @@ export default class ReactViewRouter {
         if (this.ReactVueLike && !ccg.isMobxFlow && cc.__flows && ~cc.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
         ret.push(ccg);
       }
-      if (cc && this.ReactVueLike && cc.prototype instanceof this.ReactVueLike && Array.isArray(cc.mixins)) {
+      if (this._isReactVueLike && Array.isArray(cc.mixins)) {
         cc.mixins.forEach((m: any) => {
           let ccg = m[guardName] || (m.prototype && m.prototype[guardName]);
           if (!ccg) return;

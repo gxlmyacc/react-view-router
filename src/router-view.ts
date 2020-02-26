@@ -148,8 +148,7 @@ class RouterView<
     if (this.state && this.state._routerInited) {
       if (newState) Object.assign(newState, { currentRoute });
       else if (this._isMounted) {
-        if (router.ReactVueLike
-          && (this.currentRef instanceof router.ReactVueLike)
+        if (router._isReactVueLike(this.currentRef)
           && isRouteChanged(this.state.currentRoute, currentRoute)) {
           this.currentRef._willUnmount && this.currentRef._willUnmount();
           callback && callback();

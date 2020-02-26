@@ -5,6 +5,7 @@ import ReactViewRouter from './router';
 export declare type RouteEvent = (ok: boolean, to: Route | null) => void;
 export declare type ReactVueRouterMode = 'hash' | 'browser' | 'history' | 'memory' | 'abstract';
 export interface ReactVueRouterOptions extends Partial<any> {
+    parent?: ReactViewRouter | null;
     basename?: string;
     base?: string;
     mode?: ReactVueRouterMode;

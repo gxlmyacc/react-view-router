@@ -3,6 +3,7 @@ import { nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
 import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, RouteBindInstanceFn, ReactVueLikeClass } from './types';
 export default class ReactViewRouter {
+    parent: ReactViewRouter | null;
     options: ReactVueRouterOptions;
     mode: ReactVueRouterMode;
     basename: string;
@@ -24,13 +25,14 @@ export default class ReactViewRouter {
     protected id: number;
     protected _nexting: RouteNextFn | null;
     [key: string]: any;
-    constructor({ mode, basename, base, ...options }?: ReactVueRouterOptions);
+    constructor({ parent, mode, basename, base, ...options }?: ReactVueRouterOptions);
     get history(): History;
-    start({ mode, basename, base, ...options }?: ReactVueRouterOptions): void;
+    start({ parent, mode, basename, base, ...options }?: ReactVueRouterOptions): void;
     stop(): void;
     use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions): void;
     plugin(plugin: ReactViewRoutePlugin): (() => void) | undefined;
     _callEvent(event: string, ...args: any[]): any;
+    _isReactVueLike(comp: any): any;
     _getComponentGurads(mr: MatchedRoute, guardName: string, bindInstance?: boolean | RouteBindInstanceFn): RouteGuardInterceptor[];
     _getRouteComponentGurads(matched: MatchedRoute[], guardName: string, reverse?: boolean, bindInstance?: boolean | RouteBindInstanceFn): RouteGuardInterceptor[];
     _getSameMatched(route: Route | null, compare?: Route): MatchedRoute[];
