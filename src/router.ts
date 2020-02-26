@@ -74,7 +74,7 @@ export default class ReactViewRouter {
   constructor({ parent = null, mode = 'hash', basename = '', base = '', ...options  }: ReactVueRouterOptions = {}) {
     options.getUserConfirmation = this._handleRouteInterceptor.bind(this);
 
-    this.parent = parent;
+    this.parent = parent !== this ? parent : null;
     this.id = idSeed++;
     this.options = options;
     this.mode = mode;
@@ -133,7 +133,7 @@ export default class ReactViewRouter {
     this.stop();
 
     Object.assign(this.options, options);
-    if (parent !== undefined) this.parent = parent;
+    if (parent !== undefined && parent !== this) this.parent = parent;
     if (basename !== undefined) this.basename = basename;
     if (base !== undefined) this.basename = base;
     if (mode !== undefined) this.mode = mode;
