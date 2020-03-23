@@ -323,6 +323,8 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 
 ### ReactViewRouter instance Props
 - `RouterLink` a `NavLink` component like `route-link` in `vue-router`.
+- `currentRoute` the current route that matched current url.
+- `initialRoute` the initial route when router be created.
 
 ### ReactViewRouter instance Methods
 - `beforeEach` [global Before Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)

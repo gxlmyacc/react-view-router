@@ -13,6 +13,7 @@ export default class ReactViewRouter {
     afterEachGuards: RouteAfterGuardFn[];
     prevRoute: Route | null;
     currentRoute: Route | null;
+    initialRoute: Route;
     viewRoot: RouterView | null;
     errorCallback: RouteErrorCallback | null;
     app: any;
@@ -31,6 +32,7 @@ export default class ReactViewRouter {
     stop(): void;
     use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions): void;
     plugin(plugin: ReactViewRoutePlugin): (() => void) | undefined;
+    _refreshInitialRoute(): void;
     _callEvent(event: string, ...args: any[]): any;
     _isReactVueLike(comp: any): any;
     _getComponentGurads(mr: MatchedRoute, guardName: string, bindInstance?: boolean | RouteBindInstanceFn): RouteGuardInterceptor[];
@@ -55,7 +57,7 @@ export default class ReactViewRouter {
     getMatched(to: Route, from: Route | null, parent?: ConfigRoute | null): MatchedRoute[];
     getMatchedComponents(to: Route, from: Route | null, parent: ConfigRoute | null): any[];
     getMatchedViews(to: Route, from: Route | null, parent: ConfigRoute | null): any[];
-    createRoute(to: RouteHistoryLocation | Route, from?: Route | null): Route;
+    createRoute(to: RouteHistoryLocation | Route | null, from?: Route | null): Route;
     updateRoute(location: RouteHistoryLocation | null): void;
     push(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;
     replace(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;

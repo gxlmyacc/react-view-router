@@ -47,6 +47,8 @@ export default class ReactViewRouter {
 
   currentRoute: Route | null;
 
+  initialRoute: Route;
+
   viewRoot: RouterView | null;
 
   errorCallback: RouteErrorCallback | null;
@@ -83,6 +85,7 @@ export default class ReactViewRouter {
     this.plugins = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
+    this.initialRoute = {} as any;
     this.prevRoute = null;
     this.currentRoute = null;
     this.viewRoot = null;
@@ -126,6 +129,10 @@ export default class ReactViewRouter {
     }
     HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
 
+    if (window && window.location && window.location.search !== this._history.location.search) {
+      this._history.location.search = window.location.search;
+    }
+
     return this._history as History<LocationState>;
   }
 
@@ -141,7 +148,10 @@ export default class ReactViewRouter {
     this._unlisten = this.history.listen((location: any) => this.updateRoute(location));
     this._unblock = this.history.block((location: any) => routeCache.create(location, this.id));
 
-    if (this.routes.length) this.updateRoute(this.history.location as RouteHistoryLocation);
+    if (this.routes.length) {
+      this.updateRoute(this.history.location as RouteHistoryLocation);
+      this._refreshInitialRoute();
+    }
   }
 
   stop() {
@@ -154,7 +164,10 @@ export default class ReactViewRouter {
   use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions) {
     if (routes) {
       this.routes = routes ? normalizeRoutes(routes) : [];
-      this._history && this.updateRoute(this._history.location as RouteHistoryLocation);
+      if (this._history) {
+        this.updateRoute(this._history.location as RouteHistoryLocation);
+        if (this.initialRoute.path === undefined) this._refreshInitialRoute();
+      }
     }
 
     if (inheritProps !== undefined) config.inheritProps = inheritProps;
@@ -175,6 +188,10 @@ export default class ReactViewRouter {
         if (plugin.uninstall) plugin.uninstall(this);
       }
     };
+  }
+
+  _refreshInitialRoute() {
+    this.initialRoute = this.createRoute(this._transformLocation(this.history.location as RouteHistoryLocation));
   }
 
   _callEvent(event: string, ...args: any[]) {
@@ -643,12 +660,12 @@ export default class ReactViewRouter {
     return this.getMatched(to, from, parent).map(r => r.viewInstances.default).filter(Boolean);
   }
 
-  createRoute(to: RouteHistoryLocation | Route, from: Route | null = null): Route {
-    if (!from) from = (to as Route).redirectedFrom || this.currentRoute;
-    const matched = this.getMatched(to as Route, from);
+  createRoute(to: RouteHistoryLocation | Route | null, from: Route | null = null): Route {
+    if (!from && to) from = (to as Route).redirectedFrom || this.currentRoute;
+    const matched = to ? this.getMatched(to as Route, from) : [];
     const last = matched.length ? matched[matched.length - 1] : { url: '', params: {}, meta: {} };
 
-    const { search = '', query, path = '', onAbort, onComplete } = to;
+    const { search = '', query, path = '', onAbort, onComplete, isRedirect, isReplace, onInit } = to || {};
     const ret: Route = {
       action: this.history.action,
       url: last.url,
@@ -656,9 +673,9 @@ export default class ReactViewRouter {
       path,
       search,
       fullPath: `${path}${search}`,
-      isRedirect: Boolean(to.isRedirect),
-      isReplace: Boolean(to.isReplace),
-      query: query || (search ? config.parseQuery(to.search.substr(1)) : {}),
+      isRedirect: Boolean(isRedirect),
+      isReplace: Boolean(isReplace),
+      query: query || (search ? config.parseQuery(search.substr(1)) : {}),
       params: last.params || {},
       matched,
       meta: last.meta || {},
@@ -673,11 +690,11 @@ export default class ReactViewRouter {
     //   }
     // });
     Object.defineProperty(ret, 'origin', { configurable: true, value: to });
-    if (to.isRedirect && from) {
+    if (isRedirect && from) {
       ret.redirectedFrom = from;
       if (!ret.onAbort && from.onAbort) ret.onAbort = from.onAbort;
       if (!ret.onComplete && from.onComplete) ret.onComplete = from.onComplete;
-      if (!ret.onInit && to.onInit) ret.onInit = to.onInit;
+      if (!ret.onInit && onInit) ret.onInit = onInit;
     }
     return ret;
   }
