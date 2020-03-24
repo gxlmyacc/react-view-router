@@ -57,8 +57,6 @@ export default class ReactViewRouter {
 
   isRunning: boolean;
 
-  ReactVueLike?: ReactVueLikeClass;
-
   getHostRouterView: typeof getHostRouterView;
 
   nextTick: typeof nextTick;
@@ -72,6 +70,10 @@ export default class ReactViewRouter {
   protected id: number;
 
   protected _nexting: RouteNextFn | null;
+
+  protected ReactVueLike?: ReactVueLikeClass;
+
+  protected _interceptorCounter: number;
 
   [key: string]: any;
 
@@ -96,6 +98,7 @@ export default class ReactViewRouter {
     this._nexting = null;
     this._history = null;
     this.isRunning = false;
+    this._interceptorCounter = 0;
 
     this.getHostRouterView = getHostRouterView;
     this.nextTick = nextTick.bind(this);
@@ -219,7 +222,11 @@ export default class ReactViewRouter {
   }
 
   _isReactVueLike(comp: any) {
-    return comp && this.ReactVueLike && (comp.__vuelike || comp.prototype instanceof this.ReactVueLike);
+    return comp && this.ReactVueLike && (
+      // eslint-disable-next-line no-proto
+      (comp.__proto__ && comp._isVueLike)
+        || (comp.__vuelike || comp.__vuelikeClass || comp.prototype instanceof this.ReactVueLike)
+    );
   }
 
   _getComponentGurads(mr: MatchedRoute, guardName: string,
@@ -247,7 +254,7 @@ export default class ReactViewRouter {
         if (this.ReactVueLike && !ccg.isMobxFlow && cc.__flows && ~cc.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
         ret.push(ccg);
       }
-      if (this._isReactVueLike && Array.isArray(cc.mixins)) {
+      if (this._isReactVueLike(cc) && Array.isArray(cc.mixins)) {
         cc.mixins.forEach((m: any) => {
           let ccg = m[guardName] || (m.prototype && m.prototype[guardName]);
           if (!ccg) return;
@@ -505,15 +512,19 @@ export default class ReactViewRouter {
     isInit = false
   ) {
     let isContinue = false;
+    let interceptorCounter = ++this._interceptorCounter;
     try {
       const to = this.createRoute(location);
       const from = isInit ? null : to.redirectedFrom || this.currentRoute;
       const current = this.currentRoute;
+      const checkIsContinue = () => this.isRunning
+          && interceptorCounter === this._interceptorCounter
+          && (!this.app || this.app._isMounted !== false);
 
       if (!to) return;
 
       if (from && to.fullPath === from.fullPath) {
-        isContinue = this.isRunning;
+        isContinue = checkIsContinue();
         callback(isContinue, null);
         if (isContinue) to.onInit && to.onInit(isContinue, to);
         else to.onAbort && to.onAbort(isContinue, to);
@@ -535,7 +546,8 @@ export default class ReactViewRouter {
         fallbackView && setTimeout(() => fallbackView && fallbackView._isMounted && fallbackView._updateResolving(false), 0);
 
         if (ok && typeof ok === 'string') ok = { path: ok };
-        isContinue = this.isRunning && Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
+        isContinue = checkIsContinue()
+          && Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
 
         const toLast = to.matched[to.matched.length - 1];
         if (isContinue && toLast && toLast.config.exact && toLast.redirect) {

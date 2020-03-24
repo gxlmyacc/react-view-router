@@ -18,7 +18,6 @@ export default class ReactViewRouter {
     errorCallback: RouteErrorCallback | null;
     app: any;
     isRunning: boolean;
-    ReactVueLike?: ReactVueLikeClass;
     getHostRouterView: typeof getHostRouterView;
     nextTick: typeof nextTick;
     protected _history: History | null;
@@ -26,6 +25,8 @@ export default class ReactViewRouter {
     protected __unblock?: () => void;
     protected id: number;
     protected _nexting: RouteNextFn | null;
+    protected ReactVueLike?: ReactVueLikeClass;
+    protected _interceptorCounter: number;
     [key: string]: any;
     constructor({ parent, mode, basename, base, ...options }?: ReactVueRouterOptions);
     get history(): History;

@@ -1,6 +1,6 @@
 {
   "name": "react-view-router",
-  "version": "2.1.1-alpha.1",
+  "version": "2.1.1-alpha.2",
   "description": "react-view-router",
   "keywords": [
     "react-view-router",
@@ -45,7 +45,7 @@
   "dependencies": {
     "@types/react": "^16.9.16",
     "@types/react-dom": "^16.9.4",
-    "history-fix": "^4.10.2",
+    "history-fix": "^4.10.4",
     "path-to-regexp": "^3.0.0",
     "tslib": "^1.10.0"
   },
