@@ -17,6 +17,7 @@ export default class ReactViewRouter {
     viewRoot: RouterView | null;
     errorCallback: RouteErrorCallback | null;
     app: any;
+    isRunning: boolean;
     ReactVueLike?: ReactVueLikeClass;
     getHostRouterView: typeof getHostRouterView;
     nextTick: typeof nextTick;

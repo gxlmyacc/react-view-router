@@ -55,6 +55,8 @@ export default class ReactViewRouter {
 
   app: any; // React.ComponentClass | null;
 
+  isRunning: boolean;
+
   ReactVueLike?: ReactVueLikeClass;
 
   getHostRouterView: typeof getHostRouterView;
@@ -93,6 +95,7 @@ export default class ReactViewRouter {
     this.app = null;
     this._nexting = null;
     this._history = null;
+    this.isRunning = false;
 
     this.getHostRouterView = getHostRouterView;
     this.nextTick = nextTick.bind(this);
@@ -152,6 +155,8 @@ export default class ReactViewRouter {
       this.updateRoute(this.history.location as RouteHistoryLocation);
       this._refreshInitialRoute();
     }
+
+    this.isRunning = true;
   }
 
   stop() {
@@ -159,6 +164,7 @@ export default class ReactViewRouter {
     if (this._unblock) this._unblock();
     this._history = null;
     this.app = null;
+    this.isRunning = false;
   }
 
   use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions) {
@@ -507,8 +513,10 @@ export default class ReactViewRouter {
       if (!to) return;
 
       if (from && to.fullPath === from.fullPath) {
-        callback(true, null);
-        if (to.onInit) to.onInit(Boolean(to), to);
+        isContinue = this.isRunning;
+        callback(isContinue, null);
+        if (isContinue) to.onInit && to.onInit(isContinue, to);
+        else to.onAbort && to.onAbort(isContinue, to);
         return;
       }
 
@@ -527,7 +535,7 @@ export default class ReactViewRouter {
         fallbackView && setTimeout(() => fallbackView && fallbackView._isMounted && fallbackView._updateResolving(false), 0);
 
         if (ok && typeof ok === 'string') ok = { path: ok };
-        isContinue = Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
+        isContinue = this.isRunning && Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
 
         const toLast = to.matched[to.matched.length - 1];
         if (isContinue && toLast && toLast.config.exact && toLast.redirect) {
