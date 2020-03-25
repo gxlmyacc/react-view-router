@@ -138,10 +138,6 @@ export default class ReactViewRouter {
     }
     HISTORY_METHS.forEach(key => this[key] && (this[key] = this[key].bind(this)));
 
-    if (window && window.location && window.location.search !== this._history.location.search) {
-      this._history.location.search = window.location.search;
-    }
-
     return this._history as History<LocationState>;
   }
 
@@ -199,7 +195,12 @@ export default class ReactViewRouter {
   _refreshInitialRoute() {
     const location = { ...this.history.location } as RouteHistoryLocation;
     if (window && window.location && window.location.search !== location.search) {
-      location.search = window.location.search;
+      let search = window.location.search;
+      if (window.location.hash) {
+        let [, hashSearch] = window.location.hash.match(/#[a-z0-9-_/]+\?(.+)/i) || [];
+        if (hashSearch) search = search + (search ? '&' : '?') + hashSearch;
+        location.search = search;
+      }
     }
     this.updateRoute(location);
     this.initialRoute = this.createRoute(this._transformLocation(location));
