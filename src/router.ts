@@ -47,6 +47,8 @@ export default class ReactViewRouter {
 
   currentRoute: Route | null;
 
+  pendingRoute: RouteHistoryLocation | null;
+
   initialRoute: Route;
 
   viewRoot: RouterView | null;
@@ -92,6 +94,7 @@ export default class ReactViewRouter {
     this.initialRoute = {} as any;
     this.prevRoute = null;
     this.currentRoute = null;
+    this.pendingRoute = null;
     this.viewRoot = null;
     this.errorCallback = null;
     this.app = null;
@@ -154,29 +157,23 @@ export default class ReactViewRouter {
     this._unlisten = this.history.listen((location: any) => this.updateRoute(location));
     this._unblock = this.history.block((location: any) => routeCache.create(location, this.id));
 
-    if (this.routes.length) {
-      this.updateRoute(this.history.location as RouteHistoryLocation);
-      this._refreshInitialRoute();
-    }
+    if (this.routes.length) this._refreshInitialRoute();
 
     this.isRunning = true;
   }
 
   stop() {
-    if (this._unlisten) this._unlisten();
-    if (this._unblock) this._unblock();
+    if (this._unlisten) { this._unlisten(); this._unlisten = undefined; }
+    if (this._unblock) { this._unblock(); this._unblock = undefined; }
     this._history = null;
-    this.app = null;
     this.isRunning = false;
+    this._interceptorCounter = 0;
   }
 
   use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions) {
     if (routes) {
       this.routes = routes ? normalizeRoutes(routes) : [];
-      if (this._history) {
-        this.updateRoute(this._history.location as RouteHistoryLocation);
-        if (this.initialRoute.path === undefined) this._refreshInitialRoute();
-      }
+      if (this._history) this._refreshInitialRoute();
     }
 
     if (inheritProps !== undefined) config.inheritProps = inheritProps;
@@ -200,7 +197,12 @@ export default class ReactViewRouter {
   }
 
   _refreshInitialRoute() {
-    this.initialRoute = this.createRoute(this._transformLocation(this.history.location as RouteHistoryLocation));
+    const location = { ...this.history.location } as RouteHistoryLocation;
+    if (window && window.location && window.location.search !== location.search) {
+      location.search = window.location.search;
+    }
+    this.updateRoute(location);
+    this.initialRoute = this.createRoute(this._transformLocation(location));
   }
 
   _callEvent(event: string, ...args: any[]) {
@@ -392,6 +394,41 @@ export default class ReactViewRouter {
     return flatten(ret);
   }
 
+  // _getBeforeResolveGuards(to: Route, from: Route | null) {
+  //   const ret = [...this.beforeResolveGuards];
+  //   const view = this;
+  //   if (from) {
+  //     const fm = this._getChangeMatched(from, to)
+  //       .filter(r => Object.keys(r.componentInstances).some(key => r.componentInstances[key]));
+  //     ret.push(...(this._getRouteComponentGurads(fm, 'beforeRouteResolve'));
+  //   }
+  //   if (to) {
+  //     let tm = this._getChangeMatched(to, from, { containLazy: true });
+  //     tm.forEach(r => {
+  //       let guards = this._getComponentGurads(
+  //         r,
+  //         'beforeRouteEnter',
+  //         (fn, name) => (function beforeRouteEnterWraper(to: Route, from: Route | null, next: RouteNextFn) {
+  //           return (fn as RouteBeforeGuardFn)(to, from, (cb, ...args) => {
+  //             if (isFunction(cb)) {
+  //               const _cb = cb;
+  //               r.config._pending.completeCallbacks[name] = ci => {
+  //                 const res = _cb(ci);
+  //                 view._callEvent('onRouteEnterNext', r, ci, res);
+  //                 return res;
+  //               };
+  //               cb = undefined;
+  //             }
+  //             return next(cb, ...args);
+  //           }, r);
+  //         })
+  //       ) as RouteBeforeGuardFn[];
+  //       ret.push(...guards);
+  //     });
+  //   }
+  //   return flatten(ret);
+  // }
+
   _getRouteUpdateGuards(to: Route, from: Route | null) {
     const ret = [];
     const fm: MatchedRoute[] = [];
@@ -429,14 +466,20 @@ export default class ReactViewRouter {
   async _handleRouteInterceptor(
     location: null | string | RouteHistoryLocation,
     callback: (ok: boolean, route?: Route | null) => void,
-    ...args: any[]
+    isInit = false
   ) {
+    if (!this.isRunning) return callback(false);
     if (typeof location === 'string') location = routeCache.flush(location);
     location = this._transformLocation(location as RouteHistoryLocation);
     if (!location) return callback(true);
+
+    if ((!isInit && !location.onInit) && (
+      !this.viewRoot || !this.viewRoot.state._routerInited
+    )) return callback(false);
+
     this._callEvent('onRouteing', true);
     try {
-      return await this._internalHandleRouteInterceptor(location, callback, ...args);
+      return await this._internalHandleRouteInterceptor(location, callback, isInit);
     } finally {
       this._callEvent('onRouteing', false);
     }
@@ -506,7 +549,7 @@ export default class ReactViewRouter {
     else afterInterceptors.call(this, interceptors, to, from);
   }
 
-  async _internalHandleRouteInterceptor(
+  _internalHandleRouteInterceptor(
     location: RouteHistoryLocation,
     callback: (ok: boolean, route: Route | null) => void,
     isInit = false
@@ -519,15 +562,24 @@ export default class ReactViewRouter {
       const current = this.currentRoute;
       const checkIsContinue = () => this.isRunning
           && interceptorCounter === this._interceptorCounter
-          && (!this.app || this.app._isMounted !== false);
+          && Boolean(this.viewRoot && this.viewRoot._isMounted);
+      const afterCallback = (isContinue: boolean, to: Route) => {
+        if (isContinue) to.onInit && to.onInit(isContinue, to);
+        else to.onAbort && to.onAbort(isContinue, to);
+
+        this.nextTick(() => {
+          if (!isInit && (!current || current.fullPath !== to.fullPath)) {
+            this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
+          }
+        });
+      };
 
       if (!to) return;
 
-      if (from && to.fullPath === from.fullPath) {
+      if (from && to.path === from.path) {
         isContinue = checkIsContinue();
         callback(isContinue, null);
-        if (isContinue) to.onInit && to.onInit(isContinue, to);
-        else to.onAbort && to.onAbort(isContinue, to);
+        afterCallback(isContinue, to);
         return;
       }
 
@@ -545,7 +597,7 @@ export default class ReactViewRouter {
         this._nexting = null;
         fallbackView && setTimeout(() => fallbackView && fallbackView._isMounted && fallbackView._updateResolving(false), 0);
 
-        if (ok && typeof ok === 'string') ok = { path: ok };
+        if (typeof ok === 'string') ok = { path: ok };
         isContinue = checkIsContinue()
           && Boolean(ok === undefined || (ok && !(ok instanceof Error) && !isLocation(ok)));
 
@@ -556,23 +608,18 @@ export default class ReactViewRouter {
         }
 
         callback(isContinue, to);
+        afterCallback(isContinue, to);
 
         if (!isContinue) {
           if (isLocation(ok)) {
             return this.redirect(ok, to.onComplete, to.onAbort, to.onInit || (isInit ? callback : null), to);
           }
-          if (to && isFunction(to.onAbort)) to.onAbort(Boolean(ok), to);
           if (ok instanceof Error) this.errorCallback && this.errorCallback(ok);
           return;
         }
 
-        if (to.onInit) to.onInit(Boolean(to), to);
-
         this.nextTick(() => {
           if (isFunction(ok)) ok = ok(to);
-          if (!isInit && (!current || current.fullPath !== to.fullPath)) {
-            this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
-          }
           if (to && isFunction(to.onComplete)) to.onComplete(Boolean(ok), to);
           this._routetInterceptors(this._getAfterEachGuards(to, current), to, current);
         });
@@ -600,14 +647,20 @@ export default class ReactViewRouter {
         onAbort && onAbort(res, _to);
         reject(res === false && _to === null ? new Error('to path cannot be empty!') : res);
       }
+      if (!this.isRunning) return doAbort(new Error('router is not running!'), null);
       if (!_to) return doAbort(false, null);
 
       if (isFunction(onComplete)) _to.onComplete = once(doComplete);
       if (isFunction(onAbort)) _to.onAbort = once(doAbort);
       if (onInit) _to.onInit = onInit;
       if (this._nexting) return this._nexting(_to);
+      if (replace) _to.isReplace = true;
+
+      if (!this.viewRoot || (!onInit && !this.viewRoot.state._routerInited)) {
+        return this.pendingRoute = _to;
+      }
+
       if (replace) {
-        _to.isReplace = true;
         if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) location.replace(_to.fullPath);
         else this.history.replace(_to);
       } else {

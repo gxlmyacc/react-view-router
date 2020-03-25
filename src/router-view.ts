@@ -188,14 +188,18 @@ class RouterView<
     const state = { ...(this.state as S) };
 
     if (state._routerRoot && state.router) {
-      state.router.viewRoot = this;
-      state.router._handleRouteInterceptor(
-        state.router.history.location as RouteHistoryLocation,
+      const router = state.router;
+      router.viewRoot = this;
+
+      const pendingRoute = router.pendingRoute;
+      router.pendingRoute = null;
+
+      router._handleRouteInterceptor(
+        pendingRoute || router.history.location as RouteHistoryLocation,
         (ok, to) => {
           if (!ok) return;
-          // this.state.router && (this.state.router.currentRoute = to);
           state.currentRoute = this._refreshCurrentRoute();
-          if (this._isMounted) this.setState(Object.assign(state, { _routerInited: true }));
+          if (this._isMounted) this.setState(Object.assign(state, { _routerInited: this._isMounted }));
         },
         true,
       );

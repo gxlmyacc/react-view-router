@@ -13,6 +13,7 @@ export default class ReactViewRouter {
     afterEachGuards: RouteAfterGuardFn[];
     prevRoute: Route | null;
     currentRoute: Route | null;
+    pendingRoute: RouteHistoryLocation | null;
     initialRoute: Route;
     viewRoot: RouterView | null;
     errorCallback: RouteErrorCallback | null;
@@ -48,10 +49,10 @@ export default class ReactViewRouter {
     _getRouteUpdateGuards(to: Route, from: Route | null): RouteGuardInterceptor[];
     _getAfterEachGuards(to: Route, from: Route | null): any[];
     _transformLocation(location: RouteHistoryLocation): RouteHistoryLocation | null;
-    _handleRouteInterceptor(location: null | string | RouteHistoryLocation, callback: (ok: boolean, route?: Route | null) => void, ...args: any[]): Promise<void>;
+    _handleRouteInterceptor(location: null | string | RouteHistoryLocation, callback: (ok: boolean, route?: Route | null) => void, isInit?: boolean): Promise<void>;
     _getInterceptor(interceptors: RouteGuardInterceptor[], index: number): Promise<RouteBeforeGuardFn>;
     _routetInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn): Promise<void>;
-    _internalHandleRouteInterceptor(location: RouteHistoryLocation, callback: (ok: boolean, route: Route | null) => void, isInit?: boolean): Promise<void>;
+    _internalHandleRouteInterceptor(location: RouteHistoryLocation, callback: (ok: boolean, route: Route | null) => void, isInit?: boolean): void;
     _go(to: string | RouteLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, replace?: boolean): Promise<unknown>;
     _replace(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
     _push(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
