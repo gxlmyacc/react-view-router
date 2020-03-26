@@ -662,6 +662,7 @@ export default class ReactViewRouter {
       if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) {
         if (replace) location.replace(_to.fullPath);
         else location.href = _to.fullPath;
+        return;
       }
 
       if (!this.viewRoot || (!onInit && !this.viewRoot.state._routerInited)) {
