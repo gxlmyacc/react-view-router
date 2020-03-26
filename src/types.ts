@@ -4,7 +4,7 @@ import ReactViewRouter from './router';
 
 export type RouteEvent = (ok: boolean, to: Route | null) => void;
 
-export type ReactVueRouterMode = 'hash' | 'browser' | 'history' | 'memory' | 'abstract';
+export type ReactVueRouterMode = 'hash' | 'browser' | 'memory';
 
 
 export interface ReactVueRouterOptions extends Partial<any> {
@@ -157,6 +157,21 @@ export interface Route {
   redirectedFrom?: Route,
 }
 
+export interface LocationRouteLocation {
+  hash: string;
+  host: string;
+  hostname: string;
+  href: string;
+  origin: string;
+  pathname: string;
+  port: string;
+  protocol: string;
+  [key: string]: string;
+}
+
+export interface LocationRoute extends Route {
+  location: LocationRouteLocation
+}
 
 export interface ConfigRouteArray extends Array<ConfigRoute> {
   _normalized?: boolean;

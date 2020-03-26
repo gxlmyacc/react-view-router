@@ -25,7 +25,7 @@ import ReactViewRouter from 'react-view-router';
 
 const router = new ReactViewRouter({
   base: '',     // the base URL of the app. For example, if the entire single page application is served under /app/, then base should use the value "/app/"
-  mode: 'hash', // or browser|histor|memory|abstract, default:hash
+  mode: 'hash', // or browser|memory|hash, default:hash
   routes: []    // also can be passed by router.use method
 });
    

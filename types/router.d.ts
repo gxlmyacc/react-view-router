@@ -1,7 +1,7 @@
 import { History } from 'history-fix';
 import { nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, RouteBindInstanceFn, ReactVueLikeClass } from './types';
+import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, RouteBindInstanceFn, ReactVueLikeClass, LocationRoute } from './types';
 export default class ReactViewRouter {
     parent: ReactViewRouter | null;
     options: ReactVueRouterOptions;
@@ -14,7 +14,7 @@ export default class ReactViewRouter {
     prevRoute: Route | null;
     currentRoute: Route | null;
     pendingRoute: RouteHistoryLocation | null;
-    initialRoute: Route;
+    initialRoute: LocationRoute;
     viewRoot: RouterView | null;
     errorCallback: RouteErrorCallback | null;
     app: any;

@@ -16,7 +16,7 @@ declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: any, 
     route: any;
     match: any;
 }[];
-declare function normalizeLocation(to: any, route?: any, append?: boolean, basename?: string): RouteHistoryLocation | null;
+declare function normalizeLocation(to: any, route?: any, append?: boolean, basename?: string, mode?: string): RouteHistoryLocation | null;
 declare function isPlainObject(obj: any): obj is {
     [key: string]: any;
 };
@@ -56,4 +56,5 @@ declare function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]): bo
 declare function getHostRouterView(ctx: any, continueCb?: any): RouterView<import("./router-view").RouterViewProps, import("./router-view").RouterViewState, any> | null;
 declare function getParentRoute(ctx: any): MatchedRoute | null;
 declare function isAbsoluteUrl(to: any): boolean;
-export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, afterInterceptors, getParentRoute, getHostRouterView };
+declare function getCurrentPageHash(to: string): string;
+export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, afterInterceptors, getParentRoute, getHostRouterView, getCurrentPageHash };

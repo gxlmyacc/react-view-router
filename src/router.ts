@@ -1,7 +1,7 @@
 import { createHashHistory, createBrowserHistory, createMemoryHistory, History, LocationState } from 'history-fix';
 import config from './config';
 import {
-  flatten, isAbsoluteUrl,
+  flatten, isAbsoluteUrl, innumerable,
   normalizeRoutes, normalizeLocation, resolveRedirect,
   matchRoutes, isFunction, isLocation, nextTick, once,
   afterInterceptors,
@@ -17,7 +17,7 @@ import {
   RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteNextResult, RouteLocation,
   matchPathResult, ConfigRoute, RouteErrorCallback,
   ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn,
-  ReactVueLikeClass
+  ReactVueLikeClass, LocationRouteLocation, LocationRoute,
 } from './types';
 
 
@@ -49,7 +49,7 @@ export default class ReactViewRouter {
 
   pendingRoute: RouteHistoryLocation | null;
 
-  initialRoute: Route;
+  initialRoute: LocationRoute;
 
   viewRoot: RouterView | null;
 
@@ -91,7 +91,7 @@ export default class ReactViewRouter {
     this.plugins = [];
     this.beforeEachGuards = [];
     this.afterEachGuards = [];
-    this.initialRoute = {} as any;
+    this.initialRoute = { location: {} } as any;
     this.prevRoute = null;
     this.currentRoute = null;
     this.pendingRoute = null;
@@ -126,11 +126,9 @@ export default class ReactViewRouter {
     } else {
       switch (this.mode) {
         case 'browser':
-        case 'history':
           this._history = createBrowserHistory(this.options);
           break;
         case 'memory':
-        case 'abstract':
           this._history = createMemoryHistory(this.options);
           break;
         default: this._history = createHashHistory(this.options);
@@ -193,17 +191,21 @@ export default class ReactViewRouter {
   }
 
   _refreshInitialRoute() {
-    const location = { ...this.history.location } as RouteHistoryLocation;
-    if (window && window.location && window.location.search !== location.search) {
+    const historyLocation = { ...this.history.location } as RouteHistoryLocation;
+    const location = { } as LocationRouteLocation;
+    if (window && window.location && window.location.search !== historyLocation.search) {
       let search = window.location.search;
       if (window.location.hash) {
         let [, hashSearch] = window.location.hash.match(/#[a-z0-9-_/]+\?(.+)/i) || [];
         if (hashSearch) search = search + (search ? '&' : '?') + hashSearch;
-        location.search = search;
+        historyLocation.search = search;
       }
+      ['hash', 'host', 'hostname', 'href', 'origin', 'pathname', 'port', 'protocol']
+        .forEach((key: string) => location[key] = (window.location as any)[key]);
     }
-    this.updateRoute(location);
-    this.initialRoute = this.createRoute(this._transformLocation(location));
+    this.updateRoute(historyLocation);
+    this.initialRoute = this.createRoute(this._transformLocation(historyLocation)) as any;
+    innumerable(this.initialRoute, 'location', location);
   }
 
   _callEvent(event: string, ...args: any[]) {
@@ -639,7 +641,7 @@ export default class ReactViewRouter {
     replace?: boolean
   ) {
     return new Promise((resolve, reject) => {
-      let _to = normalizeLocation(to, this.currentRoute, false, this.basename);
+      let _to = normalizeLocation(to, this.currentRoute, false, this.basename, this.mode);
       function doComplete(res: any, _to: Route | null) {
         onComplete && onComplete(res, _to);
         resolve(res);
@@ -657,17 +659,17 @@ export default class ReactViewRouter {
       if (this._nexting) return this._nexting(_to);
       if (replace) _to.isReplace = true;
 
+      if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) {
+        if (replace) location.replace(_to.fullPath);
+        else location.href = _to.fullPath;
+      }
+
       if (!this.viewRoot || (!onInit && !this.viewRoot.state._routerInited)) {
         return this.pendingRoute = _to;
       }
 
-      if (replace) {
-        if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) location.replace(_to.fullPath);
-        else this.history.replace(_to);
-      } else {
-        if (_to.fullPath && isAbsoluteUrl(_to.fullPath)) location.href = _to.fullPath;
-        else this.history.push(_to);
-      }
+      if (replace) this.history.replace(_to);
+      else this.history.push(_to);
     });
   }
 

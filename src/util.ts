@@ -149,17 +149,32 @@ function matchRoutes(
   return branch;
 }
 
-function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''): RouteHistoryLocation | null {
+function normalizeLocation(to: any, route?: any, append?: boolean, basename = '', mode = ''): RouteHistoryLocation | null {
   if (!to || (isPlainObject(to) && !to.path && !to.pathname)) return null;
   if (to._routeNormalized) return to;
   if (typeof to === 'string') {
-    const [pathname, search] = to.split('?');
-    to = { pathname, path: pathname, search: search ? `?${search}` : '', fullPath: to };
+    const searchs = to.match(/\?[^#]+/g) || [];
+    const pathname = searchs.reduce((p, v) => p.replace(v, ''), to);
+    const search = searchs.reduce((p, v, i) => {
+      if (!i) return v;
+      const s = v.substr(1);
+      return p + (s ? `&${s}` : '');
+    }, '');
+    to = { pathname, path: pathname, search, fullPath: to };
   }
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search.substr(1));
 
-  if (!isAbsoluteUrl(to.pathname)) {
+  let isAbsolute = isAbsoluteUrl(to.pathname);
+  if (isAbsolute && mode !== 'browser') {
+    let hash = getCurrentPageHash(to.pathname);
+    if (hash) {
+      to.pathname = hash;
+      isAbsolute = false;
+    }
+  }
+
+  if (!isAbsolute) {
     to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
   }
   Object.defineProperty(to, 'search', {
@@ -173,8 +188,7 @@ function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''
     enumerable: true,
     configurable: true,
     get() {
-      let s = this.search;
-      return `${this.path}${s || ''}` || '/';
+      return `${this.path}${this.search || ''}` || '/';
     }
   });
   if (!to.query) to.query = {};
@@ -455,6 +469,12 @@ function isAbsoluteUrl(to: any) {
   return typeof to === 'string' && /^(https?:)?\/\/.+/.test(to);
 }
 
+function getCurrentPageHash(to: string) {
+  if (!to || !window || !window.location) return '';
+  let [, host = '', hash = ''] = to.match(/(.+)#(.+)$/) || [];
+  return window.location.href.startsWith(host) ? hash : '';
+}
+
 export {
   camelize,
   flatten,
@@ -486,5 +506,6 @@ export {
   innumerable,
   afterInterceptors,
   getParentRoute,
-  getHostRouterView
+  getHostRouterView,
+  getCurrentPageHash
 };

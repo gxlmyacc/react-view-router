@@ -198,6 +198,7 @@ class RouterView<
         pendingRoute || router.history.location as RouteHistoryLocation,
         (ok, to) => {
           if (!ok) return;
+          this.state.router && to && (this.state.router.currentRoute = to);
           state.currentRoute = this._refreshCurrentRoute();
           if (this._isMounted) this.setState(Object.assign(state, { _routerInited: this._isMounted }));
         },
