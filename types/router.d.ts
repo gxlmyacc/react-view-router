@@ -10,6 +10,7 @@ export default class ReactViewRouter {
     routes: ConfigRouteArray;
     plugins: ReactViewRoutePlugin[];
     beforeEachGuards: RouteBeforeGuardFn[];
+    beforeResolveGuards: RouteAfterGuardFn[];
     afterEachGuards: RouteAfterGuardFn[];
     prevRoute: Route | null;
     currentRoute: Route | null;
@@ -46,6 +47,7 @@ export default class ReactViewRouter {
         count?: number;
     }): MatchedRoute[];
     _getBeforeEachGuards(to: Route, from: Route | null, current?: Route | null): any[];
+    _getBeforeResolveGuards(to: Route, from: Route | null): any[];
     _getRouteUpdateGuards(to: Route, from: Route | null): RouteGuardInterceptor[];
     _getAfterEachGuards(to: Route, from: Route | null): any[];
     _transformLocation(location: RouteHistoryLocation): RouteHistoryLocation | null;
@@ -71,6 +73,7 @@ export default class ReactViewRouter {
     forward(): void;
     goForward(): void;
     beforeEach(guard: RouteBeforeGuardFn): void;
+    beforeResolve(guard: RouteAfterGuardFn): void;
     afterEach(guard: RouteAfterGuardFn): void;
     addRoutes(routes: ConfigRoute[], parentRoute: ConfigRoute, name?: string): void;
     parseQuery(query: string): any;

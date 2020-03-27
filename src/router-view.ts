@@ -228,6 +228,8 @@ class RouterView<
 
   componentWillUnmount() {
     this._isMounted = false;
+    const { _routerRoot, router } = this.state;
+    _routerRoot && router && (router.viewRoot = null);
   }
 
   shouldComponentUpdate(nextProps: RouterViewProps, nextState: RouterViewState) {

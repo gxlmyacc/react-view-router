@@ -327,8 +327,9 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 - `initialRoute` the initial route when router be created.
 
 ### ReactViewRouter instance Methods
-- `beforeEach` [global Before Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
-- `afterEach` [global After Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
+- `beforeEach` [global before guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
+- `beforeResolve` [global brefore resolve guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-resolve-guards)
+- `afterEach` [global after guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 - `push`、`replace`、`go`、`back`、`forward` `redirect`[history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
 - `install` `ReactVueLike` plugin install methods. see: [ReactVueLike](https://www.npmjs.com/package/react-vue-like)

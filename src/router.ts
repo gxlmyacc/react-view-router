@@ -41,6 +41,8 @@ export default class ReactViewRouter {
 
   beforeEachGuards: RouteBeforeGuardFn[];
 
+  beforeResolveGuards: RouteAfterGuardFn[];
+
   afterEachGuards: RouteAfterGuardFn[];
 
   prevRoute: Route | null;
@@ -90,6 +92,7 @@ export default class ReactViewRouter {
     this.routes = [];
     this.plugins = [];
     this.beforeEachGuards = [];
+    this.beforeResolveGuards = [];
     this.afterEachGuards = [];
     this.initialRoute = { location: {} } as any;
     this.prevRoute = null;
@@ -397,40 +400,14 @@ export default class ReactViewRouter {
     return flatten(ret);
   }
 
-  // _getBeforeResolveGuards(to: Route, from: Route | null) {
-  //   const ret = [...this.beforeResolveGuards];
-  //   const view = this;
-  //   if (from) {
-  //     const fm = this._getChangeMatched(from, to)
-  //       .filter(r => Object.keys(r.componentInstances).some(key => r.componentInstances[key]));
-  //     ret.push(...(this._getRouteComponentGurads(fm, 'beforeRouteResolve'));
-  //   }
-  //   if (to) {
-  //     let tm = this._getChangeMatched(to, from, { containLazy: true });
-  //     tm.forEach(r => {
-  //       let guards = this._getComponentGurads(
-  //         r,
-  //         'beforeRouteEnter',
-  //         (fn, name) => (function beforeRouteEnterWraper(to: Route, from: Route | null, next: RouteNextFn) {
-  //           return (fn as RouteBeforeGuardFn)(to, from, (cb, ...args) => {
-  //             if (isFunction(cb)) {
-  //               const _cb = cb;
-  //               r.config._pending.completeCallbacks[name] = ci => {
-  //                 const res = _cb(ci);
-  //                 view._callEvent('onRouteEnterNext', r, ci, res);
-  //                 return res;
-  //               };
-  //               cb = undefined;
-  //             }
-  //             return next(cb, ...args);
-  //           }, r);
-  //         })
-  //       ) as RouteBeforeGuardFn[];
-  //       ret.push(...guards);
-  //     });
-  //   }
-  //   return flatten(ret);
-  // }
+  _getBeforeResolveGuards(to: Route, from: Route | null) {
+    let ret = [...this.beforeResolveGuards];
+    if (to) {
+      let tm = this._getChangeMatched(to, from);
+      ret.push(...(this._getRouteComponentGurads(tm.filter(r => !r.redirect), 'beforeRouteResolve', true) as RouteAfterGuardFn[]));
+    }
+    return flatten(ret);
+  }
 
   _getRouteUpdateGuards(to: Route, from: Route | null) {
     const ret = [];
@@ -445,11 +422,11 @@ export default class ReactViewRouter {
   }
 
   _getAfterEachGuards(to: Route, from: Route | null) {
-    const ret = [];
+    const ret: RouteAfterGuardFn[] = [];
     if (from) {
       const fm = this._getChangeMatched(from, to).filter(r => Object.keys(r.componentInstances)
         .some(key => r.componentInstances[key]));
-      ret.push(...this._getRouteComponentGurads(fm, 'afterRouteLeave', true));
+      ret.push(...(this._getRouteComponentGurads(fm, 'afterRouteLeave', true) as RouteAfterGuardFn[]));
     }
     ret.push(...this.afterEachGuards);
     return flatten(ret);
@@ -462,6 +439,7 @@ export default class ReactViewRouter {
       location = { ...location };
       location.pathname = location.pathname.substr(this.basename.length) || '/';
       if (location.path !== undefined) location.path = location.pathname;
+      location.fullPath = location.path + location.search;
     }
     return location;
   }
@@ -473,6 +451,11 @@ export default class ReactViewRouter {
   ) {
     if (!this.isRunning) return callback(false);
     if (typeof location === 'string') location = routeCache.flush(location);
+
+    if (this.pendingRoute
+      && location
+      && this.pendingRoute.fullPath === (location as RouteHistoryLocation).fullPath) return callback(true);
+
     location = this._transformLocation(location as RouteHistoryLocation);
     if (!location) return callback(true);
 
@@ -610,6 +593,8 @@ export default class ReactViewRouter {
           if (ok) isContinue = false;
         }
 
+        if (isContinue) this._routetInterceptors(this._getBeforeResolveGuards(to, current), to, current);
+
         callback(isContinue, to);
         afterCallback(isContinue, to);
 
@@ -666,7 +651,9 @@ export default class ReactViewRouter {
       }
 
       if (!this.viewRoot || (!onInit && !this.viewRoot.state._routerInited)) {
-        return this.pendingRoute = _to;
+        this.pendingRoute = _to;
+        let location = this.history.location;
+        if (_to.fullPath === `${location.pathname}${location.search}`) return;
       }
 
       if (replace) this.history.replace(_to);
@@ -868,6 +855,14 @@ export default class ReactViewRouter {
     if (~i) this.beforeEachGuards.splice(i, 1);
     guard.global = true;
     this.beforeEachGuards.push(guard);
+  }
+
+  beforeResolve(guard: RouteAfterGuardFn) {
+    if (!guard || typeof guard !== 'function') return;
+    let i = this.beforeResolveGuards.indexOf(guard);
+    if (~i) this.beforeResolveGuards.splice(i, 1);
+    guard.global = true;
+    this.beforeResolveGuards.push(guard);
   }
 
   afterEach(guard: RouteAfterGuardFn) {
