@@ -350,6 +350,11 @@ export default class ReactViewRouter {
 
   _getBeforeEachGuards(to: Route, from: Route | null, current: Route | null = null) {
     const ret = [...this.beforeEachGuards];
+    if (this.viewRoot && this.viewRoot.props.beforeEach) {
+      this.viewRoot.props.beforeEach.global = true;
+      ret.push(this.viewRoot.props.beforeEach);
+    }
+
     const view = this;
     if (from) {
       const fm = this._getChangeMatched(from, to)
@@ -402,6 +407,10 @@ export default class ReactViewRouter {
 
   _getBeforeResolveGuards(to: Route, from: Route | null) {
     let ret = [...this.beforeResolveGuards];
+    if (this.viewRoot && this.viewRoot.props.beforeResolve) {
+      this.viewRoot.props.beforeResolve.global = true;
+      ret.push(this.viewRoot.props.beforeResolve);
+    }
     if (to) {
       let tm = this._getChangeMatched(to, from);
       ret.push(...(this._getRouteComponentGurads(tm.filter(r => !r.redirect), 'beforeRouteResolve', true) as RouteAfterGuardFn[]));
@@ -427,6 +436,10 @@ export default class ReactViewRouter {
       const fm = this._getChangeMatched(from, to).filter(r => Object.keys(r.componentInstances)
         .some(key => r.componentInstances[key]));
       ret.push(...(this._getRouteComponentGurads(fm, 'afterRouteLeave', true) as RouteAfterGuardFn[]));
+    }
+    if (this.viewRoot && this.viewRoot.props.afterEach) {
+      this.viewRoot.props.afterEach.global = true;
+      ret.push(this.viewRoot.props.afterEach);
     }
     ret.push(...this.afterEachGuards);
     return flatten(ret);

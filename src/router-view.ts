@@ -5,7 +5,7 @@ import {
   getHostRouterView
 } from './util';
 import ReactViewRouter from './router';
-import { MatchedRoute, ConfigRoute, RouteHistoryLocation } from './types';
+import { MatchedRoute, ConfigRoute, RouteHistoryLocation, RouteBeforeGuardFn, RouteAfterGuardFn } from './types';
 
 type RouterViewUpdateRef = (vm: React.Component | null) => void;
 
@@ -18,6 +18,9 @@ export interface RouterViewProps {
   depth?: number,
   _updateRef?: RouterViewUpdateRef,
   excludeProps: string[],
+  beforeEach?: RouteBeforeGuardFn,
+  beforeResolve?: RouteAfterGuardFn,
+  afterEach?: RouteAfterGuardFn,
   [key: string]: any
 }
 

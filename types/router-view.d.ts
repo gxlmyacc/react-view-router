@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactViewRouter from './router';
-import { MatchedRoute, ConfigRoute } from './types';
+import { MatchedRoute, ConfigRoute, RouteBeforeGuardFn, RouteAfterGuardFn } from './types';
 declare type RouterViewUpdateRef = (vm: React.Component | null) => void;
 export interface RouterViewProps {
     name?: string;
@@ -11,6 +11,9 @@ export interface RouterViewProps {
     depth?: number;
     _updateRef?: RouterViewUpdateRef;
     excludeProps: string[];
+    beforeEach?: RouteBeforeGuardFn;
+    beforeResolve?: RouteAfterGuardFn;
+    afterEach?: RouteAfterGuardFn;
     [key: string]: any;
 }
 export interface RouterViewState {
