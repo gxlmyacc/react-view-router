@@ -154,11 +154,11 @@ class RouterView<
         if (router._isReactVueLike(this.currentRef)
           && isRouteChanged(this.state.currentRoute, currentRoute)) {
           this.currentRef._willUnmount && this.currentRef._willUnmount();
-          callback && callback();
         }
         this.setState({ currentRoute });
       }
-    } else callback && callback();
+    }
+    if (this._isMounted) callback && callback();
     return currentRoute;
   }
 
@@ -317,7 +317,7 @@ class RouterView<
 }
 
 RouterView.defaultProps = {
-  excludeProps: ['_updateRef', 'router', 'excludeProps']
+  excludeProps: ['_updateRef', 'router', 'excludeProps', 'beforeEach', 'beforeResolve', 'afterEach']
 };
 
 export {

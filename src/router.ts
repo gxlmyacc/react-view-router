@@ -567,6 +567,7 @@ export default class ReactViewRouter {
         else to.onAbort && to.onAbort(isContinue, to);
 
         this.nextTick(() => {
+          if (!checkIsContinue()) return;
           if (!isInit && (!current || current.fullPath !== to.fullPath)) {
             this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
           }
@@ -806,7 +807,7 @@ export default class ReactViewRouter {
             i === keys.length - 1  ? callback : undefined);
         });
       } else callback();
-    } else if (this.viewRoot) this.viewRoot._refreshCurrentRoute(undefined, undefined, callback);
+    } else if (this.viewRoot && this.viewRoot._isMounted) this.viewRoot._refreshCurrentRoute(undefined, undefined, callback);
     else callback();
   }
 
