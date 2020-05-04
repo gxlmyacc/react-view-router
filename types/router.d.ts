@@ -32,6 +32,7 @@ export default class ReactViewRouter {
     [key: string]: any;
     constructor({ parent, mode, basename, base, ...options }?: ReactVueRouterOptions);
     get history(): History;
+    get top(): ReactViewRouter;
     start({ parent, mode, basename, base, ...options }?: ReactVueRouterOptions): void;
     stop(): void;
     use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions): void;
@@ -79,7 +80,7 @@ export default class ReactViewRouter {
     parseQuery(query: string): any;
     stringifyQuery(obj: Partial<any>): any;
     onError(callback: RouteErrorCallback): void;
-    install(ReactVueLike: any, { App }: {
+    install(vuelike: any, { App }: {
         App: any;
     }): void;
 }

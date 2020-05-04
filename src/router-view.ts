@@ -190,9 +190,14 @@ class RouterView<
     if (this.state._routerInited) return;
     const state = { ...(this.state as S) };
 
+
     if (state._routerRoot && state.router) {
       const router = state.router;
       router.viewRoot = this;
+      // if (!router.parent) {
+      //   let parent = getHostRouterView(this);
+      //   router.parent = (parent && parent.state.router) || null;
+      // }
 
       const pendingRoute = router.pendingRoute;
       router.pendingRoute = null;
@@ -201,7 +206,7 @@ class RouterView<
         pendingRoute || router.history.location as RouteHistoryLocation,
         (ok, to) => {
           if (!ok) return;
-          this.state.router && to && (this.state.router.currentRoute = to);
+          router && to && (router.currentRoute = to);
           state.currentRoute = this._refreshCurrentRoute();
           if (this._isMounted) this.setState(Object.assign(state, { _routerInited: this._isMounted }));
         },

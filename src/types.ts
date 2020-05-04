@@ -46,6 +46,7 @@ export type RouteLocation = {
   query?: Partial<any>,
   params?: Partial<any>,
   append?: boolean,
+  absolute?: boolean,
   _routeNormalized?: boolean;
 }
 

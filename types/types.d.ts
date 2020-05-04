@@ -38,6 +38,7 @@ export declare type RouteLocation = {
     query?: Partial<any>;
     params?: Partial<any>;
     append?: boolean;
+    absolute?: boolean;
     _routeNormalized?: boolean;
 };
 export interface RouteHistoryLocation extends Location {

@@ -175,7 +175,12 @@ function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''
   }
 
   if (!isAbsolute) {
-    to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
+    to.pathname = to.path = normalizeRoutePath(
+      to.pathname || to.path,
+      route,
+      to.append || append,
+      to.absolute ? '' : basename
+    ) || '/';
   }
   Object.defineProperty(to, 'search', {
     enumerable: true,

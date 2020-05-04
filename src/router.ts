@@ -17,7 +17,7 @@ import {
   RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteNextResult, RouteLocation,
   matchPathResult, ConfigRoute, RouteErrorCallback,
   ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn,
-  ReactVueLikeClass, LocationRouteLocation, LocationRoute,
+  ReactVueLikeClass, LocationRouteLocation, LocationRoute
 } from './types';
 
 
@@ -142,6 +142,10 @@ export default class ReactViewRouter {
     return this._history as History<LocationState>;
   }
 
+  get top(): ReactViewRouter {
+    return this.parent ? this.parent.top : this;
+  }
+
   start({ parent, mode, basename, base, ...options  }: ReactVueRouterOptions = {}) {
     this.stop();
 
@@ -233,7 +237,7 @@ export default class ReactViewRouter {
     return comp && this.ReactVueLike && (
       // eslint-disable-next-line no-proto
       (comp.__proto__ && comp._isVueLike)
-        || (comp.__vuelike || comp.__vuelikeClass || comp.prototype instanceof this.ReactVueLike)
+        || (comp.__vuelike || comp.__vuelikeClass)
     );
   }
 
@@ -670,8 +674,16 @@ export default class ReactViewRouter {
         if (_to.fullPath === `${location.pathname}${location.search}`) return;
       }
 
-      if (replace) this.history.replace(_to);
-      else this.history.push(_to);
+      let history = this.history;
+
+      if (this.basename
+        && (_to as RouteLocation).absolute
+        && this.top && !this.top.basename) {
+        history = this.top.history;
+      }
+
+      if (replace) history.replace(_to);
+      else history.push(_to);
     });
   }
 
@@ -814,7 +826,7 @@ export default class ReactViewRouter {
   push(
     to: string | RouteLocation | Route,
     onComplete?: RouteEvent,
-    onAbort?: RouteEvent
+    onAbort?: RouteEvent,
   ) {
     return this._push(to, onComplete, onAbort);
   }
@@ -915,29 +927,42 @@ export default class ReactViewRouter {
     this.errorCallback = callback;
   }
 
-  install(ReactVueLike: any, { App }: { App: any }) {
-    this.ReactVueLike = ReactVueLike;
+  install(vuelike: any, { App }: { App: any }) {
+    this.ReactVueLike = vuelike.Component || vuelike;
     this.App = App;
 
-    if (!App.inherits) App.inherits = {};
-    App.inherits.$router = this;
-    App.inherits.$route = ReactVueLike.observable(this.currentRoute || {});
+    if (vuelike.inherit) {
+      vuelike.inherit({
+        $router: this,
+        $route: vuelike.observable(this.currentRoute || {})
+      });
+    } else if (App) {
+      if (!App.inherits) App.inherits = {};
+      App.inherits.$router = this;
+      App.inherits.$route = vuelike.observable(this.currentRoute || {});
+    }
 
     config.inheritProps = false;
 
-    if (!ReactVueLike.config.inheritMergeStrategies.$route) {
-      ReactVueLike.config.inheritMergeStrategies.$route = config.routeMergeStrategie;
+    if (vuelike.config.inheritMergeStrategies) {
+      if (!vuelike.config.inheritMergeStrategies.$route) {
+        vuelike.config.inheritMergeStrategies.$route = config.routeMergeStrategie;
+      }
+    } else if (vuelike.config.optionMergeStrategies) {
+      if (!vuelike.config.optionMergeStrategies.$route) {
+        vuelike.config.optionMergeStrategies.$route = config.routeMergeStrategie;
+      }
     }
 
     const router = this;
     this.plugin({
       name: 'react-view-router-vue-like-plugin',
-      onRouteChange: ReactVueLike.action(`[react-view-router][${this.id}]onRouteChange`, function (newVal: any) {
+      onRouteChange: vuelike.action(`[react-view-router][${this.id}]onRouteChange`, function (newVal: any) {
         if (router.app) {
-          router.app.$route = ReactVueLike.observable(newVal, {}, { deep: false });
+          router.app.$route = vuelike.observable(newVal, {}, { deep: false });
         } else {
-          App.inherits.$route = ReactVueLike.observable(newVal, {}, { deep: false });
-          if (App.inherits.$router !== router) App.inherits.$router = router;
+          vuelike.inherit('$route', vuelike.observable(newVal, {}, { deep: false }));
+          if (vuelike.inherits.$router !== router) vuelike.inherit('$router', router);
         }
       })
     });
