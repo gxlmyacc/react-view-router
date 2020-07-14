@@ -208,10 +208,6 @@ export interface ReactVueLike  {
   readonly $route: Route | null;
   readonly $routeIndex: number;
   readonly $matchedRoute: MatchedRoute | null;
-}
-
-export interface ReactVueLikeClass {
-  new (props: any): ReactVueLike;
 
   flow(fn: Function): Function;
 }

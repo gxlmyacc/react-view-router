@@ -18,7 +18,7 @@ import {
   RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteNextResult, RouteLocation,
   matchPathResult, ConfigRoute, RouteErrorCallback,
   ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn,
-  ReactVueLikeClass, LocationRouteLocation, LocationRoute
+  ReactVueLike, LocationRouteLocation, LocationRoute
 } from './types';
 
 
@@ -80,7 +80,7 @@ export default class ReactViewRouter {
 
   protected _nexting: RouteNextFn | null;
 
-  protected ReactVueLike?: ReactVueLikeClass;
+  protected vuelike?: ReactVueLike;
 
   protected _interceptorCounter: number = 0;
 
@@ -252,11 +252,11 @@ export default class ReactViewRouter {
     }
   }
 
-  _isReactVueLike(comp: any) {
-    return comp && this.ReactVueLike && (
+  _isVuelikeComponent(comp: any) {
+    return comp && this.vuelike && (
       // eslint-disable-next-line no-proto
-      (comp.__proto__ && comp._isVueLike)
-        || (comp.__vuelike || comp.__vuelikeClass)
+      (comp.__proto__ && comp._isVuelikeComponentInstance)
+        || (comp.__vuelike || comp.__vuelikeComponentClass)
     );
   }
 
@@ -282,14 +282,14 @@ export default class ReactViewRouter {
 
       let ccg = cc && cc.prototype && cc.prototype[guardName];
       if (ccg) {
-        if (this.ReactVueLike && !ccg.isMobxFlow && cc.__flows && ~cc.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
+        if (this.vuelike && !ccg.isMobxFlow && cc.__flows && ~cc.__flows.indexOf(guardName)) ccg = this.vuelike.flow(ccg);
         ret.push(ccg);
       }
-      if (this._isReactVueLike(cc) && Array.isArray(cc.mixins)) {
+      if (this._isVuelikeComponent(cc) && Array.isArray(cc.mixins)) {
         cc.mixins.forEach((m: any) => {
           let ccg = m[guardName] || (m.prototype && m.prototype[guardName]);
           if (!ccg) return;
-          if (this.ReactVueLike && !ccg.isMobxFlow && m.__flows && ~m.__flows.indexOf(guardName)) ccg = this.ReactVueLike.flow(ccg);
+          if (this.vuelike && !ccg.isMobxFlow && m.__flows && ~m.__flows.indexOf(guardName)) ccg = this.vuelike.flow(ccg);
           ret.push(ccg);
         });
       }
@@ -962,7 +962,7 @@ export default class ReactViewRouter {
   }
 
   install(vuelike: any, { App }: { App: any }) {
-    this.ReactVueLike = vuelike.Component || vuelike;
+    this.vuelike = vuelike;
     if (App) {
       if (!Array.isArray(App)) App = [App];
       this.Apps.push(...App);

@@ -2,7 +2,7 @@
 import { HistoryFix } from './history-fix';
 import { nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, RouteBindInstanceFn, ReactVueLikeClass, LocationRoute } from './types';
+import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, RouteBindInstanceFn, ReactVueLike, LocationRoute } from './types';
 export default class ReactViewRouter {
     parent: ReactViewRouter | null;
     options: ReactVueRouterOptions;
@@ -30,7 +30,7 @@ export default class ReactViewRouter {
     protected __unblock?: () => void;
     protected id: number;
     protected _nexting: RouteNextFn | null;
-    protected ReactVueLike?: ReactVueLikeClass;
+    protected vuelike?: ReactVueLike;
     protected _interceptorCounter: number;
     [key: string]: any;
     constructor({ name, parent, mode, basename, ...options }?: ReactVueRouterOptions);
@@ -45,7 +45,7 @@ export default class ReactViewRouter {
     plugin(plugin: ReactViewRoutePlugin): (() => void) | undefined;
     _refreshInitialRoute(): void;
     _callEvent(event: string, ...args: any[]): any;
-    _isReactVueLike(comp: any): any;
+    _isVuelikeComponent(comp: any): any;
     _getComponentGurads(mr: MatchedRoute, guardName: string, bindInstance?: boolean | RouteBindInstanceFn): RouteGuardInterceptor[];
     _getRouteComponentGurads(matched: MatchedRoute[], guardName: string, reverse?: boolean, bindInstance?: boolean | RouteBindInstanceFn): RouteGuardInterceptor[];
     _getSameMatched(route: Route | null, compare?: Route): MatchedRoute[];
