@@ -1,4 +1,5 @@
-import { History } from 'history-fix';
+/// <reference types="react" />
+import { HistoryFix } from './history-fix';
 import { nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
 import { ReactVueRouterMode, ReactVueRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, RouteBindInstanceFn, ReactVueLikeClass, LocationRoute } from './types';
@@ -7,6 +8,7 @@ export default class ReactViewRouter {
     options: ReactVueRouterOptions;
     mode: ReactVueRouterMode;
     basename: string;
+    name: string;
     routes: ConfigRouteArray;
     plugins: ReactViewRoutePlugin[];
     beforeEachGuards: RouteBeforeGuardFn[];
@@ -18,11 +20,12 @@ export default class ReactViewRouter {
     initialRoute: LocationRoute;
     viewRoot: RouterView | null;
     errorCallback: RouteErrorCallback | null;
-    app: any;
+    apps: any[];
+    Apps: React.ComponentClass[];
     isRunning: boolean;
     getHostRouterView: typeof getHostRouterView;
     nextTick: typeof nextTick;
-    protected _history: History | null;
+    protected _history: HistoryFix | null;
     protected _unlisten?: () => void;
     protected __unblock?: () => void;
     protected id: number;
@@ -30,10 +33,13 @@ export default class ReactViewRouter {
     protected ReactVueLike?: ReactVueLikeClass;
     protected _interceptorCounter: number;
     [key: string]: any;
-    constructor({ parent, mode, basename, base, ...options }?: ReactVueRouterOptions);
-    get history(): History;
+    constructor({ name, parent, mode, basename, ...options }?: ReactVueRouterOptions);
+    _clear(): void;
+    get history(): HistoryFix;
+    get pluginName(): string;
     get top(): ReactViewRouter;
-    start({ parent, mode, basename, base, ...options }?: ReactVueRouterOptions): void;
+    get isMemoryMode(): boolean;
+    start({ parent, mode, basename, ...options }?: ReactVueRouterOptions, isInit?: boolean): void;
     stop(): void;
     use({ routes, inheritProps, install, ...restOptions }: ReactVueRouterOptions): void;
     plugin(plugin: ReactViewRoutePlugin): (() => void) | undefined;

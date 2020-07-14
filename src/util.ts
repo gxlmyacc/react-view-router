@@ -33,14 +33,15 @@ function normalizePath(path: string) {
     if (paths[i + 1] === '..') paths.splice(i, 2);
     else if (paths[i] === '.') paths.splice(i, 1);
   }
-  return paths.join('/');
+  return paths.join('/').replace(/\/{2,}/, '/');
 }
 
 function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any): ConfigRoute {
   let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
   let r = { ...route, subpath: route.path, path, depth };
   if (parent) innumerable(r, 'parent', parent);
-  if (r.children && !isFunction(r.children)) {
+  if (!r.children) r.children = [];
+  if (!isFunction(r.children)) {
     innumerable(r, 'children', normalizeRoutes(r.children, r, depth + 1, force));
   }
   r.depth = depth;
@@ -83,7 +84,7 @@ function normalizeRoutes(routes: ConfigRouteArray, parent?: any, depth = 0, forc
 function normalizeRoutePath(path: string, route?: any, append?: boolean, basename = '') {
   if (isAbsoluteUrl(path)) return path;
   if (route && route.matched) route = route.matched[route.matched.length - 1];
-  if (!path || path[0] === '/' || !route) return basename + (path || '');
+  if (!path || path[0] === '/' || !route) return normalizePath(basename + (path || ''));
   if (route.config) route = route.config;
   let parent = (append || /^\.\//.test(path)) ? route : route.parent;
   while (parent && path[0] !== '/') {
@@ -480,6 +481,27 @@ function getCurrentPageHash(to: string) {
   return window.location.href.startsWith(host) ? hash : '';
 }
 
+function getSessionStorage(key: string, json: boolean = false) {
+  if (!window || !window.sessionStorage) return null;
+
+  let v = window.sessionStorage[key];
+  if (v === undefined) return json ? null : '';
+  return json ? JSON.parse(v) : v;
+}
+
+function setSessionStorage(key: string, value?: string) {
+  if (!window || !window.sessionStorage) return;
+
+  let isNull = value === undefined || value === null;
+  let v = typeof value === 'string' ? value : JSON.stringify(value);
+  if (!v || isNull) window.sessionStorage.removeItem(key);
+  else window.sessionStorage[key] = v;
+}
+
+function isRoute(route: any): route is Route {
+  return Boolean(route && route.isVuelikeRoute);
+}
+
 export {
   camelize,
   flatten,
@@ -498,6 +520,7 @@ export {
   isRouteChanged,
   isRoutesChanged,
   isAbsoluteUrl,
+  isRoute,
   resolveRedirect,
   normalizePath,
   normalizeRoute,
@@ -512,5 +535,8 @@ export {
   afterInterceptors,
   getParentRoute,
   getHostRouterView,
-  getCurrentPageHash
+  getCurrentPageHash,
+
+  getSessionStorage,
+  setSessionStorage,
 };

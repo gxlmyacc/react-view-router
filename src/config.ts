@@ -1,3 +1,4 @@
+import ReactViewRouter from './router';
 const encodeReserveRE = /[!'()*]/g;
 const encodeReserveReplacer = (c: string) => '%' + c.charCodeAt(0).toString(16);
 const commaRE = /%2C/g;
@@ -91,25 +92,30 @@ export default {
     return this._stringifyQuery;
   },
 
-  routeMergeStrategie(parent: any, child: any, vm: any) {
-    const router = vm.$router || vm._inherits.$router;
-    if (vm._isVueLikeRoot) {
-      if (router) {
-        if (!router.App || (vm instanceof router.App)) router.app = vm;
+  createMergeStrategie(router: ReactViewRouter) {
+    return function routeMergeStrategie(parent: any, child: any, vm: any) {
+      if (vm._isVueLikeRoot) {
+        if (router.Apps.some(App => vm instanceof App)) {
+          router.apps.push(vm);
+          vm.$on('componentDidUnmount', () => {
+            const idx = router.apps.indexOf(vm);
+            if (~idx) router.apps.splice(idx, 1);
+          });
+        }
+        return parent;
       }
-      return parent;
-    }
-    vm.$computed(vm, '$route', function () {
-      return this.$root ? this.$root.$route : null;
-    });
-    vm.$computed(vm, '$routeIndex', function () {
-      if (this._routeIndex !== undefined) return this._routeIndex;
-      let routeView = router.getHostRouterView(this, (v: any) => !v._isVueLikeRoot);
-      return this._routeIndex = routeView ? routeView.state._routerDepth : -1;
-    });
-    vm.$computed(vm, '$matchedRoute', function () {
-      return (this.$route && this.$route.matched[this.$routeIndex]) || null;
-    });
+      vm.$computed(vm, '$route', function () {
+        return this.$root ? this.$root.$route : null;
+      });
+      vm.$computed(vm, '$routeIndex', function () {
+        if (this._routeIndex !== undefined) return this._routeIndex;
+        let routeView = router.getHostRouterView(this, (v: any) => !v._isVueLikeRoot);
+        return this._routeIndex = routeView ? routeView.state._routerDepth : -1;
+      });
+      vm.$computed(vm, '$matchedRoute', function () {
+        return (this.$route && this.$route.matched[this.$routeIndex]) || null;
+      });
+    };
   },
 
 };

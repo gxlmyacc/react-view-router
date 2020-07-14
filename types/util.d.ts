@@ -57,4 +57,7 @@ declare function getHostRouterView(ctx: any, continueCb?: any): RouterView<impor
 declare function getParentRoute(ctx: any): MatchedRoute | null;
 declare function isAbsoluteUrl(to: any): boolean;
 declare function getCurrentPageHash(to: string): string;
-export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, afterInterceptors, getParentRoute, getHostRouterView, getCurrentPageHash };
+declare function getSessionStorage(key: string, json?: boolean): any;
+declare function setSessionStorage(key: string, value?: string): void;
+declare function isRoute(route: any): route is Route;
+export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, isRoute, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, afterInterceptors, getParentRoute, getHostRouterView, getCurrentPageHash, getSessionStorage, setSessionStorage, };

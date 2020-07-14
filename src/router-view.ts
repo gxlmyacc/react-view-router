@@ -206,7 +206,7 @@ class RouterView<
         pendingRoute || router.history.location as RouteHistoryLocation,
         (ok, to) => {
           if (!ok) return;
-          router && to && (router.currentRoute = to);
+          router && to && router.updateRoute(to as any);
           state.currentRoute = this._refreshCurrentRoute();
           if (this._isMounted) this.setState(Object.assign(state, { _routerInited: this._isMounted }));
         },
@@ -322,7 +322,7 @@ class RouterView<
 }
 
 RouterView.defaultProps = {
-  excludeProps: ['_updateRef', 'router', 'excludeProps', 'beforeEach', 'beforeResolve', 'afterEach']
+  excludeProps: ['_updateRef', 'router', 'excludeProps', 'beforeEach', 'beforeResolve', 'afterEach', 'fallback']
 };
 
 export {

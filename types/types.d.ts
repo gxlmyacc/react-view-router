@@ -42,6 +42,7 @@ export declare type RouteLocation = {
     _routeNormalized?: boolean;
 };
 export interface RouteHistoryLocation extends Location {
+    basename?: string;
     path: string;
     fullPath: string;
     query: Partial<any>;
