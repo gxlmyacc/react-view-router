@@ -4,3 +4,4 @@ workbench-common-menu/
 node_modules/
 dist/
 temp/
+../es/

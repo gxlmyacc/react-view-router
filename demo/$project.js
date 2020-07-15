@@ -68,7 +68,7 @@ const project = {
       images: '#{src}images',
       fonts: '#{src}fonts',
       history: 'history-fix',
-      'react-view-router': '#{src}../../src'
+      'react-view-router': '#{src}../../es'
     }
   },
   externals: {},
