@@ -1,4 +1,5 @@
 import ReactViewRouter from './router';
+
 const encodeReserveRE = /[!'()*]/g;
 const encodeReserveReplacer = (c: string) => '%' + c.charCodeAt(0).toString(16);
 const commaRE = /%2C/g;
@@ -94,7 +95,7 @@ export default {
 
   createMergeStrategie(router: ReactViewRouter) {
     return function routeMergeStrategie(parent: any, child: any, vm: any) {
-      if (vm._isVueLikeRoot) {
+      if (vm._isVuelikeRoot) {
         if (router.Apps.some(App => vm instanceof App)) {
           router.apps.push(vm);
           vm.$on('componentDidUnmount', () => {
@@ -109,7 +110,7 @@ export default {
       });
       vm.$computed(vm, '$routeIndex', function () {
         if (this._routeIndex !== undefined) return this._routeIndex;
-        let routeView = router.getHostRouterView(this, (v: any) => !v._isVueLikeRoot);
+        let routeView = router.getHostRouterView(this, (v: any) => !v._isVuelikeRoot);
         return this._routeIndex = routeView ? routeView.state._routerDepth : -1;
       });
       vm.$computed(vm, '$matchedRoute', function () {

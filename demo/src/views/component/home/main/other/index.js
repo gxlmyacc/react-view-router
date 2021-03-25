@@ -22,10 +22,10 @@ class HomeMainOtherIndex extends React.Component {
   render() {
     const { text } = this.state;
     return (
-      <div>
+      <div style={{ border: '1px solid yellow', padding: 10 }}>
         <h1>HomeMainOtherIndex</h1>
         { text }
-        <button onClick={this.goSome}>to some</button>
+        <button onClick={this.goSome}>to some</button> - router.push('some')
       </div>
     );
   }

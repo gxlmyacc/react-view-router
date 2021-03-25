@@ -10,6 +10,7 @@ analyzer/
 plugin/
 esm
 es
+.history/
 drawer/esm
 drawer/es
 dist

@@ -1,10 +1,10 @@
 import React from 'react';
-import { RouterView, useRouteGuards } from 'react-view-router';
+import { RouterView, withRouteGuards } from 'react-view-router';
 import { RouterLink } from 'router';
 
 function HomeMainIndex() {
   return (
-    <div>
+    <div style={{ border: '1px solid green', padding: 10 }}>
       <h1>HomeMainIndex</h1>
       <div className="nav">
         <RouterLink to="some" append>some</RouterLink>
@@ -17,7 +17,7 @@ function HomeMainIndex() {
   );
 }
 
-export default useRouteGuards(HomeMainIndex, {
+export default withRouteGuards(HomeMainIndex, {
   beforeRouteEnter(to, from, next) {
     console.log('HomeMainIndex beforeRouteEnter', to, from);
     next();

@@ -1,22 +1,38 @@
 import React from 'react';
 import matchPath from './match-path';
-import { ConfigRouteArray, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route, RouteGuardInterceptor, RouteRedirectFn, RouteLocation } from './types';
+import { ConfigRouteArray, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route, RouteGuardInterceptor, RouteRedirectFn, RouteLocation, matchPathResult, NormalizeRouteOptions, RouteGuardsInfoHooks, UserConfigRoute } from './types';
 import { ReactViewContainer, RouterViewComponent as RouterView } from './router-view';
+import ReactViewRouter from '.';
+import { HistoryFix } from './history-fix';
 declare function nextTick(cb: () => void, ctx?: object): Promise<unknown> | undefined;
+declare function readonly(obj: object, key: string, value: any, options?: PropertyDescriptor): object;
 declare function innumerable(obj: object, key: string, value: any, options?: PropertyDescriptor): object;
 declare function normalizePath(path: string): string;
-declare function normalizeRoute(route: any, parent: any, depth?: number, force?: any): ConfigRoute;
-declare function normalizeRoutes(routes: ConfigRouteArray, parent?: any, depth?: number, force?: boolean): ConfigRouteArray;
-declare function normalizeRoutePath(path: string, route?: any, append?: boolean, basename?: string): string;
-declare type RoutesHandler = (r: any) => ConfigRouteArray;
-declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: any, parent?: any, branch?: {
+declare function normalizeRoute(route: UserConfigRoute, parent?: ConfigRoute | null, options?: NormalizeRouteOptions): ConfigRoute;
+declare function walkRoutes(routes: ConfigRouteArray, walkFn: (route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray) => boolean | void): boolean;
+declare function normalizeRoutes(routes: UserConfigRoute[], parent?: ConfigRoute | null, options?: NormalizeRouteOptions): ConfigRouteArray;
+declare function normalizeRoutePath(path: string, route?: Route | MatchedRoute | ConfigRoute | RouteHistoryLocation | RouteLocation | null, append?: boolean, basename?: string): string;
+declare type RouteBranchArray = {
     route: any;
-    match: any;
-}[]): {
-    route: any;
-    match: any;
+    match: matchPathResult;
 }[];
-declare function normalizeLocation(to: any, route?: any, append?: boolean, basename?: string, mode?: string): RouteHistoryLocation | null;
+interface RoutesHandler {
+    (r: {
+        to: RouteHistoryLocation;
+        parent?: ConfigRoute;
+        branch: RouteBranchArray;
+        prevChildren?: ConfigRouteArray;
+    }): ConfigRouteArray;
+    _ctx?: Partial<any>;
+    _normalized?: boolean;
+}
+declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: RouteHistoryLocation | Route | string, parent?: ConfigRoute, branch?: RouteBranchArray): RouteBranchArray;
+declare function normalizeLocation(to: any, route?: Route | MatchedRoute | ConfigRoute | RouteHistoryLocation | RouteLocation | null, { append, basename, mode, resolvePathCb }?: {
+    append?: boolean;
+    basename?: string;
+    mode?: string;
+    resolvePathCb?: (path: string, to: RouteHistoryLocation) => string;
+}): RouteHistoryLocation | null;
 declare function isPlainObject(obj: any): obj is {
     [key: string]: any;
 };
@@ -33,10 +49,11 @@ declare function normalizeProps(props: {
 declare function once(fn: ((...args: any) => any) | null, ctx?: any): (...args: any[]) => any;
 declare function isAcceptRef(v: any): boolean;
 declare function mergeFns(...fns: any[]): (...args: any) => undefined;
-declare function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, from?: Route): "" | RouteHistoryLocation;
+declare function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, from?: Route): "" | RouteHistoryLocation<import("./history").State>;
 declare function warn(...args: any[]): void;
 declare function afterInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null): Promise<void>;
 declare type RenderRouteOption = {
+    router?: ReactViewRouter;
     container?: ReactViewContainer;
     name?: string;
     ref?: any;
@@ -58,6 +75,10 @@ declare function getParentRoute(ctx: any): MatchedRoute | null;
 declare function isAbsoluteUrl(to: any): boolean;
 declare function getCurrentPageHash(to: string): string;
 declare function getSessionStorage(key: string, json?: boolean): any;
-declare function setSessionStorage(key: string, value?: string): void;
+declare function setSessionStorage(key: string, value?: any): void;
 declare function isRoute(route: any): route is Route;
-export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, isRoute, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, afterInterceptors, getParentRoute, getHostRouterView, getCurrentPageHash, getSessionStorage, setSessionStorage, };
+declare function isReactViewRouter(v: any): v is ReactViewRouter;
+declare function isHistory(v: any): v is HistoryFix;
+declare function isRouteGuardInfoHooks(v: any): v is RouteGuardsInfoHooks;
+declare function isReadonly(obj: any, key: string): boolean;
+export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, isRoute, isReactViewRouter, isRouteGuardInfoHooks, isHistory, isReadonly, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, walkRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, readonly, afterInterceptors, getParentRoute, getHostRouterView, getCurrentPageHash, getSessionStorage, setSessionStorage, };

@@ -3,9 +3,9 @@ import Home from 'component/home';
 import Login from 'component/login';
 
 const routes = normalizeRoutes([
-  { path: '/', redirect: '/home' },
+  { path: '/', redirect: 'home' },
   {
-    path: '/home',
+    path: 'home',
     component: Home,
     // children routes
     children: [
@@ -41,7 +41,7 @@ const routes = normalizeRoutes([
     ]
   },
   {
-    path: '/login',
+    path: 'login',
     component: Login
   }
 ]);

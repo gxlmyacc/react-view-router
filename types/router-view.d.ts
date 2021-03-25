@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactViewRouter from './router';
-import { MatchedRoute, ConfigRoute, RouteBeforeGuardFn, RouteAfterGuardFn } from './types';
+import { MatchedRoute, ConfigRoute, RouteBeforeGuardFn, RouteAfterGuardFn, ConfigRouteArray } from './types';
 declare type RouterViewUpdateRef = (vm: React.Component | null) => void;
 export interface RouterViewProps {
     name?: string;
@@ -26,12 +26,12 @@ export interface RouterViewState {
     router?: ReactViewRouter;
     parentRoute: MatchedRoute | null;
     currentRoute: MatchedRoute | null;
-    routes: ConfigRoute[];
+    routes: ConfigRouteArray;
 }
 export interface RouterViewDefaultProps {
     excludeProps: string[];
 }
-export declare type RouterViewFilter = (route: ConfigRoute[], state: RouterViewState) => ConfigRoute[];
+export declare type RouterViewFilter = (route: ConfigRouteArray, state: RouterViewState) => ConfigRoute[];
 export declare type ReactViewFallback = (state: {
     parentRoute: MatchedRoute | null;
     currentRoute: MatchedRoute | null;
@@ -53,7 +53,7 @@ declare class RouterView<P extends RouterViewProps = RouterViewProps, S extends 
     _getRouteMatch(state: RouterViewState, depth?: number): MatchedRoute | null;
     _refreshCurrentRoute(state?: S, newState?: S, callback?: () => void): MatchedRoute | null;
     _updateResolving(resolving: any): void;
-    _resolveFallback(): React.ReactElement<any, string | ((props: any) => React.ReactElement<any, string | any | (new (props: any) => React.Component<any, any, any>)> | null) | (new (props: any) => React.Component<any, any, any>)> | null;
+    _resolveFallback(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | null;
     isNull(route: any): boolean;
     componentDidMount(): Promise<void>;
     componentWillUnmount(): void;
@@ -64,8 +64,8 @@ declare class RouterView<P extends RouterViewProps = RouterViewProps, S extends 
     remove(route: string | ConfigRoute): ConfigRoute | undefined;
     getComponent(currentRoute: MatchedRoute | null, excludeProps?: Partial<any>): any;
     renderCurrent(currentRoute: MatchedRoute | null): any;
-    render(): any;
+    render(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | React.FunctionComponentElement<any> | null;
 }
-export { RouterView as RouterViewComponent };
-declare const _default: React.ForwardRefExoticComponent<Pick<any, string | number | symbol> & React.RefAttributes<unknown>>;
-export default _default;
+declare const RouterViewWrapper: React.ForwardRefExoticComponent<Pick<any, string | number | symbol> & React.RefAttributes<unknown>>;
+export { RouterViewWrapper, RouterView as RouterViewComponent };
+export default RouterViewWrapper;

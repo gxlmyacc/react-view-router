@@ -1,16 +1,16 @@
 import React from 'react';
-import { RouterView, useRouteGuards } from 'react-view-router';
+import { RouterView, withRouteGuards } from 'react-view-router';
 
 function HomeIndex() {
   return (
-    <div>
+    <div style={{ border: '1px solid red', padding: 10 }}>
       <h1>HomeIndex</h1>
       <RouterView />
     </div>
   );
 }
 
-export default useRouteGuards(HomeIndex, {
+export default withRouteGuards(HomeIndex, {
   beforeRouteEnter(to, from, next) {
     console.log('HomeIndex beforeRouteEnter', to, from);
     next();

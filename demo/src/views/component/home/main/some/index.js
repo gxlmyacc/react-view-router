@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRouteGuards } from 'react-view-router';
+import { withRouteGuards } from 'react-view-router';
 import store from 'store';
 import router from 'router';
 
@@ -17,10 +17,10 @@ class HomeMainSomeIndex extends React.Component {
   render() {
     const { text } = this.state;
     return (
-      <div>
+      <div style={{ border: '1px solid blue', padding: 10 }}>
         <h1>HomeMainSomeIndex</h1>
         { text }
-        <button onClick={() => router.push('other')}>to other</button>
+        <button onClick={() => router.push('other')}>to other</button> - router.push('other')
       </div>
     );
   }
@@ -30,7 +30,7 @@ function WrapComponent(Comp) {
   return React.forwardRef((props, ref) => (<Comp {...props} ref={ref} />));
 }
 
-export default useRouteGuards(
+export default withRouteGuards(
   // component
   WrapComponent(HomeMainSomeIndex),
   // route guards

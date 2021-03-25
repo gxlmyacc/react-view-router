@@ -11,14 +11,24 @@ export {
   RouterViewState,
   RouterViewDefaultProps
 }  from './router-view';
-export { default as withRouter }  from './with-router';
-export { default as createRouterLink } from './router-link';
+export * from './hocs';
+export * from './hooks';
+
+export { default as createRouterLink, RouterLink } from './router-link';
 export { default as config } from './config';
 
-export { useRouteGuards, REACT_FORWARD_REF_TYPE } from './route-guard';
+export { withRouteGuards, REACT_FORWARD_REF_TYPE } from './route-guard';
 export { lazyImport } from './route-lazy';
 
+export * from './history';
 export * from './util';
+
+// eslint-disable-next-line no-undef
+const version = typeof __packageversion__ === 'undefined' ? undefined : __packageversion__;
+
+export {
+  version
+};
 
 
 export default ReactViewRouter;
