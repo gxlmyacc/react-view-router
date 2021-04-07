@@ -2,7 +2,7 @@ module.exports = {
   root: true,
   parserOptions: {
     parser: 'babel-eslint',
-    ecmaVersion: 2018,
+    ecmaVersion: 2020,
     sourceType: 'module',
     ecmaFeatures: {
       jsx: true
@@ -35,9 +35,6 @@ module.exports = {
     '__ENV__': true,
     '__VERSION__': true,
     '__WATCH__': true,
-    '$': true,
-    'importCss': true,
-    'importJs': true
   },
   rules: {
     'jsx-a11y/href-no-hash': 'off',
@@ -80,6 +77,7 @@ module.exports = {
     'import/no-unresolved': 0,
     // 如果只导出一个时，优先使用default导出
     'import/prefer-default-export': 0,
+    'import/extensions': 0,
     // 控制缩进
     'indent': [2, 2, { SwitchCase: 1 }],
     // 强制在 JSX 属性中一致地使用双引号或单引号

@@ -9,7 +9,7 @@ module.exports = function (options, project) {
     ],
     plugins: [
       '@babel/plugin-syntax-dynamic-import',
-      '@babel/plugin-syntax-import-meta',
+      // '@babel/plugin-syntax-import-meta',
       // '@babel/plugin-transform-runtime',
       // '@babel/plugin-transform-classes',
       '@babel/plugin-proposal-class-properties',

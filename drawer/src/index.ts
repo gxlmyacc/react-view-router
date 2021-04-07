@@ -1,14 +1,15 @@
 import React from 'react';
 import {
   RouterViewComponent,
-  RouterViewProps,
-  RouterViewState,
   renderRoute,
   config,
   isFunction,
+  MatchedRoute,
+  RouterViewProps,
+  RouterViewState,
   RouterViewDefaultProps,
-  MatchedRoute
 } from 'react-view-router';
+
 import Drawer from './drawer';
 
 import '../style/drawer.css';
@@ -37,10 +38,14 @@ class RouterDrawer<
 
   drawer?: Drawer | null;
 
+  needAnimation: boolean;
+
   static defaultProps: RouterDrawerDefaultProps;
 
   constructor(props: P) {
     super(props);
+    this.needAnimation = false;
+
     Object.assign(this.state, {
       openDrawer: false,
       prevRoute: null,
@@ -50,11 +55,14 @@ class RouterDrawer<
     this._handleAnimationEnd = this._handleAnimationEnd.bind(this);
   }
 
-  _refreshCurrentRoute(state: S) {
+  _refreshCurrentRoute(state?: S, newState?: any, callback?: () => void) {
     if (!state) state = this.state;
     const prevRoute = state.currentRoute;
-    const newState: any = { openDrawer: false };
-    const currentRoute = super._refreshCurrentRoute(state, newState);
+
+    if (!newState) newState = { openDrawer: false };
+    else newState.openDrawer = false;
+
+    const currentRoute = super._refreshCurrentRoute(state, newState, callback);
     let openDrawer;
     if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
       let r = state._routerParent && state._routerParent.state.currentRoute;
@@ -74,7 +82,9 @@ class RouterDrawer<
     }
     if (openDrawer !== undefined && this.state.openDrawer !== openDrawer) {
       newState.openDrawer = openDrawer;
-      if (!openDrawer && this.props.position) newState.prevRoute = prevRoute;
+      if (!openDrawer
+        && this.props.position
+        && !this.isNull(this.state.prevRoute)) newState.prevRoute = prevRoute;
     }
 
     if (this.state && this.state._routerInited) this.setState(newState);
@@ -140,13 +150,16 @@ class RouterDrawer<
         params,
         container: (comp: any) => {
           if (oldContainer) comp = oldContainer(comp, currentRoute, props as any);
-          const hasPrev = this.state.router && !this.isNull(this.state.router.prevRoute);
+          let needAnimation = this.state.router && !this.isNull(this.state.router.prevRoute);
+          if (!openDrawer) needAnimation = this.needAnimation && needAnimation;
+          this.needAnimation = Boolean(needAnimation);
+
           comp = React.createElement(Drawer, {
             ref: (el: Drawer | null) => this.drawer = el,
             prefixCls,
             className: drawerClassName,
-            touch: touch && hasPrev,
-            transitionName: (hasPrev && position) ? `rvr-slide-${position}` : '',
+            touch: touch && needAnimation,
+            transitionName: (needAnimation && position) ? `rvr-slide-${position}` : '',
             open: Boolean(openDrawer && comp),
             zIndex: this.getZindex(),
             onAnimateLeave: this._handleAnimationEnd,

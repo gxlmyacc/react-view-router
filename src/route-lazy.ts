@@ -60,7 +60,7 @@ export class RouteLazy {
 
   render(props: any, ref: any) {
     if (!this.resolved || !this._result) return null;
-    return React.createElement(this._result, { ...props, ref });
+    return React.createElement(this._result, { ...props, ref }, props.children);
   }
 
 }

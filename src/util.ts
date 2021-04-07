@@ -5,15 +5,26 @@ import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
 import {
   ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route,
-  RouteAfterGuardFn, RouteGuardInterceptor, lazyResovleFn, RouteRedirectFn, RouteLocation
+  RouteAfterGuardFn, RouteGuardInterceptor, lazyResovleFn, RouteRedirectFn, RouteLocation,
+  matchPathResult, NormalizeRouteOptions, RouteGuardsInfoHooks, UserConfigRoute
 } from './types';
-import { ReactViewContainer, RouterViewComponent as RouterView  } from './router-view';
+import { ReactViewContainer, RouterViewComponent as RouterView, RouterViewWrapper  } from './router-view';
+import ReactViewRouter from '.';
+import { HistoryFix } from './history-fix';
 
 function nextTick(cb: () => void, ctx?: object) {
   if (!cb) return;
   return new Promise(function (resolve) {
     setTimeout(() => resolve(ctx ? cb.call(ctx) : cb()), 0);
   });
+}
+
+function readonly(obj: object,
+  key: string,
+  value: any,
+  options: PropertyDescriptor = { configurable: true, enumerable: true }) {
+  Object.defineProperty(obj, key, { get() { return value; }, ...options });
+  return obj;
 }
 
 function innumerable(
@@ -33,17 +44,38 @@ function normalizePath(path: string) {
     if (paths[i + 1] === '..') paths.splice(i, 2);
     else if (paths[i] === '.') paths.splice(i, 1);
   }
-  return paths.join('/');
+  return paths.join('/').replace(/\/{2,}/, '/');
 }
 
-function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any): ConfigRoute {
-  let path = normalizePath(parent ? `${parent.path}/${route.path.replace(/^(\/)/, '')}` : route.path);
-  let r = { ...route, subpath: route.path, path, depth };
+function normalizeRoute(
+  route: UserConfigRoute,
+  parent?: ConfigRoute | null,
+  options: NormalizeRouteOptions = {}
+): ConfigRoute {
+  let path = normalizePath(parent ? `${parent.path}${route.path === '/' ? '' : '/'}${route.path.replace(/^(\/)/, '')}` : route.path);
+  let r: Partial<any> = {
+    ...route,
+    subpath: route.path,
+    path: parent
+      ? path
+      : path[0] === '/'
+        ? path
+        : `/${path}`,
+    depth: parent ? (parent.depth + 1) : 0
+  };
   if (parent) innumerable(r, 'parent', parent);
-  if (r.children && !isFunction(r.children)) {
-    innumerable(r, 'children', normalizeRoutes(r.children, r, depth + 1, force));
+  if (!r.children) r.children = [];
+  if (isFunction(r.children)) {
+    if (!(r.children as any)._normalized) {
+      const fn: Function = r.children;
+      const ctx = {};
+      r.children = function () { return fn.apply(ctx, arguments); };
+      innumerable(r.children, '_ctx', ctx);
+      innumerable(r.children, '_normalized', true);
+    }
+  } else {
+    innumerable(r, 'children', normalizeRoutes(r.children, r as ConfigRoute, options));
   }
-  r.depth = depth;
   r.exact = r.exact !== undefined ? r.exact : Boolean(r.redirect || r.index);
   if (!r.components) r.components = {};
   if (r.component) {
@@ -51,44 +83,64 @@ function normalizeRoute(route: any, parent: any, depth: number = 0, force?: any)
     delete r.component;
   }
   Object.keys(r.components).forEach(key => {
-    let comp = r.components[key];
+    let comp = (r as ConfigRoute).components[key];
     if (comp instanceof RouteLazy) {
       (comp as RouteLazy).updaters.push(c => {
-        if (c.__children) {
+        if (c && c.__children) {
           let children = c.__children || [];
           if (isFunction(children)) children = (children as ((r: any) => any[]))(r) || [];
-          innumerable(r, 'children', normalizeRoutes(children as ConfigRouteArray, r, depth + 1));
-          r.exact = !r.children.length;
+          innumerable(r, 'children', normalizeRoutes(children as ConfigRouteArray, r as ConfigRoute));
+          r.exact = !(r as ConfigRoute).children.length;
         }
-        return r.components[key] = c;
+        return (r as ConfigRoute).components[key] = c;
       });
     }
   });
-  if (!r.meta) r.meta = {};
+  readonly(r, 'meta', r.meta || {});
   if (r.props) innumerable(r, 'props', normalizeProps(r.props));
   if (r.paramsProps) innumerable(r, 'paramsProps', normalizeProps(r.paramsProps));
   if (r.queryProps) innumerable(r, 'queryProps', normalizeProps(r.queryProps));
   innumerable(r, '_pending', { completeCallbacks: {} });
-  return r;
+  return r as ConfigRoute;
 }
 
-function normalizeRoutes(routes: ConfigRouteArray, parent?: any, depth = 0, force = false) {
+function walkRoutes(
+  routes: ConfigRouteArray,
+  walkFn: (route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray) => boolean|void
+): boolean {
+  return routes.some((route, routeIndex) => {
+    if (walkFn(route, routeIndex, routes)) return true;
+    if (!route.children || !Array.isArray(route.children)) return;
+    return walkRoutes(route.children, walkFn);
+  });
+}
+
+function normalizeRoutes(
+  routes: UserConfigRoute[],
+  parent?: ConfigRoute | null,
+  options: NormalizeRouteOptions = {}
+) {
   if (!routes) routes = [] as ConfigRouteArray;
-  if (!force && routes._normalized) return routes;
-  routes = routes.map((route: any) => route && normalizeRoute(route, parent, depth || 0, force)).filter(Boolean);
+  if (!options.force && (routes as ConfigRouteArray)._normalized) return routes as ConfigRouteArray;
+  routes = routes.map((route: any) => route && normalizeRoute(route, parent, options)).filter(Boolean);
   Object.defineProperty(routes, '_normalized', { value: true });
-  return routes;
+  return routes as ConfigRouteArray;
 }
 
-function normalizeRoutePath(path: string, route?: any, append?: boolean, basename = '') {
+function normalizeRoutePath(
+  path: string,
+  route?: Route|MatchedRoute|ConfigRoute|RouteHistoryLocation|RouteLocation|null,
+  append?: boolean,
+  basename = ''
+) {
   if (isAbsoluteUrl(path)) return path;
-  if (route && route.matched) route = route.matched[route.matched.length - 1];
-  if (!path || path[0] === '/' || !route) return basename + (path || '');
-  if (route.config) route = route.config;
-  let parent = (append || /^\.\//.test(path)) ? route : route.parent;
+  if (isRoute(route)) route = route.matched[route.matched.length - 1];
+  if (!path || ['/', '#'].includes(path[0]) || !route) return normalizePath(basename + (path || ''));
+  if (isMatchedRoute(route)) route = route.config;
+  let parent: any = (append || /^\.\//.test(path)) ? route : ((route as ConfigRoute).parent || { path: '' });
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
-    parent = route.parent;
+    parent = (route as ConfigRoute).parent;
   }
   if (basename && path[0] === '/') path = basename + path;
   return normalizePath(path);
@@ -96,7 +148,11 @@ function normalizeRoutePath(path: string, route?: any, append?: boolean, basenam
 
 function resloveIndex(index: string | RouteIndexFn, routes: ConfigRouteArray): any {
   index = isFunction(index) ? (index as RouteIndexFn)(routes) : index;
-  let r = routes.find((r: ConfigRoute) => r.subpath === index);
+  let r = routes.find((r: ConfigRoute) => {
+    let path1 = r.subpath[0] === '/' ? r.subpath : `/${r.subpath}`;
+    let path2 = (index as string)[0] === '/' ? index : `/${index}`;
+    return path1 === path2;
+  });
   if (r && r.index) {
     if (r.index === index) return null;
     return resloveIndex(r.index, routes);
@@ -105,43 +161,59 @@ function resloveIndex(index: string | RouteIndexFn, routes: ConfigRouteArray): a
 }
 
 
-type RoutesHandler = (r: any) => ConfigRouteArray;
+type RouteBranchArray = { route: any, match: matchPathResult }[];
+
+interface RoutesHandler {
+  (r: {
+    to: RouteHistoryLocation,
+    parent?: ConfigRoute,
+    branch: RouteBranchArray,
+    prevChildren?: ConfigRouteArray
+  }): ConfigRouteArray;
+  _ctx?: Partial<any>;
+  _normalized?: boolean;
+}
 
 function matchRoutes(
   routes: ConfigRouteArray | RoutesHandler,
-  to: any,
-  parent?: any,
-  branch: { route: any, match: any }[] = []
+  to: RouteHistoryLocation | Route | string,
+  parent?: ConfigRoute,
+  branch: RouteBranchArray = []
 ) {
-  to = normalizeLocation(to);
+  to = normalizeLocation(to) as RouteHistoryLocation;
+  if (!to || to.path === '') return [];
 
   if (isFunction(routes)) {
-    routes = normalizeRoutes((routes as RoutesHandler)({
-      location,
+    let fn = (routes as RoutesHandler);
+    routes = normalizeRoutes(fn({
+      to,
       parent,
       branch,
-      prevChildren: parent && parent.prevChildren
+      prevChildren: fn._ctx && fn._ctx.prevChildren
     }), parent);
-    if (parent) parent.prevChildren = routes;
+    if (fn._ctx) fn._ctx.prevChildren = routes;
   }
 
   (routes as ConfigRouteArray).some(route => {
     let match = route.path
-      ? matchPath(to.path, route)
+      ? matchPath((to as RouteHistoryLocation).path, route)
       : branch.length
         ? branch[branch.length - 1].match // use parent match
-        : computeRootMatch(to.path); // use default "root" match
+        : computeRootMatch((to as RouteHistoryLocation).path); // use default "root" match
 
     if (match && route.index) {
       route = resloveIndex(route.index, routes as ConfigRouteArray);
       if (!route) return;
-      to.pathname = to.path = route.path;
+      (to as RouteHistoryLocation).pathname = (to as RouteHistoryLocation).path = route.path;
+      match = matchPath(route.path, route);
     }
 
     if (match) {
       branch.push({ route,  match });
 
-      if (route.children) matchRoutes(route.children, to, route, branch);
+      if (route.children
+        && (route.children.length || isFunction(route.children))
+      ) matchRoutes(route.children as any, to, route, branch);
     }
     if (match) return true;
   });
@@ -149,18 +221,57 @@ function matchRoutes(
   return branch;
 }
 
-function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''): RouteHistoryLocation | null {
+function normalizeLocation(
+  to: any,
+  route?: Route|MatchedRoute|ConfigRoute|RouteHistoryLocation|RouteLocation|null,
+  {
+    append = false,
+    basename = '',
+    mode = '',
+    resolvePathCb
+  }: {
+    append?: boolean,
+    basename?: string,
+    mode?: string,
+    resolvePathCb?: (path: string, to: RouteHistoryLocation) => string
+  } = {}
+): RouteHistoryLocation | null {
   if (!to || (isPlainObject(to) && !to.path && !to.pathname)) return null;
   if (to._routeNormalized) return to;
   if (typeof to === 'string') {
-    const [pathname, search] = to.split('?');
-    to = { pathname, path: pathname, search: search ? `?${search}` : '', fullPath: to };
+    const searchs = to.match(/\?[^#]+/g) || [];
+    const pathname = searchs.reduce((p, v) => p.replace(v, ''), to);
+    const search = searchs.reduce((p, v, i) => {
+      if (!i) return v;
+      const s = v.substr(1);
+      return p + (s ? `&${s}` : '');
+    }, '');
+    to = { pathname, path: pathname, search, fullPath: to };
   }
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
-  else if (to.search) to.query = config.parseQuery(to.search.substr(1));
+  else if (to.search) to.query = config.parseQuery(to.search);
 
-  if (!isAbsoluteUrl(to.pathname)) {
-    to.pathname = to.path = normalizeRoutePath(to.pathname || to.path, route, to.append || append, basename) || '/';
+  let isAbsolute = isAbsoluteUrl(to.pathname);
+  if (isAbsolute && mode !== 'browser') {
+    let hash = getCurrentPageHash(to.pathname);
+    if (hash) {
+      to.pathname = hash;
+      isAbsolute = false;
+    }
+  }
+
+  if (to.basename == null && basename) to.basename = to.absolute ? '' : basename;
+
+  if (!isAbsolute) {
+    let path = to.pathname || to.path;
+    if (resolvePathCb) path = resolvePathCb(path, to);
+    path = normalizeRoutePath(
+      path,
+      route,
+      to.append || append,
+      to.absolute ? '' : basename
+    ) || '/';
+    to.pathname = to.path = path;
   }
   Object.defineProperty(to, 'search', {
     enumerable: true,
@@ -173,8 +284,7 @@ function normalizeLocation(to: any, route?: any, append?: boolean, basename = ''
     enumerable: true,
     configurable: true,
     get() {
-      let s = this.search;
-      return `${this.path}${s || ''}` || '/';
+      return `${this.path}${this.search || ''}` || '/';
     }
   });
   if (!to.query) to.query = {};
@@ -193,7 +303,7 @@ function isNull(value: any): value is (null | undefined) {
   return value === null || value === undefined;
 }
 function isMatchedRoute(value: any): value is MatchedRoute {
-  return Boolean(value.config);
+  return Boolean(value && value.config);
 }
 function isLocation(v: any): v is RouteLocation {
   return isPlainObject(v) && (v.path || v.pathname);
@@ -280,6 +390,7 @@ async function afterInterceptors(interceptors: RouteGuardInterceptor[], to: Rout
 }
 
 type RenderRouteOption = {
+  router?: ReactViewRouter,
   container?: ReactViewContainer
   name?: string;
   ref?: any,
@@ -310,7 +421,7 @@ function renderRoute(
         let val = obj[key];
         if (val === undefined) {
           if (prop.default) {
-            if (typeof prop.default === 'function' && (type === Object || type === Array)) {
+            if (isFunction(prop.default) && (type === Object || type === Array)) {
               _props[key] = prop.default();
             } else _props[key] = prop.default;
           } else return;
@@ -322,10 +433,14 @@ function renderRoute(
   }
   function createComp(route: ConfigRoute | MatchedRoute, props: any, children: React.ReactNode, options: RenderRouteOption) {
     let component = route.components && route.components[options.name || 'default'];
-    if (!component) return null;
+    if (!component) {
+      if (route.children && route.children.length && options.router) {
+        component = RouterViewWrapper;
+      } else  return null;
+    }
     if (isMatchedRoute(route)) route = route.config;
 
-    const _props = {};
+    const _props = { key: route.path };
     if (route.defaultProps) {
       Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
     }
@@ -341,7 +456,7 @@ function renderRoute(
       }
     }
     const _pending = route._pending;
-    const completeCallback = _pending.completeCallbacks[options.name || 'default'];
+    const completeCallback = _pending && _pending.completeCallbacks[options.name || 'default'];
     let refHandler = once((el, componentClass) => {
       if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
@@ -361,7 +476,7 @@ function renderRoute(
         completeCallback && completeCallback(el);
       }
     });
-    _pending.completeCallbacks[options.name || 'default'] = null;
+    _pending && (_pending.completeCallbacks[options.name || 'default'] = null);
     if (ref) ref = mergeFns(ref, (el: any) => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
     let ret;
@@ -406,7 +521,7 @@ function flatten(array: any[]) {
 }
 
 function camelize(str: string): string {
-  let ret = str.replace(/[-|:](\w)/g, function (_, c) { return c ? c.toUpperCase() : ''; });
+  let ret = str.replace(/[-](\w)/g, function (_, c) { return c ? c.toUpperCase() : ''; });
   if (/^[A-Z]/.test(ret)) ret = ret.charAt(0).toLowerCase() + ret.substr(1);
   return ret;
 }
@@ -417,7 +532,7 @@ function isPropChanged(prev: { [key: string]: any }, next: { [key: string]: any 
 }
 
 function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRoute | MatchedRoute | null) {
-  if (prev && next) return prev.path !== next.path && prev.subpath !== next.subpath;
+  if (prev && next) return prev.path !== next.path || prev.subpath !== next.subpath;
   if ((!prev || !next) && prev !== next) return true;
   return false;
 }
@@ -455,6 +570,50 @@ function isAbsoluteUrl(to: any) {
   return typeof to === 'string' && /^(https?:)?\/\/.+/.test(to);
 }
 
+function getCurrentPageHash(to: string) {
+  if (!to || !window || !window.location) return '';
+  let [, host = '', hash = ''] = to.match(/(.+)#(.+)$/) || [];
+  return window.location.href.startsWith(host) ? hash : '';
+}
+
+function getSessionStorage(key: string, json: boolean = false) {
+  if (!window || !window.sessionStorage) return null;
+
+  let v = window.sessionStorage[key];
+  if (v === undefined) return json ? null : '';
+  return json ? JSON.parse(v) : v;
+}
+
+function setSessionStorage(key: string, value?: any) {
+  if (!window || !window.sessionStorage) return;
+
+  let isNull = value === undefined || value === null;
+  let v = typeof value === 'string' ? value : JSON.stringify(value);
+  if (!v || isNull) window.sessionStorage.removeItem(key);
+  else window.sessionStorage[key] = v;
+}
+
+function isRoute(route: any): route is Route {
+  return Boolean(route && route.isViewRoute);
+}
+
+function isReactViewRouter(v: any): v is ReactViewRouter {
+  return v && v.isReactViewRouterInstance;
+}
+
+function isHistory(v: any): v is HistoryFix {
+  return v && v.isHistoryInstance;
+}
+
+function isRouteGuardInfoHooks(v: any): v is RouteGuardsInfoHooks {
+  return v && v.__routeGuardInfoHooks;
+}
+
+function isReadonly(obj: any, key: string) {
+  let d = obj && Object.getOwnPropertyDescriptor(obj, key);
+  return Boolean(!obj || (d && !d.writable));
+}
+
 export {
   camelize,
   flatten,
@@ -473,10 +632,16 @@ export {
   isRouteChanged,
   isRoutesChanged,
   isAbsoluteUrl,
+  isRoute,
+  isReactViewRouter,
+  isRouteGuardInfoHooks,
+  isHistory,
+  isReadonly,
   resolveRedirect,
   normalizePath,
   normalizeRoute,
   normalizeRoutes,
+  walkRoutes,
   normalizeRoutePath,
   normalizeLocation,
   normalizeProps,
@@ -484,7 +649,12 @@ export {
   matchRoutes,
   renderRoute,
   innumerable,
+  readonly,
   afterInterceptors,
   getParentRoute,
-  getHostRouterView
+  getHostRouterView,
+  getCurrentPageHash,
+
+  getSessionStorage,
+  setSessionStorage,
 };

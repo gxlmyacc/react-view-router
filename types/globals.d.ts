@@ -40,7 +40,7 @@ export interface RouteHistoryLocation {
     onInit?: RouteEvent;
     redirectedFrom?: Route | null;
 }
-export interface UseRouteGuardsInfo {
+export interface RouteGuardsInfo {
     componentClass?: React.ComponentType;
     children?: any;
     beforeRouteEnter?: RouteBeforeGuardFn;

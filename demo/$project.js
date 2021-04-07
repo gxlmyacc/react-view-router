@@ -67,8 +67,8 @@ const project = {
       styles: '#{src}styles',
       images: '#{src}images',
       fonts: '#{src}fonts',
-      history: 'history-fix',
-      'react-view-router': '#{src}../../src'
+      // history: 'history-fix',
+      // 'react-view-router': '#{src}../../es'
     }
   },
   externals: {},
@@ -89,7 +89,7 @@ const project = {
   },
   webserver: {
     host: '0.0.0.0',
-    port: 8080,
+    port: 8081,
     disableHostCheck: true,
     publicHost: '',
     path: '/',

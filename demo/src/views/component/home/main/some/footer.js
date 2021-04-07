@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRouteGuards } from 'react-view-router';
+import { withRouteGuards } from 'react-view-router';
 
 class HomeMainSomeFooter extends React.Component {
   constructor(props) {
@@ -11,7 +11,7 @@ class HomeMainSomeFooter extends React.Component {
   render() {
     const { text } = this.state;
     return (
-      <div>
+      <div style={{ border: '1px solid blue', padding: 10, marginTop: 10 }}>
         <h1>HomeMainSomeFooter</h1>
         { text }
       </div>
@@ -19,7 +19,7 @@ class HomeMainSomeFooter extends React.Component {
   }
 }
 
-export default useRouteGuards(
+export default withRouteGuards(
   // component
   HomeMainSomeFooter,
   // route guards

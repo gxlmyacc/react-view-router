@@ -2,10 +2,12 @@ import React from 'react';
 import {
   renderRoute, normalizeRoute, normalizeRoutes, isFunction,
   isRouteChanged, isRoutesChanged, isPropChanged,
-  getHostRouterView
+  getHostRouterView, warn
 } from './util';
 import ReactViewRouter from './router';
-import { MatchedRoute, ConfigRoute, RouteHistoryLocation } from './types';
+import { MatchedRoute, ConfigRoute, RouteHistoryLocation, RouteBeforeGuardFn, RouteAfterGuardFn, ConfigRouteArray } from './types';
+import { computeRootMatch } from './match-path';
+import { RouterContext, RouterViewContext } from './context';
 
 type RouterViewUpdateRef = (vm: React.Component | null) => void;
 
@@ -18,6 +20,9 @@ export interface RouterViewProps {
   depth?: number,
   _updateRef?: RouterViewUpdateRef,
   excludeProps: string[],
+  beforeEach?: RouteBeforeGuardFn,
+  beforeResolve?: RouteAfterGuardFn,
+  afterEach?: RouteAfterGuardFn,
   [key: string]: any
 }
 
@@ -32,14 +37,14 @@ export interface RouterViewState {
   router?: ReactViewRouter,
   parentRoute: MatchedRoute | null,
   currentRoute: MatchedRoute | null,
-  routes: ConfigRoute[],
+  routes: ConfigRouteArray,
 }
 
 export interface RouterViewDefaultProps {
   excludeProps: string[];
 }
 
-export type RouterViewFilter = (route: ConfigRoute[], state: RouterViewState) => ConfigRoute[];
+export type RouterViewFilter = (route: ConfigRouteArray, state: RouterViewState) => ConfigRoute[];
 export type ReactViewFallback = (state: {
   parentRoute: MatchedRoute | null,
   currentRoute: MatchedRoute | null,
@@ -107,7 +112,7 @@ class RouterView<
     let currentRoute = this.state.currentRoute;
     if (currentRoute) currentRoute.componentInstances[this.name] = ref;
     if (this.props && this.props._updateRef) this.props._updateRef(ref);
-    if (this._isMounted) this.setState({ currentRoute });
+    // if (this._isMounted) this.setState({ currentRoute });
   }
 
   _filterRoutes(routes: ConfigRoute[], state?: RouterViewState) {
@@ -137,26 +142,32 @@ class RouterView<
     let currentRoute = this._getRouteMatch(state, state._routerDepth);
 
     if (!currentRoute) {
+      let route = normalizeRoute({ path: '' }, state.parentRoute && state.parentRoute.config);
       currentRoute = router.createMatchedRoute(
-        normalizeRoute({ path: '' }, state.parentRoute, state._routerDepth),
-        state.parentRoute as any
+        route,
+        computeRootMatch()
       );
       router.currentRoute && router.currentRoute.matched.push(currentRoute);
     } else if (!currentRoute || currentRoute.redirect) currentRoute = null;
 
-    if (currentRoute) currentRoute.viewInstances[this.name] = this;
+    if (currentRoute) {
+      currentRoute.viewInstances[this.name] = this;
+    }
     if (this.state && this.state._routerInited) {
       if (newState) Object.assign(newState, { currentRoute });
       else if (this._isMounted) {
-        if (router.ReactVueLike
-          && (this.currentRef instanceof router.ReactVueLike)
+        if (router._isVuelikeComponent(this.currentRef)
           && isRouteChanged(this.state.currentRoute, currentRoute)) {
           this.currentRef._willUnmount && this.currentRef._willUnmount();
-          callback && callback();
         }
-        this.setState({ currentRoute });
+        try {
+          this.setState({ currentRoute });
+        } catch (ex) {
+          console.error(ex);
+        }
       }
-    } else callback && callback();
+    }
+    if (this._isMounted) callback && callback();
     return currentRoute;
   }
 
@@ -188,15 +199,32 @@ class RouterView<
     if (this.state._routerInited) return;
     const state = { ...(this.state as S) };
 
+
     if (state._routerRoot && state.router) {
-      state.router.viewRoot = this;
-      state.router._handleRouteInterceptor(
-        state.router.history.location as RouteHistoryLocation,
+      const router = state.router;
+      router.viewRoot = this;
+      // if (!router.parent) {
+      //   let parent = getHostRouterView(this);
+      //   router.parent = (parent && parent.state.router) || null;
+      // }
+
+      const pendingRoute = router.pendingRoute;
+      router.pendingRoute = null;
+
+      if (!router.isRunning) {
+        warn('[react-view-router] warning: router is not running in RouterView.componentDidMount');
+      }
+      const [, location] = router.history.getIndexAndLocation
+        ? router.history.getIndexAndLocation()
+        : [router.history.index, router.history.location];
+      router._handleRouteInterceptor(
+        pendingRoute || { ...(location as RouteHistoryLocation) },
         (ok, to) => {
           if (!ok) return;
-          // this.state.router && (this.state.router.currentRoute = to);
+          router && to && router.updateRoute(to as any);
           state.currentRoute = this._refreshCurrentRoute();
-          if (this._isMounted) this.setState(Object.assign(state, { _routerInited: true }));
+          if (this._isMounted) this.setState(Object.assign(state, { _routerInited: this._isMounted }));
+          if (isFunction(ok)) ok(true);
         },
         true,
       );
@@ -224,6 +252,8 @@ class RouterView<
 
   componentWillUnmount() {
     this._isMounted = false;
+    const { _routerRoot, router } = this.state;
+    _routerRoot && router && (router.viewRoot = null);
   }
 
   shouldComponentUpdate(nextProps: RouterViewProps, nextState: RouterViewState) {
@@ -240,14 +270,14 @@ class RouterView<
 
   push(...routes: ConfigRoute[]) {
     const state = { ...this.state };
-    state.routes.push(...normalizeRoutes(routes, state.parentRoute));
+    state.routes.push(...normalizeRoutes(routes, state.parentRoute && state.parentRoute.config));
     if (this._isMounted) this.setState(state);
     return state.routes;
   }
 
   splice(idx: number, len: number, ...routes: ConfigRoute[]) {
     const state = { ...this.state };
-    state.routes.splice(idx, len, ...normalizeRoutes(routes, state.parentRoute));
+    state.routes.splice(idx, len, ...normalizeRoutes(routes, state.parentRoute && state.parentRoute.config));
     if (this._isMounted) this.setState(state);
     return state.routes;
   }
@@ -280,6 +310,7 @@ class RouterView<
     return renderRoute(currentRoute, routes, props,
       children,
       {
+        router,
         name: this.name,
         query,
         params,
@@ -296,7 +327,15 @@ class RouterView<
   render() {
     if (!this.state._routerInited) return this._resolveFallback();
 
-    let ret = this.renderCurrent(this.state.currentRoute);
+    let ret = React.createElement<any>(
+      RouterViewContext.Provider, { value: this }, this.renderCurrent(this.state.currentRoute)
+    );
+
+    if (this.state._routerRoot) {
+      ret = React.createElement<any>(
+        RouterContext.Provider, { value: this.state.router }, ret
+      );
+    }
 
     if (this.state._routerResolving) {
       ret = React.createElement(React.Fragment, {}, ret, this._resolveFallback());
@@ -307,18 +346,21 @@ class RouterView<
 
 }
 
-RouterView.defaultProps = {
-  excludeProps: ['_updateRef', 'router', 'excludeProps']
-};
-
-export {
-  RouterView as RouterViewComponent
-};
-
-export default React.forwardRef((
+const RouterViewWrapper = React.forwardRef((
   props: any,
   ref: any
 ) => React.createElement(RouterView, {
   ...props,
   _updateRef: ref
 }));
+
+RouterView.defaultProps = {
+  excludeProps: ['_updateRef', 'router', 'excludeProps', 'beforeEach', 'beforeResolve', 'afterEach', 'fallback']
+};
+
+export {
+  RouterViewWrapper,
+  RouterView as RouterViewComponent
+};
+
+export default RouterViewWrapper;

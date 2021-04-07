@@ -25,7 +25,7 @@ import ReactViewRouter from 'react-view-router';
 
 const router = new ReactViewRouter({
   base: '',     // the base URL of the app. For example, if the entire single page application is served under /app/, then base should use the value "/app/"
-  mode: 'hash', // or browser|histor|memory|abstract, default:hash
+  mode: 'hash', // or browser|memory|hash, default:hash
   routes: []    // also can be passed by router.use method
 });
    
@@ -104,7 +104,7 @@ export default function HomeMainIndex() {
 ```javascript
 /// home/home/main/some/index.js
 import React from 'react';
-import { useRouteGuards } from 'react-view-router';
+import { withRouteGuards } from 'react-view-router';
 import store from 'store';
 
 class HomeMainSomeIndex extends React.Component {
@@ -128,7 +128,7 @@ class HomeMainSomeIndex extends React.Component {
   }
 }
 
-export default useRouteGuards(HomeMainSomeIndex, {
+export default withRouteGuards(HomeMainSomeIndex, {
   beforeRouteEnter(to, from, next) {
     if (!store.logined) next('/login');
     else next(vm => vm.refresh());
@@ -323,16 +323,19 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 
 ### ReactViewRouter instance Props
 - `RouterLink` a `NavLink` component like `route-link` in `vue-router`.
+- `currentRoute` the current route that matched current url.
+- `initialRoute` the initial route when router be created.
 
 ### ReactViewRouter instance Methods
-- `beforeEach` [global Before Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
-- `afterEach` [global After Guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
+- `beforeEach` [global before guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
+- `beforeResolve` [global brefore resolve guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-resolve-guards)
+- `afterEach` [global after guards](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-after-hooks)
 - `push`、`replace`、`go`、`back`、`forward` `redirect`[history navigation methods](https://router.vuejs.org/guide/essentials/navigation.html)
 - `parseQuery`、`stringifyQuery` Provide custom query string parse / stringify functions, can be override by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`
 - `install` `ReactVueLike` plugin install methods. see: [ReactVueLike](https://www.npmjs.com/package/react-vue-like)
 
 ### Export Methods
-- `useRouteGuards` route component guards methods:
+- `withRouteGuards` route component guards methods:
 ```javascript
 /**
  * route component guards methods
@@ -341,7 +344,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
  * @param {Class} [componentClass] - the route component class, it will be useful when component is High-order components
  * @return {RouteComponentGuards} - the route componet that can be regarded as `React.forwardRef`
  **/
-function useRouteGuards(component, guards = {}, componentClass?) {}
+function withRouteGuards(component, guards = {}, componentClass?) {}
 ```
 
 - `lazyImport` route component lazy load method:

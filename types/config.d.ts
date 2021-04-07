@@ -1,3 +1,4 @@
+import ReactViewRouter from './router';
 declare function _parseQuery(query: string): Partial<any>;
 declare function _stringifyQuery(obj: Partial<any> | null | undefined, prefix?: string): string;
 declare const _default: {
@@ -8,6 +9,6 @@ declare const _default: {
     zIndexStep: number;
     readonly parseQuery: any;
     readonly stringifyQuery: any;
-    routeMergeStrategie(parent: any, child: any, vm: any): any;
+    createMergeStrategie(router: ReactViewRouter): (parent: any, child: any, vm: any) => any;
 };
 export default _default;
