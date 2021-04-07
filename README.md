@@ -104,7 +104,7 @@ export default function HomeMainIndex() {
 ```javascript
 /// home/home/main/some/index.js
 import React from 'react';
-import { useRouteGuards } from 'react-view-router';
+import { withRouteGuards } from 'react-view-router';
 import store from 'store';
 
 class HomeMainSomeIndex extends React.Component {
@@ -128,7 +128,7 @@ class HomeMainSomeIndex extends React.Component {
   }
 }
 
-export default useRouteGuards(HomeMainSomeIndex, {
+export default withRouteGuards(HomeMainSomeIndex, {
   beforeRouteEnter(to, from, next) {
     if (!store.logined) next('/login');
     else next(vm => vm.refresh());
@@ -335,7 +335,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 - `install` `ReactVueLike` plugin install methods. see: [ReactVueLike](https://www.npmjs.com/package/react-vue-like)
 
 ### Export Methods
-- `useRouteGuards` route component guards methods:
+- `withRouteGuards` route component guards methods:
 ```javascript
 /**
  * route component guards methods
@@ -344,7 +344,7 @@ see: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
  * @param {Class} [componentClass] - the route component class, it will be useful when component is High-order components
  * @return {RouteComponentGuards} - the route componet that can be regarded as `React.forwardRef`
  **/
-function useRouteGuards(component, guards = {}, componentClass?) {}
+function withRouteGuards(component, guards = {}, componentClass?) {}
 ```
 
 - `lazyImport` route component lazy load method:
