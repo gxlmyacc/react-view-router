@@ -9,6 +9,9 @@
 
 > see [react-view-router@1.x](https://github.com/gxlmyacc/react-view-router/tree/1.x)
 
+
+## [中文说明](./README_CN.md)
+
 ## Installation
 
 ```bash
