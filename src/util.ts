@@ -460,9 +460,9 @@ function renderRoute(
     let refHandler = once((el, componentClass) => {
       if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
-        if (componentClass && el && el._reactInternalFiber) {
+        if (componentClass && el && (el._reactInternalFiber || el._reactInternals)) {
           let refComp = null;
-          let comp = el._reactInternalFiber;
+          let comp = el._reactInternalFiber || el._reactInternals;
           while (comp && !refComp) {
             if (comp.type === componentClass) {
               refComp = comp;
@@ -549,7 +549,7 @@ function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]) {
 }
 
 function getHostRouterView(ctx: any, continueCb?: any) {
-  let parent = ctx._reactInternalFiber.return;
+  let parent = (ctx._reactInternalFiber || ctx._reactInternals).return;
   while (parent) {
     if (continueCb && continueCb(parent) === false) return null;
 

@@ -68,7 +68,9 @@ class RouterView<
 
   target: typeof RouterView;
 
-  _reactInternalFiber: any;
+  _reactInternalFiber?: any;
+
+  _reactInternals?: any;
 
   static defaultProps: RouterViewDefaultProps
 
@@ -231,7 +233,7 @@ class RouterView<
       return;
     }
 
-    if (!this._reactInternalFiber) return;
+    if (!this._reactInternalFiber && !this._reactInternals) return;
 
     let parent = getHostRouterView(this);
     if (parent) {

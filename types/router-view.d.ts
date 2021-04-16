@@ -43,7 +43,8 @@ export declare type ReactViewContainer = (result: React.ReactElement | null, rou
 declare class RouterView<P extends RouterViewProps = RouterViewProps, S extends RouterViewState = RouterViewState, SS = any> extends React.Component<P, S, SS> {
     _isMounted: boolean;
     target: typeof RouterView;
-    _reactInternalFiber: any;
+    _reactInternalFiber?: any;
+    _reactInternals?: any;
     static defaultProps: RouterViewDefaultProps;
     constructor(props: RouterViewProps);
     get name(): string;
