@@ -146,22 +146,27 @@ function normalizeRoutePath(
   return normalizePath(path);
 }
 
-function resloveIndex(index: string | RouteIndexFn, routes: ConfigRouteArray): any {
-  index = isFunction(index) ? (index as RouteIndexFn)(routes) : index;
+function resloveIndex(_index: string | RouteIndexFn, routes: ConfigRouteArray): ConfigRoute | null {
+  let index = isFunction(_index) ? (_index as RouteIndexFn)(routes) : _index;
+  if (!index) return null;
+
   let r = routes.find((r: ConfigRoute) => {
     let path1 = r.subpath[0] === '/' ? r.subpath : `/${r.subpath}`;
     let path2 = (index as string)[0] === '/' ? index : `/${index}`;
     return path1 === path2;
-  });
+  }) || null;
   if (r && r.index) {
-    if (r.index === index) return null;
+    if (r.index === _index) return null;
     return resloveIndex(r.index, routes);
   }
   return r;
 }
 
 
-type RouteBranchArray = { route: any, match: matchPathResult }[];
+type RouteBranchInfo = { route: any, match: matchPathResult };
+interface RouteBranchArray extends Array<RouteBranchInfo> {
+  unmatchedPath?: string
+}
 
 interface RoutesHandler {
   (r: {
@@ -178,7 +183,8 @@ function matchRoutes(
   routes: ConfigRouteArray | RoutesHandler,
   to: RouteHistoryLocation | Route | string,
   parent?: ConfigRoute,
-  branch: RouteBranchArray = []
+  branch: RouteBranchArray = [],
+  level: number = 0
 ) {
   to = normalizeLocation(to) as RouteHistoryLocation;
   if (!to || to.path === '') return [];
@@ -202,21 +208,27 @@ function matchRoutes(
         : computeRootMatch((to as RouteHistoryLocation).path); // use default "root" match
 
     if (match && route.index) {
-      route = resloveIndex(route.index, routes as ConfigRouteArray);
+      route = resloveIndex(route.index, routes as ConfigRouteArray) as ConfigRoute;
       if (!route) return;
       (to as RouteHistoryLocation).pathname = (to as RouteHistoryLocation).path = route.path;
       match = matchPath(route.path, route);
     }
 
-    if (match) {
-      branch.push({ route,  match });
+    if (!match) return;
 
-      if (route.children
-        && (route.children.length || isFunction(route.children))
-      ) matchRoutes(route.children as any, to, route, branch);
-    }
-    if (match) return true;
+    branch.push({ route,  match });
+
+    if (route.children
+      && (route.children.length || isFunction(route.children))
+    ) matchRoutes(route.children as any, to, route, branch, level + 1);
+
+    return true;
   });
+
+  if (!level && branch.length) {
+    const lastRouteBranch = branch[branch.length - 1];
+    branch.unmatchedPath = to.pathname.substr(lastRouteBranch.match.path.length, to.pathname.length);
+  }
 
   return branch;
 }
@@ -526,9 +538,19 @@ function camelize(str: string): string {
   return ret;
 }
 
-function isPropChanged(prev: { [key: string]: any }, next: { [key: string]: any }) {
+function isPropChanged(
+  prev: { [key: string]: any },
+  next: { [key: string]: any },
+  onChanged?: (key: string, newVal: any, oldVal: any) => boolean,
+) {
   if ((!prev || !next) && prev !== next) return true;
-  return Object.keys(next).some(key => next[key] !== prev[key]);
+  return Object.keys(next).some(key => {
+    let newVal = next[key];
+    let oldVal = prev[key];
+    let changed = newVal !== oldVal;
+    if (changed && onChanged) changed = onChanged(key, newVal, oldVal);
+    return changed;
+  });
 }
 
 function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRoute | MatchedRoute | null) {

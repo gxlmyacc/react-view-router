@@ -1,5 +1,6 @@
 
 import { Location, History, State, HashType } from './history';
+import { RouteLazy } from './route-lazy';
 import ReactViewRouter from './router';
 
 export type RouteEvent = (ok: boolean, to: Route | null) => void;
@@ -127,7 +128,7 @@ export interface RouteLazyUpdater {
 }
 
 export type matchPathResult = {
-  path?: string,
+  path: string,
   url: string,
   regx: RegExp,
   isExact?: boolean,
@@ -147,7 +148,7 @@ export interface UserConfigRoute extends CommonRoute {
 
   parent?: ConfigRoute,
   children?: UserConfigRoute[] | ConfigRouteArray | RouteChildrenFn,
-  component?: React.ComponentType,
+  component?: React.ComponentType| RouteLazy,
   components?: {
     default?: any,
     [key: string]: any
@@ -195,6 +196,10 @@ export interface MatchedRoute extends CommonRoute {
   viewInstances: {
     [key: string]: any
   }
+}
+
+export interface MatchedRouteArray extends Array<MatchedRoute> {
+  unmatchedPath: string
 }
 
 export interface Route {

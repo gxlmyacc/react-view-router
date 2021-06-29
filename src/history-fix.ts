@@ -146,7 +146,7 @@ function createHistory(options: any, fn: () => HistoryFix, type: HistoryType) {
     // console.log('[createHistory][listen]', location, action, index);
   }));
   innumerable(history, '_unblock', history.block(({ action, location, callback }) => {
-    if (Object.isFrozen(location)) location = { ...location };
+    location = { ...location };
     confirmInterceptors(interceptors, location as RouteHistoryLocation, callback);
   }));
   return history;

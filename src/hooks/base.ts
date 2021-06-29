@@ -1,12 +1,11 @@
 import { useContext, useState, useEffect, useCallback, useImperativeHandle, Ref, DependencyList } from 'react';
-import ReactViewRouter, { isPlainObject } from '.';
-import { RouterContext, RouterViewContext } from './context';
-import { HashType } from './history';
+import ReactViewRouter from '../router';
+import { RouterContext, RouterViewContext } from '../context';
 import {
-  ReactViewRouterMode, RouteResolveNameFn, RouteGuardsInfo,
+  RouteGuardsInfo,
   RouteGuardsInfoHooks, onRouteChangeEvent, onRouteMetaChangeEvent
-} from './types';
-import { innumerable, isFunction } from './util';
+} from '../types';
+import { innumerable, isFunction, isPlainObject } from '../util';
 
 function useRouter(defaultRouter?: ReactViewRouter|null) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -18,7 +17,10 @@ function useRoute(defaultRouter?: ReactViewRouter|null) {
   return router ? (router.currentRoute || router.initialRoute) : null;
 }
 
-function useRouteMeta(metaKey: string|string[], defaultRouter?: ReactViewRouter|null): [Partial<any> | null, (key: string, value: any) => void] {
+function useRouteMeta(
+  metaKey: string|string[],
+  defaultRouter?: ReactViewRouter|null
+): [Partial<any> | null, (key: string, value: any) => void] {
   const router = useRouter(defaultRouter);
   const route = useMatchedRoute(router);
   const meta = (route && route.meta);
@@ -72,31 +74,20 @@ function useMatchedRoute(defaultRouter?: ReactViewRouter|null) {
 }
 
 
-function useManualRouter(router: ReactViewRouter, {
-  basename = '',
-  routerMode = 'hash',
-  routerHashType = 'slash',
-  resolveRouteName,
-}: {
-  basename?: string,
-  routerMode?: ReactViewRouterMode,
-  routerHashType?: HashType,
-  resolveRouteName?: RouteResolveNameFn,
-} = {}) {
-  if (!router.isRunning) {
-    router.start({
-      basename,
-      mode: routerMode,
-      hashType: routerHashType
-    });
-    resolveRouteName && router.resolveRouteName(resolveRouteName);
-  }
+function useRouteState<T = any>(
+  defaultRouter?: ReactViewRouter|null
+): [routeState: T, setRouteState: (newState: T) => void] {
+  const router = useRouter(defaultRouter);
+  const route = useMatchedRoute(router || defaultRouter);
+  const routeUrl = route && route.url;
 
-  useEffect(() => () => {
-    if (router.isRunning) router.stop();
-  }, [router]);
+  const setRouteState = useCallback(
+    (newState: T) => router?.replaceState(newState, route || undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [router, routeUrl],
+  );
 
-  return [router];
+  return [(route ? route.state : {}) as T, setRouteState];
 }
 
 function useRouteChanged(router: ReactViewRouter, onChange: onRouteChangeEvent) {
@@ -147,12 +138,12 @@ function useRouteGuardsRef<T extends RouteGuardsInfo>(
 }
 
 export {
-  useManualRouter,
   useRouter,
   useRouteChanged,
   useRouteMetaChanged,
   useRoute,
   useRouteMeta,
+  useRouteState,
   useRouterView,
   useMatchedRouteIndex,
   useMatchedRoute,

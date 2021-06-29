@@ -264,7 +264,10 @@ class RouterView<
     if (this.state._routerInited !== nextState._routerInited) return true;
     if (this.state._routerDepth !== nextState._routerDepth) return true;
     if (this.state.router !== nextState.router) return true;
-    if (isPropChanged(this.props, nextProps)) return true;
+    if (isPropChanged(this.props, nextProps, key => {
+      if (key === 'fallback' && nextState._routerResolving) return false;
+      return true;
+    })) return true;
     if (isRouteChanged(this.state.currentRoute, nextState.currentRoute)) return true;
     if (isRoutesChanged(this.state.routes, nextState.routes)) return true;
     return false;
@@ -339,9 +342,7 @@ class RouterView<
       );
     }
 
-    if (this.state._routerResolving) {
-      ret = React.createElement(React.Fragment, {}, ret, this._resolveFallback());
-    }
+    ret = React.createElement(React.Fragment, {}, ret, this.state._routerResolving ? this._resolveFallback() : null);
 
     return ret;
   }
