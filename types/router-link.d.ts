@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactViewRouter from './router';
+import { Route } from './types';
+import { RouterViewComponent } from './router-view';
 interface RouterLinkProps {
     router?: ReactViewRouter;
     tag: string;
@@ -15,16 +17,18 @@ interface RouterLinkProps {
     disabled?: boolean;
     children: React.ReactNode[];
     className?: string;
+    onRouteChange?: (route: Route, routerLinkInstance: RouterLink) => void;
+    onRouteActive?: (route: Route, routerLinkInstance: RouterLink) => void;
+    onRouteInactive?: (route: Route, routerLinkInstance: RouterLink) => void;
     href?: string;
-    onRouteChange?: (route: any) => void;
     [key: string]: any;
 }
 interface RouterLinkState {
     inited: boolean;
-    currentRoute: any;
-    parentRoute: any;
+    routerView: RouterViewComponent | null;
     router?: ReactViewRouter;
     seed: number;
+    isMatched: boolean;
 }
 declare class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
     static propTypes: any;
@@ -32,21 +36,22 @@ declare class RouterLink extends React.Component<RouterLinkProps, RouterLinkStat
         tag: string;
         activeClass: string;
         exactActiveClass: string;
-        event: string;
+        event: string | string[];
     };
     private unplugin?;
     constructor(props: RouterLinkProps);
     _remount(): void;
+    getFallbackClassName(isMatched: boolean): string;
+    isMatched(currentRoute?: Route | null, routerView?: RouterViewComponent | null): boolean;
     componentDidMount(): void;
     componentWillUnmount(): void;
     shouldComponentUpdate(nextProps: RouterLinkProps, nextState: RouterLinkState): boolean;
     componentDidUpdate(prevProps: RouterLinkProps): void;
-    render(): React.ReactElement<{
+    render(): React.ReactNode[] | React.ReactElement<{
         readonly [x: string]: any;
         disabled?: boolean | undefined;
         className?: string | undefined;
         href?: string | undefined;
-        onRouteChange?: ((route: any) => void) | undefined;
     } & {
         [key: string]: (e: any) => void;
     }, string | React.JSXElementConstructor<any>> | null;

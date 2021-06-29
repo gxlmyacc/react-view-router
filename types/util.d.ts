@@ -12,10 +12,13 @@ declare function normalizeRoute(route: UserConfigRoute, parent?: ConfigRoute | n
 declare function walkRoutes(routes: ConfigRouteArray, walkFn: (route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray) => boolean | void): boolean;
 declare function normalizeRoutes(routes: UserConfigRoute[], parent?: ConfigRoute | null, options?: NormalizeRouteOptions): ConfigRouteArray;
 declare function normalizeRoutePath(path: string, route?: Route | MatchedRoute | ConfigRoute | RouteHistoryLocation | RouteLocation | null, append?: boolean, basename?: string): string;
-declare type RouteBranchArray = {
+declare type RouteBranchInfo = {
     route: any;
     match: matchPathResult;
-}[];
+};
+interface RouteBranchArray extends Array<RouteBranchInfo> {
+    unmatchedPath?: string;
+}
 interface RoutesHandler {
     (r: {
         to: RouteHistoryLocation;
@@ -26,7 +29,7 @@ interface RoutesHandler {
     _ctx?: Partial<any>;
     _normalized?: boolean;
 }
-declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: RouteHistoryLocation | Route | string, parent?: ConfigRoute, branch?: RouteBranchArray): RouteBranchArray;
+declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: RouteHistoryLocation | Route | string, parent?: ConfigRoute, branch?: RouteBranchArray, level?: number): RouteBranchArray;
 declare function normalizeLocation(to: any, route?: Route | MatchedRoute | ConfigRoute | RouteHistoryLocation | RouteLocation | null, { append, basename, mode, resolvePathCb }?: {
     append?: boolean;
     basename?: string;
@@ -67,7 +70,7 @@ declare function isPropChanged(prev: {
     [key: string]: any;
 }, next: {
     [key: string]: any;
-}): boolean;
+}, onChanged?: (key: string, newVal: any, oldVal: any) => boolean): boolean;
 declare function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRoute | MatchedRoute | null): boolean;
 declare function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]): boolean;
 declare function getHostRouterView(ctx: any, continueCb?: any): RouterView<import("./router-view").RouterViewProps, import("./router-view").RouterViewState, any> | null;

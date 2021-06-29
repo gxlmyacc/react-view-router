@@ -1,8 +1,8 @@
-/// <reference types="react" />
+import { ComponentType } from 'react';
 import { HistoryFix } from './history-fix';
 import { nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactViewRouterMode, ReactViewRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, lazyResovleFn, RouteBindInstanceFn, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute } from './types';
+import { ReactViewRouterMode, ReactViewRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, lazyResovleFn, RouteBindInstanceFn, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute } from './types';
 export default class ReactViewRouter {
     isReactViewRouterInstance: boolean;
     parent: ReactViewRouter | null;
@@ -10,6 +10,7 @@ export default class ReactViewRouter {
     options: ReactViewRouterOptions;
     mode: ReactViewRouterMode;
     basename: string;
+    basenameNoSlash: string;
     name: string;
     routeNameMap: {
         [key: string]: string;
@@ -83,9 +84,9 @@ export default class ReactViewRouter {
     } | RouteHistoryLocation): string;
     updateRouteMeta(route: ConfigRoute, newValue: Partial<any>): undefined;
     createMatchedRoute(route: ConfigRoute, match: matchPathResult): MatchedRoute;
-    getMatched(to: Route | RouteHistoryLocation | string, from?: Route | null, parent?: ConfigRoute): MatchedRoute[];
-    getMatchedComponents(to: Route, from?: Route, parent?: ConfigRoute): any[];
-    getMatchedViews(to: Route, from?: Route, parent?: ConfigRoute): any[];
+    getMatched(to: Route | RouteHistoryLocation | string, from?: Route | null, parent?: ConfigRoute): MatchedRouteArray;
+    getMatchedComponents(to: Route, from?: Route, parent?: ConfigRoute): ComponentType<{}>[];
+    getMatchedViews(to: Route, from?: Route, parent?: ConfigRoute): RouterView<import("./router-view").RouterViewProps, import("./router-view").RouterViewState, any>[];
     createRoute(to: RouteHistoryLocation | string | Route | null, from?: Route | null): Route;
     updateRoute(location: RouteHistoryLocation | null): void;
     push(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent): Promise<unknown>;
@@ -95,6 +96,7 @@ export default class ReactViewRouter {
     back(): void;
     forward(): void;
     replaceState(newState: Partial<any>, matchedRoute?: MatchedRoute): Partial<any> | undefined;
+    replaceQuery(keyOrObj: string, value?: any): void;
     beforeEach(guard: RouteBeforeGuardFn): void;
     beforeResolve(guard: RouteAfterGuardFn): void;
     afterEach(guard: RouteAfterGuardFn): void;

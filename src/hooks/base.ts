@@ -73,16 +73,15 @@ function useMatchedRoute(defaultRouter?: ReactViewRouter|null) {
   return (route && route.matched[routeIndex]) || null;
 }
 
-
 function useRouteState<T = any>(
   defaultRouter?: ReactViewRouter|null
-): [routeState: T, setRouteState: (newState: T) => void] {
+): [T, (newState: T) => void] {
   const router = useRouter(defaultRouter);
   const route = useMatchedRoute(router || defaultRouter);
   const routeUrl = route && route.url;
 
   const setRouteState = useCallback(
-    (newState: T) => router?.replaceState(newState, route || undefined),
+    (newState: T) => router && router.replaceState(newState, route || undefined),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [router, routeUrl],
   );

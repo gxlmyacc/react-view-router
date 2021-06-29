@@ -347,6 +347,7 @@ export interface MemoryHistory<S extends State = State> extends History<S> {
 }
 export declare type BrowserHistoryOptions = {
     window?: Window;
+    hashType?: HashType;
 };
 /**
  * Browser history stores the location in regular URLs. This is the standard for

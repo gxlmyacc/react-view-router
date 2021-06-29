@@ -411,7 +411,7 @@ type HistoryState = {
 const HashChangeEventType = 'hashchange';
 const PopStateEventType = 'popstate';
 
-export type BrowserHistoryOptions = { window?: Window };
+export type BrowserHistoryOptions = { window?: Window, hashType?: HashType };
 
 /**
  * Browser history stores the location in regular URLs. This is the standard for
@@ -423,7 +423,7 @@ export type BrowserHistoryOptions = { window?: Window };
 export function createBrowserHistory(
   options: BrowserHistoryOptions = {}
 ): BrowserHistory {
-  let { window = document.defaultView! } = options;
+  let { window = document.defaultView!, hashType } = options;
   let globalHistory = window.history;
 
   function getIndexAndLocation(): [number, Location] {
@@ -503,7 +503,18 @@ export function createBrowserHistory(
   }
 
   function createHref(to: To) {
-    return typeof to === 'string' ? to : createPath(to);
+    let path = typeof to === 'string' ? to : createPath(to);
+
+    if (hashType != null) {
+      let slashChar = path.substr(0, 1);
+      if (hashType === 'slash') {
+        if (slashChar !== '/') path = '/' + path;
+      } else  if (hashType === 'noslash') {
+        if (slashChar === '/') path = path.substr(1);
+      }
+    }
+
+    return path;
   }
 
   function getNextLocation(to: To, state: State = null): Location {
