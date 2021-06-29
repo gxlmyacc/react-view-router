@@ -663,6 +663,33 @@ function Test() {
 }
 ```
 
+### `replaceQuery(keyOrObj: string, value?: any)`
+
+更新当前路由(`currentRoute`)的`query`中的指定参数。如果`router`的`mode`是`browser|hash`，同时也会更新url上对应的参数；
+
+```js
+import React, { useEffect } from 'react';
+import router from '@/router';
+
+function Test() {
+  const updateQueryTest = () => {
+    router.replaceQuery('test', 1);
+  }
+
+  const updateQueryObj = () => {
+    router.replaceQuery({
+      test: 1,
+      aaa: 2
+    });
+  }
+
+  return <div>
+    <Button onClick={updateQueryTest}>更新query中的test</Button>
+    <Button onClick={updateQueryObj}>更新query中多个参数</Button>
+  </div>;
+}
+```
+
 #### `plugin(plugin: ReactViewRoutePlugin): () => void`
 
 注册一个`ReactViewRouter`插件，该插件可以用于监听路由中的各种事件，并做一些处理。如：
@@ -876,6 +903,25 @@ function isLocation(v) {}
   });
 
   export default Test;
+  ```
+
+- `readRouteMeta` 读取ConfigRoute中`meta`的某个值，当值为函数时，会将其当做
+  ```ts 
+  function (route: ConfigRoute, routes: ConfigRoute[], props: Partial<any>): any
+  ```
+回调进行调用，并将其返回值返回；
+
+  ```javascript
+  /**
+   * @param {ConfigRoute} route - 要读取meta的ConfigRoute
+   * @param {string} key - 要读取meta的参数名
+   * @param {props: Partial<any>} props - 将作为第三个参数传递给meta的value函数
+   * @return {any}
+   **/
+  function readRouteMeta(route: ConfigRoute, key: string = '', props: {
+    router?: ReactViewRouter|null,
+    [key: string]: any
+  } = {}): any
   ```
 
 ## HOCS/HOOKS
@@ -1149,7 +1195,158 @@ useRouteChanged(router, (route) => {
   }
 });
 ```
-## ReactVueLike集成
+
+### useRouteTitle
+
+遍历路由配置，检索出路由配置中`meta.title`、`meta.visible`过滤出来的信息。你可以根据该信息来创建菜单、标签页等。函数签名如下：
+
+```ts
+type RouteTitleInfo = {
+  title: string;
+  path: string;
+  meta: Partial<any>;
+  children?: RouteTitleInfo[];
+};
+
+type filterCallback = (r: ConfigRoute, routes: ConfigRouteArray, props: {
+  router: RainbowRouter
+  level: number,
+  maxLevel: number,
+  refresh: () => void,
+  title?: string,
+  visible?: boolean
+}) => boolean;
+
+type RouteTitleProps = {
+  // useRouteTitle的最大检索层级
+  maxLevel?: number,
+  // 对过滤出来的title信息进行自定义的过滤
+  filter?: filterCallback,
+  // 指定filter依赖的ConfigRoute中的meta参数名，以便它们更新时可以触发titles的更新
+  filterMetas?: string[],
+  /**
+   * 是否是手动模式，当为true时，第一次调用useRouteTitle时不会主动检索ConfigRoute，直到你调用一次refreshTitles后，
+   * 可以通过该参数实现异步展示菜单、标签栏等方案
+   **/
+  manual?: boolean,
+}
+
+type RouteTitleResult = {
+  titles: RouteTitleInfo[];
+  setTitles: (titles: RouteTitleInfo[]) => void;
+
+  currentPaths: string[];
+  setCurrentPaths: (currentPaths: string[]) => void;
+
+  refreshTitles: () => void;
+}
+
+/**
+ * @param {RouteTitleProps} props 参数
+ * @param {RainbowRouter} defaultRouter 默认的路由实例
+ * @param {DependencyList} deps 传给useRouteTitle的deps
+ * @return {RouteTitleResult} 
+ **/
+function useRouteTitle(
+  props: RouteTitleProps = {},
+  defaultRouter?: ReactViewRouter,
+  deps: any[] = []
+): RouteTitleResult;
+```
+左侧菜单示例：
+
+```js
+import React, { useMemo, useEffect } from 'react';
+import {
+ useRouter, useRouteTitle,
+} from 'react-view-router';
+import { observer } from 'mobx-react';
+import { LeftMenu } from '@/ui';
+import store from '@/store';
+
+const MainLeft = observer(() => {
+  const { companyId } = store.state.company;
+
+  const router = useRouter();
+  const {
+    titles,
+    currentPaths: currentMenus,
+    refreshTitles,
+  } = useRouteTitle({ maxLevel: 2 });
+
+  const menus = useMemo(() => {
+    const getMenus = (list = []) => list.map((item) => {
+      const { title, meta, path } = item;
+      return {
+        text: title,
+        key: path,
+        icon: meta.icon ? <i className={`iconfont ${meta.icon}`} /> : null,
+        children: getMenus(item.children),
+      };
+    });
+    return getMenus(titles);
+  }, [titles]);
+
+  useEffect(() => {
+    if (titles.length) refreshTitles();
+  }, [companyId]);
+
+  return (
+    <LeftMenu
+      onlyOpenCurrent
+      defaultLock
+      height="100%"
+      data={menus}
+      openKeys={currentMenus.length > 1 ? currentMenus.slice(0, currentMenus.length - 1) : []}
+      selectedKeys={currentMenus}
+      onSelect={(path) => router.push(path)}
+    />
+  );
+});
+
+export default MainLeft;
+```
+
+标签栏示例：
+
+```js
+import React from 'react';
+import router from '@/history';
+import { useRouter, RouterView, useRouteTitle } from 'rainbow-router';
+import { Tabs } from '@/ui';
+
+const { TabPane } = Tabs;
+
+function MainHeader(props) {
+  const router = useRouter();
+  const {
+    titles,
+    currentPaths: [currentPath],
+  } = useRouteTitle({ maxLevel: 1 }, router);
+
+  return (
+    <div>
+      <Tabs
+        activeKey={currentPath}
+        onChange={(path) => router.replace(path)}
+      >
+      {
+        titles.map((tab) => (
+          <TabPane
+            tab={tab.title}
+            key={tab.path}
+          />
+        ))
+      }
+      </Tabs>
+      <RouterView />
+   </div>
+  );
+}
+
+export default MainHeader;
+```
+## Rainbow集成
 
 `react-view-router`可以作为`ReactVueLike`的插件来使用：
 
@@ -1254,9 +1451,9 @@ class EmployeeManager extends ReactVueLike.Component {
   render() {
     return (
       <div className="employee-manager">
-        <dpl-tabs activeKey={this.active} onChange={this.handleTabChanged}>
-          { this.tabs.map((tab) => <dpl-tabs-tab-pane tab={tab.label} key={tab.key} />)}
-        </dpl-tabs>
+        <ui-tabs activeKey={this.active} onChange={this.handleTabChanged}>
+          { this.tabs.map((tab) => <ui-tabs-tab-pane tab={tab.label} key={tab.key} />)}
+        </ui-tabs>
       </div>
     );
   }
