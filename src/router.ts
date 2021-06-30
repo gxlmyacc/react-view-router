@@ -1281,10 +1281,15 @@ export default class ReactViewRouter {
       currentRoute = vuelike.observable(
         currentRoute,
         Object.keys(currentRoute).reduce((p: Partial<any>, key: string) => {
+          let d = Object.getOwnPropertyDescriptor(currentRoute, key);
+          if (!d || d.get || d.set) return p;
           let v: any = (currentRoute as any)[key];
-          p[key] = isPlainObject(v) || Array.isArray(v)
-            ? vuelike.observable.shallow
-            : vuelike.observable;
+          if (d.get || d.set) p[key] = vuelike.observable.ref;
+          else {
+            p[key] = isPlainObject(v) || Array.isArray(v)
+              ? vuelike.observable.shallow
+              : vuelike.observable;
+          }
           return p;
         }, {})
       );
