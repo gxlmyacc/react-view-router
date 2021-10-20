@@ -25,6 +25,7 @@ declare function useRouteTitle(props?: {
     filter?: filterCallback;
     filterMetas?: string[];
     manual?: boolean;
+    matchedOffset?: number;
 }, defaultRouter?: RainbowRouter, deps?: any[]): {
     titles: (RouteTitleInfo | undefined)[];
     setTitles: import("react").Dispatch<import("react").SetStateAction<(RouteTitleInfo | undefined)[]>>;

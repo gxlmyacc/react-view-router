@@ -198,6 +198,7 @@ export declare type To = string | PartialPath;
 export interface PopAction<S extends State = State> extends Update<S> {
     prevIndex: number;
     delta: number;
+    cb?: () => void;
 }
 /**
  * A history is an interface to the navigation stack. The history serves as the

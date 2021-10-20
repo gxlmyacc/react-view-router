@@ -9,8 +9,8 @@ import { HashType } from '../history';
 function useManualRouter(router: ReactViewRouter, {
   basename = '',
   routerMode = 'hash',
-  routerHashType = 'slash',
-  hashType = 'slash',
+  routerHashType,
+  hashType,
   resolveRouteName,
   routes
 }: {

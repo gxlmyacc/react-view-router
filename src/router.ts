@@ -322,8 +322,8 @@ export default class ReactViewRouter {
       });
       return ret;
     } catch (ex) {
-      if (plugin && (plugin as ReactViewRoutePlugin).name && ex && ex.message) {
-        ex.message = `[${(plugin as ReactViewRoutePlugin).name}:${event}]${ex.message}`;
+      if (plugin && (plugin as ReactViewRoutePlugin).name && ex && (ex as any).message) {
+        (ex as any).message = `[${(plugin as ReactViewRoutePlugin).name}:${event}]${(ex as any).message}`;
       }
       throw ex;
     }
@@ -555,7 +555,20 @@ export default class ReactViewRouter {
     if (!location || isRoute(location)) return location;
     if (this.basename && !this.isMemoryMode) {
       let pathname = location.pathname;
-      if (location.basename) pathname = location.basename + pathname;
+      if (location.basename != null) pathname = location.basename + pathname;
+      else if (pathname.length < this.basename.length) {
+        let parent: ReactViewRouter | null = this.parent;
+        while (parent) {
+          if (pathname.length >= parent.basename.length) {
+            const parentMatched = parent.getMatched(pathname);
+            if (parentMatched.length) {
+              pathname = parentMatched[parentMatched.length - 1].path + parentMatched.unmatchedPath;
+              break;
+            }
+          }
+          parent = parent.parent;
+        }
+      }
       if (!/\/$/.test(pathname)) pathname += '/';
       const isCurrentBasename = pathname.indexOf(this.basename) === 0;
       location = { ...location };
@@ -795,14 +808,22 @@ export default class ReactViewRouter {
       let _to = normalizeLocation(to, (to && (to as RouteLocation).route) || this.currentRoute, {
         basename: this.basename,
         mode: this.mode,
-        resolvePathCb: (path, to) => path.replace(
-          /\[([A-z.\-_#@$%^&*():|?<>=+]+)\]/g,
-          (m, name) => {
-            let ret = this.nameToPath(name, to);
-            if (ret == null) throw new Error(`route name [${name}]not be found!`);
-            return ret;
-          }
-        )
+        resolvePathCb: (path, to) => {
+          // if (/^\/[A-z0-9.\-_#@$%^&*():|?<>=+]+$/.test(path)) {
+          //   let newPath = this.nameToPath(path.substr(1), to);
+          //   if (newPath) newPath = `/${newPath}`;
+          //   if (newPath !== path) return newPath;
+          // }
+          const newPath = path.replace(
+            /\[([A-z0-9.\-_#@$%^&*():|?<>=+]+)\]/g,
+            (m, name) => {
+              let ret = this.nameToPath(name, to);
+              if (ret == null) throw new Error(`route name [${name}]not be found!`);
+              return ret;
+            }
+          );
+          return newPath;
+        }
       });
       function doComplete(res: any, _to: Route | null) {
         onComplete && onComplete(res, _to);

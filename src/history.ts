@@ -228,7 +228,8 @@ export type To = string | PartialPath;
 
 export interface PopAction<S extends State = State> extends Update<S> {
   prevIndex: number,
-  delta: number
+  delta: number,
+  cb?: () => void
 }
 
 /**
@@ -461,6 +462,7 @@ export function createBrowserHistory(
         go(blockedPopAp.delta);
         return;
       }
+      blockedPopAp.cb && blockedPopAp.cb();
       blockedPopAp = null;
     } else if (blockers.length && delta) {
       const callback = (ok: boolean) => {
@@ -599,7 +601,8 @@ export function createBrowserHistory(
         return;
       }
 
-      _cb(index);
+      if (blockedPopAp) blockedPopAp.cb = () => _cb(index);
+      else _cb(index);
     };
 
     if (allowTx(nextAction, nextLocation, callback)) {
@@ -624,7 +627,8 @@ export function createBrowserHistory(
         return;
       }
 
-      _cb(index);
+      if (blockedPopAp) blockedPopAp.cb = () => _cb(index);
+      else _cb(index);
     };
 
     if (allowTx(nextAction, nextLocation, callback)) {
@@ -695,7 +699,14 @@ export type HashHistoryOptions = { window?: Window, hashType?: HashType };
 export function createHashHistory(
   options: HashHistoryOptions = {}
 ): HashHistory {
-  let { window = document.defaultView!, hashType = 'slash' } = options;
+  let {
+    window = document.defaultView!,
+  } = options;
+
+  let locationHash = window.location.hash.substr(1, 1);
+  let {
+    hashType = (!locationHash || locationHash === '/') ? 'slash' : 'noslash'
+  } = options;
   let globalHistory = window.history;
 
   function getIndexAndLocation(): [number, Location] {
@@ -736,6 +747,7 @@ export function createHashHistory(
         go(blockedPopAp.delta);
         return;
       }
+      blockedPopAp.cb && blockedPopAp.cb();
       blockedPopAp = null;
     } else if (blockers.length && delta) {
       const callback = (ok: boolean) => {
@@ -895,7 +907,8 @@ export function createHashHistory(
         return;
       }
 
-      _cb(index);
+      if (blockedPopAp) blockedPopAp.cb = () => _cb(index);
+      else _cb(index);
     };
 
     if (allowTx(nextAction, nextLocation, callback)) {
@@ -921,7 +934,8 @@ export function createHashHistory(
         return;
       }
 
-      _cb(index);
+      if (blockedPopAp) blockedPopAp.cb = () => _cb(index);
+      else _cb(index);
     };
 
     if (allowTx(nextAction, nextLocation, callback)) {

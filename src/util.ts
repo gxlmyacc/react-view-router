@@ -52,10 +52,11 @@ function normalizeRoute(
   parent?: ConfigRoute | null,
   options: NormalizeRouteOptions = {}
 ): ConfigRoute {
-  let path = normalizePath(parent ? `${parent.path}${route.path === '/' ? '' : '/'}${route.path.replace(/^(\/)/, '')}` : route.path);
+  let routePath = route.path || '/';
+  let path = normalizePath(parent ? `${parent.path}${routePath === '/' ? '' : '/'}${routePath.replace(/^(\/)/, '')}` : routePath);
   let r: Partial<any> = {
     ...route,
-    subpath: route.path,
+    subpath: routePath,
     path: parent
       ? path
       : path[0] === '/'
@@ -66,10 +67,14 @@ function normalizeRoute(
   if (parent) innumerable(r, 'parent', parent);
   if (!r.children) r.children = [];
   if (isFunction(r.children)) {
-    if (!(r.children as any)._normalized) {
+    if (!(r.children as RoutesHandler)._normalized) {
       const fn: Function = r.children;
       const ctx = {};
       r.children = function () { return fn.apply(ctx, arguments); };
+      Object.getOwnPropertyNames(fn).forEach(key => {
+        const p =  Object.getOwnPropertyDescriptor(fn, key);
+        p && Object.defineProperty(r.children, key, p);
+      });
       innumerable(r.children, '_ctx', ctx);
       innumerable(r.children, '_normalized', true);
     }
@@ -168,6 +173,12 @@ interface RouteBranchArray extends Array<RouteBranchInfo> {
   unmatchedPath?: string
 }
 
+type RoutesHandlerCacheHandler = (props: {
+  to: RouteHistoryLocation | Route | string,
+  parent?: ConfigRoute,
+  level: number,
+  prevChildren?: ConfigRouteArray
+}) => boolean;
 interface RoutesHandler {
   (r: {
     to: RouteHistoryLocation,
@@ -177,6 +188,7 @@ interface RoutesHandler {
   }): ConfigRouteArray;
   _ctx?: Partial<any>;
   _normalized?: boolean;
+  cache?: boolean | RoutesHandlerCacheHandler;
 }
 
 function matchRoutes(
@@ -191,13 +203,28 @@ function matchRoutes(
 
   if (isFunction(routes)) {
     let fn = (routes as RoutesHandler);
-    routes = normalizeRoutes(fn({
-      to,
-      parent,
-      branch,
-      prevChildren: fn._ctx && fn._ctx.prevChildren
-    }), parent);
-    if (fn._ctx) fn._ctx.prevChildren = routes;
+
+    let cache = fn._ctx && fn._ctx.prevChildren && fn.cache;
+    if (cache && isFunction(cache)) {
+      cache = cache.call(fn._ctx, {
+        to,
+        parent,
+        level,
+        prevChildren: fn._ctx && fn._ctx.prevChildren
+      });
+    }
+
+    if (cache) {
+      routes = (fn._ctx && fn._ctx.prevChildren) || [];
+    } else {
+      routes = normalizeRoutes(fn({
+        to,
+        parent,
+        branch,
+        prevChildren: fn._ctx && fn._ctx.prevChildren
+      }), parent);
+      if (fn._ctx) fn._ctx.prevChildren = routes;
+    }
   }
 
   (routes as ConfigRouteArray).some(route => {

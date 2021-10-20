@@ -5,8 +5,8 @@ declare function useRouter(defaultRouter?: ReactViewRouter | null): ReactViewRou
 declare function useRoute(defaultRouter?: ReactViewRouter | null): import("../types").Route | null;
 declare function useRouteMeta(metaKey: string | string[], defaultRouter?: ReactViewRouter | null): [Partial<any> | null, (key: string, value: any) => void];
 declare function useRouterView(): import("../router-view").RouterViewComponent<import("..").RouterViewProps, import("..").RouterViewState, any> | null;
-declare function useMatchedRouteIndex(): number;
-declare function useMatchedRoute(defaultRouter?: ReactViewRouter | null): import("../types").MatchedRoute | null;
+declare function useMatchedRouteIndex(matchedOffset?: number): number;
+declare function useMatchedRoute(defaultRouter?: ReactViewRouter | null, matchedOffset?: number): import("../types").MatchedRoute | null;
 declare function useRouteState<T = any>(defaultRouter?: ReactViewRouter | null): [T, (newState: T) => void];
 declare function useRouteChanged(router: ReactViewRouter, onChange: onRouteChangeEvent): void;
 declare function useRouteMetaChanged(router: ReactViewRouter, onChange: onRouteMetaChangeEvent, deps?: string[]): void;

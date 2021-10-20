@@ -19,6 +19,12 @@ declare type RouteBranchInfo = {
 interface RouteBranchArray extends Array<RouteBranchInfo> {
     unmatchedPath?: string;
 }
+declare type RoutesHandlerCacheHandler = (props: {
+    to: RouteHistoryLocation | Route | string;
+    parent?: ConfigRoute;
+    level: number;
+    prevChildren?: ConfigRouteArray;
+}) => boolean;
 interface RoutesHandler {
     (r: {
         to: RouteHistoryLocation;
@@ -28,6 +34,7 @@ interface RoutesHandler {
     }): ConfigRouteArray;
     _ctx?: Partial<any>;
     _normalized?: boolean;
+    cache?: boolean | RoutesHandlerCacheHandler;
 }
 declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: RouteHistoryLocation | Route | string, parent?: ConfigRoute, branch?: RouteBranchArray, level?: number): RouteBranchArray;
 declare function normalizeLocation(to: any, route?: Route | MatchedRoute | ConfigRoute | RouteHistoryLocation | RouteLocation | null, { append, basename, mode, resolvePathCb }?: {

@@ -41,7 +41,7 @@ export interface ReactViewRouterOptions extends Partial<any> {
         App?: any;
     }) => void;
 }
-export declare type RouteNextResult = boolean | Error | Function | string | null | RouteLocation;
+export declare type RouteNextResult = unknown | boolean | Error | Function | string | null | RouteLocation;
 export declare type RouteRedirectFn = (this: ConfigRoute, from?: Route) => string;
 export declare type RouteIndexFn = (routes: ConfigRouteArray) => string;
 export declare type RouteNextFn = (ok?: RouteNextResult, ...args: any[]) => void;

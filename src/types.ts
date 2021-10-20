@@ -49,7 +49,7 @@ export interface ReactViewRouterOptions extends Partial<any> {
   install?: (vuelike: any, options: { App?: any }) => void
 }
 
-export type RouteNextResult = boolean | Error | Function | string | null | RouteLocation;
+export type RouteNextResult = unknown | boolean | Error | Function | string | null | RouteLocation;
 
 export type RouteRedirectFn = (this: ConfigRoute, from?: Route) => string;
 export type RouteIndexFn = (routes: ConfigRouteArray) => string;

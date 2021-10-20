@@ -62,16 +62,18 @@ function useRouterView() {
   return useContext(RouterViewContext);
 }
 
-function useMatchedRouteIndex() {
+function useMatchedRouteIndex(matchedOffset: number = 0) {
   const view = useRouterView();
-  return view ? view.state._routerDepth : 0;
+  const index = view ? view.state._routerDepth : 0;
+  return Math.max(0, index + matchedOffset);
 }
 
-function useMatchedRoute(defaultRouter?: ReactViewRouter|null) {
+function useMatchedRoute(defaultRouter?: ReactViewRouter|null, matchedOffset: number = 0) {
   const route = useRoute(defaultRouter);
-  const routeIndex = useMatchedRouteIndex();
+  const routeIndex = useMatchedRouteIndex(matchedOffset);
   return (route && route.matched[routeIndex]) || null;
 }
+
 
 function useRouteState<T = any>(
   defaultRouter?: ReactViewRouter|null

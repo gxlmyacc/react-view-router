@@ -1,8 +1,8 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import RainbowRouter from '../router';
 import { ConfigRoute, ConfigRouteArray, MatchedRoute, Route } from '../types';
 import { useRouter, useMatchedRoute, useRouteChanged, useRouteMetaChanged } from './base';
-import { isFunction } from '../util';
+import { isFunction, isRouteChanged } from '../util';
 
 type filterCallback = (r: ConfigRoute, routes: ConfigRouteArray, props: {
   router: RainbowRouter
@@ -95,16 +95,18 @@ function useRouteTitle(
     filter?: filterCallback,
     filterMetas?: string[],
     manual?: boolean,
+    matchedOffset?: number,
   } = {},
   defaultRouter?: RainbowRouter,
   deps: any[] = []
 ) {
-  const { maxLevel = 99, filter, filterMetas = [], manual } = props;
+  const { maxLevel = 99, filter, filterMetas = [], manual, matchedOffset = 0 } = props;
+  const ref = useRef<{ routeMetaChangedCallback?:() => void }>({});
 
   const router: RainbowRouter = useRouter(defaultRouter) as any;
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const matchedRoute = defaultRouter ? null : useMatchedRoute();
+  const matchedRoute = defaultRouter ? null : useMatchedRoute(undefined, matchedOffset);
 
   const [dirty, setDirty] = useState(false);
   const refreshTitles = useCallback(() => setDirty(true), [setDirty]);
@@ -115,7 +117,7 @@ function useRouteTitle(
   );
 
   const [titles, setTitles] = useState(() => (
-    manual ? [] : refreshTabs(matchedRoute ? matchedRoute.config.children : router.routes)
+    manual ? [] : refreshTabs(defaultRouter ? router.routes : (matchedRoute ? matchedRoute.config.children : []))
   ));
 
   const [currentPaths, setCurrentPaths] = useState(() => {
@@ -138,13 +140,20 @@ function useRouteTitle(
     if (paths.length !== currentPaths.length || currentPaths.some((path, i) => path !== paths[i])) {
       setCurrentPaths(paths);
     }
-  }, [router, matchedRoute, maxLevel, currentPaths, setCurrentPaths]));
+    if (!defaultRouter) {
+      const matched = getMatched(router, route);
+      const newMatchedRoute = matched[matchedRoute ? matchedRoute.depth : 0];
+      if (isRouteChanged(matchedRoute, newMatchedRoute)) {
+        setTitles(refreshTabs(newMatchedRoute ? newMatchedRoute.config.children : []));
+      }
+    }
+  }, [matchedRoute, router, maxLevel, currentPaths, defaultRouter, refreshTabs]));
 
-  const routeMetaChangedCallback = useCallback(
-    () => setTitles(refreshTabs(matchedRoute ? matchedRoute.config.children : router.routes)),
-    [matchedRoute, setTitles, refreshTabs, router.routes]
+  ref.current.routeMetaChangedCallback = useCallback(
+    () => setTitles(refreshTabs(defaultRouter ? router.routes : (matchedRoute ? matchedRoute.config.children : []))),
+    [refreshTabs, defaultRouter, matchedRoute, router.routes]
   );
-  useRouteMetaChanged(router, routeMetaChangedCallback, [...filterMetas, 'title', 'visible']);
+  useRouteMetaChanged(router, ref.current.routeMetaChangedCallback, [...filterMetas, 'title', 'visible']);
 
   useMemo(() => {
     if (!dirty) return;
@@ -152,9 +161,9 @@ function useRouteTitle(
     if (dirtyTimerId) return;
     dirtyTimerId = setTimeout(() => {
       dirtyTimerId = null;
-      router.isRunning && routeMetaChangedCallback();
+      router.isRunning && ref.current.routeMetaChangedCallback && ref.current.routeMetaChangedCallback();
     }, 0);
-  }, [router, dirty, routeMetaChangedCallback]);
+  }, [router, dirty, ref]);
 
   return {
     titles,
