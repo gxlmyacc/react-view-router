@@ -2,7 +2,7 @@ import { ComponentType } from 'react';
 import { HistoryFix } from './history-fix';
 import { nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactViewRouterMode, ReactViewRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, lazyResovleFn, RouteBindInstanceFn, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute } from './types';
+import { ReactViewRouterMode, ReactViewRouterOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, lazyResovleFn, RouteBindInstanceFn, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
 export default class ReactViewRouter {
     isReactViewRouterInstance: boolean;
     parent: ReactViewRouter | null;
@@ -26,6 +26,7 @@ export default class ReactViewRouter {
     currentRoute: Route | null;
     pendingRoute: RouteHistoryLocation | null;
     initialRoute: Route;
+    queryProps: ParseQueryProps;
     viewRoot: RouterView | null;
     errorCallback: RouteErrorCallback | null;
     apps: any[];
@@ -53,7 +54,7 @@ export default class ReactViewRouter {
     get isMemoryMode(): boolean;
     start({ mode, basename, ...options }?: ReactViewRouterOptions, isInit?: boolean): void;
     stop(isInit?: boolean): void;
-    use({ routes, inheritProps, rememberInitialRoute, install, ...restOptions }: ReactViewRouterOptions): void;
+    use({ routes, inheritProps, rememberInitialRoute, install, queryProps, ...restOptions }: ReactViewRouterOptions): void;
     plugin(plugin: ReactViewRoutePlugin | onRouteChangeEvent): (() => void) | undefined;
     _walkRoutes(routes: ConfigRouteArray): void;
     _refreshInitialRoute(): void;
@@ -96,12 +97,12 @@ export default class ReactViewRouter {
     back(): void;
     forward(): void;
     replaceState(newState: Partial<any>, matchedRoute?: MatchedRoute): Partial<any> | undefined;
-    replaceQuery(keyOrObj: string, value?: any): void;
+    replaceQuery(keyOrObj: string | Partial<any>, value?: any): void;
     beforeEach(guard: RouteBeforeGuardFn): void;
     beforeResolve(guard: RouteAfterGuardFn): void;
     afterEach(guard: RouteAfterGuardFn): void;
     addRoutes(routes: UserConfigRoute[] | ConfigRouteArray, parentRoute?: ConfigRoute): void;
-    parseQuery(query: string): any;
+    parseQuery(query: string, queryProps?: ParseQueryProps): any;
     stringifyQuery(obj: Partial<any>): any;
     onError(callback: RouteErrorCallback): void;
     install(vuelike: any, { App }: {

@@ -1,6 +1,6 @@
 import React from 'react';
 import config from './config';
-import { RouteLazy } from './route-lazy';
+import { RouteLazy, isPromise } from './route-lazy';
 import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
 import {
@@ -9,7 +9,7 @@ import {
   matchPathResult, NormalizeRouteOptions, RouteGuardsInfoHooks, UserConfigRoute
 } from './types';
 import { ReactViewContainer, RouterViewComponent as RouterView, RouterViewWrapper  } from './router-view';
-import ReactViewRouter from '.';
+import ReactViewRouter, { ParseQueryProps } from '.';
 import { HistoryFix } from './history-fix';
 
 function nextTick(cb: () => void, ctx?: object) {
@@ -53,7 +53,7 @@ function normalizeRoute(
   options: NormalizeRouteOptions = {}
 ): ConfigRoute {
   let routePath = route.path || '/';
-  let path = normalizePath(parent ? `${parent.path}${routePath === '/' ? '' : '/'}${routePath.replace(/^(\/)/, '')}` : routePath);
+  let path = normalizePath(parent ? `${parent.path || '/'}${routePath === '/' ? '' : '/'}${routePath.replace(/^(\/)/, '')}` : routePath);
   let r: Partial<any> = {
     ...route,
     subpath: routePath,
@@ -81,7 +81,7 @@ function normalizeRoute(
   } else {
     innumerable(r, 'children', normalizeRoutes(r.children, r as ConfigRoute, options));
   }
-  r.exact = r.exact !== undefined ? r.exact : Boolean(r.redirect || r.index);
+  r.exact = r.exact !== undefined ? (r.exact || false) : Boolean(r.redirect || r.index);
   if (!r.components) r.components = {};
   if (r.component) {
     r.components.default = r.component;
@@ -95,7 +95,7 @@ function normalizeRoute(
           let children = c.__children || [];
           if (isFunction(children)) children = (children as ((r: any) => any[]))(r) || [];
           innumerable(r, 'children', normalizeRoutes(children as ConfigRouteArray, r as ConfigRoute));
-          r.exact = !(r as ConfigRoute).children.length;
+          // r.exact = !(r as ConfigRoute).children.length;
         }
         return (r as ConfigRoute).components[key] = c;
       });
@@ -151,17 +151,19 @@ function normalizeRoutePath(
   return normalizePath(path);
 }
 
-function resloveIndex(_index: string | RouteIndexFn, routes: ConfigRouteArray): ConfigRoute | null {
-  let index = isFunction(_index) ? (_index as RouteIndexFn)(routes) : _index;
+function resloveIndex(originIndex: string | RouteIndexFn, routes: ConfigRouteArray): ConfigRoute | null {
+  let index = isFunction(originIndex) ? (originIndex as RouteIndexFn)(routes) : originIndex;
   if (!index) return null;
 
   let r = routes.find((r: ConfigRoute) => {
+    if (index === ':first' && !r.index) return true;
+
     let path1 = r.subpath[0] === '/' ? r.subpath : `/${r.subpath}`;
     let path2 = (index as string)[0] === '/' ? index : `/${index}`;
     return path1 === path2;
   }) || null;
   if (r && r.index) {
-    if (r.index === _index) return null;
+    if (r.index === originIndex) return null;
     return resloveIndex(r.index, routes);
   }
   return r;
@@ -195,11 +197,17 @@ function matchRoutes(
   routes: ConfigRouteArray | RoutesHandler,
   to: RouteHistoryLocation | Route | string,
   parent?: ConfigRoute,
-  branch: RouteBranchArray = [],
-  level: number = 0
+  options: {
+    branch?: RouteBranchArray,
+    level?: number,
+    queryProps? : ParseQueryProps
+  } = {}
 ) {
-  to = normalizeLocation(to) as RouteHistoryLocation;
+  const { queryProps } = options;
+  to = normalizeLocation(to, { queryProps }) as RouteHistoryLocation;
   if (!to || to.path === '') return [];
+
+  const { branch = [], level = 0 } = options;
 
   if (isFunction(routes)) {
     let fn = (routes as RoutesHandler);
@@ -247,7 +255,7 @@ function matchRoutes(
 
     if (route.children
       && (route.children.length || isFunction(route.children))
-    ) matchRoutes(route.children as any, to, route, branch, level + 1);
+    ) matchRoutes(route.children as any, to, route, { branch, level: level + 1, queryProps });
 
     return true;
   });
@@ -262,17 +270,20 @@ function matchRoutes(
 
 function normalizeLocation(
   to: any,
-  route?: Route|MatchedRoute|ConfigRoute|RouteHistoryLocation|RouteLocation|null,
   {
+    route,
     append = false,
     basename = '',
     mode = '',
-    resolvePathCb
+    resolvePathCb,
+    queryProps
   }: {
+    route?: Route|MatchedRoute|ConfigRoute|RouteHistoryLocation|RouteLocation|null,
     append?: boolean,
     basename?: string,
     mode?: string,
-    resolvePathCb?: (path: string, to: RouteHistoryLocation) => string
+    resolvePathCb?: (path: string, to: RouteHistoryLocation) => string,
+    queryProps?: ParseQueryProps
   } = {}
 ): RouteHistoryLocation | null {
   if (!to || (isPlainObject(to) && !to.path && !to.pathname)) return null;
@@ -288,7 +299,7 @@ function normalizeLocation(
     to = { pathname, path: pathname, search, fullPath: to };
   }
   if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
-  else if (to.search) to.query = config.parseQuery(to.search);
+  else if (to.search) to.query = config.parseQuery(to.search, queryProps);
 
   let isAbsolute = isAbsoluteUrl(to.pathname);
   if (isAbsolute && mode !== 'browser') {
@@ -402,18 +413,21 @@ function mergeFns(...fns: any[]) {
   };
 }
 
-function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, from?: Route) {
-  if (isFunction(to)) to = (to as RouteRedirectFn).call(route.config, from);
+function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, options: {
+  from?: Route,
+  queryProps?: ParseQueryProps,
+} = {}) {
+  if (isFunction(to)) to = (to as RouteRedirectFn).call(route.config, options.from);
   if (!to) return '';
-  let ret = normalizeLocation(to, route);
+  let ret = normalizeLocation(to, { route, queryProps: options.queryProps });
   if (!ret) return '';
-  from && Object.assign(ret.query, from.query);
+  options.from && Object.assign(ret.query, options.from.query);
   ret.isRedirect = true;
   return ret;
 }
 
 function warn(...args: any[]) {
-  console.warn(...args);
+  console.error(...args);
 }
 
 async function afterInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null) {
@@ -642,6 +656,11 @@ function setSessionStorage(key: string, value?: any) {
   else window.sessionStorage[key] = v;
 }
 
+function getRouterViewPath(routerView: RouterView) {
+  if (!routerView || !routerView.state.currentRoute) return '';
+  return routerView.state.currentRoute.path;
+}
+
 function isRoute(route: any): route is Route {
   return Boolean(route && route.isViewRoute);
 }
@@ -662,6 +681,7 @@ function isReadonly(obj: any, key: string) {
   let d = obj && Object.getOwnPropertyDescriptor(obj, key);
   return Boolean(!obj || (d && !d.writable));
 }
+
 
 export {
   camelize,
@@ -686,6 +706,7 @@ export {
   isRouteGuardInfoHooks,
   isHistory,
   isReadonly,
+  isPromise,
   resolveRedirect,
   normalizePath,
   normalizeRoute,
@@ -703,6 +724,7 @@ export {
   getParentRoute,
   getHostRouterView,
   getCurrentPageHash,
+  getRouterViewPath,
 
   getSessionStorage,
   setSessionStorage,

@@ -2,6 +2,7 @@ import React from 'react';
 import ReactViewRouter from './router';
 import { Route } from './types';
 import { RouterViewComponent } from './router-view';
+declare function guardEvent(e: any): true | undefined;
 interface RouterLinkProps {
     router?: ReactViewRouter;
     tag: string;
@@ -56,5 +57,5 @@ declare class RouterLink extends React.Component<RouterLinkProps, RouterLinkStat
         [key: string]: (e: any) => void;
     }, string | React.JSXElementConstructor<any>> | null;
 }
-export { RouterLink };
+export { RouterLinkProps, RouterLink, guardEvent };
 export default function createRouterLink(router: ReactViewRouter): React.ForwardRefExoticComponent<Pick<RouterLinkProps, string | number> & React.RefAttributes<RouterLink>>;

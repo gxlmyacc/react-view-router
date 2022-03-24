@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   renderRoute, normalizeRoute, normalizeRoutes, isFunction,
   isRouteChanged, isRoutesChanged, isPropChanged,
@@ -350,12 +350,26 @@ class RouterView<
 }
 
 const RouterViewWrapper = React.forwardRef((
-  props: any,
+  props: RouterViewProps,
   ref: any
-) => React.createElement(RouterView, {
-  ...props,
-  _updateRef: ref
-}));
+) => {
+  const [isRunning, setIsRunning] = useState(!props.router || props.router.isRunning);
+
+  useEffect(
+    () => {
+      if (!isRunning && props.router && props.router.isRunning) {
+        setIsRunning(true);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isRunning, props.router && props.router.isRunning]
+  );
+
+  return isRunning ? React.createElement(RouterView, {
+    ...props,
+    _updateRef: ref
+  }) : null;
+});
 
 RouterView.defaultProps = {
   excludeProps: ['_updateRef', 'router', 'excludeProps', 'beforeEach', 'beforeResolve', 'afterEach', 'fallback']

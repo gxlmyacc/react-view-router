@@ -1,8 +1,9 @@
 import React from 'react';
+import { isPromise } from './route-lazy';
 import matchPath from './match-path';
 import { ConfigRouteArray, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route, RouteGuardInterceptor, RouteRedirectFn, RouteLocation, matchPathResult, NormalizeRouteOptions, RouteGuardsInfoHooks, UserConfigRoute } from './types';
 import { ReactViewContainer, RouterViewComponent as RouterView } from './router-view';
-import ReactViewRouter from '.';
+import ReactViewRouter, { ParseQueryProps } from '.';
 import { HistoryFix } from './history-fix';
 declare function nextTick(cb: () => void, ctx?: object): Promise<unknown> | undefined;
 declare function readonly(obj: object, key: string, value: any, options?: PropertyDescriptor): object;
@@ -36,12 +37,18 @@ interface RoutesHandler {
     _normalized?: boolean;
     cache?: boolean | RoutesHandlerCacheHandler;
 }
-declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: RouteHistoryLocation | Route | string, parent?: ConfigRoute, branch?: RouteBranchArray, level?: number): RouteBranchArray;
-declare function normalizeLocation(to: any, route?: Route | MatchedRoute | ConfigRoute | RouteHistoryLocation | RouteLocation | null, { append, basename, mode, resolvePathCb }?: {
+declare function matchRoutes(routes: ConfigRouteArray | RoutesHandler, to: RouteHistoryLocation | Route | string, parent?: ConfigRoute, options?: {
+    branch?: RouteBranchArray;
+    level?: number;
+    queryProps?: ParseQueryProps;
+}): RouteBranchArray;
+declare function normalizeLocation(to: any, { route, append, basename, mode, resolvePathCb, queryProps }?: {
+    route?: Route | MatchedRoute | ConfigRoute | RouteHistoryLocation | RouteLocation | null;
     append?: boolean;
     basename?: string;
     mode?: string;
     resolvePathCb?: (path: string, to: RouteHistoryLocation) => string;
+    queryProps?: ParseQueryProps;
 }): RouteHistoryLocation | null;
 declare function isPlainObject(obj: any): obj is {
     [key: string]: any;
@@ -59,7 +66,10 @@ declare function normalizeProps(props: {
 declare function once(fn: ((...args: any) => any) | null, ctx?: any): (...args: any[]) => any;
 declare function isAcceptRef(v: any): boolean;
 declare function mergeFns(...fns: any[]): (...args: any) => undefined;
-declare function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, from?: Route): "" | RouteHistoryLocation<import("./history").State>;
+declare function resolveRedirect(to: string | RouteRedirectFn, route: MatchedRoute, options?: {
+    from?: Route;
+    queryProps?: ParseQueryProps;
+}): "" | RouteHistoryLocation<import("./history").State>;
 declare function warn(...args: any[]): void;
 declare function afterInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null): Promise<void>;
 declare type RenderRouteOption = {
@@ -86,9 +96,10 @@ declare function isAbsoluteUrl(to: any): boolean;
 declare function getCurrentPageHash(to: string): string;
 declare function getSessionStorage(key: string, json?: boolean): any;
 declare function setSessionStorage(key: string, value?: any): void;
+declare function getRouterViewPath(routerView: RouterView): string;
 declare function isRoute(route: any): route is Route;
 declare function isReactViewRouter(v: any): v is ReactViewRouter;
 declare function isHistory(v: any): v is HistoryFix;
 declare function isRouteGuardInfoHooks(v: any): v is RouteGuardsInfoHooks;
 declare function isReadonly(obj: any, key: string): boolean;
-export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, isRoute, isReactViewRouter, isRouteGuardInfoHooks, isHistory, isReadonly, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, walkRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, readonly, afterInterceptors, getParentRoute, getHostRouterView, getCurrentPageHash, getSessionStorage, setSessionStorage, };
+export { camelize, flatten, warn, once, mergeFns, isAcceptRef, nextTick, isNull, isPlainObject, isFunction, isMatchedRoute, isLocation, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isAbsoluteUrl, isRoute, isReactViewRouter, isRouteGuardInfoHooks, isHistory, isReadonly, isPromise, resolveRedirect, normalizePath, normalizeRoute, normalizeRoutes, walkRoutes, normalizeRoutePath, normalizeLocation, normalizeProps, matchPath, matchRoutes, renderRoute, innumerable, readonly, afterInterceptors, getParentRoute, getHostRouterView, getCurrentPageHash, getRouterViewPath, getSessionStorage, setSessionStorage, };

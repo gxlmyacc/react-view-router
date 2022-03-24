@@ -226,6 +226,7 @@ export interface History<S extends State = State> {
      * The current location index in history state
      */
     readonly index: number;
+    readonly realtimeLocation: Location<S>;
     /**
      * Returns a valid href for the given `to` value that may be used as
      * the value of an <a href> attribute.

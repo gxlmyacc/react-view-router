@@ -14,8 +14,8 @@ export {
 export * from './hocs';
 export * from './hooks';
 
-export { default as createRouterLink, RouterLink } from './router-link';
-export { default as config } from './config';
+export { default as createRouterLink, RouterLink, guardEvent, RouterLinkProps } from './router-link';
+export { default as config,  parseQuery, stringifyQuery } from './config';
 
 export { withRouteGuards, REACT_FORWARD_REF_TYPE } from './route-guard';
 export { lazyImport } from './route-lazy';

@@ -1,8 +1,8 @@
 /// <reference types="react" />
-import RainbowRouter from '../router';
-import { ConfigRoute, ConfigRouteArray } from '../types';
+import ReactViewRouter from '../router';
+import { ConfigRoute, ConfigRouteArray, MatchedRoute, Route } from '../types';
 declare type filterCallback = (r: ConfigRoute, routes: ConfigRouteArray, props: {
-    router: RainbowRouter;
+    router: ReactViewRouter;
     level: number;
     maxLevel: number;
     refresh: () => void;
@@ -16,22 +16,24 @@ declare type RouteTitleInfo = {
     children?: RouteTitleInfo[];
 };
 declare function readRouteMeta(route: ConfigRoute, key?: string, props?: {
-    router?: RainbowRouter | null;
+    router?: ReactViewRouter | null;
     [key: string]: any;
 }): any;
-declare function walkRouteTitle(router: RainbowRouter, routes: ConfigRouteArray | undefined, refresh: () => void, filter?: filterCallback, maxLevel?: number, level?: number): (RouteTitleInfo | undefined)[];
+declare function walkRouteTitle(router: ReactViewRouter, routes: ConfigRouteArray | undefined, refresh: () => void, filter?: filterCallback, maxLevel?: number, level?: number): (RouteTitleInfo | undefined)[];
+declare function isCommonPage(matched: MatchedRoute[]): boolean;
+declare function getMatched(router: ReactViewRouter, currentRoute: Route): MatchedRoute[];
 declare function useRouteTitle(props?: {
     maxLevel?: number;
     filter?: filterCallback;
     filterMetas?: string[];
     manual?: boolean;
     matchedOffset?: number;
-}, defaultRouter?: RainbowRouter, deps?: any[]): {
+}, defaultRouter?: ReactViewRouter, deps?: any[]): {
     titles: (RouteTitleInfo | undefined)[];
     setTitles: import("react").Dispatch<import("react").SetStateAction<(RouteTitleInfo | undefined)[]>>;
     refreshTitles: () => void;
     currentPaths: string[];
     setCurrentPaths: import("react").Dispatch<import("react").SetStateAction<string[]>>;
 };
-export { readRouteMeta, walkRouteTitle, };
+export { isCommonPage, readRouteMeta, walkRouteTitle, getMatched, filterCallback, RouteTitleInfo, };
 export default useRouteTitle;

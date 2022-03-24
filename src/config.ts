@@ -1,4 +1,5 @@
 import ReactViewRouter from './router';
+import { ParseQueryProps } from './types';
 
 const encodeReserveRE = /[!'()*]/g;
 const encodeReserveReplacer = (c: string) => '%' + c.charCodeAt(0).toString(16);
@@ -13,7 +14,7 @@ const encode = (str: string) => encodeURIComponent(str)
 
 const decode = decodeURIComponent;
 
-function _parseQuery(query: string) {
+function parseQuery(query: string, props: ParseQueryProps = {}) {
   const res: Partial<any> = {};
 
   query = query.trim().replace(/^(\?|#|&)/, '');
@@ -35,6 +36,8 @@ function _parseQuery(query: string) {
     else if (val === 'NaN') val = NaN;
     else if ((val || '').indexOf('[object ') !== 0 && /^(\{.*\})|(\[.*\])$/.test(val)) {
       try { val = JSON.parse(val); } catch (e) { /* empty */ }
+    } else if (props[key]) {
+      try { val = props[key](val, key, query); } catch (e) { console.error(e); }
     }
 
     if (res[key] === undefined) {
@@ -49,7 +52,7 @@ function _parseQuery(query: string) {
   return res;
 }
 
-function _stringifyQuery(obj: Partial<any> | null | undefined, prefix = '?') {
+function stringifyQuery(obj: Partial<any> | null | undefined, prefix = '?') {
   const res = obj ? Object.keys(obj).map((key: string) => {
     let val: any = obj[key];
 
@@ -77,9 +80,14 @@ function _stringifyQuery(obj: Partial<any> | null | undefined, prefix = '?') {
   return res ? `${prefix}${res}` : '';
 }
 
+export {
+  parseQuery,
+  stringifyQuery
+};
+
 export default {
-  _parseQuery,
-  _stringifyQuery,
+  _parseQuery: parseQuery,
+  _stringifyQuery: stringifyQuery,
 
   inheritProps: true,
 

@@ -36,17 +36,17 @@ export enum HistoryType {
   memory = 'memory'
 }
 
-const RAINBOW_ROUTER_KEY = '__RAINBOW_ROUTER_GLOBAL__';
-if (!window[RAINBOW_ROUTER_KEY as any]) {
-  innumerable(window, RAINBOW_ROUTER_KEY, { historys: {} });
+const REACT_VIEW_ROUTER_KEY = '__REACT_VIEW_ROUTER_GLOBAL__';
+if (!window[REACT_VIEW_ROUTER_KEY as any]) {
+  innumerable(window, REACT_VIEW_ROUTER_KEY, { historys: {} });
 }
-const RAINBOW_ROUTER_GLOBAL: {
+const REACT_VIEW_ROUTER_GLOBAL: {
   historys: {
     hash?: HistoryFix,
     browser?: HistoryFix,
     memory?: HistoryFix,
   }
-} = window[RAINBOW_ROUTER_KEY as any] as any;
+} = window[REACT_VIEW_ROUTER_KEY as any] as any;
 
 function eachInterceptor(
   interceptors: RouteInterceptorItem[],
@@ -98,17 +98,30 @@ function createHistory(options: any, fn: () => HistoryFix, type: HistoryType) {
   history.interceptors = interceptors;
   history.interceptorTransitionTo = function (interceptor: RouteInterceptor, router: ReactViewRouter) {
     const idx = this.interceptors.findIndex((v: any) => v.interceptor === interceptor);
+    let newRouter: ReactViewRouter|null = null;
     if (idx < 0) {
-      if (router && router.basename) {
-        let parentRouter: ReactViewRouter | null = null;
-        this.interceptors.forEach((v: RouteInterceptorItem) => {
-          if (v.router && router.basename.includes(v.router.basename)) {
-            if (!parentRouter || parentRouter.basename < v.router.basename) parentRouter = v.router;
-          }
-        });
-        if (router._updateParent) router._updateParent(parentRouter);
-      }
       this.interceptors.push({ interceptor, router });
+      newRouter = router;
+    } else {
+      console.error(`[react-view-router][interceptorTransitionTo]interceptor was already exist in index: ${idx}!`, router);
+      if (router && router !== this.interceptors[idx].router) {
+        const oldRouter: ReactViewRouter = this.interceptors[idx].router;
+        oldRouter && oldRouter.stop();
+
+        this.interceptors[idx].router = router;
+        newRouter = router;
+
+        console.error('[react-view-router][interceptorTransitionTo] router was replaced by same interceptor!', oldRouter, router);
+      }
+    }
+    if (newRouter && newRouter.basename) {
+      let basename = newRouter.basename;
+      let parentRouter: ReactViewRouter | null = null;
+      this.interceptors.forEach((v: RouteInterceptorItem) => {
+        if (!v.router || v.router === newRouter || !basename.includes(v.router.basename)) return;
+        if (!parentRouter || parentRouter.basename < v.router.basename) parentRouter = v.router;
+      });
+      if (newRouter._updateParent) newRouter._updateParent(parentRouter);
     }
     return () => {
       const idx = this.interceptors.findIndex((v: RouteInterceptorItem) => v.interceptor === interceptor);
@@ -120,7 +133,7 @@ function createHistory(options: any, fn: () => HistoryFix, type: HistoryType) {
   };
 
   const needSession = type !== HistoryType.memory;
-  const SessionStacksKey = `_RAINBOW_ROUTER_${type.toUpperCase()}_STACKS_`;
+  const SessionStacksKey = `_REACT_VIEW_ROUTER_${type.toUpperCase()}_STACKS_`;
 
   history.stacks = needSession
     ? getSessionStorage(SessionStacksKey, true) || []
@@ -153,10 +166,10 @@ function createHistory(options: any, fn: () => HistoryFix, type: HistoryType) {
 }
 
 function createHashHistoryNew(options: HashHistoryOptions) {
-  if (RAINBOW_ROUTER_GLOBAL.historys.hash) {
-    return RAINBOW_ROUTER_GLOBAL.historys.hash;
+  if (REACT_VIEW_ROUTER_GLOBAL.historys.hash) {
+    return REACT_VIEW_ROUTER_GLOBAL.historys.hash;
   }
-  return RAINBOW_ROUTER_GLOBAL.historys.hash = createHistory(
+  return REACT_VIEW_ROUTER_GLOBAL.historys.hash = createHistory(
     options,
     () => createHashHistory(options) as any,
     HistoryType.hash
@@ -165,10 +178,10 @@ function createHashHistoryNew(options: HashHistoryOptions) {
 
 
 function createBrowserHistoryNew(options: BrowserHistoryOptions) {
-  if (RAINBOW_ROUTER_GLOBAL.historys.browser) {
-    return RAINBOW_ROUTER_GLOBAL.historys.browser;
+  if (REACT_VIEW_ROUTER_GLOBAL.historys.browser) {
+    return REACT_VIEW_ROUTER_GLOBAL.historys.browser;
   }
-  return RAINBOW_ROUTER_GLOBAL.historys.browser = createHistory(
+  return REACT_VIEW_ROUTER_GLOBAL.historys.browser = createHistory(
     options,
     () => createBrowserHistory(options) as any,
     HistoryType.browser
@@ -184,8 +197,8 @@ function createMemoryHistoryNew(options: MemoryHistoryOptions) {
 }
 
 function getPossibleRouterMode() {
-  if (RAINBOW_ROUTER_GLOBAL.historys.hash) return 'hash';
-  if (RAINBOW_ROUTER_GLOBAL.historys.browser) return 'browser';
+  if (REACT_VIEW_ROUTER_GLOBAL.historys.hash) return 'hash';
+  if (REACT_VIEW_ROUTER_GLOBAL.historys.browser) return 'browser';
   return '';
 }
 

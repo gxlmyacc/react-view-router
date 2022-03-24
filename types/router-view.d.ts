@@ -67,6 +67,6 @@ declare class RouterView<P extends RouterViewProps = RouterViewProps, S extends 
     renderCurrent(currentRoute: MatchedRoute | null): any;
     render(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | React.FunctionComponentElement<any> | null;
 }
-declare const RouterViewWrapper: React.ForwardRefExoticComponent<Pick<any, string | number | symbol> & React.RefAttributes<unknown>>;
+declare const RouterViewWrapper: React.ForwardRefExoticComponent<Pick<RouterViewProps, string | number> & React.RefAttributes<unknown>>;
 export { RouterViewWrapper, RouterView as RouterViewComponent };
 export default RouterViewWrapper;

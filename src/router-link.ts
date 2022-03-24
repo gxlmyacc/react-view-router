@@ -159,7 +159,14 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
     if (!currentRoute) return false;
     let { to, exact, append } = this.props;
     if (!routerView) routerView = this.state.routerView;
-    to = normalizeLocation(to, routerView ? routerView.state.currentRoute : null, { append }) as { path: string };
+    to = normalizeLocation(
+      to,
+      {
+        route: routerView ? routerView.state.currentRoute : null,
+        append,
+        queryProps: router && router.queryProps
+      }
+    ) as { path: string };
     let isMatched = false;
     if (to && currentRoute) {
       isMatched = exact
@@ -215,7 +222,14 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
 
     const events: { [key: string]: (e: any) => void; } = {};
 
-    to = normalizeLocation(to, routerView ? routerView.state.currentRoute : null, { append }) as { path: string };
+    to = normalizeLocation(
+      to,
+      {
+        route: routerView ? routerView.state.currentRoute : null,
+        append,
+        queryProps: router && router.queryProps
+      }
+    ) as { path: string };
 
     let fallbackClass = this.getFallbackClassName(isMatched);
     if (fallbackClass) {
@@ -269,7 +283,9 @@ RouterLink.defaultProps = {
 };
 
 export {
-  RouterLink
+  RouterLinkProps,
+  RouterLink,
+  guardEvent
 };
 
 export default function createRouterLink(router: ReactViewRouter) {

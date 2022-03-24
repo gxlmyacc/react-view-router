@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
-import RainbowRouter from '../router';
-import { ConfigRoute, ConfigRouteArray, MatchedRoute, Route } from '../types';
+import ReactViewRouter from '../router';
+import { ConfigRoute, ConfigRouteArray, MatchedRoute, Route, RouteMetaFunction } from '../types';
 import { useRouter, useMatchedRoute, useRouteChanged, useRouteMetaChanged } from './base';
 import { isFunction, isRouteChanged } from '../util';
+import { normalizeRoutes } from '..';
 
 type filterCallback = (r: ConfigRoute, routes: ConfigRouteArray, props: {
-  router: RainbowRouter
+  router: ReactViewRouter
   level: number,
   maxLevel: number,
   refresh: () => void,
@@ -21,18 +22,23 @@ type RouteTitleInfo = {
 }
 
 function readRouteMeta(route: ConfigRoute, key: string = '', props: {
-  router?: RainbowRouter|null,
+  router?: ReactViewRouter|null,
   [key: string]: any
 } = {}) {
   let value = key && route.meta[key];
   if (isFunction(value)) {
-    value = value(route, route.parent ? route.parent.children : (props.router && props.router.routes), props);
+    let routes = route.parent ? route.parent.children : (props.router && props.router.routes);
+    value = (value as RouteMetaFunction)(
+      route,
+      (isFunction(routes) ? normalizeRoutes(routes.call(route.parent as ConfigRoute), route.parent) : routes) || [],
+      props
+    );
   }
   return value;
 }
 
 function walkRouteTitle(
-  router: RainbowRouter,
+  router: ReactViewRouter,
   routes: ConfigRouteArray = [],
   refresh: () => void,
   filter?: filterCallback,
@@ -63,11 +69,15 @@ function walkRouteTitle(
     }).filter(Boolean);
 }
 
-function getMatched(router: RainbowRouter, currentRoute: Route) {
+function isCommonPage(matched: MatchedRoute[]) {
+  return matched.some(r => readRouteMeta(r.config, 'commonPage'));
+}
+
+function getMatched(router: ReactViewRouter, currentRoute: Route) {
   let { matched } = currentRoute;
   if (matched) {
-    const isCommonPage = matched.some(r => r.meta.commonPage);
-    if (isCommonPage && currentRoute.query.redirect) {
+    const _isCommonPage = isCommonPage(matched);
+    if (_isCommonPage && currentRoute.query.redirect) {
       matched = router.getMatched(currentRoute.query.redirect);
     }
   }
@@ -80,7 +90,7 @@ function getMatchedDepth(matchedRoute: MatchedRoute | null) {
 
 function getMatchedPathList(matched: MatchedRoute[], depth: number, maxLevel: number) {
   const ret = [];
-  while (depth < maxLevel && matched[depth]) {
+  while (depth < maxLevel && matched && matched[depth]) {
     const { path } = matched[depth++];
     ret.push(path);
   }
@@ -97,13 +107,13 @@ function useRouteTitle(
     manual?: boolean,
     matchedOffset?: number,
   } = {},
-  defaultRouter?: RainbowRouter,
+  defaultRouter?: ReactViewRouter,
   deps: any[] = []
 ) {
   const { maxLevel = 99, filter, filterMetas = [], manual, matchedOffset = 0 } = props;
   const ref = useRef<{ routeMetaChangedCallback?:() => void }>({});
 
-  const router: RainbowRouter = useRouter(defaultRouter) as any;
+  const router: ReactViewRouter = useRouter(defaultRouter) as any;
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const matchedRoute = defaultRouter ? null : useMatchedRoute(undefined, matchedOffset);
@@ -142,7 +152,7 @@ function useRouteTitle(
     }
     if (!defaultRouter) {
       const matched = getMatched(router, route);
-      const newMatchedRoute = matched[matchedRoute ? matchedRoute.depth : 0];
+      const newMatchedRoute = matched && matched[matchedRoute ? matchedRoute.depth : 0];
       if (isRouteChanged(matchedRoute, newMatchedRoute)) {
         setTitles(refreshTabs(newMatchedRoute ? newMatchedRoute.config.children : []));
       }
@@ -177,8 +187,13 @@ function useRouteTitle(
 }
 
 export {
+  isCommonPage,
   readRouteMeta,
   walkRouteTitle,
+  getMatched,
+
+  filterCallback,
+  RouteTitleInfo,
 };
 
 export default useRouteTitle;

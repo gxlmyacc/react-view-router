@@ -1,12 +1,18 @@
 import { ConfigRouteArray, ReactViewRouterMode, RouteResolveNameFn } from '../types';
 import ReactViewRouter from '../router';
 import { HashType } from '../history';
-declare function useManualRouter(router: ReactViewRouter, { basename, routerMode, routerHashType, hashType, resolveRouteName, routes }?: {
+declare type ManualRouterOptions = {
     basename?: string;
     routerMode?: ReactViewRouterMode;
     routerHashType?: HashType;
     hashType?: HashType;
     resolveRouteName?: RouteResolveNameFn;
     routes?: ConfigRouteArray;
-}): ReactViewRouter[];
+    manual?: boolean;
+};
+declare function useManualRouter(router: ReactViewRouter, options?: ManualRouterOptions): {
+    router: ReactViewRouter;
+    start: (overrideOptions?: Omit<ManualRouterOptions, 'manual'>) => void;
+};
+export { ManualRouterOptions };
 export default useManualRouter;

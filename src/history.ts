@@ -261,6 +261,8 @@ export interface History<S extends State = State> {
    */
   readonly index: number;
 
+  readonly realtimeLocation: Location<S>;
+
   /**
    * Returns a valid href for the given `to` value that may be used as
    * the value of an <a href> attribute.
@@ -650,6 +652,12 @@ export function createBrowserHistory(
     get index() {
       return index;
     },
+    get realtimeLocation() {
+      const [, current] = getIndexAndLocation();
+      return (current.pathname === location.pathname && current.search === location.search && current.hash === location.hash)
+        ? location
+        : current;
+    },
     createHref,
     getIndexAndLocation,
     push,
@@ -960,6 +968,12 @@ export function createHashHistory(
     get hashType() {
       return hashType;
     },
+    get realtimeLocation() {
+      const [, current] = getIndexAndLocation();
+      return (current.pathname === location.pathname && current.search === location.search && current.hash === location.hash)
+        ? location
+        : current;
+    },
     createHref,
     getIndexAndLocation,
     push,
@@ -1137,6 +1151,9 @@ export function createMemoryHistory(
     },
     get index() {
       return index;
+    },
+    get realtimeLocation() {
+      return location;
     },
     createHref,
     getIndexAndLocation() {

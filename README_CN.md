@@ -1209,7 +1209,7 @@ type RouteTitleInfo = {
 };
 
 type filterCallback = (r: ConfigRoute, routes: ConfigRouteArray, props: {
-  router: RainbowRouter
+  router: ReactViewRouter
   level: number,
   maxLevel: number,
   refresh: () => void,
@@ -1243,7 +1243,7 @@ type RouteTitleResult = {
 
 /**
  * @param {RouteTitleProps} props 参数
- * @param {RainbowRouter} defaultRouter 默认的路由实例
+ * @param {ReactViewRouter} defaultRouter 默认的路由实例
  * @param {DependencyList} deps 传给useRouteTitle的deps
  * @return {RouteTitleResult} 
  **/
@@ -1312,7 +1312,7 @@ export default MainLeft;
 ```js
 import React from 'react';
 import router from '@/history';
-import { useRouter, RouterView, useRouteTitle } from 'rainbow-router';
+import { useRouter, RouterView, useRouteTitle } from 'react-view-router';
 import { Tabs } from '@/ui';
 
 const { TabPane } = Tabs;
@@ -1346,7 +1346,7 @@ function MainHeader(props) {
 
 export default MainHeader;
 ```
-## Rainbow集成
+## ReactViewLike集成
 
 `react-view-router`可以作为`ReactVueLike`的插件来使用：
 
