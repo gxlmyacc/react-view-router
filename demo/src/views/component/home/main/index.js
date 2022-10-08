@@ -1,15 +1,26 @@
 import React from 'react';
-import { RouterView, withRouteGuards } from 'react-view-router';
-import { RouterLink } from 'router';
+import { RouterView, withRouteGuards, RouterLink } from 'react-view-router';
 
 function HomeMainIndex() {
   return (
     <div style={{ border: '1px solid green', padding: 10 }}>
       <h1>HomeMainIndex</h1>
       <div className="nav">
-        <RouterLink to="some" append>some</RouterLink>
+        <RouterLink
+          tag="a"
+          to="some"
+          append
+          onRouteActive={() => {
+            console.log('%csome actived', 'color: red;font-weight:bold;');
+          }}>some</RouterLink>
         &nbsp;
-        <RouterLink to="other" append>other</RouterLink>
+        <RouterLink
+          tag="a"
+          to="other"
+          append
+          onRouteActive={() => {
+            console.log('%cother actived', 'color: red;font-weight:bold;');
+          }}>other</RouterLink>
       </div>
       <RouterView />
       <RouterView name="footer" />
@@ -29,6 +40,9 @@ export default withRouteGuards(HomeMainIndex, {
   },
   beforeRouteUpdate(to, from) {
     console.log('HomeMainIndex beforeRouteUpdate', to, from);
+  },
+  beforeRouteResolve(to, from) {
+    console.log('HomeMainIndex beforeRouteResolve', to, from);
   },
   afterRouteLeave(to, from) {
     console.log('HomeMainIndex afterRouteLeave', to, from);

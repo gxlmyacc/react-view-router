@@ -235,20 +235,21 @@ export default function LoginIndex() {
 
 ### Route 配置选项
 - `name` 路由名称，相当于别名，路由名称在一个router的所有路由配置中应该唯一，可以通过它调整路由，如：`router.push('[aRouteName]/somepath')`，`name`中可以有以下字符：`A-z.\-_#@$%^&*():|?<>=+`
-- `path` URL字符串.
-- `component` 路由对应的组件.
-- `components` 路由对应的组件，可用于`命名RouterView`，`component`对应于`components.default`.
-- `exact` 是否严格匹配`location.pathname`.
-- `redirect` 路由将会重定向到一个新地址，可以是字符串、对象或函数.
-- `index` 默认路由名称，可以是字符串或函数.
-- `children` 嵌套的子路由配置信息.
-- `meta` 路由的自定义元信息, 参见: [路由元信息](https://router.vuejs.org/zh/guide/advanced/meta.html).
-- `defaultProps` 值为对象，格式： `{ aa: 1, bb: '2', cc: true }`, 渲染路由组件时添加额外的pros参数.
-- `props` boolean或对象，格式： `{ aa: Number, bb: String, cc: Boolean }`, 将路由的params参数中指定的属性当做props传递给路由组件，是下面的`paramsProps`的别名.
-- `paramsProps` boolean或对象，格式： `{ aa: Number, bb: String, cc: Boolean }`, 将路由的params参数中指定的属性当做props传递给路由组件.
-- `queryProps` boolean或对象，格式：`{ aa: Number, bb: String, cc: Boolean }`, 将路由的query参数中指定的属性当做props传递给路由组件.
+- `path` URL字符串。
+- `component` 路由对应的组件。
+- `components` 路由对应的组件，可用于`命名RouterView`，`component`对应于`components.default`。
+- `exact` 是否严格匹配`location.pathname`。
+- `redirect` 路由将会重定向到一个新地址，可以是字符串、对象或函数。
+- `index` 默认路由名称，可以是字符串或函数。
+- `children` 嵌套的子路由配置信息。
+- `meta` 路由的自定义元信息, 参见: [路由元信息](https://router.vuejs.org/zh/guide/advanced/meta.html)。
+- `metaComputed` 路由配置中的meta信息(已完成计算)。当meta中某个值为函数时，则将会将其当做`RouteMetaFunction`函数执行结果当做值。
+- `defaultProps` 值为对象，格式： `{ aa: 1, bb: '2', cc: true }`, 渲染路由组件时添加额外的pros参数。
+- `props` boolean或对象，格式： `{ aa: Number, bb: String, cc: Boolean }`, 将路由的params参数中指定的属性当做props传递给路由组件，是下面的`paramsProps`的别名。
+- `paramsProps` boolean或对象，格式： `{ aa: Number, bb: String, cc: Boolean }`, 将路由的params参数中指定的属性当做props传递给路由组件。
+- `queryProps` boolean或对象，格式：`{ aa: Number, bb: String, cc: Boolean }`, 将路由的query参数中指定的属性当做props传递给路由组件。
 - `guards` 路由守卫, 指`beforeEnter`、`beforeLeave`、`beforeUpdate`、`afterLeave`，参见:[Per-Route Guard](https://router.vuejs.org/zh/guide/advanced/navigation-guards.html#全局前置守卫)
-
+- `isComplete` boolean，路由是否完成拦截处理。在路由跳转过程中，经常需要重定向处理，对于最终未完成跳转的路由对象`Route`的`isComplete`将为`false`。
 
 ### RouterView的Props
 
@@ -269,8 +270,8 @@ import { RouterLink } from 'react-view-router';
 export default function HomeIndex() {
   return (
     <div>
-      <RouterLink to={{ path: '/login' }}>登录</RouterLink>
-      <RouterLink to="/admin" replace>设置</RouterLink>
+      <RouterLink tag="a" to={{ path: '/login' }}>登录</RouterLink>
+      <RouterLink tag="a" to="/admin" replace>设置</RouterLink>
     </div>
   );
 }
@@ -296,8 +297,12 @@ export default function HomeIndex() {
   append?: boolean,
   // 是否是绝对地址
   absolute?: boolean | 'hash' | 'browser' | 'memory',
-  // 跳转前的回退步数
+  // 跳转前的回退步数，整数表示前进，负数表示后退
   delta?: number,
+  // 如果要跳转的路由在历史路由栈中已经有时，则进行回退，而不是push/replace，该参数跳转了一系列路由后会首页，又不想产生新的路由历史时会比较有用
+  backIfVisited?: boolean,
+  // 如果该参数为true，则在调用`push`、`replace`方法时，如果当前`router`未完成准备(`!router.isPrepared`)并且处在拦截器处理中（`beforeEach`、`beforeRouterEnter`、`beforeRouterLeave`）时则不会解决拦截器的处理，而是改为设置`pendingRoute`；
+  pendingIfNotPrepared?: boolean,
 }
 ```
 
@@ -310,9 +315,9 @@ export default function HomeIndex() {
 设置`append`属性后，则在当前 (相对) 路径前添加基路径。例如，我们从`/a`导航到一个相对路径`b`，如果没有配置`append`，则路径为`/b`，如果配了，则为`/a/b`。该属性和跳转对象中的`append`等效
 
 
-#### tag: string|React.ElementType = 'a'
+#### tag: string|React.ElementType
 
-有时候想要`RouterLink`渲染成某种标签，例如`<li>`。 于是我们使用`tag`属性指定何种标签，同样它还是会监听点击，触发导航。默认为`a`标签。
+有时候想要`RouterLink`渲染成某种标签，例如`<li>`。 于是我们使用`tag`属性指定何种标签，同样它还是会监听点击，触发导航。
 
 #### activeClass: string = 'router-link-active'
 
@@ -334,6 +339,15 @@ export default function HomeIndex() {
   
 路由发生变更时的事件
 
+#### onRouteActive: (route: Route) => void
+  
+当`RouterLink`组件匹配当前路由时触发
+
+#### onRouteInactive: (route: Route) => void
+  
+当`RouterLink`组件从匹配状态变为非匹配状态时触发
+
+
 ### ReactViewRouter的options选项
 
   `options`选项用在创建`ReactViewRouter`实例中，或者`use`、`start`方法参数上。它支持下面几个参数：
@@ -342,11 +356,17 @@ export default function HomeIndex() {
 
   - `basename: string` 该路径组件的基路径
 
-  - `mode: 'hash'|'memory'|'browser'` 路由模式
+  - `mode: 'hash'|'memory'|'browser'|History` - 路由模式
 
   - `hashType: 'slash'|'noslash'` 当`mode`为`hash`时，配置`hash`路径是否以`/`开头
 
-  - `routes: ConfigRoute[]` 所有的路由配置列表
+  - `pathname: string` - 在`memory`路由模式时使用，用于指定`memory`路由的初始路由地址
+
+  - `history: History` - `ReactViewRouter`的`history`对象，不传时`ReactViewRouter`将内部创建它，该属性一般用在路由为`memory`模式，通过将其的`router.history`传递给子应用的 `ReactViewRouter`, 这样子应用的`memory`路由可以实现和父应用的`memory`路由联动。
+
+  - `routes: ConfigRoute[]` - 所有的路由配置列表
+
+  - `queryProps: { [key: string]: (val: string) => any; }` url参数类型转换对象
 
   - `manual: boolean` 是否手动模式，表示在`new ReactViewRouter()`时不自动调用`start`方法。这时需要你手动调用`start`方法来启用路由监听后，`ReactViewRouter`实例才真正开始工作
 
@@ -377,6 +397,8 @@ export default function HomeIndex() {
       subpath: String,
       // 路由配置中的meta信息
       meta: Object,
+      // 路由配置中的meta信息(已完成计算)
+      metaComputed: Object,
       // 路由的状态信息，可以通过router.replaceState(state: State, matchedRoute?: MatchedRoute)来更新指定matchedRoute的state
       state: Object,
       // 路由配置的中的redirect
@@ -402,6 +424,8 @@ export default function HomeIndex() {
   query: Object,
   // 当前路由的元信息，等同于matched[matched.length - 1].meta
   meta: Object,
+  // 路由配置中的meta信息(已完成计算)
+  metaComputed: Object,
   // 当前路由的state信息，等同于matched[matched.length - 1].state
   state: Object,
   // 指示该路由是否是从哪个路由重定向过来的
@@ -418,9 +442,29 @@ export default function HomeIndex() {
 
 ### ReactViewRouter 实例属性
 
+- `id`  - 路由实例id，数字类型，用于标识一个路由实例的唯一性；
+
+- `name` - 路由实例名称，在创建路由实例时，可以传递一个`name`参数为该路由实例取个名字以方便识别；
+
 - `currentRoute` - 匹配当前url的当前路由信息。
 
 - `initialRoute` - 当实例创建时的初始路由对象。
+
+- `prevRoute` - 前一个路由信息。
+
+- `mode` - 路由模式，值有: `hash`、`browser`、`memory`。
+
+- `basename` - 当前路由实例的路由前缀，当不为空时始终以`/`结尾;
+
+- `basenameNoSlash` - 当前路由实例的路由前缀，当不为空时始终不以`/`结尾;
+
+- `parent` - 当前路由实例的父路由实例(如果有的话);
+
+- `top` - 当前路由实例的最顶层路由实例，当等于自己时，标识自己就是最顶层的路由实例;
+
+- `children` - 当前路由实例的子路由实例列表;
+
+- `viewRoot` - 和当前路由实例关联的跟`RouterView`；
 
 - `stacks: { index: number, pathname: string, search: string, timestamp: number }[]` - 路由堆栈，里面包含了当前跳转过的路由信息，通过它可以查看当前页面已经跳转过哪些路由，可以通过 `go` 方法`前进/回退`到该路由，或者通过`getMatched`获取该路由匹配的所有路由配置。示例：
 
@@ -433,12 +477,26 @@ export default function HomeIndex() {
     }
     ```
 
+  - `isRunning` - `router`实例是否在运行状态，当为`false`时将不会响应路由事件；
+
+  - `isRunning` - `router`实例是否在运行状态，当为`false`时将不会响应路由事件；
+
+  - `isPrepared` - 当前路由是否已准备好 - `根路由`、`currentRoute`已经生成完成；
+
+  - `isHistoryCreater` - 是否是内部的`history`的创建者；
+
+  - `isBrowserMode` - 是否是`browser`路由模式；
+
+  - `isHashMode` - 是否是`hash`路由模式；
+
+  - `isMemoryMode` - 是否是`memory`路由模式；
+
 ### ReactViewRouter 实例方法
 
 #### `beforeEach` [全局前置守卫](https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards)
 
 ```js
-const router = new RainbwoRouter({ ... })
+const router = new ReactViewRouter({ ... })
 
 router.beforeEach((to, from, next) => {
   // ...
@@ -596,7 +654,7 @@ router.push('http://www.baidu.com')
 
 注：默认的解析器会将query中的`true`、`false`、`null`、`undefined`、`JSON对象/数组`解析成对应类型，而非字符串。
 
-### `createRoute(to: string | object, from?: object)`
+### `createRoute(to: string | object, options: { from?: object, action?: string, matchedProvider?: object })`
 
 将`string`、`{ path: string, query: {} }`类型的路由信息根据转换成和`router.currentRoute`一样的格式，并且已经解析好`matched`，你可以通过它来获取该地址匹配的路由配置信息。
 
@@ -712,6 +770,9 @@ uninstall();
 插件支持的方法有：
 
 ```ts
+type onRouteChangeEvent = (route: Route, prevRoute: Route, router: ReactViewRouter, prevRes?: any) => void;
+type onRouteMetaChangeEvent = (newVal: any, oldVal: any, route: ConfigRoute, router: ReactViewRouter, prevRes?: any) => void;
+
 interface ReactViewRoutePlugin {
   // 插件名称
   name: string;
@@ -720,22 +781,75 @@ interface ReactViewRoutePlugin {
   // 插件卸载方法，在调用`router.plugin()`注册插件时发现同名插件时会uninstall该插件，再注册。或者是调用`router.plugin()`返回的卸载方法时也会调用uninstall
   uninstall?(router: any): void;
 
-  // 路由进入的守卫事件
-  onRouteEnterNext?(route: MatchedRoute, ci: React.Component, prevRes: any): void;
-  // 路由离开的守卫事件
-  onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, prevRes: any): void;
-  // 当路由发生改变，正在解析、判断路由是否可以跳转的过程前后被调用
-  onRouteing?(isRouting: boolean): void;
-  // 当路由发生改变时被调用
-  onRouteChange?(route: Route, router: ReactViewRouter): void;
-  // 当解析异步路由拿到真实的路由组件时被调用
-  onResolveComponent?(
-    nc: React.ComponentType,
-    route: ConfigRoute
-  ): React.ComponentType | undefined;
+  // 当启动路由监听时调用
+  onStart?(router: ReactViewRouter, routerOptions: ReactViewRouterOptions, isInit: boolean|undefined, prevRes?: any): void;
+  // 当停止路由监听时调用
+  onStop?(router: ReactViewRouter, isInit: boolean|undefined, prevRes?: any): void;
 
+  // 当router.routes发生改变时(use设置routes、调用addRoutes添加路由)被触发，当routes === originRoutes时表示在在原有routes里新增了路由；
+  onRoutesChange?(
+    routes: ConfigRouteArray,
+    originRoutes: ConfigRouteArray,
+    parent?: ConfigRoute|null,
+    parentChildren?: ConfigRouteArray,
+    prevRes?: any
+  ): void;
+
+  // 当调用router.push、router.replace、router.redirect方法时被触发，你可以在该事件里中断默认的路由跳转行为，改为你自己的操作；
+  onRouteGo?(
+    to: RouteHistoryLocation,
+    onComplete: (res: any, _to: Route|null) => void,
+    onAbort: (res: any, _to: Route|null) => void,
+    isReplace: boolean,
+    prevRes?: any
+  ): void|boolean;
+
+  // 路由进入的守卫事件
+  onRouteEnterNext?(route: MatchedRoute, ci: React.Component, prevRes?: any): void;
+  // 路由离开的守卫事件
+  onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, prevRes?: any): void;
+  // 当路由发生改变，正在解析、判断路由是否可以跳转的过程前后被调用
+  onRouteing?(next: boolean|onRouteingNextCallback|Route, prevRes?: any): void;
+  // 当路由发生改变时被调用
+  onRouteChange?: onRouteChangeEvent;
+  // 当路由meta发生改变时被调用
+  onRouteMetaChange?: onRouteMetaChangeEvent;
+  // 当解析异步路由懒加载拿到真实的路由组件时被调用
+  onLazyResolveComponent?(
+    nc: React.ComponentType|React.ForwardRefExoticComponent<any>,
+    route: ConfigRoute,
+    prevRes?: any
+  ): React.ComponentType | undefined;
   // 当向router中注册routes时，router初次遍历routes中没有route时被调用
-  onWalkRoute?(route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray): void;
+  onWalkRoute?(route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray, prevRes?: any): void;
+
+  onGetRouteComponentGurads?(
+    interceptors: RouteGuardInterceptor[],
+    route: ConfigRoute,
+    component: any,
+    componentKey: string,
+    guardName: string,
+     options: {
+      router: ReactViewRouter,
+      onBindInstance?: OnBindInstance,
+      onGetLazyResovle?: OnGetLazyResovle,
+      toResovle: RouteComponentToResolveFn,
+      getGuard: (obj: any, guardName: string) => any,
+      replaceInterceptors: (newInterceptors: any[], interceptors: RouteGuardInterceptor[], index: number) => any[]
+    },
+    prevRes?: any
+  ): void|boolean;
+
+  // 当路由调整被终止时被调用
+  onRouteAbort?(to: Route, reason?: any, prevRes?: any): void;
+
+  onViewContainer?(container: ReactViewContainer|undefined, options: {
+    routes: MatchedRoute[],
+    route: MatchedRoute,
+    depth: number,
+    router: ReactViewRouter,
+    view: RouterViewComponent,
+  }, prevRes?: ReactViewContainer): ReactViewContainer|void;
 }
 ```
 
@@ -793,8 +907,8 @@ export default withRouteGuards(HomeIndex, {
   beforeRouteUpdate(to, from) {
     console.log('HomeIndex beforeRouteUpdate', to, from);
   },
-  afterRouteEnter(to, from) {
-    console.log('HomeIndex afterRouteEnter', to, from);
+  beforeRouteResolve(to, from) {
+    console.log('HomeIndex beforeRouteResolve', to, from);
   },
   afterRouteLeave(to, from) {
     console.log('HomeIndex afterRouteLeave', to, from);
@@ -803,34 +917,37 @@ export default withRouteGuards(HomeIndex, {
 ```
 
 - `lazyImport` 路由组件懒加载方法:
-```javascript
+```ts
+type LazyImportMethod<P = any> = (route: ConfigRoute, key: string, router: ReactViewRouter, options: Partial<any>) => P | Promise<P>;
+
 /**
  * 路由组件懒加载方法
- * @param {Function} importMethod - webpack的import懒加载方法, 示例: () => import('@/components/some-component')
+ * @param {LazyImportMethod} importMethod - webpack的import懒加载方法, 示例: () => import('@/components/some-component')
  * @return {RouteLazy} - 返回值可以作为路由配置中的component/components值，来实现懒加载
  **/
-function lazyImport(importMethod) {}
+function lazyImport(importMethod: LazyImportMethod, options?: Partial<any>): RouteLazy;
 ```
 
 - `normalizeRoutes` 正规化路由配置:
-```javascript
+```ts
 /**
  * 正规化路由配置
- * @param {Array} routes - 为正规化的路由配置
- * @param {Object} [parent] - 如果提供，则routes将会被当做它的子路由配置信息
- * @return {Array} - 正规化后的路由配置
+ * @param {UserConfigRoute[]} routes - 为正规化的路由配置
+ * @param {ConfigRoute} [parent] - 如果提供，则routes将会被当做它的子路由配置信息
+ * @return {ConfigRouteArray} - 正规化后的路由配置
  **/
-function normalizeRoutes(routes, parent?) {}
+function normalizeRoutes(routes: UserConfigRoute[], parent?: ConfigRoute): ConfigRouteArray;
 ```
 - `normalizeLocation` 正规化路由字符串或对象为统一格式的路由对象:
 ```javascript
 /**
  * 正规化路由字符串或对象为统一格式的路由对象
  * @param {Object|string} to - 待正规化的地址对象
- * @param {Object} [route] - 地址对象的父路由，如果提供的话，路由中的相对路径将会基于它来解析
+ * @param {Object} [options] - 其他选项
+ * @param {Object} [options.route] 地址对象的父路由，如果提供的话，路由中的相对路径将会基于它来解析
  * @return {Object} - 正规化后的路由对象: { path: string, pathname: string, search: string, query: Object, ...custom props } 
  **/
-function normalizeLocation(to, route?) {}
+function normalizeLocation(to, options: { route? } = {}) {}
 ```
 
 - `isLocation`判断 `v`是否是一个路由对象
@@ -1018,9 +1135,21 @@ const useRouter = (defaultRouter?: ReactViewRouter|null) => ReactViewRouter|null
 
 ```javascript
 /**
+ * @param {ReactViewRouter} [defaultRouter] 默认的路由管理组件，当不传时它会根据上下文来寻找
+ * @param {object} [options]  匹配选项
+ * @param {boolean} [options.watch]  是否监听路由变化
+ * @param {number|boolean = false} [options.delay]  路由发生变化时是否异步通知路由变更
+ * @param {boolean = true} [options.ignoreSamePath]  路由发生变化前后的路由fullPath相同，则不触发组件重新渲染
  * @return {Route}
  **/
-const useRoute = (defaultRouter?: ReactViewRouter|null) => Route
+const useRoute = (
+  defaultRouter?: ReactViewRouter|null, 
+  options?: { 
+    watch?: boolean,
+    delay?: boolean|number,
+    ignoreSamePath?: boolean
+  }
+) => Route
 ```
 
 ### useRouteMeta
@@ -1090,9 +1219,24 @@ function Test() {
 
 ```javascript
 /**
+ * @param {ReactViewRouter} [defaultRouter] 默认的路由管理组件，当不传时它会根据上下文来寻找
+ * @param {object} [options]  匹配选项
+ * @param {number = 0} [options.matchedOffset]  匹配的matchedRoute的(向前)偏移量
+ * @param {string} [commonPageName] 公共路由的meta名称，如果commonPageName不为空并且currentRoute的meta中该名称的属性值为true，并且currentRoute.query.redirect不为空，则将会从currentRoute.query.redirect中解析matchedRoute
+ * @param {boolean = true} [options.watch]  是否监听路由变化
+ * @param {number|boolean = false} [options.delay]  路由发生变化时是否异步通知路由变更
+ * @param {boolean = true} [options.ignoreSamePath]  路由发生变化前后的路由fullPath相同，则不触发组件重新渲染
  * @return {MatchRoute}
  **/
-const useMatchedRoute = (defaultRouter?: ReactViewRouter|null) => MatchRoute
+const useMatchedRoute = (
+  defaultRouter?: ReactViewRouter|null, 
+  options?: { 
+    matchedOffset?: number, 
+    watch?: boolean,
+    delay?: boolean|number,
+    ignoreSamePath?: boolean 
+  }
+) => MatchedRoute
 ```
 
 ### useMatchedRouteIndex
@@ -1101,9 +1245,11 @@ const useMatchedRoute = (defaultRouter?: ReactViewRouter|null) => MatchRoute
 
 ```javascript
 /**
+ * @param {ReactViewRouter} [defaultRouter] 默认的路由管理组件，当不传时它会根据上下文来寻找
+ * @param {number} [matchedOffset]  匹配的matchedRoute的(向前)偏移量，默认值为0
  * @return {number}
  **/
-const useMatchedRouteIndex = () => number
+const useMatchedRouteIndex = (matchedOffset?: number = 0) => number
 ```
 
 ### useRouterView
@@ -1125,7 +1271,7 @@ const useRouterView = () => RouterView
 ```javascript
 /**
  * @param {Ref} ref 通过React.forwardRef获取的ref
- * @param {T|(() => T)} guards 路由守卫对象，支持beforeRouteLeave、afterRouteEnter、afterRouteLeave、beforeRouteUpdate守卫
+ * @param {T|(() => T)} guards 路由守卫对象，支持beforeRouteLeave、beforeRouteResolve、afterRouteLeave、beforeRouteUpdate守卫
  * @param {DependencyList} deps 传给useImperativeHandle的deps
  * @return {void} 
  **/
@@ -1198,13 +1344,23 @@ useRouteChanged(router, (route) => {
 
 ### useRouteTitle
 
-遍历路由配置，检索出路由配置中`meta.title`、`meta.visible`过滤出来的信息。你可以根据该信息来创建菜单、标签页等。函数签名如下：
+遍历路由配置，检索出路由配置中`meta.title`、`meta.visible`过滤出来的信息，其中`meta.title`、`meta.visible`可以是一个函数。你可以根据该信息来创建菜单、标签页等。函数签名如下：
 
 ```ts
+// `meta.title`、`meta.visible`可以是boolean值，也可以下面这样的函数
+type RouteMetaFunction<T = boolean> = (route: ConfigRoute, routes: ConfigRouteArray, props: {
+  router?: ReactViewRouter|null,
+  level?: number,
+  maxLevel?: number,
+  refresh?: () => void
+  [key:string]: any
+}) => T;
+
 type RouteTitleInfo = {
   title: string;
   path: string;
   meta: Partial<any>;
+  route: ConfigRoute;
   children?: RouteTitleInfo[];
 };
 
@@ -1229,6 +1385,10 @@ type RouteTitleProps = {
    * 可以通过该参数实现异步展示菜单、标签栏等方案
    **/
   manual?: boolean,
+  // 匹配的matchedRoute的(向前)偏移量，默认值为0
+  matchedOffset?: number;
+  // 公共页面meta的key值，默认为'commonPage'。即当某个匹配路由的meta中包含commonPage: true时，并且router.currentRoute.query.redirect不为空时，解析路由将会改为从router.currentRoute.query.redirect重新解析titles
+  commonPageName?: string;
 }
 
 type RouteTitleResult = {
@@ -1272,7 +1432,10 @@ const MainLeft = observer(() => {
     titles,
     currentPaths: currentMenus,
     refreshTitles,
-  } = useRouteTitle({ maxLevel: 2 });
+  } = useRouteTitle({ 
+    // 从当前组件所在的路由层级再向下2级开始查找匹配titles
+    maxLevel: 2 
+  });
 
   const menus = useMemo(() => {
     const getMenus = (list = []) => list.map((item) => {
@@ -1291,14 +1454,19 @@ const MainLeft = observer(() => {
     if (titles.length) refreshTitles();
   }, [companyId]);
 
+  const parentPaths = currentPaths.length > 1
+    ? currentPaths.slice(0, currentPaths.length - 1)
+    : currentPaths;
+  const currentPath = currentPaths.length ? currentPaths[currentPaths.length - 1] : null;
+
   return (
     <LeftMenu
       onlyOpenCurrent
       defaultLock
       height="100%"
       data={menus}
-      openKeys={currentMenus.length > 1 ? currentMenus.slice(0, currentMenus.length - 1) : []}
-      selectedKeys={currentMenus}
+      openKeys={parentPaths}
+      selectedKeys={currentPath ? [currentPath] : null}
       onSelect={(path) => router.push(path)}
     />
   );
@@ -1381,7 +1549,7 @@ class EmployeeManager extends ReactVueLike.Component {
     next();
   }
 
-  afterRouteEnter(to, from) {
+  beforeRouteResolve(to, from) {
 
   }
 
@@ -1491,6 +1659,51 @@ class MainSider extends ReactVueLike.Component {
 
 export default MainSider;
 ```
+
+## 路由调整动效
+
+你可以通过`import RouterView from 'react-view-router/transition'`引用支持路由跳转动效的`RouterView`来为页面添加简单的转场动效。目前支持`fade|slide|carousel`三种动效：
+
+```js
+import React from 'react';
+// import { RouterView } from 'react-view-router';
+import RouterView from 'react-view-router/transition';
+import router from '@/history';
+
+function  App() {
+  return (
+    <div className="app-index">
+      <RouterView
+        router={router}
+        transition="slide"
+        // transitionPrefix="react-view-router-"
+        // transitionZIndex={1000}
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+用法和普通的`RouterView`一样，只是多添加了`transition`、`transitionPrefix`、`transitionZIndex`、`routerView`四个额外属性：
+```ts
+interface TransitionRouterViewProps extends RouterViewProps {
+  transition?: TransitionName | {
+    name: TransitionName,
+    zIndex?: number,
+    containerStyle?: React.HTMLAttributes<HTMLDivElement>,
+    containerTag?: string | React.ComponentType | React.ForwardRefExoticComponent<any>
+  };
+  transitionPrefix?: string;
+  transitionZIndex?: number;
+  routerView?: RouterViewComponent
+}
+```
+
+- `transition` - 动效的名称，目前支持`slide`、`fade`两种动效。它也可以是一个对象。
+- `transitionPrefix` - 动效的`className`前缀，默认为`react-view-router-`。如果你修改了该值，则动效的样式需要由你自己来提供；
+- `transitionZIndex` - 进场/离场页面的`zIndex`，默认为1000。若当前是`slide`动效，并且当前页面中存在zIndex大于1000的元素时，你可以通过设置`transitionZIndex`为更高的值来避免该元素穿透转场页面。
 
 ## 中台模块中路由处理
 

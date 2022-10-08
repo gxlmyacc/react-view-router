@@ -49,11 +49,14 @@ function parseQuery(query: string, props: ParseQueryProps = {}) {
     }
   });
 
-  return res;
+  return Object.keys(res).sort().reduce((p, key) => {
+    p[key] = res[key];
+    return p;
+  }, {} as typeof res);
 }
 
 function stringifyQuery(obj: Partial<any> | null | undefined, prefix = '?') {
-  const res = obj ? Object.keys(obj).map((key: string) => {
+  const res = obj ? Object.keys(obj).sort().map((key: string) => {
     let val: any = obj[key];
 
     if (val === undefined) return '';
@@ -76,7 +79,8 @@ function stringifyQuery(obj: Partial<any> | null | undefined, prefix = '?') {
 
     if (typeof val === 'object') val = JSON.stringify(val);
     return encode(key) + '=' + encode(val);
-  }).filter((x: string) => x.length > 0).join('&') : null;
+  }).filter((x: string) => x.length > 0)
+    .join('&') : null;
   return res ? `${prefix}${res}` : '';
 }
 
@@ -85,11 +89,11 @@ export {
   stringifyQuery
 };
 
-export default {
+const config = {
   _parseQuery: parseQuery,
   _stringifyQuery: stringifyQuery,
 
-  inheritProps: true,
+  inheritProps: false,
 
   zIndexStart: 0,
   zIndexStep: 1,
@@ -128,3 +132,5 @@ export default {
   },
 
 };
+
+export default config;

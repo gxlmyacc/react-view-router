@@ -1,13 +1,18 @@
-import { MemoryHistoryOptions, HashHistoryOptions, BrowserHistoryOptions, getBaseHref, History } from './history';
-import { HistoryFix, RouteHistoryLocation, RouteInterceptorItem } from './types';
-export declare enum HistoryType {
-    hash = "hash",
-    browser = "browser",
-    memory = "memory"
-}
-declare function confirmInterceptors(interceptors: HistoryFix | RouteInterceptorItem[], location: string | RouteHistoryLocation, callback: (ok: boolean) => void): void;
-declare function createHashHistoryNew(options: HashHistoryOptions): HistoryFix;
-declare function createBrowserHistoryNew(options: BrowserHistoryOptions): HistoryFix;
-declare function createMemoryHistoryNew(options: MemoryHistoryOptions): HistoryFix;
-declare function getPossibleRouterMode(): "" | "browser" | "hash";
-export { createHashHistoryNew as createHashHistory, createBrowserHistoryNew as createBrowserHistory, createMemoryHistoryNew as createMemoryHistory, getBaseHref, getPossibleRouterMode, History, HistoryFix, confirmInterceptors };
+import { HashHistoryOptions, BrowserHistoryOptions, getBaseHref, History } from './history';
+import { HistoryFix, RouteHistoryLocation, RouteInterceptorItem, History4, ReactViewRouterMoreOptions } from './types';
+import ReactViewRouter from './router';
+import { REACT_VIEW_ROUTER_GLOBAL } from './global';
+declare function confirmInterceptors(interceptors: RouteInterceptorItem[], location: RouteHistoryLocation, callback: (ok: boolean, payload: RouteInterceptorItem[]) => void): void;
+declare function isHistory4(history: any): history is History4;
+declare function createHashHistoryNew(options: HashHistoryOptions & {
+    history?: HistoryFix;
+}, router: ReactViewRouter): HistoryFix;
+declare function createBrowserHistoryNew(options: BrowserHistoryOptions & {
+    history?: HistoryFix;
+}, router: ReactViewRouter): HistoryFix;
+declare function createMemoryHistoryNew(options: {
+    history?: HistoryFix;
+    pathname?: string;
+}, router: ReactViewRouter): HistoryFix;
+declare function getPossibleHistory(options?: ReactViewRouterMoreOptions): HistoryFix | null;
+export { createHashHistoryNew as createHashHistory, createBrowserHistoryNew as createBrowserHistory, createMemoryHistoryNew as createMemoryHistory, getBaseHref, getPossibleHistory, History, HistoryFix, confirmInterceptors, REACT_VIEW_ROUTER_GLOBAL, isHistory4 };

@@ -394,22 +394,7 @@ function isLocation(v) {}
 - `matchPath` just re-export, see: [matchPath](https://reacttraining.com/react-router/web/api/matchPath)
 
 ## NOTE
-1. You sholud config the  `Webpack Configuration` with `alias`:
-```javascript
-{
-  ...
-  resolve: {
-    ...
-    alias: {
-      history: 'history-fix'
-    }
-  },
-  ...
-}
-``` 
-otherwise, webpack will package both `history` and `history-fix` into the target js file.
-
-2. if route component is `Class Component` (not `Function Component`), then `this` variable in `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards will be that component instance;
+1. if route component is `Class Component` (not `Function Component`), then `this` variable in `beforeRouteUpdate`,`beforeRouteLeave`,`afterRouteLeave` Component Guards will be that component instance;
 
 ## License
 

@@ -6,12 +6,14 @@ temp/
 analyzer/
 */analyzer/
 .DS_Store
+.history
 */.DS_Store
 plugin/
 esm
 es
-.history/
 drawer/esm
 drawer/es
 dist
+/external
+yarn-error.log
 

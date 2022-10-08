@@ -1,10 +1,12 @@
-import { ConfigRouteArray, ReactViewRouterMode, RouteResolveNameFn } from '../types';
+import { ConfigRouteArray, HistoryFix, RouteResolveNameFn } from '../types';
 import ReactViewRouter from '../router';
-import { HashType } from '../history';
+import { HashType, HistoryType } from '../history';
 declare type ManualRouterOptions = {
     basename?: string;
-    routerMode?: ReactViewRouterMode;
-    routerHashType?: HashType;
+    pathname?: string;
+    history?: HistoryFix;
+    mode?: HistoryType | HistoryFix;
+    routerMode?: HistoryType | HistoryFix;
     hashType?: HashType;
     resolveRouteName?: RouteResolveNameFn;
     routes?: ConfigRouteArray;

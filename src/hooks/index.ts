@@ -8,11 +8,11 @@ export {
 
 export {
   default as useRouteTitle,
-  readRouteMeta,
 
   isCommonPage,
   walkRouteTitle,
-  getMatched,
+
+  readRouteTitle,
 
   filterCallback,
   RouteTitleInfo,

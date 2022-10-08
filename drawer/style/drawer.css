@@ -46,7 +46,7 @@
 }
 
 .rvr-route-drawer.touched {
-  transition: transform cubic-bezier(0.55, 0, 0.55, 0.2) .3s;
+  transition: transform linear .3s;
 }
 
 .rvr-slide-right-enter,
@@ -62,8 +62,8 @@
           animation-duration: .2s;
   -webkit-animation-fill-mode: both;
           animation-fill-mode: both;
-  -webkit-animation-timing-function: cubic-bezier(0.55, 0, 0.55, 0.2);
-          animation-timing-function: cubic-bezier(0.55, 0, 0.55, 0.2);
+  -webkit-animation-timing-function: linear;
+          animation-timing-function: linear;
   -webkit-animation-play-state: paused;
           animation-play-state: paused;
 }

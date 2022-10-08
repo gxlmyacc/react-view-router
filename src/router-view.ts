@@ -1,28 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import {
   renderRoute, normalizeRoute, normalizeRoutes, isFunction,
   isRouteChanged, isRoutesChanged, isPropChanged,
-  getHostRouterView, warn
+  getHostRouterView, warn, hasOwnProp
 } from './util';
 import ReactViewRouter from './router';
-import { MatchedRoute, ConfigRoute, RouteHistoryLocation, RouteBeforeGuardFn, RouteAfterGuardFn, ConfigRouteArray } from './types';
+import {
+  MatchedRoute, ConfigRoute, RouteHistoryLocation, ReactViewContainer,
+  RouteBeforeGuardFn, RouteAfterGuardFn, ConfigRouteArray
+} from './types';
 import { computeRootMatch } from './match-path';
 import { RouterContext, RouterViewContext } from './context';
 
-type RouterViewUpdateRef = (vm: React.Component | null) => void;
-
-export interface RouterViewProps {
+export interface RouterViewProps extends React.HTMLAttributes<any> {
   name?: string,
   filter?: RouterViewFilter,
   fallback?: ReactViewFallback | React.Component,
   container?: ReactViewContainer,
   router?: ReactViewRouter,
   depth?: number,
-  _updateRef?: RouterViewUpdateRef,
   excludeProps: string[],
   beforeEach?: RouteBeforeGuardFn,
-  beforeResolve?: RouteAfterGuardFn,
   afterEach?: RouteAfterGuardFn,
+
+  _updateRef?: React.RefCallback<RouterView>|null,
   [key: string]: any
 }
 
@@ -52,12 +53,11 @@ export type ReactViewFallback = (state: {
   resolving: boolean,
   depth: number
 }) => React.ReactElement;
-export type ReactViewContainer = (
-  result: React.ReactElement | null,
-  route: ConfigRoute | MatchedRoute,
-  props: RouterViewProps
-) => React.ReactElement;
 
+function normalizeRouterViewProps(props: RouterViewProps) {
+  if (props.beforeEach && !hasOwnProp(props.beforeEach, 'global')) props.beforeEach.global = true;
+  if (props.afterEach && !hasOwnProp(props.afterEach, 'global')) props.afterEach.global = true;
+}
 class RouterView<
   P extends RouterViewProps = RouterViewProps,
   S extends RouterViewState = RouterViewState,
@@ -72,7 +72,7 @@ class RouterView<
 
   _reactInternals?: any;
 
-  static defaultProps: RouterViewDefaultProps
+  static defaultProps: RouterViewDefaultProps;
 
   constructor(props: RouterViewProps) {
     super(props as P);
@@ -95,6 +95,8 @@ class RouterView<
     this.state = state as S;
     this.target = new.target;
 
+    normalizeRouterViewProps(props);
+
     this._updateRef = this._updateRef.bind(this);
     this._filterRoutes = this._filterRoutes.bind(this);
   }
@@ -110,7 +112,7 @@ class RouterView<
     return currentRoute && currentRoute.componentInstances[this.name];
   }
 
-  _updateRef(ref: React.Component) {
+  _updateRef(ref: RouterView) {
     let currentRoute = this.state.currentRoute;
     if (currentRoute) currentRoute.componentInstances[this.name] = ref;
     if (this.props && this.props._updateRef) this.props._updateRef(ref);
@@ -193,7 +195,7 @@ class RouterView<
   }
 
   isNull(route: any) {
-    return !route || !route.path || route.subpath === '';
+    return !route || !route.path || route.subpath === '' || route.isNull;
   }
 
   async componentDidMount() {
@@ -225,8 +227,8 @@ class RouterView<
           if (!ok) return;
           router && to && router.updateRoute(to as any);
           state.currentRoute = this._refreshCurrentRoute();
+          if (isFunction(ok)) ok(true, router.currentRoute);
           if (this._isMounted) this.setState(Object.assign(state, { _routerInited: this._isMounted }));
-          if (isFunction(ok)) ok(true);
         },
         true,
       );
@@ -273,6 +275,11 @@ class RouterView<
     return false;
   }
 
+  static getDerivedStateFromProps(nextProps: RouterViewProps) {
+    normalizeRouterViewProps(nextProps);
+    return null;
+  }
+
   push(...routes: ConfigRoute[]) {
     const state = { ...this.state };
     state.routes.push(...normalizeRoutes(routes, state.parentRoute && state.parentRoute.config));
@@ -281,10 +288,11 @@ class RouterView<
   }
 
   splice(idx: number, len: number, ...routes: ConfigRoute[]) {
-    const state = { ...this.state };
-    state.routes.splice(idx, len, ...normalizeRoutes(routes, state.parentRoute && state.parentRoute.config));
+    const state: RouterViewState = { ...this.state };
+    const ret = state.routes.splice(idx, len, ...normalizeRoutes(routes, state.parentRoute && state.parentRoute.config));
+    if (state.currentRoute && ret.some(r => r === state.currentRoute?.config)) state.currentRoute = null;
     if (this._isMounted) this.setState(state);
-    return state.routes;
+    return ret;
   }
 
   indexOf(route: string | ConfigRoute) {
@@ -295,33 +303,50 @@ class RouterView<
 
   remove(route: string | ConfigRoute) {
     if (typeof route === 'string') route = { path: route } as ConfigRoute;
-    const { routes } = this.state;
+    let { routes, currentRoute } = this.state;
     const index = this.indexOf(route);
-    if (~index) routes.splice(index, 1);
-    if (this._isMounted) this.setState({ routes });
+    if (~index) {
+      const route = routes[index];
+      if (currentRoute && currentRoute.config === route) {
+        currentRoute = null;
+      }
+      routes.splice(index, 1);
+    }
+    if (this._isMounted) this.setState({ routes, currentRoute });
     return ~index ? route : undefined;
   }
 
-  getComponent(currentRoute: MatchedRoute | null, excludeProps?: Partial<any>) {
+  getComponentProps() {
+    let { children, ...props } = this.props;
+
+    const excludeProps = this.target.defaultProps.excludeProps || RouterView.defaultProps.excludeProps || [];
+    excludeProps.forEach((key: string) => delete (props as any)[key]);
+    return {
+      props,
+      children
+    };
+  }
+
+  getComponent(currentRoute: MatchedRoute | null) {
     if (!currentRoute) return null;
 
     const { routes, router } = this.state;
-    const { container, children, ...props } = this.props;
-    const { query = {}, params } = ((router && router.currentRoute) || {});
+    const { query = {}, params = {} } = ((router && router.currentRoute) || {});
+    let { children, props } = this.getComponentProps();
 
-    const targetExcludeProps = this.target.defaultProps.excludeProps || RouterView.defaultProps.excludeProps || [];
-    (excludeProps || targetExcludeProps).forEach((key: string) => delete (props as any)[key]);
-
-    return renderRoute(currentRoute, routes, props,
+    return renderRoute(
+      currentRoute,
+      routes,
+      props,
       children,
       {
         router,
         name: this.name,
         query,
         params,
-        container,
         ref: this._updateRef
-      });
+      }
+    );
   }
 
   renderCurrent(currentRoute: MatchedRoute | null) {
@@ -329,20 +354,48 @@ class RouterView<
     return this.getComponent(currentRoute);
   }
 
+  renderContainer(current: ReactNode|null, currentRoute: MatchedRoute | null): ReactNode | null {
+    const { routes, router, _routerDepth } = this.state;
+    let { container } = this.props;
+
+    if (router) {
+      container = router._callEvent('onViewContainer', container, {
+        routes,
+        route: currentRoute,
+        depth: _routerDepth,
+        router,
+        view: this,
+      }) || container;
+    }
+
+    return container && currentRoute
+      ? container(current, currentRoute, (current && (current as any).props) || this.getComponentProps(), this)
+      : current;
+  }
+
   render() {
     if (!this.state._routerInited) return this._resolveFallback();
 
-    let ret = React.createElement<any>(
-      RouterViewContext.Provider, { value: this }, this.renderCurrent(this.state.currentRoute)
+    const { currentRoute } = this.state;
+
+    let ret = this.renderCurrent(currentRoute);
+
+    ret = React.createElement<any>(
+      RouterViewContext.Provider,
+      { value: this },
+      this.renderContainer(ret, this.state.currentRoute)
     );
 
     if (this.state._routerRoot) {
-      ret = React.createElement<any>(
-        RouterContext.Provider, { value: this.state.router }, ret
-      );
+      ret = React.createElement<any>(RouterContext.Provider, { value: this.state.router }, ret);
     }
 
-    ret = React.createElement(React.Fragment, {}, ret, this.state._routerResolving ? this._resolveFallback() : null);
+    ret = React.createElement(
+      React.Fragment,
+      {},
+      ret,
+      this.state._routerResolving ? this._resolveFallback() : null,
+    );
 
     return ret;
   }
@@ -351,7 +404,7 @@ class RouterView<
 
 const RouterViewWrapper = React.forwardRef((
   props: RouterViewProps,
-  ref: any
+  ref?: React.Ref<RouterView>
 ) => {
   const [isRunning, setIsRunning] = useState(!props.router || props.router.isRunning);
 
@@ -367,12 +420,12 @@ const RouterViewWrapper = React.forwardRef((
 
   return isRunning ? React.createElement(RouterView, {
     ...props,
-    _updateRef: ref
+    _updateRef: ref && (isFunction(ref) ? ref : (r: RouterView) => (ref.current as any) = r)
   }) : null;
 });
 
 RouterView.defaultProps = {
-  excludeProps: ['_updateRef', 'router', 'excludeProps', 'beforeEach', 'beforeResolve', 'afterEach', 'fallback']
+  excludeProps: ['_updateRef', 'router', 'excludeProps', 'beforeEach', 'afterEach', 'fallback', 'container']
 };
 
 export {

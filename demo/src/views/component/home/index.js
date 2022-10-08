@@ -20,6 +20,9 @@ export default withRouteGuards(HomeIndex, {
     console.log('HomeIndex beforeRouteLeave', this, to, from);
     next();
   },
+  beforeRouteResolve(to, from) {
+    console.log('HomeIndex beforeRouteResolve', to, from);
+  },
   beforeRouteUpdate(to, from) {
     console.log('HomeIndex beforeRouteUpdate', to, from);
   },

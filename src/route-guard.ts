@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouteGuardsInfoHOC } from './types';
+import { RouteGuardsInfoHOC, ReactAllComponentType } from './types';
 
 const hasSymbol = typeof Symbol === 'function' && Symbol.for;
 
@@ -14,9 +14,9 @@ export class RouteComponentGuards {
 
   __guards?: RouteGuardsInfoHOC;
 
-  __component?: React.ComponentType | RouteComponentGuards;
+  __component?: ReactAllComponentType | RouteComponentGuards;
 
-  __componentClass?: React.ComponentType;
+  __componentClass?: ReactAllComponentType;
 
   __children?: any;
 
@@ -35,11 +35,12 @@ export function getGuardsComponent(v: RouteComponentGuards, useComponentClass = 
 }
 
 export function withRouteGuards(
-  component: React.ComponentType,
-  guards: RouteGuardsInfoHOC = {},
-  componentClass?: React.ComponentType | null,
+  component: ReactAllComponentType,
+  guards: RouteGuardsInfoHOC,
+  componentClass?: ReactAllComponentType | null,
   children?: any
 ) {
+  if (!guards) guards = {};
   const ret = new RouteComponentGuards();
   ret.render = function (props: any, ref: any) {
     return React.createElement(component, { ...props, ref }, props.children);

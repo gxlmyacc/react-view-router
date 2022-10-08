@@ -29,7 +29,6 @@ const routes = normalizeRoutes([
             beforeEnter(to, from, next) { next(); },
             beforeLeave(to, from, next) { next(); },
             beforeUpdate(to, from) {},
-            afterEnter(to, from) {},
             afterLeave(to, from) {},
           },
           {

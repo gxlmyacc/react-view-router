@@ -1,5 +1,6 @@
 import React from 'react';
 import router from 'router';
+import { withRouteGuards } from 'react-view-router';
 
 class HomeMainOtherIndex extends React.Component {
   constructor(props) {
@@ -17,7 +18,7 @@ class HomeMainOtherIndex extends React.Component {
     }, () => {
       console.log('router.push some is abort!');
     });
-  }
+  };
 
   render() {
     const { text } = this.state;
@@ -31,4 +32,30 @@ class HomeMainOtherIndex extends React.Component {
   }
 }
 
-export default HomeMainOtherIndex;
+export default withRouteGuards(
+  // component
+  HomeMainOtherIndex,
+  // route guards
+  {
+    beforeRouteEnter(to, from, next) {
+      console.log('HomeMainOtherIndex beforeRouteEnter', to, from);
+      next(vm => {
+        console.log('HomeMainOtherIndex beforeRouteEnter next', vm, to, from);
+      });
+    },
+    beforeRouteLeave(to, from, next) {
+      // confirm leave prompt
+      console.log('HomeMainOtherIndex beforeRouteLeave', this, to, from);
+      next();
+    },
+    beforeRouteResolve(to, from) {
+      console.log('HomeMainOtherIndex beforeRouteResolve', this, to, from);
+    },
+    beforeRouteUpdate(to, from) {
+      console.log('HomeMainOtherIndex beforeRouteUpdate', this, to, from);
+    },
+    afterRouteLeave(to, from) {
+      console.log('HomeMainOtherIndex afterRouteLeave', this, to, from);
+    },
+  }
+);

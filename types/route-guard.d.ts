@@ -1,15 +1,14 @@
-import React from 'react';
-import { RouteGuardsInfoHOC } from './types';
+import { RouteGuardsInfoHOC, ReactAllComponentType } from './types';
 export declare const REACT_FORWARD_REF_TYPE: number | symbol;
 export declare const REACT_LAZY_TYPE: number | symbol;
 export declare class RouteComponentGuards {
     $$typeof: Symbol | number;
     render: Function | null;
     __guards?: RouteGuardsInfoHOC;
-    __component?: React.ComponentType | RouteComponentGuards;
-    __componentClass?: React.ComponentType;
+    __component?: ReactAllComponentType | RouteComponentGuards;
+    __componentClass?: ReactAllComponentType;
     __children?: any;
     constructor();
 }
-export declare function getGuardsComponent(v: RouteComponentGuards, useComponentClass?: boolean): RouteComponentGuards | React.ComponentType<{}>;
-export declare function withRouteGuards(component: React.ComponentType, guards?: RouteGuardsInfoHOC, componentClass?: React.ComponentType | null, children?: any): RouteComponentGuards;
+export declare function getGuardsComponent(v: RouteComponentGuards, useComponentClass?: boolean): ReactAllComponentType<any> | RouteComponentGuards;
+export declare function withRouteGuards(component: ReactAllComponentType, guards: RouteGuardsInfoHOC, componentClass?: ReactAllComponentType | null, children?: any): RouteComponentGuards;

@@ -12,7 +12,7 @@ class HomeMainSomeIndex extends React.Component {
 
   refresh = () => {
     this.setState({ text: 'text1 refreshed' });
-  }
+  };
 
   render() {
     const { text } = this.state;
@@ -47,6 +47,9 @@ export default withRouteGuards(
       // confirm leave prompt
       console.log('HomeMainSomeIndex beforeRouteLeave', this, to, from);
       next();
+    },
+    beforeRouteResolve(to, from) {
+      console.log('HomeMainSomeIndex beforeRouteResolve', this, to, from);
     },
     beforeRouteUpdate(to, from) {
       console.log('HomeMainSomeIndex beforeRouteUpdate', this, to, from);

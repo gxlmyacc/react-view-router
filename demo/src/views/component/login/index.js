@@ -1,8 +1,9 @@
 import React from 'react';
 import store from 'store';
 import router from 'router';
+import { withRouteGuards } from 'react-view-router';
 
-export default function LoginIndex() {
+function LoginIndex() {
   const doLogin = () => {
     store.logined = true;
     router.push({
@@ -22,3 +23,24 @@ export default function LoginIndex() {
     </div>
   );
 }
+
+export default withRouteGuards(LoginIndex, {
+  beforeRouteEnter(to, from, next) {
+    console.log('LoginIndex beforeRouteEnter', to, from);
+    next();
+  },
+  beforeRouteLeave(to, from, next) {
+    // confirm leave prompt
+    console.log('LoginIndex beforeRouteLeave', this, to, from);
+    next();
+  },
+  beforeRouteResolve(to, from) {
+    console.log('LoginIndex beforeRouteResolve', this, to, from);
+  },
+  beforeRouteUpdate(to, from) {
+    console.log('LoginIndex beforeRouteUpdate', this, to, from);
+  },
+  afterRouteLeave(to, from) {
+    console.log('LoginIndex afterRouteLeave', this, to, from);
+  },
+});

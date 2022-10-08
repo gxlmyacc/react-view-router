@@ -8,30 +8,25 @@ module.exports = function (options, project) {
   const porjectDir = project.root;
   const distDir = path.resolve(porjectDir, project.dist.dir);
   return {
-    inline: true,
-    quiet: true,
     historyApiFallback: true,
-    // noInfo: true, // only errors & warns on hot reload
     host: project.webserver.host,
     port: project.webserver.port,
-    disableHostCheck: project.webserver.disableHostCheck,
     hot: project.webserver.hot,
-    hotOnly: project.webserver.hotOnly,
     compress: project.gzip,
-    contentBase: distDir,
-    public: project.webserver.publicHost ? (project.webserver.publicHost + ':' + project.webserver.port) : '',
-    publicPath: project.webserver.path,
+    static: {
+      directory: path.join(distDir, '/'),
+      publicPath: project.webserver.path,
+    },
     https: project.webserver.https,
     headers: project.webserver.headers,
-    overlay: {
-      warnings: false,
-      errors: true
+    client: {
+      overlay: {
+        warnings: false,
+        errors: true
+      },
     },
-    stats: {
-      extensions: true,
-      index: project.webserver.open
-    },
-    before(app) {
+    onBeforeSetupMiddleware(devServer) {
+      const { app } = devServer;
       let store = {};
       let _global = {};
       app.use(bodyParser.json({ limit: '50mb' }));

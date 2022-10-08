@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title><%= htmlWebpackPlugin.options.title %></title>
+  <title>首页</title>
   <script type="text/javascript">
     window.__STARTTIME__ = Date.now();
     window.__PARAMS__ = (function (search){
@@ -25,15 +25,9 @@
     return url;
   };
   </script>
-  <% for (var index in htmlWebpackPlugin.files.css) { %>
-  <link href="<%=htmlWebpackPlugin.files.css[index] %>" rel="stylesheet">
-  <% } %>
 </head>
 <body>
   <div id="root" class="app"></div>
-  <% for (var index in htmlWebpackPlugin.files.js) { %>
-  <script type="text/javascript" src="<%=htmlWebpackPlugin.files.js[index] %>"></script>
-  <% } %>
   <script type="text/javascript">
     window.__LOADTIME__ = Date.now();
   </script>

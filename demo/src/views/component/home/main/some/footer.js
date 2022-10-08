@@ -30,5 +30,19 @@ export default withRouteGuards(
         console.log('HomeMainSomeFooter beforeRouteEnter next', vm, to, from);
       });
     },
+    beforeRouteLeave(to, from, next) {
+      // confirm leave prompt
+      console.log('HomeMainSomeFooter beforeRouteLeave', this, to, from);
+      next();
+    },
+    beforeRouteResolve(to, from) {
+      console.log('HomeMainSomeFooter beforeRouteResolve', this, to, from);
+    },
+    beforeRouteUpdate(to, from) {
+      console.log('HomeMainSomeFooter beforeRouteUpdate', this, to, from);
+    },
+    afterRouteLeave(to, from) {
+      console.log('HomeMainSomeFooter afterRouteLeave', this, to, from);
+    },
   }
 );

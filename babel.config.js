@@ -6,7 +6,7 @@ const config = {
         modules: false,
         useBuiltIns: 'usage',
         corejs: 2,
-        targets: { browsers: ['Chrome >= 31'] }
+        targets: { browsers: ['chrome >= 49', 'android >= 6', 'ios >= 8'] }
       }
     ],
     '@babel/typescript',
@@ -38,7 +38,8 @@ module.exports = process.env.BUILD_ENV === 'es'
     ],
     plugins: [
       '@babel/proposal-class-properties',
-      '@babel/proposal-object-rest-spread'
+      '@babel/proposal-object-rest-spread',
+      'babel-plugin-define-variables'
     ]
   }
   : config;

@@ -68,7 +68,7 @@ const project = {
       images: '#{src}images',
       fonts: '#{src}fonts',
       // history: 'history-fix',
-      // 'react-view-router': '#{src}../../es'
+      'react-view-router': '#{src}../../es'
     }
   },
   externals: {},
@@ -93,7 +93,7 @@ const project = {
     disableHostCheck: true,
     publicHost: '',
     path: '/',
-    hot: false,
+    hot: true,
     hotOnly: false,
     open: 'index.html',
     https: false,

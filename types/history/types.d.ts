@@ -1,3 +1,8 @@
+export declare enum HistoryType {
+    hash = "hash",
+    browser = "browser",
+    memory = "memory"
+}
 /**
  * Actions represent the type of change to a location value.
  *
@@ -87,6 +92,7 @@ export interface Path {
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#location
  */
 export interface Location<S extends State = State> extends Path {
+    fromEvent?: boolean;
     /**
      * An object of arbitrary data associated with this location.
      *
@@ -173,15 +179,19 @@ export interface Update<S extends State = State> {
 export interface Listener<S extends State = State> {
     (update: Update<S>): void;
 }
+export declare type TransitionCallback = (ok: boolean, payload?: any) => void;
 /**
  * A change to the current location that was blocked. May be retried
  * after obtaining user confirmation.
  */
 export interface Transition<S extends State = State> extends Update<S> {
+    seed: number;
+    nextIndex: number;
     /**
      * continue the update to the current location.
      */
-    callback(ok: boolean): void;
+    callback: TransitionCallback;
+    backCallback: (seed: number) => void;
 }
 /**
  * A function that receives transitions when navigation is blocked.
@@ -200,6 +210,9 @@ export interface PopAction<S extends State = State> extends Update<S> {
     delta: number;
     cb?: () => void;
 }
+export interface HistoryOptions {
+    extra?: any;
+}
 /**
  * A history is an interface to the navigation stack. The history serves as the
  * source of truth for the current location, as well as provides a set of
@@ -209,6 +222,14 @@ export interface PopAction<S extends State = State> extends Update<S> {
  * focused API.
  */
 export interface History<S extends State = State> {
+    /**
+     * custom extra data
+     */
+    readonly extra: any;
+    /**
+     * history type
+     */
+    readonly type: HistoryType;
     /**
      * The last action that modified the current location. This will always be
      * Action.Pop when a history instance is first created. This value is mutable.
@@ -226,6 +247,13 @@ export interface History<S extends State = State> {
      * The current location index in history state
      */
     readonly index: number;
+    /**
+     * The history length
+     */
+    readonly length: number;
+    /**
+     * The current realtimie location
+     */
     readonly realtimeLocation: Location<S>;
     /**
      * Returns a valid href for the given `to` value that may be used as
@@ -314,90 +342,8 @@ export interface History<S extends State = State> {
      */
     block(blocker: Blocker<S>): () => void;
 }
-/**
- * A browser history stores the current location in regular URLs in a web
- * browser environment. This is the standard for most web apps and provides the
- * cleanest URLs the browser's address bar.
- *
- * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#browserhistory
- */
-export interface BrowserHistory<S extends State = State> extends History<S> {
-}
-/**
- * A hash history stores the current location in the fragment identifier portion
- * of the URL in a web browser environment.
- *
- * This is ideal for apps that do not control the server for some reason
- * (because the fragment identifier is never sent to the server), including some
- * shared hosting environments that do not provide fine-grained controls over
- * which pages are served at which URLs.
- *
- * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#hashhistory
- */
-export interface HashHistory<S extends State = State> extends History<S> {
-    readonly hashType: HashType;
-}
-/**
- * A memory history stores locations in memory. This is useful in stateful
- * environments where there is no web browser, such as node tests or React
- * Native.
- *
- * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#memoryhistory
- */
-export interface MemoryHistory<S extends State = State> extends History<S> {
-    index: number;
-}
-export declare type BrowserHistoryOptions = {
-    window?: Window;
-    hashType?: HashType;
+export declare type HistoryState = {
+    usr: State;
+    key?: string;
+    idx: number;
 };
-/**
- * Browser history stores the location in regular URLs. This is the standard for
- * most web apps, but it requires some configuration on the server to ensure you
- * serve the same app at multiple URLs.
- *
- * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#createbrowserhistory
- */
-export declare function createBrowserHistory(options?: BrowserHistoryOptions): BrowserHistory;
-export declare type HashHistoryOptions = {
-    window?: Window;
-    hashType?: HashType;
-};
-/**
- * Hash history stores the location in window.location.hash. This makes it ideal
- * for situations where you don't want to send the location to the server for
- * some reason, either because you do cannot configure it or the URL space is
- * reserved for something else.
- *
- * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#createhashhistory
- */
-export declare function createHashHistory(options?: HashHistoryOptions): HashHistory;
-/**
- * A user-supplied object that describes a location. Used when providing
- * entries to `createMemoryHistory` via its `initialEntries` option.
- */
-export declare type InitialEntry = string | PartialLocation;
-export declare type MemoryHistoryOptions = {
-    initialEntries?: InitialEntry[];
-    initialIndex?: number;
-};
-/**
- * Memory history stores the current location in memory. It is designed for use
- * in stateful non-browser environments like tests and React Native.
- *
- * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#creatememoryhistory
- */
-export declare function createMemoryHistory(options?: MemoryHistoryOptions): MemoryHistory;
-export declare function getBaseHref(): string;
-/**
- * Creates a string URL path from the given pathname, search, and hash components.
- *
- * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#createpath
- */
-export declare function createPath({ pathname, search, hash }: PartialPath): string;
-/**
- * Parses a string URL path into its separate pathname, search, and hash components.
- *
- * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#parsepath
- */
-export declare function parsePath(path: string): PartialPath;

@@ -3,7 +3,7 @@ import { ParseQueryProps } from './types';
 declare function parseQuery(query: string, props?: ParseQueryProps): Partial<any>;
 declare function stringifyQuery(obj: Partial<any> | null | undefined, prefix?: string): string;
 export { parseQuery, stringifyQuery };
-declare const _default: {
+declare const config: {
     _parseQuery: typeof parseQuery;
     _stringifyQuery: typeof stringifyQuery;
     inheritProps: boolean;
@@ -13,4 +13,4 @@ declare const _default: {
     readonly stringifyQuery: any;
     createMergeStrategie(router: ReactViewRouter): (parent: any, child: any, vm: any) => any;
 };
-export default _default;
+export default config;

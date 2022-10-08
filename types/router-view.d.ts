@@ -1,19 +1,17 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import ReactViewRouter from './router';
-import { MatchedRoute, ConfigRoute, RouteBeforeGuardFn, RouteAfterGuardFn, ConfigRouteArray } from './types';
-declare type RouterViewUpdateRef = (vm: React.Component | null) => void;
-export interface RouterViewProps {
+import { MatchedRoute, ConfigRoute, ReactViewContainer, RouteBeforeGuardFn, RouteAfterGuardFn, ConfigRouteArray } from './types';
+export interface RouterViewProps extends React.HTMLAttributes<any> {
     name?: string;
     filter?: RouterViewFilter;
     fallback?: ReactViewFallback | React.Component;
     container?: ReactViewContainer;
     router?: ReactViewRouter;
     depth?: number;
-    _updateRef?: RouterViewUpdateRef;
     excludeProps: string[];
     beforeEach?: RouteBeforeGuardFn;
-    beforeResolve?: RouteAfterGuardFn;
     afterEach?: RouteAfterGuardFn;
+    _updateRef?: React.RefCallback<RouterView> | null;
     [key: string]: any;
 }
 export interface RouterViewState {
@@ -39,7 +37,6 @@ export declare type ReactViewFallback = (state: {
     resolving: boolean;
     depth: number;
 }) => React.ReactElement;
-export declare type ReactViewContainer = (result: React.ReactElement | null, route: ConfigRoute | MatchedRoute, props: RouterViewProps) => React.ReactElement;
 declare class RouterView<P extends RouterViewProps = RouterViewProps, S extends RouterViewState = RouterViewState, SS = any> extends React.Component<P, S, SS> {
     _isMounted: boolean;
     target: typeof RouterView;
@@ -49,24 +46,32 @@ declare class RouterView<P extends RouterViewProps = RouterViewProps, S extends 
     constructor(props: RouterViewProps);
     get name(): string;
     get currentRef(): any;
-    _updateRef(ref: React.Component): void;
+    _updateRef(ref: RouterView): void;
     _filterRoutes(routes: ConfigRoute[], state?: RouterViewState): ConfigRoute[];
     _getRouteMatch(state: RouterViewState, depth?: number): MatchedRoute | null;
     _refreshCurrentRoute(state?: S, newState?: S, callback?: () => void): MatchedRoute | null;
     _updateResolving(resolving: any): void;
     _resolveFallback(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | null;
-    isNull(route: any): boolean;
+    isNull(route: any): any;
     componentDidMount(): Promise<void>;
     componentWillUnmount(): void;
     shouldComponentUpdate(nextProps: RouterViewProps, nextState: RouterViewState): boolean;
+    static getDerivedStateFromProps(nextProps: RouterViewProps): null;
     push(...routes: ConfigRoute[]): S["routes"];
-    splice(idx: number, len: number, ...routes: ConfigRoute[]): S["routes"];
+    splice(idx: number, len: number, ...routes: ConfigRoute[]): ConfigRoute[];
     indexOf(route: string | ConfigRoute): number;
     remove(route: string | ConfigRoute): ConfigRoute | undefined;
-    getComponent(currentRoute: MatchedRoute | null, excludeProps?: Partial<any>): any;
-    renderCurrent(currentRoute: MatchedRoute | null): any;
-    render(): React.ReactElement<any, string | React.JSXElementConstructor<any>> | React.FunctionComponentElement<any> | null;
+    getComponentProps(): {
+        props: Omit<Readonly<P> & Readonly<{
+            children?: React.ReactNode;
+        }>, "children">;
+        children: (P["children"] & (boolean | React.ReactChild | React.ReactFragment | React.ReactPortal | null)) | undefined;
+    };
+    getComponent(currentRoute: MatchedRoute | null): React.ReactNode;
+    renderCurrent(currentRoute: MatchedRoute | null): React.ReactNode;
+    renderContainer(current: ReactNode | null, currentRoute: MatchedRoute | null): ReactNode | null;
+    render(): {} | null;
 }
-declare const RouterViewWrapper: React.ForwardRefExoticComponent<Pick<RouterViewProps, string | number> & React.RefAttributes<unknown>>;
+declare const RouterViewWrapper: React.ForwardRefExoticComponent<Pick<RouterViewProps, string | number> & React.RefAttributes<RouterView<RouterViewProps, RouterViewState, any>>>;
 export { RouterViewWrapper, RouterView as RouterViewComponent };
 export default RouterViewWrapper;

@@ -47,10 +47,11 @@ module.exports = function (options) {
   // const nativesDir = path.resolve(rootDir, project.natives.dir);
 
   // 插件定义
+  const ESLintPlugin = require('eslint-webpack-plugin');
   const RuntimeChunkPlugin = webpack.optimize.RuntimeChunkPlugin;
   const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
   const CopyWebpackPlugin = require('copy-webpack-plugin');
-  const CleanWebpackPlugin = require('clean-webpack-plugin');
+  const { CleanWebpackPlugin } = require('clean-webpack-plugin');
   const ProgressBarPlugin = require('progress-bar-webpack-plugin');
   const HtmlWebpackPlugin = require('html-webpack-plugin');
   const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -73,7 +74,7 @@ module.exports = function (options) {
 
   // html_webpack_plugins 定义
   const htmlPlugins = function () {
-    let entryHtml = glob.sync(srcDir + '/' + project.src.templates + '/*.ejs');
+    let entryHtml = glob.sync(srcDir + '/' + project.src.templates + '/*.html');
     let r = [];
     let entriesFiles = entries();
     for (let i = 0; i < entryHtml.length; i++) {
@@ -90,7 +91,7 @@ module.exports = function (options) {
       // 如果和入口js文件同名
       if (filename in entriesFiles) {
         // let fileext = filePath.substring(filePath.lastIndexOf('.') + 1);
-        conf.inject = false; // 'body';
+        conf.inject = 'body';
         conf.chunks = ['vendor', 'manifest', filename];
         conf.minify = options.dev ? {} : {
           removeComments: true,
@@ -119,13 +120,13 @@ module.exports = function (options) {
   if (!options.dev) plugins.push(new webpack.HashedModuleIdsPlugin());
   plugins.push(new LodashModuleReplacementPlugin());
   cssLoader = [
-    options.watch ? 'style-loader' : MiniCssExtractPlugin.loader,
+    { loader: options.watch ? 'style-loader' : MiniCssExtractPlugin.loader, options: {} },
     { loader: 'css-loader', options: require('./css.config')(options, project) },
   ];
   scssLoader = [].concat(cssLoader, [
     { loader: 'postcss-loader', options: { config: { path: path.resolve(buildDir, 'postcss.config.js') } } },
     { loader: 'resolve-url-loader', options: { sourceMap: options.dev } },
-    { loader: 'sass-loader', options: require('./sass.config')(options, project) }
+    { loader: 'fast-sass-loader', options: require('./sass.config')(options, project) }
   ]);
 
   plugins.push(new MiniCssExtractPlugin({
@@ -159,6 +160,15 @@ module.exports = function (options) {
   // plugins.push(new webpack.optimize.ModuleConcatenationPlugin());
   plugins.push(new webpack.ProvidePlugin(project.provide || {}));
 
+  plugins.push(new ESLintPlugin({
+    context: project.root,
+    emitWarning: options.watch,
+    extensions: ['js', 'jsx', 'ts', 'tsx'],
+    exclude: [
+      path.join(project.root, 'node_modules')
+    ]
+  }));
+
   // plugins.push(new webpack.SourceMapDevToolPlugin());
 
   if (options.watch && project.webserver.hot) {
@@ -166,7 +176,11 @@ module.exports = function (options) {
     plugins.push(new webpack.HotModuleReplacementPlugin());
   }
 
-  if (!options.watch && project.cleanDirs.length) plugins.push(new CleanWebpackPlugin(project.cleanDirs, { root: porjectDir, allowExternal: true }));
+  if (!options.watch && project.cleanDirs.length) plugins.push(
+    new CleanWebpackPlugin({
+      cleanOnceBeforeBuildPatterns: project.cleanDirs,
+    })
+  );
   if (fs.existsSync(libsDir)) plugins.push(new CopyWebpackPlugin([{ from: libsDir + '/**', to: distDir }], { context: porjectDir }));
   if (fs.existsSync(assetsDir)) plugins.push(new CopyWebpackPlugin([{ from: assetsDir + '/**', to: distDir }], { context: porjectDir }));
 
@@ -216,46 +230,49 @@ module.exports = function (options) {
       // noParse: /jquery|lodash/,
       rules: [
         {
-          test: /\.(js|jsx)$/,
-          loader: 'eslint-loader',
-          enforce: 'pre',
-          exclude: [/node_modules/],
-          options: require('./eslint.config')(options, project)
-        },
-        {
           test: /\.(jpe?g|png|gif|ico|webp)(\?.*)?$/,
           // exclude: /node_modules/,
           // 小于5KB的图片会自动转成dataUrl，
-          loader: [
+          use: [
             {
               loader: 'url-loader',
               options: require('./url.config')(options, project, project.src.images)
             },
             // { loader: 'image-webpack-loader', options: require('./image.config')(options, project) }
-          ]
+          ],
         },
         {
           test: /\.(woff|eot|ttf|svg|otf)\??.*$/,
           // exclude: /node_modules/,
-          loader: 'url-loader',
-          options: require('./url.config')(options, project, project.src.fonts)
+          use: [
+            {
+              loader: 'url-loader',
+              options: require('./url.config')(options, project, project.src.fonts)
+            }
+          ],
         },
-        { test: /\.ejs$/, loader: 'ejs-loader' },
-        { test: /\.css$/, loader: cssLoader, sideEffects: true },
-        { test: /\.scss$/, loader: scssLoader, sideEffects: true },
+        {
+          test: /\.ejs$/,
+          use: [
+            {
+              loader: 'ejs-loader',
+              options: {
+                variable: 'data',
+                interpolate: '\\{\\{(.+?)\\}\\}',
+                evaluate: '\\[\\[(.+?)\\]\\]'
+              }
+            }
+          ]
+        },
+        { test: /\.css$/, use: cssLoader, type: 'javascript/auto', dependency: { not: ['url'] } },
+        { test: /\.scss$/, use: scssLoader, type: 'javascript/auto', dependency: { not: ['url'] } },
       ]
     },
     externals: project.externals,
     resolve: {
-      symlinks: false,
-      enforceExtension: false,
-      enforceModuleExtension: false,
       extensions: ['.js', '.json', '.css', '.scss'],
       modules: [srcDir, nodeModPath],
       alias: project.src.pathAlias
-    },
-    resolveLoader: {
-      moduleExtensions: ['-loader']
     },
     optimization: {
       minimize: !options.dev,
@@ -275,8 +292,9 @@ module.exports = function (options) {
         new OptimizeCSSAssetsPlugin({ cssProcessorOptions: makeCssProcessorOptions(options) })
       ],
       splitChunks: {
+        chunks: 'all',
+        name: false,
         automaticNameDelimiter: '-',
-        name: true,
         minSize: (options.dev ? 50 : 20) * 1024,
         cacheGroups: {
           vendor: {

@@ -1,5 +1,3 @@
-
-
 import ReactViewRouter from './router';
 
 export * from './types';

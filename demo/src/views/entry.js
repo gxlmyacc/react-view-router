@@ -5,7 +5,7 @@ import App from 'component/app';
 
 import routes from './pages';
 
-module.exports = function (param) {
+const entry = function (param) {
   router.use({ routes });
 
   router.beforeEach((to, from, next) => {
@@ -13,7 +13,13 @@ module.exports = function (param) {
       console.log(
         '%croute changed',
         'background-color:#ccc;color:green;font-weight:bold;font-size:14px;',
-        to.url, to.query, to.meta, to.redirectedFrom
+        to.url,
+
+        to.query,
+
+        to.meta,
+
+        to.redirectedFrom
       );
       return next();
     }
@@ -21,3 +27,5 @@ module.exports = function (param) {
 
   ReactDOM.render(<App />, document.getElementById('root'));
 };
+
+export default entry;

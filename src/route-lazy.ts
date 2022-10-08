@@ -1,7 +1,8 @@
 import React from 'react';
-import { innumerable } from '.';
+import { innumerable } from './util';
 import { REACT_LAZY_TYPE } from './route-guard';
-import { LazyImportMethod, RouteLazyUpdater, MatchedRoute, ConfigRoute } from './types';
+import { LazyImportMethod, RouteLazyUpdater, MatchedRoute, ConfigRoute, ReactAllComponentType } from './types';
+import ReactViewRouter from './router';
 
 
 function isEsModule(value: any): value is EsModule {
@@ -10,11 +11,13 @@ function isEsModule(value: any): value is EsModule {
 
 export class RouteLazy<P = any> {
 
-  private _ctor: React.ComponentType | LazyImportMethod | Promise<React.ComponentType>;
+  private _ctor: ReactAllComponentType<P> | LazyImportMethod | Promise<ReactAllComponentType<P>>;
 
-  private _result: React.ComponentType | React.ForwardRefExoticComponent<P> | null;
+  private _result: ReactAllComponentType<P> | null;
 
   private resolved: boolean;
+
+  routeLazyInstance: boolean;
 
   $$typeof: Symbol | number = REACT_LAZY_TYPE;
 
@@ -23,12 +26,13 @@ export class RouteLazy<P = any> {
   updaters: RouteLazyUpdater[] = [];
 
   constructor(
-    ctor: React.ComponentType | LazyImportMethod<P> | Promise<React.ComponentType>,
+    ctor: ReactAllComponentType<P> | LazyImportMethod<P> | Promise<ReactAllComponentType<P>>,
     options: Partial<any> = {}
   ) {
     this._ctor = ctor;
     this._result = null;
 
+    this.routeLazyInstance = true;
     this.options = options;
     this.render = this.render.bind(this);
 
@@ -36,13 +40,14 @@ export class RouteLazy<P = any> {
     this.updaters = [];
   }
 
-  toResolve(route: ConfigRoute, key: string): Promise<React.ComponentType | null> {
+  toResolve(router: ReactViewRouter, route: ConfigRoute, key: string): Promise<ReactAllComponentType | null> {
     return new Promise(async (resolve, reject) => {
-      if (this.resolved) return resolve(this._result as any);
+      if (this.resolved) {
+        resolve(this._result as any);
+        return;
+      }
 
-      let _resolve = (v: React.ComponentType
-        | React.ForwardRefExoticComponent<P>
-        | EsModule<React.ComponentType | React.ForwardRefExoticComponent<P>>) => {
+      let _resolve = (v: ReactAllComponentType<P> | EsModule<ReactAllComponentType<P>>) => {
         v = isEsModule(v) ? v.default : v;
         this.updaters.forEach(updater => v = updater(v as any) as any || v);
         this._result = v;
@@ -50,16 +55,18 @@ export class RouteLazy<P = any> {
         resolve(v as any);
       };
       let component = (this._ctor as LazyImportMethod<P>).__lazyImportMethod
-        ? (this._ctor as LazyImportMethod<P>)(route, key, this.options)
-        : (this._ctor as React.ComponentType|Promise<React.ComponentType>);
+        ? (this._ctor as LazyImportMethod<P>)(route, key, router, this.options)
+        : (this._ctor as ReactAllComponentType<P>|Promise<ReactAllComponentType<P>>);
 
       try {
-        component = isPromise<React.ComponentType>(component) ? await component : (component as React.ComponentType);
+        component = isPromise<ReactAllComponentType<P>>(component) ? await component : (component as ReactAllComponentType<P>);
       } catch (ex) {
-        return reject(ex);
+        reject(ex);
+        return;
       }
       if (!component) {
-        return reject(new Error('component should not null!'));
+        reject(new Error('component should not null!'));
+        return;
       }
 
       if (component instanceof Promise) {
@@ -95,6 +102,9 @@ export function lazyImport<P = any>(importMethod: LazyImportMethod<P>, options: 
   return new RouteLazy<P>(importMethod, options || {});
 }
 
+export function isRouteLazy(value: any): value is RouteLazy  {
+  return value && value.routeLazyInstance;
+}
 
 export function isPromise<P = any>(value: any): value is Promise<P> {
   return value && value.then;

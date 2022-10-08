@@ -1,5 +1,4 @@
 import {
-  MemoryHistoryOptions,
   HashHistoryOptions,
   BrowserHistoryOptions,
 
@@ -9,6 +8,7 @@ import {
   getBaseHref,
   History,
   Location,
+  HistoryType,
 } from './history';
 import {
   innumerable,
@@ -16,6 +16,7 @@ import {
   once,
   getSessionStorage,
   setSessionStorage,
+  isFunction,
 } from './util';
 import {
   HistoryFix,
@@ -24,60 +25,47 @@ import {
   RouteHistoryLocation,
   RouteInterceptorItem,
   RouteInterceptorCallback,
+  History4,
+  History4Options,
+  ReactViewRouterMoreOptions
 } from './types';
-import ReactViewRouter, { isFunction } from '.';
+import ReactViewRouter from './router';
+import { REACT_VIEW_ROUTER_GLOBAL } from './global';
+import { parseQuery } from './config';
 
-export enum HistoryType {
-  // eslint-disable-next-line no-unused-vars
-  hash = 'hash',
-  // eslint-disable-next-line no-unused-vars
-  browser = 'browser',
-  // eslint-disable-next-line no-unused-vars
-  memory = 'memory'
-}
 
-const REACT_VIEW_ROUTER_KEY = '__REACT_VIEW_ROUTER_GLOBAL__';
-if (!window[REACT_VIEW_ROUTER_KEY as any]) {
-  innumerable(window, REACT_VIEW_ROUTER_KEY, { historys: {} });
-}
-const REACT_VIEW_ROUTER_GLOBAL: {
-  historys: {
-    hash?: HistoryFix,
-    browser?: HistoryFix,
-    memory?: HistoryFix,
-  }
-} = window[REACT_VIEW_ROUTER_KEY as any] as any;
-
-function eachInterceptor(
+function eachInterceptor<T = any>(
   interceptors: RouteInterceptorItem[],
   location: RouteHistoryLocation,
-  callback: (ok: boolean) => void,
+  callback: (ok: boolean, payload?: T|null) => void,
   index: number,
-  nexts: RouteInterceptorCallback[]
+  nexts: RouteInterceptorCallback[],
+  payload?: T|null
 ) {
   let item = interceptors[index];
-  if (!item) return callback(true);
+  if (!item) return callback(true, payload);
   if (isFunction(item)) item = { interceptor: item as any, router: null };
-  const cb = once(ok => {
+  const cb: RouteInterceptorCallback<any, T> = once((ok, payload) => {
+    item.payload = payload;
     if (!ok) return callback(ok);
     if (isFunction(ok)) nexts.push(ok);
-    eachInterceptor(interceptors, location, callback, index + 1, nexts);
+    eachInterceptor(interceptors, location, callback, index + 1, nexts, payload);
   });
   if (item.router && item.router.isRunning) item.interceptor(location, cb);
-  else cb(true);
+  else cb(true, payload);
 }
 
 function confirmInterceptors(
-  interceptors: HistoryFix | RouteInterceptorItem[],
-  location: string | RouteHistoryLocation,
-  callback: (ok: boolean) => void
+  interceptors: RouteInterceptorItem[],
+  location: RouteHistoryLocation,
+  callback: (ok: boolean, payload: RouteInterceptorItem[]) => void
 ) {
   if (isHistory(interceptors)) interceptors = interceptors.interceptors;
   const nexts: RouteInterceptorCallback[] = [];
   interceptors = [...interceptors];
-  return eachInterceptor(interceptors, location as RouteHistoryLocation, ok => {
+  return eachInterceptor(interceptors, location, ok => {
     nexts.forEach(next => next(ok));
-    callback(ok);
+    callback(ok, interceptors);
   }, 0, nexts);
 }
 
@@ -87,13 +75,59 @@ function createStackInfo(index: number, location: Location) {
     search: location.search,
     index,
     timestamp: Date.now(),
+    query: parseQuery(location.search)
   };
 }
+
+function createHistory4(history: HistoryFix, options: History4Options = {}) {
+  const history4 = {
+    isHistory4: true,
+    goBack: () => history.back(),
+    goForward: () => history.forward(),
+    listen: listener => history.listen(({ location, action }) => listener(location, action)),
+    block: prompt => history.block(({ location, action, callback }) => {
+      if (prompt != null) {
+        const result = typeof prompt === 'function' ? prompt(location, action) : prompt;
+
+        if (typeof result === 'string') {
+          if (typeof options.getUserConfirmation === 'function') {
+            options.getUserConfirmation(result, callback);
+          } else {
+            // if (process.env.NODE_ENV !== 'production') warn('A history needs a getUserConfirmation function in order to use a prompt message');
+            callback(true);
+          }
+        } else {
+          // Return false from a transition hook to cancel the transition.
+          callback(result !== false);
+        }
+      } else {
+        callback(true);
+      }
+    })
+  } as History4;
+  innumerable(history4, 'owner', history);
+
+  ['length', 'type', 'action', 'location', 'createHref', 'push', 'replace', 'go'].forEach(key => {
+    Object.defineProperty(history4, key, {
+      get: () => (history as any)[key],
+      enumerable: true,
+      configurable: true
+    });
+  });
+
+  return history4 as History4;
+}
+
+function isHistory4(history: any): history is History4 {
+  return history && history.isHistory4;
+}
+
 
 function createHistory(options: any, fn: () => HistoryFix, type: HistoryType) {
   const interceptors: RouteInterceptorItem[] = [];
   const history = fn();
 
+  history.createHistory4 = (options = {}) => createHistory4(history, options);
   history.isHistoryInstance = true;
   history.interceptors = interceptors;
   history.interceptorTransitionTo = function (interceptor: RouteInterceptor, router: ReactViewRouter) {
@@ -134,14 +168,16 @@ function createHistory(options: any, fn: () => HistoryFix, type: HistoryType) {
 
   const needSession = type !== HistoryType.memory;
   const SessionStacksKey = `_REACT_VIEW_ROUTER_${type.toUpperCase()}_STACKS_`;
-
+  const SessionStacksKeys = ['index', 'pathname', 'search', 'timestamp'];
   history.stacks = needSession
     ? getSessionStorage(SessionStacksKey, true) || []
     : [];
+  history.stacks.forEach(s => !s.query && (s.query = parseQuery(s.search)));
+
   const lastStackInfo: HistoryStackInfo = history.stacks[history.stacks.length - 1];
   if (!lastStackInfo || lastStackInfo.index !== history.index) {
     history.stacks.push(createStackInfo(history.index, history.location));
-    if (needSession) setSessionStorage(SessionStacksKey, history.stacks);
+    if (needSession) setSessionStorage(SessionStacksKey, history.stacks, SessionStacksKeys);
   }
   innumerable(history, '_unlisten', history.listen(state => {
     if (!state) return;
@@ -155,51 +191,86 @@ function createHistory(options: any, fn: () => HistoryFix, type: HistoryType) {
         history.stacks.splice(idx, history.stacks.length, createStackInfo(index, location));
       }
     }
-    if (needSession) setSessionStorage(SessionStacksKey, history.stacks);
+    if (needSession) setSessionStorage(SessionStacksKey, history.stacks, SessionStacksKeys);
     // console.log('[createHistory][listen]', location, action, index);
   }));
   innumerable(history, '_unblock', history.block(({ action, location, callback }) => {
-    location = { ...location };
+    location = { action, ...location } as RouteHistoryLocation;
     confirmInterceptors(interceptors, location as RouteHistoryLocation, callback);
   }));
   return history;
 }
 
-function createHashHistoryNew(options: HashHistoryOptions) {
+function createHashHistoryNew(options: HashHistoryOptions & {
+  history?: HistoryFix
+}, router: ReactViewRouter) {
+  if (options.history && options.history.type === HistoryType.hash) {
+    return isHistory4(options.history) ? options.history.owner : options.history;
+  }
   if (REACT_VIEW_ROUTER_GLOBAL.historys.hash) {
+    router.isHistoryCreater = REACT_VIEW_ROUTER_GLOBAL.historys.hash.extra === router;
     return REACT_VIEW_ROUTER_GLOBAL.historys.hash;
   }
   return REACT_VIEW_ROUTER_GLOBAL.historys.hash = createHistory(
     options,
-    () => createHashHistory(options) as any,
+    () => {
+      router.isHistoryCreater = true;
+      return createHashHistory({ ...options, extra: router }) as any;
+    },
     HistoryType.hash
   );
 }
 
 
-function createBrowserHistoryNew(options: BrowserHistoryOptions) {
+function createBrowserHistoryNew(options: BrowserHistoryOptions & {
+  history?: HistoryFix
+}, router: ReactViewRouter) {
+  if (options.history && options.history.type === HistoryType.browser) {
+    return isHistory4(options.history) ? options.history.owner : options.history;
+  }
   if (REACT_VIEW_ROUTER_GLOBAL.historys.browser) {
+    router.isHistoryCreater = REACT_VIEW_ROUTER_GLOBAL.historys.browser.extra === router;
     return REACT_VIEW_ROUTER_GLOBAL.historys.browser;
   }
   return REACT_VIEW_ROUTER_GLOBAL.historys.browser = createHistory(
     options,
-    () => createBrowserHistory(options) as any,
-    HistoryType.browser
+    () => {
+      router.isHistoryCreater = true;
+      return createBrowserHistory({ ...options, extra: router }) as any;
+    },
+    HistoryType.browser,
   );
 }
 
-function createMemoryHistoryNew(options: MemoryHistoryOptions) {
+function createMemoryHistoryNew(options: {
+  history?: HistoryFix,
+  pathname?: string,
+}, router: ReactViewRouter) {
+  if (options.history && options.history.type === HistoryType.memory) {
+    return isHistory4(options.history) ? options.history.owner : options.history;
+  }
   return createHistory(
     options,
-    () => createMemoryHistory(options) as any,
-    HistoryType.memory
+    () => {
+      router.isHistoryCreater = true;
+      return createMemoryHistory({
+        initialEntries: options.pathname ? [options.pathname] : ['/'],
+        extra: router
+      }) as any;
+    },
+    HistoryType.memory,
   );
 }
 
-function getPossibleRouterMode() {
-  if (REACT_VIEW_ROUTER_GLOBAL.historys.hash) return 'hash';
-  if (REACT_VIEW_ROUTER_GLOBAL.historys.browser) return 'browser';
-  return '';
+function getPossibleHistory(options?: ReactViewRouterMoreOptions) {
+  if (REACT_VIEW_ROUTER_GLOBAL.historys.hash) {
+    return REACT_VIEW_ROUTER_GLOBAL.historys.hash;
+  }
+  if (REACT_VIEW_ROUTER_GLOBAL.historys.browser) {
+    return REACT_VIEW_ROUTER_GLOBAL.historys.browser;
+  }
+  if (options && options.history) return options.history;
+  return null;
 }
 
 export {
@@ -207,10 +278,13 @@ export {
   createBrowserHistoryNew as createBrowserHistory,
   createMemoryHistoryNew as createMemoryHistory,
   getBaseHref,
-  getPossibleRouterMode,
+  getPossibleHistory,
   History,
   HistoryFix,
-  confirmInterceptors
+  confirmInterceptors,
+  REACT_VIEW_ROUTER_GLOBAL,
+
+  isHistory4
 };
 
 // export {

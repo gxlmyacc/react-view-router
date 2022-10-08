@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import {
   RouterViewComponent,
   renderRoute,
@@ -126,10 +126,8 @@ class RouterDrawer<
   renderCurrent(currentRoute: MatchedRoute | null) {
     const { routes } = this.state;
     if (!this.state.router || !currentRoute) return null;
-    // eslint-disable-next-line
-    const { _updateRef, router, container: oldContainer, prefixCls, position, zIndexStart, delay,
-      drawerClassName, children, touch, ...props
-    } = this.props;
+
+    const { children, props } = this.getComponentProps();
     const { openDrawer, prevRoute } = this.state;
     const { query, params } = this.state.router.currentRoute || {};
 
@@ -142,36 +140,46 @@ class RouterDrawer<
 
     let ret = renderRoute(
       !openDrawer ? prevRoute : currentRoute,
-      routes, props,
+      routes,
+      props,
       children,
       {
         name: this.name,
         query,
         params,
-        container: (comp: any) => {
-          if (oldContainer) comp = oldContainer(comp, currentRoute, props as any);
-          let needAnimation = this.state.router && !this.isNull(this.state.router.prevRoute);
-          if (!openDrawer) needAnimation = this.needAnimation && needAnimation;
-          this.needAnimation = Boolean(needAnimation);
-
-          comp = React.createElement(Drawer, {
-            ref: (el: Drawer | null) => this.drawer = el,
-            prefixCls,
-            className: drawerClassName,
-            touch: touch && needAnimation,
-            transitionName: (needAnimation && position) ? `rvr-slide-${position}` : '',
-            open: Boolean(openDrawer && comp),
-            zIndex: this.getZindex(),
-            onAnimateLeave: this._handleAnimationEnd,
-            onClose: this._handleClose,
-          } as any, comp);
-          return comp;
-        },
         ref: this._updateRef
       }
     );
 
     return ret;
+  }
+
+  renderContainer(current: ReactNode|null, currentRoute: MatchedRoute | null): ReactNode | null {
+    let result = super.renderContainer(current, currentRoute);
+    if (this.isNull(currentRoute)) return result;
+
+    const {
+      prefixCls, position, drawerClassName, touch
+    } = this.props;
+    const { openDrawer } = this.state;
+
+    let needAnimation = this.state.router && !this.isNull(this.state.router.prevRoute);
+    if (!openDrawer) needAnimation = this.needAnimation && needAnimation;
+    this.needAnimation = Boolean(needAnimation);
+
+    result = React.createElement(Drawer, {
+      ref: (el: Drawer | null) => this.drawer = el,
+      prefixCls,
+      className: drawerClassName,
+      touch: touch && needAnimation,
+      transitionName: (needAnimation && position) ? `rvr-slide-${position}` : '',
+      open: Boolean(openDrawer && result),
+      zIndex: this.getZindex(),
+      onAnimateLeave: this._handleAnimationEnd,
+      onClose: this._handleClose,
+    } as any, result);
+
+    return result;
   }
 
 }
@@ -181,6 +189,10 @@ RouterDrawer.defaultProps = {
   prefixCls: 'rvr-route-drawer',
   position: 'right',
   touch: true,
+  excludeProps: [
+    ...RouterViewComponent.defaultProps.excludeProps,
+    'drawerClassName', 'touch', 'prefixCls', 'position', 'zIndexStart', 'delay'
+  ]
 };
 
 export default React.forwardRef((props, ref) => React.createElement(RouterDrawer as any, {

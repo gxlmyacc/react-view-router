@@ -254,7 +254,7 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
 
     if (to && tag === 'a') remainProps.href = to.path;
 
-    return React.createElement(tag, Object.assign({}, remainProps, events), children);
+    return React.createElement(tag, { ...remainProps, ...events }, children);
   }
 
 }

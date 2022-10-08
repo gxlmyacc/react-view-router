@@ -2,8 +2,9 @@ import React from 'react';
 import ReactViewRouter from './router';
 import { RouterViewComponent } from './router-view';
 import { RouterContext, RouterViewContext } from './context';
+import { ReactAllComponentType } from './types';
 
-function withRouter(comp: React.ComponentType, { withRoute = false } = {}) {
+function withRouter(comp: ReactAllComponentType, { withRoute = false } = {}) {
   return React.forwardRef((props, ref: any) => (
     React.createElement<any>(RouterContext.Consumer, {}, (router: ReactViewRouter|null) => {
       const newProps: any = {
@@ -17,7 +18,7 @@ function withRouter(comp: React.ComponentType, { withRoute = false } = {}) {
   ));
 }
 
-function withRoute(comp: React.ComponentType, { withRouter = false } = {}) {
+function withRoute(comp: ReactAllComponentType, { withRouter = false } = {}) {
   return React.forwardRef((props, ref: any) => (
     React.createElement<any>(RouterContext.Consumer, {}, (router: ReactViewRouter|null) => {
       const newProps: any = {
@@ -31,7 +32,7 @@ function withRoute(comp: React.ComponentType, { withRouter = false } = {}) {
   ));
 }
 
-function withRouterView(comp: React.ComponentType) {
+function withRouterView(comp: ReactAllComponentType) {
   return React.forwardRef((props, ref: any) => (
     React.createElement<any>(RouterViewContext.Consumer, {}, (routerView: RouterViewComponent|null) => {
       const newProps: any = {
@@ -44,7 +45,7 @@ function withRouterView(comp: React.ComponentType) {
   ));
 }
 
-function withMatchedRouteIndex(comp: React.ComponentType, { withMatchedRoute = false } = {}) {
+function withMatchedRouteIndex(comp: ReactAllComponentType, { withMatchedRoute = false } = {}) {
   return React.forwardRef((props, ref: any) => (
     React.createElement<any>(RouterViewContext.Consumer, {}, (routerView: RouterViewComponent|null) => {
       const matchedRouteIndex = routerView ? routerView.state._routerDepth : -1;
@@ -59,7 +60,7 @@ function withMatchedRouteIndex(comp: React.ComponentType, { withMatchedRoute = f
   ));
 }
 
-function withMatchedRoute(comp: React.ComponentType, { withMatchedRouteIndex = false } = {}) {
+function withMatchedRoute(comp: ReactAllComponentType, { withMatchedRouteIndex = false } = {}) {
   return React.forwardRef((props, ref: any) => (
     React.createElement<any>(RouterViewContext.Consumer, {}, (routerView: RouterViewComponent|null) => {
       const newProps: any = {

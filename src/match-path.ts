@@ -78,7 +78,7 @@ function matchPath(pathname: string, options: (
 }
 
 export function computeRootMatch(pathname: string = '/'): matchPathResult {
-  return { path: '/', url: '/', params: {}, regx: compilePath('/', {}), isExact: pathname === '/' };
+  return { path: '/', url: '/', params: {}, regx: compilePath('/', {}), isExact: pathname === '/', isNull: true };
 }
 
 export default matchPath;

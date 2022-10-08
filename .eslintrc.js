@@ -1,8 +1,8 @@
 module.exports = {
   root: true,
   parserOptions: {
-    parser: 'babel-eslint',
-    ecmaVersion: 2020,
+    parser: '@babel/eslint-parser',
+    ecmaVersion: 2022,
     sourceType: 'module',
     ecmaFeatures: {
       jsx: true
@@ -30,11 +30,11 @@ module.exports = {
     },
   },
   globals: {
-    'define': true,
-    '__DEV__': true,
-    '__ENV__': true,
-    '__VERSION__': true,
-    '__WATCH__': true,
+    define: true,
+    __DEV__: true,
+    __ENV__: true,
+    __VERSION__: true,
+    __WATCH__: true,
   },
   rules: {
     'jsx-a11y/href-no-hash': 'off',
@@ -57,13 +57,13 @@ module.exports = {
     // 要求 return 语句要么总是指定返回的值，要么不指定
     'consistent-return': 0,
     // 强制所有控制语句使用一致的括号风格
-    'curly': [0, 'multi-or-nest'],
+    curly: [0, 'multi-or-nest'],
     // switch 语句强制 default 分支，也可添加 // no default 注释取消此次警告
     'default-case': 2,
     // 文件末尾强制换行
     'eol-last': 0,
     // 使用 === 替代 == allow-null允许null和undefined==
-    'eqeqeq': 0,
+    eqeqeq: 0,
     // 强制使用命名的 function 表达式
     'func-names': 0,
     // 要求 require() 出现在顶层模块作用域中
@@ -79,7 +79,7 @@ module.exports = {
     'import/prefer-default-export': 0,
     'import/extensions': 0,
     // 控制缩进
-    'indent': [2, 2, { SwitchCase: 1 }],
+    indent: [2, 2, { SwitchCase: 1 }],
     // 强制在 JSX 属性中一致地使用双引号或单引号
     'jsx-quotes': 2,
     // 强制使用一致的换行风格
@@ -151,18 +151,18 @@ module.exports = {
     // 禁用不必要的转义字符
     'no-useless-escape': 2,
     // 强制花括号内换行符的一致性
-    "object-curly-newline": [2, { multiline: true, consistent: true }],
+    'object-curly-newline': [2, { multiline: true, consistent: true }],
     // 强制将对象的属性放在不同的行上
-    "object-property-newline": [2, { allowAllPropertiesOnSameLine: true }],
+    'object-property-newline': [2, { allowAllPropertiesOnSameLine: true }],
     // 要求对象字面量中方法和属性使用简写语法
-    "object-shorthand": [2, 'always'],
+    'object-shorthand': [2, 'always'],
     // 强制函数中的变量要么一起声明要么分开声明
-    "one-var": [2, { initialized: 'never', uninitialized: 'never' }],
+    'one-var': [2, { initialized: 'never', uninitialized: 'never' }],
     // 在变量声明周围执行一致的换行符。这条规则忽略了for循环条件中的变量声明
-    "one-var-declaration-per-line": [2, 'initializations'],
+    'one-var-declaration-per-line': [2, 'initializations'],
     // 强制操作符使用一致的换行符
-    "operator-linebreak": [2, 'before', { overrides: { ':': 'before', '?': 'before' } }],
-    "padded-blocks": [2, { blocks: 'never', switches: 'never', classes: 'always' }],
+    'operator-linebreak': [2, 'before', { overrides: { ':': 'before', '?': 'before' } }],
+    'padded-blocks': [2, { blocks: 'never', switches: 'never', classes: 'always' }],
     // 要求使用箭头函数作为回调
     'prefer-arrow-callback': 0,
     // 要求使用 const 声明那些声明后不再被修改的变量
@@ -176,10 +176,10 @@ module.exports = {
     // 要求使用模板字面量而非字符串连接
     'prefer-template': 0,
     // 强制在parseInt()使用基数参数
-    'radix': [2, 'as-needed'],
+    radix: [2, 'as-needed'],
     // 强制分号之前和之后使用一致的空格
     // 'semi-spacing': [0, { after: true, before: false }],
     // 将立即调用函数表达式用括号括起来
     'wrap-iife': [2, 'inside']
   }
-}
+};
