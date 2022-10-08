@@ -56,4 +56,4 @@ declare class RouterLink extends React.Component<RouterLinkProps, RouterLinkStat
     }, string | React.JSXElementConstructor<any>> | null;
 }
 export { RouterLinkProps, RouterLink, guardEvent };
-export default function createRouterLink(router: ReactViewRouter): React.ForwardRefExoticComponent<Pick<RouterLinkProps, string | number> & React.RefAttributes<RouterLink>>;
+export default function createRouterLink(router: ReactViewRouter): React.ForwardRefExoticComponent<Pick<RouterLinkProps, keyof RouterLinkProps> & React.RefAttributes<RouterLink>>;

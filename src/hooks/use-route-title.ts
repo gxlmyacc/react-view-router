@@ -197,8 +197,8 @@ function useRouteTitle(
     parsed: boolean,
     mounted: boolean,
     timerIds: {
-      onNoMatchedPath: number,
-      dirty: number
+      onNoMatchedPath: number|NodeJS.Timeout,
+      dirty: number|NodeJS.Timeout
     }
   });
   $refs.filter = props.filter;
