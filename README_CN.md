@@ -1660,9 +1660,9 @@ class MainSider extends ReactVueLike.Component {
 export default MainSider;
 ```
 
-## 路由调整动效
+## 路由转场动效
 
-你可以通过`import RouterView from 'react-view-router/transition'`引用支持路由跳转动效的`RouterView`来为页面添加简单的转场动效。目前支持`fade|slide|carousel`三种动效：
+你可以通过`import RouterView from 'react-view-router/transition'`引用支持路由转场动效的`RouterView`来为页面添加简单的转场动效。目前支持`fade|slide|carousel`三种动效：
 
 ```js
 import React from 'react';
@@ -1749,7 +1749,10 @@ import React from 'react';
 import { useManualRouter, RouterView } from 'react-view-router';
 import router from '@/history';
 
-// 全局的路由拦截事件
+/** 
+ * 全局的路由拦截事件
+ * @type {import('react-view-router').RouteBeforeGuardFn} 
+ **/
 function beforeEach(to, from, next) {
   next();
 }
