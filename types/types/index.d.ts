@@ -71,8 +71,8 @@ export interface ReactViewRouterOptions extends ReactViewRouterMoreOptions {
     mode?: HistoryType | HistoryFix;
 }
 export declare type RouteNextResult = unknown | boolean | Error | Function | string | null | RouteLocation;
-export declare type RouteRedirectFn = (this: ConfigRoute, from?: Route, isInit?: boolean) => string;
-export declare type RouteIndexFn = (routes: ConfigRouteArray) => string;
+export declare type RouteRedirectFn = (this: ConfigRoute, from?: Route, isInit?: boolean) => string | RouteLocation;
+export declare type RouteIndexFn = (routes: ConfigRouteArray) => string | RouteLocation;
 export declare type RouteAbortFn = (this: ConfigRoute, from?: Route, isInit?: boolean) => boolean | string | Error;
 export declare type RouteNextFn = (ok?: RouteNextResult, ...args: any[]) => void;
 export interface RouteChildrenFn {
@@ -178,12 +178,12 @@ export declare type UserConfigRoutePropsNormalItem = {
     type: boolean | null | ((value: any) => any);
     default?: string | number | boolean | null | undefined | (() => any);
 };
-export declare type UserConfigRoutePropsNormal = Record<string, UserConfigRoutePropsNormalItem> | Record<string, Record<string, UserConfigRoutePropsNormalItem | boolean | Array<string>>>;
+export declare type UserConfigRoutePropsNormal = Record<string, UserConfigRoutePropsNormalItem> | Record<string, UserConfigRoutePropsNormalItem['type']> | Record<string, Record<string, UserConfigRoutePropsNormalItem | boolean | Array<string>>>;
 export declare type UserConfigRouteProps = boolean | UserConfigRoutePropsNormal | Array<string>;
 export interface UserConfigRoute extends CommonRoute {
     exact?: boolean;
     parent?: ConfigRoute;
-    children?: UserConfigRoute[] | ConfigRouteArray | RouteChildrenFn | NormalizedRouteChildrenFn;
+    children?: Array<UserConfigRoute | ConfigRoute> | RouteChildrenFn | NormalizedRouteChildrenFn;
     component?: ReactAllComponentType | RouteLazy | RouteComponentGuards;
     components?: {
         default?: any;
@@ -312,8 +312,8 @@ export interface Route {
 export interface ConfigRouteArray extends Array<ConfigRoute> {
     _normalized?: boolean;
 }
-export declare type onRouteChangeEvent = (route: Route, prevRoute: Route, router: ReactViewRouter, prevRes?: any) => void;
-export declare type onRouteMetaChangeEvent = (newVal: any, oldVal: any, route: ConfigRoute, router: ReactViewRouter, prevRes?: any) => void;
+export declare type onRouteChangeEvent = (route: Route, prevRoute: Route | null, router: ReactViewRouter, prevRes?: any) => void;
+export declare type onRouteMetaChangeEvent = (newVal: any, oldVal: any, route: ConfigRoute | MatchedRoute, router: ReactViewRouter, prevRes?: any) => void;
 export declare type onRouteingNextCallback = (ok: boolean, error: any | undefined, options: {
     location: RouteHistoryLocation | Route | null;
     isInit?: boolean;
@@ -324,20 +324,23 @@ export interface ReactViewRoutePlugin {
     install?(router: ReactViewRouter): void;
     uninstall?(router: ReactViewRouter): void;
     onStart?(router: ReactViewRouter, routerOptions: ReactViewRouterOptions, isInit: boolean | undefined, prevRes?: any): void;
-    onStop?(router: ReactViewRouter, isInit: boolean | undefined, prevRes?: any): void;
+    onStop?(router: ReactViewRouter, options: {
+        isInit?: boolean;
+        ignoreClearRoute?: boolean;
+    }, prevRes?: any): void;
     onRoutesChange?(routes: ConfigRouteArray, originRoutes: ConfigRouteArray, parent?: ConfigRoute | null, parentChildren?: ConfigRouteArray, prevRes?: any): void;
     onRouteGo?(to: RouteHistoryLocation, onComplete: (res: any, _to: Route | null) => void, onAbort: (res: any, _to: Route | null) => void, isReplace: boolean, prevRes?: any): void;
     onRouteEnterNext?(route: MatchedRoute, ci: React.Component, prevRes?: any): void;
     onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, prevRes?: any): void;
-    onRouteing?(next: boolean | onRouteingNextCallback | Route, prevRes?: any): void;
+    onRouteing?(next: (ok: boolean | onRouteingNextCallback | Route) => void, prevRes?: any): void;
     onRouteChange?: onRouteChangeEvent;
     onRouteMetaChange?: onRouteMetaChangeEvent;
-    onLazyResolveComponent?(nc: ReactAllComponentType, route: ConfigRoute, prevRes?: any): ReactAllComponentType | undefined;
+    onLazyResolveComponent?(nc: ReactAllComponentType | null, route: ConfigRoute, prevRes?: any): ReactAllComponentType | undefined;
     onWalkRoute?(route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray, prevRes?: any): void;
     onGetRouteComponentGurads?(interceptors: RouteGuardInterceptor[], route: ConfigRoute, component: any, componentKey: string, guardName: string, options: {
         router: ReactViewRouter;
-        onBindInstance?: OnBindInstance;
-        onGetLazyResovle?: OnGetLazyResovle;
+        onBindInstance?: OnBindInstance | null;
+        onGetLazyResovle?: OnGetLazyResovle | null;
         toResovle: RouteComponentToResolveFn;
         getGuard: (obj: any, guardName: string) => any;
         replaceInterceptors: (newInterceptors: any[], interceptors: RouteGuardInterceptor[], index: number) => any[];
@@ -345,8 +348,8 @@ export interface ReactViewRoutePlugin {
     onGetRouteInterceptor?(interceptor: any, interceptors: RouteGuardInterceptor[], index: number, prevRes?: any): any;
     onRouteAbort?(to: Route, reason?: any, prevRes?: any): void;
     onViewContainer?(container: ReactViewContainer | undefined, options: {
-        routes: MatchedRoute[];
-        route: MatchedRoute;
+        routes: MatchedRoute[] | ConfigRouteArray;
+        route: MatchedRoute | null;
         depth: number;
         router: ReactViewRouter;
         view: RouterViewComponent;

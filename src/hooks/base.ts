@@ -139,8 +139,10 @@ function useRouteMeta(
 
 function useRouteState<T extends Record<string, any> = any>(
   defaultRouter?: ReactViewRouter|null,
+  stateAction?: T | (() => T),
   options?: UseMatchedRouteOptions
-): [T, (newState: T) => void] {
+): [routeState: T, setRouteState: (newState: T) => void] {
+  const [defaultState] = useState(stateAction || {});
   const router = useRouter(defaultRouter);
   const route = useMatchedRoute(router || defaultRouter, options);
   const routeUrl = route && route.url;
@@ -151,7 +153,7 @@ function useRouteState<T extends Record<string, any> = any>(
     [router, routeUrl],
   );
 
-  return [(route ? route.state : {}) as T, setRouteState];
+  return [(route ? route.state : defaultState) as T, setRouteState];
 }
 
 function useRouteChanged(router: ReactViewRouter, onChange: onRouteChangeEvent, deps: string[] = []) {

@@ -372,7 +372,10 @@ class ReactViewRouter {
     // innumerable(this.initialRoute, 'location', location);
   }
 
-  _callEvent(event: string, ...args: any[]) {
+  _callEvent<E extends Exclude<keyof ReactViewRoutePlugin, 'name'|'install'|'uninstall'>>(
+    event: E,
+    ...args: Parameters<ReactViewRoutePlugin[E]>
+  ): ReturnType<ReactViewRoutePlugin[E]> {
     let plugin: ReactViewRoutePlugin | null = null;
     try {
       let ret: any;
@@ -485,7 +488,7 @@ class ReactViewRouter {
           onGetLazyResovle,
           toResovle,
           getGuard,
-          replaceInterceptors
+          replaceInterceptors: replaceInterceptors as any
         }
       );
       if (isResolved === true) return ret;
@@ -1040,7 +1043,7 @@ class ReactViewRouter {
         this.pendingRoute = null;
       }
 
-      let isContinue = onInit || this._callEvent('onRouteGo', to, doComplete, doAbort, replace);
+      let isContinue = onInit || this._callEvent('onRouteGo', to as any, doComplete, doAbort, Boolean(replace));
       if (isContinue === false) return;
 
       let history = this.history;
@@ -1511,7 +1514,7 @@ class ReactViewRouter {
     let callback = () => {
       called = true;
       currentRoute.isComplete = true;
-      this._callEvent('onRouteChange', this.currentRoute, this.prevRoute, this);
+      this._callEvent('onRouteChange', this.currentRoute as Route, this.prevRoute, this);
     };
 
     if (tm) {

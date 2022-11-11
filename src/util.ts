@@ -48,8 +48,8 @@ function normalizePath(path: string) {
   return paths.join('/').replace(/\/{2,}/, '/');
 }
 
-function normalizeRoute(
-  route: UserConfigRoute,
+function normalizeRoute<T extends UserConfigRoute>(
+  route: T,
   parent?: ConfigRoute | null,
   options: NormalizeRouteOptions = {}
 ): ConfigRoute {
@@ -118,14 +118,14 @@ function walkRoutes(
   });
 }
 
-function normalizeRoutes(
-  routes: UserConfigRoute[],
+function normalizeRoutes<T extends UserConfigRoute[]|ConfigRouteArray>(
+  routes: T,
   parent?: ConfigRoute | null,
   options: NormalizeRouteOptions = {}
 ) {
-  if (!routes) routes = [] as ConfigRouteArray;
-  if (!options.force && (routes as ConfigRouteArray)._normalized) return routes as ConfigRouteArray;
-  routes = routes.map((route: any) => route && normalizeRoute(route, parent, options)).filter(Boolean);
+  if (!routes) routes = [] as any;
+  if (!options.force && (routes as unknown as ConfigRouteArray)._normalized) return routes as ConfigRouteArray;
+  routes = routes.map((route: any) => route && normalizeRoute(route, parent, options)).filter(Boolean) as any;
   Object.defineProperty(routes, '_normalized', { value: true });
   return routes as ConfigRouteArray;
 }
@@ -304,7 +304,7 @@ function normalizeProps(props: UserConfigRouteProps) {
     Object.keys(props).forEach(key => {
       let val = props[key];
       res[key] = isPlainObject(val)
-        ? val.type !== undefined
+        ? (val as any).type !== undefined
           ? val as UserConfigRoutePropsNormalItem
           : normalizeProps(val as any) as Record<string, UserConfigRoutePropsNormalItem>
         : { type: val };
@@ -398,7 +398,7 @@ function resolveIndex(originIndex: string | RouteIndexFn, routes: ConfigRouteArr
   return r;
 }
 
-function resolveRedirect(to: string | RouteRedirectFn | undefined, route: MatchedRoute, options: {
+function resolveRedirect(to: string | RouteLocation | RouteRedirectFn | undefined, route: MatchedRoute, options: {
   isInit?: boolean,
   from?: Route,
   queryProps?: ParseQueryProps,
@@ -797,6 +797,15 @@ function reverseArray<T>(originArray: T[]) {
   return ret;
 }
 
+function createUserConfigRoute<T extends UserConfigRoute>(route: T): T {
+  return route;
+}
+
+function createUserConfigRoutes<T extends RouteChildrenFn | NormalizedRouteChildrenFn>(routes: T): T
+function createUserConfigRoutes<T extends Array<UserConfigRoute|ConfigRoute>>(routes: T): T {
+  return routes;
+}
+
 export {
   DEFAULT_STATE_NAME,
   MatchRegxList,
@@ -861,4 +870,7 @@ export {
 
   readRouteMeta,
   createLazyComponent,
+
+  createUserConfigRoute,
+  createUserConfigRoutes
 };

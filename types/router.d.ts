@@ -65,7 +65,7 @@ declare class ReactViewRouter {
     plugin(plugin: ReactViewRoutePlugin | onRouteChangeEvent): (() => void) | undefined;
     _walkRoutes(routes: ConfigRouteArray | RouteChildrenFn, parent?: ConfigRoute): void;
     _refreshInitialRoute(): void;
-    _callEvent(event: string, ...args: any[]): any;
+    _callEvent<E extends Exclude<keyof ReactViewRoutePlugin, 'name' | 'install' | 'uninstall'>>(event: E, ...args: Parameters<ReactViewRoutePlugin[E]>): ReturnType<ReactViewRoutePlugin[E]>;
     _isVuelikeComponent(comp: any): any;
     _getComponentGurads<T extends RouteGuardInterceptor>(mr: MatchedRoute, guardName: string, onBindInstance?: OnBindInstance<Exclude<T, 'LazyResolveFn'>>, onGetLazyResovle?: OnGetLazyResovle | null): T[];
     _getSameMatched(route: Route | null, compare?: Route): MatchedRoute[];

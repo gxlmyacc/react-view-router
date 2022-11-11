@@ -22,7 +22,7 @@ declare function useMatchedRoute(defaultRouter?: ReactViewRouter | null, options
 declare function useRouteMeta(metaKey: string | string[], defaultRouter?: ReactViewRouter | null, options?: {
     ignoreConfigRoute?: boolean;
 } & UseMatchedRouteOptions): [Partial<any> | null, (key: string, value: any) => void];
-declare function useRouteState<T extends Record<string, any> = any>(defaultRouter?: ReactViewRouter | null, options?: UseMatchedRouteOptions): [T, (newState: T) => void];
+declare function useRouteState<T extends Record<string, any> = any>(defaultRouter?: ReactViewRouter | null, stateAction?: T | (() => T), options?: UseMatchedRouteOptions): [routeState: T, setRouteState: (newState: T) => void];
 declare function useRouteChanged(router: ReactViewRouter, onChange: onRouteChangeEvent, deps?: string[]): void;
 declare function useRouteMetaChanged(router: ReactViewRouter, onChange: onRouteMetaChangeEvent, deps?: string[]): void;
 declare function createRouteGuardsRef(ref: Partial<any>): Partial<any>;
