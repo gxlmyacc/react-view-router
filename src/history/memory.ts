@@ -3,7 +3,7 @@ import {
   HistoryType, PartialLocation, HistoryOptions
 } from './types';
 import {
-  createEvents, createPath, createKey, parsePath, readOnly, clamp, allowTx
+  createEvents, createPath, createKey, parsePath, freeze, clamp, allowTx
 } from './utils';
 /**
  * A memory history stores locations in memory. This is useful in stateful
@@ -44,7 +44,7 @@ export function createMemoryHistory(
   let { initialEntries = ['/'], initialIndex } = options;
 
   let entries: Location[] = initialEntries.map(entry => {
-    let location = readOnly<Location>({
+    let location = freeze<Location>({
       pathname: '/',
       search: '',
       hash: '',
@@ -71,7 +71,7 @@ export function createMemoryHistory(
 
   function getNextLocation(to: To, state: State = null): Location {
     let { pathname = '/', search = '', hash = '' } = location;
-    return readOnly<Location>({
+    return freeze<Location>({
       pathname,
       search,
       hash,
@@ -202,6 +202,9 @@ export function createMemoryHistory(
     replace,
     replaceState(state: State) {
       return location.state = state;
+    },
+    refresh() {
+      return [index, location];
     },
     go,
     back() {

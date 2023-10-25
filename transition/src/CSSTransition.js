@@ -4,7 +4,7 @@ import addOneClass from 'dom-helpers/addClass';
 import removeOneClass from 'dom-helpers/removeClass';
 
 import { classNamesShape } from 'react-transition-group/esm/utils/PropTypes';
-import Transition from 'react-transition-group/Transition';
+import Transition from './Transition';
 
 const addClass = (node, classes) => node && classes && classes.split(' ').forEach(c => addOneClass(node, c));
 const removeClass = (node, classes) => node && classes && classes.split(' ').forEach(c => removeOneClass(node, c));

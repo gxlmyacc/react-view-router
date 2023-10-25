@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ENTERED, ENTERING, EXITING } from 'react-transition-group/Transition';
 import TransitionGroupContext from 'react-transition-group/TransitionGroupContext';
+import { ENTERED, ENTERING, EXITING } from './Transition';
 
 function areChildrenDifferent(oldChildren, newChildren) {
   if (oldChildren === newChildren) return false;
@@ -216,7 +216,7 @@ SwitchTransition.propTypes = {
    *
    * @type {'out-in'|'in-out'|'together'}
    */
-  mode: PropTypes.oneOf([modes.in, modes.out]),
+  mode: PropTypes.oneOf([modes.in, modes.out, modes.together]),
   /**
    * Any `Transition` or `CSSTransition` component.
    */

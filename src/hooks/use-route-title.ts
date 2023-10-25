@@ -1,19 +1,19 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactViewRouter from '../router';
-import { ConfigRoute, ConfigRouteArray, MatchedRoute, RouteChildrenFn } from '../types';
+import { ConfigRoute, MatchedRoute, RouteChildrenFn } from '../types';
 import {
   isCommonPage, getRouteMatched,
   useRouter, useMatchedRouteAndIndex, useRouteChanged, useRouteMetaChanged
 } from './base';
-import { isRouteChanged, hasOwnProp, getRouteChildren, readRouteMeta } from '../util';
+import { isRouteChanged, hasOwnProp, getRouteChildren, readRouteMeta, isString } from '../util';
 
 const DEFAULT_TITLE_NAME = 'title';
 
-type filterCallback = (r: ConfigRoute, routes: ConfigRouteArray, props: {
+type filterCallback = (r: ConfigRoute, routes: ConfigRoute[], props: {
   router: ReactViewRouter
   level: number,
   maxLevel: number,
-  refresh: () => void,
+  refresh?: () => void,
   title?: string,
   visible?: boolean
 }) => boolean;
@@ -38,7 +38,7 @@ function readRouteTitle(
   } = {}
 ) {
   const ret = { visible: false, title: '' };
-  let visible = readRouteMeta(route, 'visible', options);
+  const visible = readRouteMeta(route, 'visible', options);
   if (visible === false) return ret;
 
   const titleName = options.titleName || DEFAULT_TITLE_NAME;
@@ -48,23 +48,32 @@ function readRouteTitle(
   return ret;
 }
 
-function walkRouteTitle(
+function readRouteTitles(
   router: ReactViewRouter,
-  routes: ConfigRouteArray|RouteChildrenFn,
-  refresh: () => void,
-  filter?: filterCallback,
-  titleName: string = DEFAULT_TITLE_NAME,
-  maxLevel = 99,
-  level = 1,
+  routes: ConfigRoute[]|RouteChildrenFn,
+  options: {
+    refresh?: () => void,
+    filter?: filterCallback,
+    titleName?: string,
+    maxLevel?: number,
+    level?: number,
+  } = {}
 ) {
+  const {
+    refresh,
+    filter,
+    titleName,
+    maxLevel = 99,
+    level = 1,
+  } = options;
   routes = getRouteChildren(routes);
   return routes
     .filter(r => r.meta.title)
     .map(r => {
-      const { visible, title } = readRouteTitle(r, { titleName, router, level, maxLevel, refresh });
+      const { visible, title } = readRouteTitle(r, { router, titleName, level, maxLevel, refresh });
       if (visible === false) return;
 
-      if (filter && filter(r, routes as ConfigRouteArray, { title, visible, router, level, maxLevel, refresh }) === false) return;
+      if (filter && filter(r, routes as ConfigRoute[], { title, visible, router, level, maxLevel, refresh }) === false) return;
 
       const ret: RouteTitleInfo = {
         title,
@@ -74,7 +83,7 @@ function walkRouteTitle(
         level
       };
       if (level < maxLevel && Array.isArray(r.children) && r.children.length) {
-        const children = walkRouteTitle(router, r.children, refresh, filter, titleName, maxLevel, level + 1);
+        const children = readRouteTitles(router, r.children, { refresh, filter, titleName, maxLevel, level: level + 1 });
         if (children.length) ret.children = children as any;
       }
       return ret;
@@ -217,7 +226,7 @@ function useRouteTitle(
   const refreshTabs = useCallback(
     (routes = []) => {
       $refs.parsed = true;
-      return walkRouteTitle(router, routes, refreshTitles, $refs.filter, titleName, maxLevel);
+      return readRouteTitles(router, routes, { refresh: refreshTitles, filter: $refs.filter, titleName, maxLevel });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [router, $refs, maxLevel, refreshTitles, ...deps]
@@ -232,7 +241,7 @@ function useRouteTitle(
   );
 
   const matchedTitles = useMemo(() => {
-    let ret: RouteTitleInfo[] = [];
+    const ret: RouteTitleInfo[] = [];
     if (!matchedRoutes.length || !$refs.parsed) return ret;
     const currentRoute = matchedRoutes[matchedRoutes.length - 1];
     findTitleByMatchedPath(currentRoute.path, titles, ret);
@@ -249,12 +258,12 @@ function useRouteTitle(
         $refs.timerIds.onNoMatchedPath = 0;
         if (!$refs.mounted || !$refs.onNoMatchedPath) return;
         const fallback: Parameters<OnNoMatchedPathCallback>[2] = fallbackPath => {
-          const toPath = typeof fallbackPath === 'string' ? fallbackPath : fallbackPath.path;
+          const toPath = isString(fallbackPath) ? fallbackPath : fallbackPath.path;
           const currentRoute = router.pendingRoute || router.currentRoute || router.initialRoute;
           if (!toPath || (currentRoute && currentRoute.path === toPath)) return;
           return router.replace(fallbackPath);
         };
-        if (typeof $refs.onNoMatchedPath === 'string') {
+        if (isString($refs.onNoMatchedPath)) {
           if (!titles.length) return;
           return fallback($refs.onNoMatchedPath === ':first' ? titles[0].path : $refs.onNoMatchedPath);
         }
@@ -339,7 +348,7 @@ export {
   isTitleRoute,
   isCommonPage,
   readRouteTitle,
-  walkRouteTitle,
+  readRouteTitles,
 
   filterCallback,
   RouteTitleInfo,

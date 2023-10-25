@@ -122,8 +122,8 @@ const config = {
       });
       vm.$computed(vm, '$routeIndex', function () {
         if (this._routeIndex !== undefined) return this._routeIndex;
-        let routeView = router.getHostRouterView(this, (v: any) => !v._isVuelikeRoot);
-        return this._routeIndex = routeView ? routeView.state._routerDepth : -1;
+        const routeView = router.getHostRouterView(this, (v: any) => !v._isVuelikeRoot);
+        return this._routeIndex = routeView ? routeView.state.depth : -1;
       });
       vm.$computed(vm, '$matchedRoute', function () {
         return (this.$route && this.$route.matched[this.$routeIndex]) || null;

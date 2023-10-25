@@ -9,3 +9,5 @@ temp/
 demo/
 demo*/
 yarn-error.log
+.history
+eslint-config-airbnb-base

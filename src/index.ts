@@ -1,4 +1,4 @@
-import ReactViewRouter from './router';
+import ReactViewRouter, { version } from './router';
 
 export * from './types';
 
@@ -11,6 +11,11 @@ export {
 }  from './router-view';
 export * from './hocs';
 export * from './hooks';
+export {
+  KEEP_ALIVE_ANCHOR,
+  KEEP_ALIVE_REPLACOR,
+  KEEP_ALIVE_KEEP_COPIES
+} from './keep-alive';
 
 export { default as createRouterLink, RouterLink, guardEvent, RouterLinkProps } from './router-link';
 export { default as config,  parseQuery, stringifyQuery } from './config';
@@ -20,9 +25,6 @@ export { lazyImport } from './route-lazy';
 
 export * from './history';
 export * from './util';
-
-// eslint-disable-next-line no-undef
-const version = typeof __packageversion__ === 'undefined' ? undefined : __packageversion__;
 
 export {
   version

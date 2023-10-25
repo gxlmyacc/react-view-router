@@ -1,11 +1,12 @@
 import { useContext, useState, useEffect, useCallback, useImperativeHandle, Ref, DependencyList } from 'react';
 import ReactViewRouter from '../router';
 import { RouterContext, RouterViewContext } from '../context';
+import { RouterViewEvents, _checkActivate, _checkDeactivate } from '../router-view';
 import {
   RouteGuardsInfo, Route,
   RouteGuardsInfoHooks, onRouteChangeEvent, onRouteMetaChangeEvent, ReactViewRoutePlugin, MatchedRoute
 } from '../types';
-import { innumerable, isFunction, isPlainObject, readRouteMeta } from '../util';
+import { innumerable, isFunction, isPlainObject, isNumber, readRouteMeta, isEmptyRouteState } from '../util';
 
 function isCommonPage(matched: MatchedRoute[], commonPageName?: string) {
   return Boolean(commonPageName && matched.some(r => readRouteMeta(r.config, commonPageName)));
@@ -49,7 +50,7 @@ function useRoute(
       if (anotherWatch && await anotherWatch(route, prevRoute, router) === false) return;
       if (isFunction(options.watch) && await options.watch(route, prevRoute, router) === false) return;
 
-      if (options.delay) setTimeout(() => setRoute(route), typeof options.delay === 'number' ? options.delay : 0);
+      if (options.delay) setTimeout(() => setRoute(route), isNumber(options.delay) ? options.delay : 0);
       else setRoute(route);
     }, [options, anotherWatch]);
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -64,7 +65,7 @@ function useRouterView() {
 
 function useMatchedRouteIndex(matchedOffset: number = 0) {
   const view = useRouterView();
-  const index = view ? view.state._routerDepth : 0;
+  const index = view ? view.state.depth : 0;
   return Math.max(0, index + matchedOffset);
 }
 
@@ -82,7 +83,7 @@ function useMatchedRouteAndIndex(
   const routeIndex = useMatchedRouteIndex(matchedOffset);
   const matchRouteWatch = useCallback((route, prevRoute) => route.matched[routeIndex] !== prevRoute.matched[routeIndex], [routeIndex]);
   const route = useRoute(defaultRouter, options, matchRouteWatch);
-  let matched = getRouteMatched(router, route, options.commonPageName);
+  const matched = getRouteMatched(router, route, options.commonPageName);
   const matchedRoute = (matched && matched[routeIndex]) || null;
   return [matchedRoute, routeIndex];
 }
@@ -126,7 +127,7 @@ function useRouteMeta(
         return p;
       }, {});
     }
-    let changed = route && router && router.updateRouteMeta(route, newValue, { ignoreConfigRoute: options?.ignoreConfigRoute });
+    const changed = route && router && router.updateRouteMeta(route, newValue, { ignoreConfigRoute: options?.ignoreConfigRoute });
     if (!changed) return;
     _setValue({ ...value, ...newValue });
   }, [meta, keyIsArray, route, router, value, metaKey, options?.ignoreConfigRoute]);
@@ -153,7 +154,10 @@ function useRouteState<T extends Record<string, any> = any>(
     [router, routeUrl],
   );
 
-  return [(route ? route.state : defaultState) as T, setRouteState];
+  let state = route && route.state;
+  if (isEmptyRouteState(state) && defaultState) state = defaultState;
+
+  return [state as T, setRouteState];
 }
 
 function useRouteChanged(router: ReactViewRouter, onChange: onRouteChangeEvent, deps: string[] = []) {
@@ -208,6 +212,44 @@ function useRouteGuardsRef<T extends RouteGuardsInfo>(
   );
 }
 
+function useRouterViewEvent<T extends keyof RouterViewEvents>(
+  name: T,
+  onEvent: RouterViewEvents[T] extends Array<infer U> ? U : any,
+  unshift?: boolean
+) {
+  const view = useRouterView();
+  const [$refs] = useState({} as any);
+  $refs.onEvent = onEvent;
+  $refs.unshift = unshift;
+  useEffect(() => {
+    if (!view) return;
+    const fn = (...args: any[]) => $refs.onEvent(...args);
+    view._events[name][$refs.unshift ? 'unshift' : 'push'](fn);
+    return () => {
+      const idx = view._events[name].indexOf(fn);
+      if (~idx) view._events[name].splice(idx, 1);
+    };
+  }, [$refs, view, name]);
+}
+
+function useViewActivate(onEvent: RouterViewEvents['activate'] extends Array<infer U> ? U : never) {
+  const router = useRouter();
+  const current = useMatchedRoute();
+  useRouterViewEvent('activate', event => {
+    if (!onEvent || !_checkActivate(router, current, event)) return;
+    onEvent(event);
+  });
+}
+
+function useViewDeactivate(onEvent: RouterViewEvents['deactivate'] extends Array<infer U> ? U : never) {
+  const router = useRouter();
+  const current = useMatchedRoute();
+  useRouterViewEvent('deactivate', event => {
+    if (!onEvent || !_checkDeactivate(router, current, event)) return;
+    onEvent(event);
+  }, true);
+}
+
 export {
   isCommonPage,
   getRouteMatched,
@@ -223,6 +265,9 @@ export {
   useMatchedRoute,
   useMatchedRouteAndIndex,
   useRouteGuardsRef,
+  useRouterViewEvent,
+  useViewActivate,
+  useViewDeactivate,
 
   createRouteGuardsRef
 };

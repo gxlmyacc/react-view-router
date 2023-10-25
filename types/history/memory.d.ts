@@ -14,7 +14,7 @@ export interface MemoryHistory<S extends State = State> extends History<S> {
  * A user-supplied object that describes a location. Used when providing
  * entries to `createMemoryHistory` via its `initialEntries` option.
  */
-export declare type InitialEntry = string | PartialLocation;
+export type InitialEntry = string | PartialLocation;
 export interface MemoryHistoryOptions extends HistoryOptions {
     initialEntries?: InitialEntry[];
     initialIndex?: number;

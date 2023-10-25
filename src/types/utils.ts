@@ -1,3 +1,5 @@
+import type { RefAttributes } from 'react';
+
 type Contra<T> =
   T extends any
     ? (arg: T) => void
@@ -14,7 +16,13 @@ type Union2Tuple<T> =
         : [...Union2Tuple<Exclude<T, U>>, U]
     : never;
 
+type ForwardRefObject<C> = C extends React.ForwardRefExoticComponent<infer P & RefAttributes<infer T>>
+  ? T
+  : any;
+
+
 export {
   PickOne,
   Union2Tuple,
+  ForwardRefObject,
 };

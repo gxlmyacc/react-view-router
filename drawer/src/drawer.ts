@@ -2,12 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Animate from 'rc-animate';
 import { Swipeable } from 'react-swipeable';
-
-const CAN_USE_DOM = !!(
-  typeof window !== 'undefined'
-  && window.document
-  && window.document.createElement
-);
+import { CAN_USE_DOM } from '../..';
 
 type DrawerProps = {
   touchThreshold: number

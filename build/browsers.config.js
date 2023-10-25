@@ -1,3 +1,3 @@
 module.exports = function (options) {
-  return ['Chrome >= 31', 'ie > 8'];
+  return ['Chrome >= 49', 'firefox > 52'];
 };

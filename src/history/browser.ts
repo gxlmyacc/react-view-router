@@ -35,18 +35,18 @@ export function createBrowserHistory(
   options: BrowserHistoryOptions = {}
 ): BrowserHistory {
   const {
-    window = document.defaultView!,
+    window: _window = global.document?.defaultView!,
   } = options;
   const {
-    hashType = getPossibleHashType(window)
+    hashType = getPossibleHashType(_window)
   } = options;
 
   const type = HistoryType.browser;
 
   const history = createHistory({
-    window,
+    window: _window,
     type,
-    getLocationPath: () => window.location,
+    getLocationPath: () => _window.location,
     createHref: (to: To) => createBrowserHref(to, hashType),
     extra: options.extra,
   }) as BrowserHistory;

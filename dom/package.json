@@ -1,0 +1,15 @@
+{
+  "name": "react-view-router-dom",
+  "version": "1.0.0",
+  "main": "esm/index.js",
+  "module": "esm/index.js",
+  "typings": "types/index.d.ts",
+  "files": [
+    "es",
+    "esm",
+    "src",
+    "types"
+  ],
+  "dependencies": {
+  }
+}

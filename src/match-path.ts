@@ -41,7 +41,8 @@ function matchPath(pathname: string, options: (
     options = { path: options as any } as TokensToRegexpOptions;
   }
 
-  let { path = '', subpath, exact = false, strict = false, sensitive = false } = options;
+  const { subpath, exact = false, strict = false, sensitive = false } = options;
+  let { path = '' } = options;
   if (subpath === '*') path = path.replace(/\*$/, ':fallback([^\\/]*)');
 
   const paths = ([] as string[]).concat(path || []);

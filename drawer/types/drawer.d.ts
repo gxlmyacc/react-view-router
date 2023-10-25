@@ -1,10 +1,10 @@
 import React from 'react';
-declare type DrawerProps = {
+type DrawerProps = {
     touchThreshold: number;
 } & {
     [key: string]: any;
 };
-declare type DrawerState = {};
+type DrawerState = {};
 declare class Drawer extends React.Component<DrawerProps, DrawerState> {
     closed: boolean;
     isTouching: boolean | null;

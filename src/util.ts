@@ -4,11 +4,11 @@ import { RouteLazy, isPromise, isRouteLazy } from './route-lazy';
 import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
 import {
-  ConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route,
+  NormalizedConfigRouteArray, RouteIndexFn, ConfigRoute, MatchedRoute, RouteHistoryLocation, Route,
   RouteAfterGuardFn, RouteGuardInterceptor, LazyResolveFn, RouteRedirectFn, RouteAbortFn, RouteLocation,
   NormalizeRouteOptions, RouteGuardsInfoHooks, UserConfigRoute, RouteBranchArray, ReactAllComponentType,
   RouteChildrenFn, NormalizedRouteChildrenFn, ParseQueryProps, RouteMetaFunction,
-  UserConfigRouteProps, UserConfigRoutePropsNormal, UserConfigRoutePropsNormalItem
+  UserConfigRouteProps, UserConfigRoutePropsNormal, UserConfigRoutePropsNormalMap, UserConfigRoutePropsNormalItem
 } from './types';
 import { RouterViewComponent as RouterView, RouterViewWrapper  } from './router-view';
 import ReactViewRouter from './router';
@@ -18,8 +18,25 @@ import { HistoryType, Action, readonly } from './history';
 const DEFAULT_STATE_NAME = '[root]';
 
 function nextTick(cb: () => void, ctx?: object) {
-  if (!cb) return;
-  return new Promise<any>(resolve => { resolve(null); }).then(() => (ctx ? cb.call(ctx) : cb()));
+  // @ts-ignore
+  // eslint-disable-next-line no-promise-executor-return
+  return cb && new Promise<any>(r => r()).then(() => (ctx ? cb.call(ctx) : cb()));
+}
+
+function ignoreCatch<
+  T extends(
+    (...args: any) => any
+  )
+>(
+  fn: T,
+  onCatch?: (ex: any) => void
+) {
+  return function (...args: Parameters<T>): void|ReturnType<T> {
+    try {
+      // eslint-disable-next-line prefer-spread
+      return (fn as any).apply(this, args);
+    } catch (ex) { onCatch ? onCatch(ex) : warn(ex); }
+  };
 }
 
 const _hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -38,6 +55,100 @@ function innumerable<T extends object>(
   return obj;
 }
 
+function concatConfigRoutePath(routePath?: string|null, parentPath?: string|null) {
+  if (routePath == null || routePath === '/') routePath = '';
+  else if (routePath[0] !== '/') routePath = '/' + routePath;
+  if (parentPath == null || parentPath === '/') parentPath = '';
+  return (parentPath + routePath) || '/';
+}
+
+function getRoutePath(route?: ConfigRoute|UserConfigRoute|null) {
+  if (!route || !route.path) return '/';
+  return route.path;
+}
+
+function normalizeRoute(
+  route: UserConfigRoute|ConfigRoute,
+  parent?: ConfigRoute | null,
+  options: NormalizeRouteOptions = {}
+): ConfigRoute {
+  if (route._normalized) route = route._normalized;
+  const subpath = getRoutePath(route);
+  const path = concatConfigRoutePath(subpath, parent && parent.path);
+  const r: ConfigRoute = ({
+    path,
+    subpath,
+    depth: parent ? (parent.depth + 1) : 0,
+    components: {},
+  }) as any;
+  if (parent) innumerable(r, 'parent', parent);
+  if (isFunction(route.children)) {
+    r.children = isRouteChildrenNormalized(route.children)
+      ? route.children
+      : normalizeRouteChildrenFn(route.children);
+  } else {
+    innumerable(r, 'children', normalizeRoutes(route.children || [], r, options));
+  }
+  r.exact = route.exact !== undefined ? (route.exact || false) : Boolean(route.redirect || route.index);
+  r.components = { ...route.components, default: route.component };
+  Object.keys(r.components).forEach(key => {
+    const comp = r.components[key];
+    if (comp instanceof RouteLazy) {
+      (comp as RouteLazy).updaters.push(c => {
+        if (c && c.__children) {
+          let children = c.__children || [];
+          if (isFunction(children)) children = (children as ((r: any) => any[]))(r) || [];
+          innumerable(r, 'children', normalizeRoutes(children, r, options));
+          // r.exact = !(r as ConfigRoute).children.length;
+        }
+        return r.components[key] = c;
+      });
+    }
+  });
+  const meta = route.meta || {};
+  readonly(r, 'meta', () => meta);
+  if (route.props) innumerable(r, 'props', normalizeProps(route.props));
+  if (route.paramsProps) innumerable(r, 'paramsProps', normalizeProps(route.paramsProps));
+  if (route.queryProps) innumerable(r, 'queryProps', normalizeProps(route.queryProps));
+  innumerable(r, '_pending', { completeCallbacks: {} });
+  innumerable(r, '_normalized', route);
+
+  copyOwnProperties(r, route);
+  return r;
+}
+
+function normalizeRoutes(
+  routes: UserConfigRoute[]|NormalizedConfigRouteArray|ConfigRoute[]|null|undefined,
+  parent?: ConfigRoute | null,
+  options: NormalizeRouteOptions = {}
+) {
+  const _normalized = getRoutePath(parent);
+  if (!options.force && (isNormalizedConfigRouteArray(routes) && routes._normalized === _normalized)) {
+    return routes;
+  }
+  if (routes) {
+    routes = routes.map((route: any) => route && normalizeRoute(route, parent, options)).filter(Boolean) as any;
+  } else {
+    routes = [] as any;
+  }
+  innumerable(routes as any, '_normalized', _normalized);
+  return routes as NormalizedConfigRouteArray;
+}
+
+function walkRoutes(
+  routes: ConfigRoute[]|RouteChildrenFn,
+  walkFn: (route: ConfigRoute, routeIndex: number, routes: ConfigRoute[]) => boolean|void,
+  parent?: ConfigRoute
+): boolean {
+  if (isFunction(routes)) routes = normalizeRoutes(routes(parent), parent);
+  return routes.some((route, routeIndex) => {
+    if (walkFn(route, routeIndex, routes as ConfigRoute[])) return true;
+    if (!route.children || !Array.isArray(route.children)) return;
+    return walkRoutes(route.children, walkFn, route);
+  });
+}
+
+
 function normalizePath(path: string) {
   const paths = path.split('/');
   if (paths.length > 2 && !paths[paths.length - 1]) paths.splice(paths.length - 1, 1);
@@ -45,89 +156,7 @@ function normalizePath(path: string) {
     if (paths[i + 1] === '..') paths.splice(i, 2);
     else if (paths[i] === '.') paths.splice(i, 1);
   }
-  return paths.join('/').replace(/\/{2,}/, '/');
-}
-
-function normalizeRoute<T extends UserConfigRoute>(
-  route: T,
-  parent?: ConfigRoute | null,
-  options: NormalizeRouteOptions = {}
-): ConfigRoute {
-  let routePath = route.path || '/';
-  let path = normalizePath(parent ? `${parent.path || '/'}${routePath === '/' ? '' : '/'}${
-    routePath.replace(/^(\/)/, '')
-  }` : routePath);
-  let r: ConfigRoute = ({
-    ...route,
-    subpath: routePath,
-    path: parent
-      ? path
-      : path[0] === '/'
-        ? path
-        : `/${path}`,
-    depth: parent ? (parent.depth + 1) : 0
-  }) as any;
-  if (parent) innumerable(r, 'parent', parent);
-  if (!r.children) r.children = [];
-  if (isFunction(r.children)) {
-    if (!isRouteChildrenNormalized(r.children)) {
-      r.children = normalizeRouteChildrenFn(r.children);
-    }
-  } else {
-    innumerable(r, 'children', normalizeRoutes(r.children, r as ConfigRoute, options));
-  }
-  r.exact = r.exact !== undefined ? (r.exact || false) : Boolean(r.redirect || r.index);
-  if (!r.components) r.components = {};
-  if (r.component) {
-    r.components.default = r.component;
-    delete r.component;
-  }
-  Object.keys(r.components).forEach(key => {
-    let comp = (r as ConfigRoute).components[key];
-    if (comp instanceof RouteLazy) {
-      (comp as RouteLazy).updaters.push(c => {
-        if (c && c.__children) {
-          let children = c.__children || [];
-          if (isFunction(children)) children = (children as ((r: any) => any[]))(r) || [];
-          innumerable(r, 'children', normalizeRoutes(children as ConfigRouteArray, r as ConfigRoute));
-          // r.exact = !(r as ConfigRoute).children.length;
-        }
-        return (r as ConfigRoute).components[key] = c;
-      });
-    }
-  });
-  const meta = r.meta || {};
-  readonly(r, 'meta', () => meta);
-  if (r.props) innumerable(r, 'props', normalizeProps(r.props));
-  if (r.paramsProps) innumerable(r, 'paramsProps', normalizeProps(r.paramsProps));
-  if (r.queryProps) innumerable(r, 'queryProps', normalizeProps(r.queryProps));
-  innumerable(r, '_pending', { completeCallbacks: {} });
-  return r as ConfigRoute;
-}
-
-function walkRoutes(
-  routes: ConfigRouteArray|RouteChildrenFn,
-  walkFn: (route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray) => boolean|void,
-  parent?: ConfigRoute
-): boolean {
-  if (isFunction(routes)) routes = normalizeRoutes(routes(parent));
-  return routes.some((route, routeIndex) => {
-    if (walkFn(route, routeIndex, routes as ConfigRouteArray)) return true;
-    if (!route.children || !Array.isArray(route.children)) return;
-    return walkRoutes(route.children, walkFn, route);
-  });
-}
-
-function normalizeRoutes<T extends UserConfigRoute[]|ConfigRouteArray>(
-  routes: T,
-  parent?: ConfigRoute | null,
-  options: NormalizeRouteOptions = {}
-) {
-  if (!routes) routes = [] as any;
-  if (!options.force && (routes as unknown as ConfigRouteArray)._normalized) return routes as ConfigRouteArray;
-  routes = routes.map((route: any) => route && normalizeRoute(route, parent, options)).filter(Boolean) as any;
-  Object.defineProperty(routes, '_normalized', { value: true });
-  return routes as ConfigRouteArray;
+  return paths.join('/').replace(/\/{2,}/g, '/');
 }
 
 function normalizeRoutePath(
@@ -151,7 +180,7 @@ function normalizeRoutePath(
 
 
 function matchRoutes(
-  routes: ConfigRouteArray | RouteChildrenFn,
+  routes: ConfigRoute[] | RouteChildrenFn,
   to: RouteHistoryLocation | Route | string,
   parent?: ConfigRoute,
   options: {
@@ -176,7 +205,7 @@ function matchRoutes(
         : computeRootMatch((to as RouteHistoryLocation).path); // use default "root" match
 
     if (match && route.index) {
-      route = resolveIndex(route.index, routes as ConfigRouteArray) as ConfigRoute;
+      route = resolveIndex(route.index, routes as ConfigRoute[]) as ConfigRoute;
       if (!route) return;
       (to as RouteHistoryLocation).pathname = (to as RouteHistoryLocation).path = route.path;
       match = matchPath(route.path, route);
@@ -203,14 +232,7 @@ function matchRoutes(
 
 function normalizeLocation(
   to: any,
-  {
-    route,
-    append = false,
-    basename = '',
-    mode = '',
-    resolvePathCb,
-    queryProps
-  }: {
+  options: {
     route?: Route|MatchedRoute|ConfigRoute|RouteHistoryLocation|RouteLocation|null,
     append?: boolean,
     basename?: string,
@@ -219,10 +241,18 @@ function normalizeLocation(
     queryProps?: ParseQueryProps
   } = {}
 ): RouteHistoryLocation | null {
+  const {
+    route,
+    append = false,
+    basename = '',
+    mode = '',
+    resolvePathCb,
+    queryProps
+  } = options;
   if (!to || (isPlainObject(to) && !to.path && !to.pathname)) return null;
   if (to._routeNormalized) return to;
-  if (typeof to === 'string') {
-    const searchs = to.match(/\?[^#]+/g) || [];
+  if (isString(to)) {
+    const searchs = to.match(/\?[^#]+/g) || ([] as string[]);
     const pathname = searchs.reduce((p, v) => p.replace(v, ''), to);
     const search = searchs.sort().reduce((p, v, i) => {
       if (!i) return v;
@@ -236,14 +266,12 @@ function normalizeLocation(
 
   let isAbsolute = isAbsoluteUrl(to.pathname);
   if (isAbsolute && mode !== HistoryType.browser) {
-    let hash = getCurrentPageHash(to.pathname);
+    const hash = getCurrentPageHash(to.pathname);
     if (hash) {
       to.pathname = hash;
       isAbsolute = false;
     }
   }
-
-  if (to.basename == null && basename != null) to.basename = to.absolute ? '' : basename;
 
   if (!isAbsolute) {
     let path = to.pathname || to.path;
@@ -252,10 +280,13 @@ function normalizeLocation(
       path,
       route,
       to.append || append,
-      to.absolute ? '' : basename
+      (to.absolute || to.basename) ? '' : basename
     ) || '/';
     to.pathname = to.path = path;
   }
+
+  if (to.basename == null && basename != null) to.basename = to.absolute ? '' : basename;
+
   Object.defineProperty(to, 'search', {
     enumerable: true,
     configurable: true,
@@ -271,7 +302,7 @@ function normalizeLocation(
     }
   });
   if (!to.query) to.query = {};
-  innumerable(to, '_normalized', true);
+  innumerable(to, '_routeNormalized', true);
   return to;
 }
 
@@ -295,14 +326,18 @@ function isHistoryLocation(v: any): v is RouteHistoryLocation {
   return isLocation(v) && Boolean(v._routeNormalized);
 }
 
+function isBoolean(v: any): v is boolean {
+  return typeof v === 'boolean';
+}
+
 function normalizeProps(props: UserConfigRouteProps) {
-  let res: UserConfigRoutePropsNormal = {};
-  if (typeof props === 'boolean') return props;
+  const res: UserConfigRoutePropsNormal|UserConfigRoutePropsNormalMap = {};
+  if (isBoolean(props)) return props;
   if (Array.isArray(props)) {
     props.forEach(key => res[key] = { type: null });
   } else if (isPlainObject(props)) {
     Object.keys(props).forEach(key => {
-      let val = props[key];
+      const val = props[key];
       res[key] = isPlainObject(val)
         ? (val as any).type !== undefined
           ? val as UserConfigRoutePropsNormalItem
@@ -313,14 +348,19 @@ function normalizeProps(props: UserConfigRouteProps) {
   return res;
 }
 
-function copyOwnProperties(target: object, source: object) {
+function copyOwnProperty(target: any, key: string, source: any): PropertyDescriptor | undefined {
+  if (!target || !source) return;
+  const d = Object.getOwnPropertyDescriptor(source, key);
+  d && Object.defineProperty(target, key, d);
+  return d;
+}
+function copyOwnProperties<T>(target: T, source: any, overwrite?: boolean): T {
   if (!target || !source) return target;
   Object.getOwnPropertyNames(source).forEach(key => {
-    if (hasOwnProp(target, key)) return;
-    const d = Object.getOwnPropertyDescriptor(source, key);
-    if (!d) return;
-    Object.defineProperty(target, key, d);
+    if (!overwrite && hasOwnProp(target, key)) return;
+    copyOwnProperty(target, key, source);
   });
+  return target;
 }
 
 type MatchRegxList =RegExp|string|(RegExp|string)[];
@@ -331,7 +371,7 @@ function isMatchRegxList(key: string, regx: MatchRegxList): boolean {
 
 function omitProps<T extends Record<string, any>>(props: T, excludes: RegExp|string|(string|RegExp)[]) {
   if (!excludes) return props;
-  let ret: Record<string, any> = {};
+  const ret: Record<string, any> = {};
   Object.getOwnPropertyNames(props).forEach(key => {
     if (isMatchRegxList(key, excludes)) return;
     ret[key] = props[key];
@@ -377,18 +417,18 @@ function mergeFns(...fns: any[]) {
   };
 }
 
-function resolveIndex(originIndex: string | RouteIndexFn, routes: ConfigRouteArray): ConfigRoute | null {
-  let index = isFunction(originIndex) ? (originIndex as RouteIndexFn)(routes) : originIndex;
+function resolveIndex(originIndex: string | RouteIndexFn, routes: ConfigRoute[]): ConfigRoute | null {
+  const index = isFunction(originIndex) ? (originIndex as RouteIndexFn)(routes) : originIndex;
   if (!index) return null;
 
-  let r = routes.find((r: ConfigRoute) => {
+  const r = routes.find((r: ConfigRoute) => {
     if (index === ':first' && !r.index) {
       const visible = readRouteMeta(r, 'visible');
       if (visible !== false) return true;
     }
 
-    let path1 = r.subpath[0] === '/' ? r.subpath : `/${r.subpath}`;
-    let path2 = (index as string)[0] === '/' ? index : `/${index}`;
+    const path1 = r.subpath[0] === '/' ? r.subpath : `/${r.subpath}`;
+    const path2 = (index as string)[0] === '/' ? index : `/${index}`;
     return path1 === path2;
   }) || null;
   if (r && r.index) {
@@ -405,7 +445,7 @@ function resolveRedirect(to: string | RouteLocation | RouteRedirectFn | undefine
 } = {}) {
   if (isFunction(to)) to = (to as RouteRedirectFn).call(route.config, options.from, options.isInit);
   if (!to) return '';
-  let ret = normalizeLocation(to, { route, queryProps: options.queryProps });
+  const ret = normalizeLocation(to, { route, queryProps: options.queryProps });
   if (!ret) return '';
   options.from && Object.assign(ret.query, options.from.query);
   ret.isRedirect = true;
@@ -489,6 +529,38 @@ type RenderRouteOption = {
   ref?: any,
   params?: Partial<any>,
   query?: Partial<any>,
+  // getComponent?: (name: string, route: ConfigRoute) => React.ComponentType|null
+}
+
+function getConfigRouteProps(configs: UserConfigRouteProps, name?: string) {
+  if (configs === false) return;
+  if (name && (configs as UserConfigRoutePropsNormalMap)[name] !== undefined) configs = (configs as UserConfigRoutePropsNormalMap)[name];
+  if (configs === true) return true;
+  else if (isPlainObject(configs)) return Object.keys(configs);
+  else if (Array.isArray(configs)) return configs;
+  return [];
+}
+
+function configRouteProps(_props: Record<string, any>, configs: UserConfigRouteProps, obj: any, name?: string) {
+  if (!obj || configs === false) return;
+  if (name && (configs as UserConfigRoutePropsNormalMap)[name] !== undefined) configs = (configs as UserConfigRoutePropsNormalMap)[name];
+  if (configs === true) Object.assign(_props, obj);
+  else if (isPlainObject(configs)) {
+    Object.keys(configs).forEach(key => {
+      const prop = (configs as UserConfigRoutePropsNormalMap)[key];
+      const type = prop.type;
+      const val = obj[key];
+      if (val === undefined) {
+        if (prop.default) {
+          if (isFunction(prop.default) && (type === Object || type === Array)) {
+            _props[key] = (prop as any).default();
+          } else _props[key] = prop.default;
+        } else return;
+      }
+      if (type != null && !isBoolean(type)) _props[key] = (type as Function)(val);
+      else _props[key] = val;
+    });
+  }
 }
 
 function renderRoute(
@@ -496,50 +568,29 @@ function renderRoute(
   routes: ConfigRoute[],
   props: any,
   children: React.ReactNode | null,
-  options: RenderRouteOption = { }
+  options: RenderRouteOption = {}
 ): ReactNode|null {
   if (props === undefined) props = {};
   if (!route) return null;
   if (React.isValidElement(route)) return route;
-  if (route.config) route = route.config;
+  if (isMatchedRoute(route)) route = route.config;
 
-  function configProps(_props: any, configs: any, obj: any, name?: string) {
-    if (!obj) return;
-    if (name && configs[name] !== undefined) configs = configs[name];
-    if (configs === true) Object.assign(_props, obj);
-    else if (isPlainObject(configs)) {
-      Object.keys(configs).forEach(key => {
-        const prop = configs[key];
-        const type = prop.type;
-        let val = obj[key];
-        if (val === undefined) {
-          if (prop.default) {
-            if (isFunction(prop.default) && (type === Object || type === Array)) {
-              _props[key] = prop.default();
-            } else _props[key] = prop.default;
-          } else return;
-        }
-        if (type != null && typeof type !== 'boolean') _props[key] = type(val);
-        else _props[key] = val;
-      });
-    }
-  }
-  function createComp(route: ConfigRoute | MatchedRoute, props: any, children: React.ReactNode, options: RenderRouteOption) {
+
+  function createComp(route: ConfigRoute, props: any, children: React.ReactNode, options: RenderRouteOption) {
     let component = route.components && route.components[options.name || 'default'];
     if (!component) {
       if (route.children && route.children.length && options.router) {
         component = RouterViewWrapper;
-      } else  return null;
+      } else return null;
     }
-    if (isMatchedRoute(route)) route = route.config;
 
     const _props = { key: route.path };
     if (route.defaultProps) {
       Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
     }
-    if (route.props) configProps(_props, route.props, options.params, options.name);
-    if (route.paramsProps) configProps(_props, route.paramsProps, options.params, options.name);
-    if (route.queryProps) configProps(_props, route.queryProps, options.query, options.name);
+    if (route.props) configRouteProps(_props, route.props, options.params, options.name);
+    if (route.paramsProps) configRouteProps(_props, route.paramsProps, options.params, options.name);
+    if (route.queryProps) configRouteProps(_props, route.queryProps, options.query, options.name);
 
     let ref: any = null;
     if (component) {
@@ -550,7 +601,7 @@ function renderRoute(
     }
     const _pending = route._pending;
     const completeCallback = _pending && _pending.completeCallbacks[options.name || 'default'];
-    let refHandler = once((el?: any, componentClass?: any) => {
+    const refHandler = once((el?: any, componentClass?: any) => {
       if (el || !ref) {
         // if (isFunction(componentClass)) componentClass = componentClass(el, route);
         if (componentClass && el && (el._reactInternalFiber || el._reactInternals)) {
@@ -572,7 +623,6 @@ function renderRoute(
     _pending && (_pending.completeCallbacks[options.name || 'default'] = null);
     if (ref) ref = mergeFns(ref, (el: any) => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
-    let ret;
     if (isRouteLazy(component)) {
       const routeLazy = component;
       component = createLazyComponent(() => routeLazy.toResolve(
@@ -582,7 +632,7 @@ function renderRoute(
       ));
       warn(`route [${route.path}] component should not be RouteLazy instance!`);
     }
-    ret = React.createElement(
+    const ret = React.createElement(
       component,
       Object.assign(
         _props,
@@ -596,17 +646,17 @@ function renderRoute(
     return ret;
   }
 
-  let renderRoute = route;
+  let renderRoute: ConfigRoute|null = route;
   if (route && route.redirect) return null;
   if (route && route.index) renderRoute = resolveIndex(route.index, routes);
   if (!renderRoute) return null;
 
-  let result = createComp(renderRoute, props, children, options) as any;
+  const result = createComp(renderRoute, props, children, options) as any;
   return result;
 }
 
 function flatten(array: any[]) {
-  let flattend: any[] = [];
+  const flattend: any[] = [];
   (function flat(array) {
     array.forEach(function (el) {
       if (Array.isArray(el)) flat(el);
@@ -623,14 +673,15 @@ function camelize(str: string): string {
 }
 
 function isPropChanged(
-  prev: { [key: string]: any },
-  next: { [key: string]: any },
-  onChanged?: (key: string, newVal: any, oldVal: any) => boolean,
+  prev: Record<string, any>|null,
+  next: Record<string, any>|null,
+  onChanged?: ((key: string, newVal: any, oldVal: any) => boolean)|null,
+  keys?: string[]
 ) {
   if (!prev || !next) return prev !== next;
-  return Object.keys(next).some(key => {
-    let newVal = next[key];
-    let oldVal = prev[key];
+  return (keys || Object.keys(next)) .some(key => {
+    const newVal = next[key];
+    const oldVal = prev[key];
     let changed = newVal !== oldVal;
     if (changed && onChanged) changed = onChanged(key, newVal, oldVal);
     return changed;
@@ -640,6 +691,27 @@ function isPropChanged(
 function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRoute | MatchedRoute | null) {
   if (!prev || !next) return prev !== next;
   return prev.path !== next.path || prev.subpath !== next.subpath;
+}
+
+function isMatchedRoutePropsChanged(matchedRoute: MatchedRoute|null, router: ReactViewRouter, name?: string) {
+  if (!matchedRoute) return false;
+  return router && ['query', 'params'].some(key => {
+    let configs = key === 'params'
+      ? matchedRoute.config.paramsProps || matchedRoute.config.props
+      : matchedRoute.config.queryProps;
+    let keys = configs && getConfigRouteProps(configs, name);
+    if (!keys) return false;
+    if (keys === true) {
+      if (!router.currentRoute) return false;
+      keys = Object.keys((router.currentRoute as any)[key]);
+    }
+    return isPropChanged(
+      router.currentRoute && ((router as any).currentRoute as any)[key],
+      router.prevRoute && ((router as any).prevRoute as any)[key],
+      null,
+      keys as string[]
+    );
+  })
 }
 
 function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]) {
@@ -657,10 +729,11 @@ function getHostRouterView(ctx: any, continueCb?: any) {
   let parent = (ctx._reactInternalFiber || ctx._reactInternals).return;
   while (parent) {
     if (continueCb && continueCb(parent) === false) return null;
-
     const memoizedState = parent.memoizedState;
     // const memoizedProps = parent.memoizedProps;
-    if (memoizedState && memoizedState._routerView) return parent.stateNode as RouterView;
+    if (memoizedState && hasOwnProp(memoizedState, '_routerRoot')) {
+      return parent.stateNode as RouterView;
+    }
     parent = parent.return;
   }
   return null;
@@ -671,31 +744,47 @@ function getParentRoute(ctx: any): MatchedRoute | null {
   return (view && view.state.currentRoute) || null;
 }
 
+function isConfigRoute(value: any): value is ConfigRoute {
+  return value && value._normalized && value._pending;
+}
+
+function isNormalizedConfigRouteArray(value: any): value is NormalizedConfigRouteArray {
+  return Array.isArray(value) && (value as any)._normalized;
+}
+
+function isString(value: any): value is string {
+  return typeof value === 'string';
+}
+
+function isNumber(value: any): value is number {
+  return typeof value === 'number';
+}
+
 function isAbsoluteUrl(to: any) {
-  return typeof to === 'string' && /^(https?:)?\/\/.+/.test(to);
+  return isString(to) && /^(https?:)?\/\/.+/.test(to);
 }
 
 function getCurrentPageHash(to: string) {
-  if (!to || !window || !window.location) return '';
-  let [, host = '', hash = ''] = to.match(/(.+)#(.+)$/) || [];
-  return window.location.href.startsWith(host) ? hash : '';
+  if (!to || !global.location) return '';
+  const [, host = '', hash = ''] = to.match(/(.+)#(.+)$/) || [];
+  return global.location.href.startsWith(host) ? hash : '';
 }
 
 function getSessionStorage(key: string, json: boolean = false) {
-  if (!window || !window.sessionStorage) return null;
+  if (!global.sessionStorage) return null;
 
-  let v = window.sessionStorage[key];
+  const v = global.sessionStorage[key];
   if (v === undefined) return json ? null : '';
   return json ? JSON.parse(v) : v;
 }
 
 function setSessionStorage(key: string, value?: any, replacer?: (number | string)[]|((this: any, key: string, value: any) => any)) {
-  if (!window || !window.sessionStorage) return;
+  if (!global.sessionStorage) return;
 
-  let isNull = value === undefined || value === null;
-  let v = typeof value === 'string' ? value : JSON.stringify(value, replacer as any);
-  if (!v || isNull) window.sessionStorage.removeItem(key);
-  else window.sessionStorage[key] = v;
+  const isNull = value === undefined || value === null;
+  const v = isString(value) ? value : JSON.stringify(value, replacer as any);
+  if (!v || isNull) global.sessionStorage.removeItem(key);
+  else global.sessionStorage[key] = v;
 }
 
 function getRouterViewPath(routerView: RouterView) {
@@ -720,7 +809,7 @@ function isRouteGuardInfoHooks(v: any): v is RouteGuardsInfoHooks {
 }
 
 function isReadonly(obj: any, key: string) {
-  let d = obj && Object.getOwnPropertyDescriptor(obj, key);
+  const d = obj && Object.getOwnPropertyDescriptor(obj, key);
   return Boolean(!obj || (d && !d.writable));
 }
 
@@ -730,15 +819,15 @@ function isRouteChildrenNormalized(fn: any): fn is NormalizedRouteChildrenFn {
 
 function normalizeRouteChildrenFn(
   childrenFn: RouteChildrenFn | NormalizedRouteChildrenFn,
-  checkDirty?: (oldRoutes?: ConfigRouteArray) => boolean
+  checkDirty?: (oldRoutes?: NormalizedConfigRouteArray) => boolean
 ): NormalizedRouteChildrenFn {
   if (!childrenFn || isRouteChildrenNormalized(childrenFn)) return childrenFn;
 
   const cache: NormalizedRouteChildrenFn['cache'] = {};
   const ret: RouteChildrenFn = function (parent) {
     const isDirty = checkDirty && checkDirty(cache.routes);
-    if (!isDirty && cache.routes) return cache.routes || [];
-    return cache.routes = normalizeRoutes(childrenFn(parent));
+    if (!isDirty && cache.routes) return cache.routes || normalizeRoutes([], parent);
+    return cache.routes = normalizeRoutes(childrenFn(parent), parent);
   };
   innumerable(cache, 'cache', cache);
   innumerable(ret, '_normalized', true);
@@ -750,7 +839,7 @@ function normalizeRouteChildrenFn(
   return ret as NormalizedRouteChildrenFn;
 }
 
-function getRouteChildren(children: ConfigRouteArray|RouteChildrenFn, parent?: ConfigRoute|null) {
+function getRouteChildren(children: ConfigRoute[]|RouteChildrenFn, parent?: ConfigRoute|null) {
   if (isFunction(children)) children = children(parent);
   return children || [];
 }
@@ -762,13 +851,13 @@ function readRouteMeta(configOrMatchedRoute: ConfigRoute|MatchedRoute, key: stri
   if (!key) return;
   // if (isMatchedRoute(configOrMatchedRoute)) return configOrMatchedRoute.meta[key];
 
-  let route: ConfigRoute = isMatchedRoute(configOrMatchedRoute) ? configOrMatchedRoute.config : configOrMatchedRoute;
+  const route: ConfigRoute = isMatchedRoute(configOrMatchedRoute) ? configOrMatchedRoute.config : configOrMatchedRoute;
   let value = route.meta[key];
   if (isFunction(value)) {
-    let routes = route.parent ? route.parent.children : (props.router && props.router.routes);
+    const routes = route.parent ? route.parent.children : (props.router && props.router.routes);
     value = (value as RouteMetaFunction)(
       route,
-      (isFunction(routes) ? normalizeRoutes(routes(route.parent), route.parent) : routes) || [],
+      (isFunction(routes) ? normalizeRoutes(routes(route.parent), route.parent) : routes) || normalizeRoutes([], route.parent),
       props
     );
   }
@@ -790,20 +879,29 @@ function getLoactionAction(to?: Route): undefined|Action {
 }
 
 function reverseArray<T>(originArray: T[]) {
-  let ret: T[] = [];
+  const ret: T[] = [];
   for (let i = originArray.length - 1; i >= 0; i--) {
     ret.push(originArray[i]);
   }
   return ret;
 }
 
-function createUserConfigRoute<T extends UserConfigRoute>(route: T): T {
+function createUserConfigRoute(route: UserConfigRoute): UserConfigRoute {
   return route;
 }
 
 function createUserConfigRoutes<T extends RouteChildrenFn | NormalizedRouteChildrenFn>(routes: T): T
-function createUserConfigRoutes<T extends Array<UserConfigRoute|ConfigRoute>>(routes: T): T {
+function createUserConfigRoutes(routes: Array<UserConfigRoute|ConfigRoute>) {
   return routes;
+}
+
+const EMPTY_ROTUE_STATE_NAME = 'empty-state';
+function createEmptyRouteState() {
+  return innumerable({}, EMPTY_ROTUE_STATE_NAME, true);
+}
+
+function isEmptyRouteState(state: any) {
+  return !state || state[EMPTY_ROTUE_STATE_NAME];
 }
 
 export {
@@ -814,21 +912,29 @@ export {
   flatten,
   warn,
   once,
+  ignoreCatch,
   mergeFns,
   reverseArray,
+  copyOwnProperty,
   copyOwnProperties,
   isAcceptRef,
   nextTick,
   hasOwnProp,
   isNull,
+  isBoolean,
+  isString,
+  isNumber,
   isPlainObject,
   isFunction,
   isMatchedRoute,
   isLocation,
+  isConfigRoute,
+  isNormalizedConfigRouteArray,
   isHistoryLocation,
   isPropChanged,
   isRouteChanged,
   isRoutesChanged,
+  isMatchedRoutePropsChanged,
   isAbsoluteUrl,
   isRoute,
   isReactViewRouter,
@@ -853,6 +959,7 @@ export {
   walkRoutes,
   matchPath,
   matchRoutes,
+  configRouteProps,
   renderRoute,
   innumerable,
   readonly,
@@ -872,5 +979,8 @@ export {
   createLazyComponent,
 
   createUserConfigRoute,
-  createUserConfigRoutes
+  createUserConfigRoutes,
+
+  createEmptyRouteState,
+  isEmptyRouteState
 };

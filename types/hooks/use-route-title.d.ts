@@ -1,16 +1,16 @@
 /// <reference types="react" />
 import ReactViewRouter from '../router';
-import { ConfigRoute, ConfigRouteArray, MatchedRoute, RouteChildrenFn } from '../types';
+import { ConfigRoute, MatchedRoute, RouteChildrenFn } from '../types';
 import { isCommonPage } from './base';
-declare type filterCallback = (r: ConfigRoute, routes: ConfigRouteArray, props: {
+type filterCallback = (r: ConfigRoute, routes: ConfigRoute[], props: {
     router: ReactViewRouter;
     level: number;
     maxLevel: number;
-    refresh: () => void;
+    refresh?: () => void;
     title?: string;
     visible?: boolean;
 }) => boolean;
-declare type RouteTitleInfo = {
+type RouteTitleInfo = {
     title: string;
     path: string;
     meta: Partial<any>;
@@ -28,10 +28,16 @@ declare function readRouteTitle(route: ConfigRoute, options?: {
     visible: boolean;
     title: string;
 };
-declare function walkRouteTitle(router: ReactViewRouter, routes: ConfigRouteArray | RouteChildrenFn, refresh: () => void, filter?: filterCallback, titleName?: string, maxLevel?: number, level?: number): RouteTitleInfo[];
+declare function readRouteTitles(router: ReactViewRouter, routes: ConfigRoute[] | RouteChildrenFn, options?: {
+    refresh?: () => void;
+    filter?: filterCallback;
+    titleName?: string;
+    maxLevel?: number;
+    level?: number;
+}): RouteTitleInfo[];
 declare function isTitleRoute(route?: ConfigRoute | MatchedRoute | null, titleName?: string): boolean | null | undefined;
-declare type OnNoMatchedPathCallback = (matchedPath: string, titles: RouteTitleInfo[], fallback: (fallbackPath: Parameters<ReactViewRouter['replace']>[0]) => void) => void | Promise<void>;
-declare type UseRouteTitleProps = {
+type OnNoMatchedPathCallback = (matchedPath: string, titles: RouteTitleInfo[], fallback: (fallbackPath: Parameters<ReactViewRouter['replace']>[0]) => void) => void | Promise<void>;
+type UseRouteTitleProps = {
     maxLevel?: number;
     filter?: filterCallback;
     filterMetas?: string[];
@@ -41,7 +47,7 @@ declare type UseRouteTitleProps = {
     titleName?: string;
     onNoMatchedPath?: ':first' | string | OnNoMatchedPathCallback;
 };
-declare type RefreshTitlesFn = () => void;
+type RefreshTitlesFn = () => void;
 declare function useRouteTitle(props?: UseRouteTitleProps, defaultRouter?: ReactViewRouter, deps?: React.DependencyList[]): {
     parsed: boolean;
     titles: RouteTitleInfo[];
@@ -51,5 +57,5 @@ declare function useRouteTitle(props?: UseRouteTitleProps, defaultRouter?: React
     matchedTitles: RouteTitleInfo[];
     currentPaths: string[];
 };
-export { isTitleRoute, isCommonPage, readRouteTitle, walkRouteTitle, filterCallback, RouteTitleInfo, };
+export { isTitleRoute, isCommonPage, readRouteTitle, readRouteTitles, filterCallback, RouteTitleInfo, };
 export default useRouteTitle;

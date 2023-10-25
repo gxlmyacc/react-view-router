@@ -2,14 +2,20 @@ import {
   PartialPath, To, HashType, Blocker, State, Action, Location
 } from './types';
 
+export const CAN_USE_DOM = !!(
+  typeof window !== 'undefined'
+  && window.document
+  && window.document.createElement
+);
+
 // eslint-disable-next-line no-constant-condition
-export const readOnly: <T extends unknown>(obj: T) => T = false /** __DEV__* */
+export const freeze: <T extends unknown>(obj: T) => T = false /** __DEV__* */
   ? obj => Object.freeze(obj)
   : obj => obj;
 
 
-export function getPossibleHashType(window: Window = document.defaultView!) {
-  let locationHash = window.location.hash.substr(1, 1);
+export function getPossibleHashType(_window: Window = document.defaultView!) {
+  let locationHash = _window.location.hash.substr(1, 1);
   return (!locationHash || locationHash === '/') ? 'slash' : 'noslash';
 }
 
@@ -56,11 +62,12 @@ export function createKey() {
 }
 
 export function getBaseHref() {
-  let base = document.querySelector('base');
+  if (!CAN_USE_DOM) return '';
+  let base = global.document.querySelector('base');
   let href = '';
 
   if (base && base.getAttribute('href')) {
-    let url = window.location.href;
+    let url = global.location.href;
     let hashIndex = url.indexOf('#');
     href = hashIndex === -1 ? url : url.slice(0, hashIndex);
   }
@@ -168,8 +175,9 @@ export function readonly<T extends object>(
   obj: T,
   key: string,
   get: () => any,
-  options: PropertyDescriptor = { configurable: true, enumerable: true }
+  options?: PropertyDescriptor
 ) {
-  Object.defineProperty(obj, key, { get, ...options });
+  const { configurable = true, enumerable = true, ...restOptions } = options || {};
+  Object.defineProperty(obj, key, { get, configurable, enumerable, ...restOptions });
   return obj;
 }

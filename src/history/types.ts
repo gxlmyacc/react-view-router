@@ -316,6 +316,12 @@ export interface History<S extends State = State> {
   getIndexAndLocation(): [number, Location];
 
   /**
+   * Refresh current index and location from window.location
+   *
+   */
+  refresh(): [number, Location];
+
+  /**
    * Pushes a new location onto the history stack, increasing its length by one.
    * If there were any entries in the stack after the current one, they are
    * lost.

@@ -48,7 +48,7 @@ function withRouterView(comp: ReactAllComponentType) {
 function withMatchedRouteIndex(comp: ReactAllComponentType, { withMatchedRoute = false } = {}) {
   return React.forwardRef((props, ref: any) => (
     React.createElement<any>(RouterViewContext.Consumer, {}, (routerView: RouterViewComponent|null) => {
-      const matchedRouteIndex = routerView ? routerView.state._routerDepth : -1;
+      const matchedRouteIndex = routerView ? routerView.state.depth : -1;
       const newProps: any = {
         ...props,
         ref,
@@ -68,7 +68,7 @@ function withMatchedRoute(comp: ReactAllComponentType, { withMatchedRouteIndex =
         ref,
         matchedRoute: routerView ? routerView.state.currentRoute : null
       };
-      if (withMatchedRouteIndex) newProps.matchedRouteIndex = routerView ? routerView.state._routerDepth : -1;
+      if (withMatchedRouteIndex) newProps.matchedRouteIndex = routerView ? routerView.state.depth : -1;
       return React.createElement<any>(comp, newProps, props.children);
     })
   ));

@@ -1,10 +1,13 @@
 import { ComponentType } from 'react';
 import { HistoryFix } from './history-fix';
-import { nextTick, getHostRouterView } from './util';
+import { normalizeLocation, nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactViewRouterOptions, ReactViewRouterMoreOptions, ConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, OnBindInstance, OnGetLazyResovle, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
+import { ReactViewRouterOptions, ReactViewRouterMoreOptions, NormalizedConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, OnBindInstance, OnGetLazyResovle, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
 import { Action, HistoryType } from './history';
+declare const version: string;
 declare class ReactViewRouter {
+    static version: string;
+    version: string;
     isReactViewRouterInstance: boolean;
     parent: ReactViewRouter | null;
     children: ReactViewRouter[];
@@ -16,10 +19,11 @@ declare class ReactViewRouter {
     routeNameMap: {
         [key: string]: string;
     };
-    routes: ConfigRouteArray;
+    routes: NormalizedConfigRouteArray;
     stacks: HistoryStackInfo[];
     plugins: ReactViewRoutePlugin[];
     beforeEachGuards: RouteBeforeGuardFn[];
+    afterUpdateGuards: RouteAfterGuardFn[];
     beforeResolveGuards: RouteAfterGuardFn[];
     afterEachGuards: RouteAfterGuardFn[];
     resolveNameFns: RouteResolveNameFn[];
@@ -63,7 +67,7 @@ declare class ReactViewRouter {
     }): void;
     use({ routes, inheritProps, rememberInitialRoute, install, queryProps, ...restOptions }: ReactViewRouterMoreOptions): void;
     plugin(plugin: ReactViewRoutePlugin | onRouteChangeEvent): (() => void) | undefined;
-    _walkRoutes(routes: ConfigRouteArray | RouteChildrenFn, parent?: ConfigRoute): void;
+    _walkRoutes(routes: ConfigRoute[] | RouteChildrenFn, parent?: ConfigRoute): void;
     _refreshInitialRoute(): void;
     _callEvent<E extends Exclude<keyof ReactViewRoutePlugin, 'name' | 'install' | 'uninstall'>>(event: E, ...args: Parameters<ReactViewRoutePlugin[E]>): ReturnType<ReactViewRoutePlugin[E]>;
     _isVuelikeComponent(comp: any): any;
@@ -71,17 +75,19 @@ declare class ReactViewRouter {
     _getSameMatched(route: Route | null, compare?: Route): MatchedRoute[];
     _getChangeMatched(route: Route, route2?: Route | null, options?: {
         containLazy?: boolean;
-        count?: number;
-        compare?: (tr: MatchedRoute, fr: MatchedRoute) => boolean;
+        count?: number | ((ret: MatchedRoute[], tr: MatchedRoute, fr: MatchedRoute) => number);
+        compare?: null | ((tr: MatchedRoute, fr: MatchedRoute) => boolean);
     }): MatchedRoute[];
     _getBeforeEachGuards(to: Route, from: Route | null, current?: Route | null): any[];
     _getBeforeResolveGuards(to: Route, from: Route | null): any[];
     _getRouteUpdateGuards(to: Route, from: Route | null): RouteAfterGuardFn[];
     _getAfterEachGuards(to: Route, from: Route | null): any[];
+    _isMatchBasename(location: RouteHistoryLocation | Route): boolean;
     _transformLocation(location: RouteHistoryLocation | Route): Route | RouteHistoryLocation<import("./history").State>;
     _getInterceptor(interceptors: RouteGuardInterceptor[], index: number): Promise<any>;
     _routetInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn): Promise<void>;
     _handleRouteInterceptor(location: null | RouteHistoryLocation | Route, callback: (ok: boolean | RouteInterceptorCallback, route?: Route | null) => void, isInit?: boolean): Promise<void>;
+    _normalizeLocation(to: Parameters<typeof normalizeLocation>[0], options?: Parameters<typeof normalizeLocation>[1]): RouteHistoryLocation<import("./history").State> | null;
     _internalHandleRouteInterceptor(location: RouteHistoryLocation | Route, callback: (ok: boolean | RouteInterceptorCallback, route?: Route | null) => void, isInit?: boolean): void;
     _go(to: string | RouteLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, replace?: boolean): Promise<unknown>;
     _replace(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
@@ -114,12 +120,17 @@ declare class ReactViewRouter {
     go(n: number | HistoryStackInfo): void;
     back(): void;
     forward(): void;
-    replaceState(newState: Partial<any>, matchedRoute?: MatchedRoute): Partial<any> | undefined;
+    replaceState(newState: Partial<any>, matchedRoute?: MatchedRoute | null, options?: {
+        mergeState?: boolean;
+    }): Partial<any> | undefined;
     replaceQuery(keyOrObj: string | Partial<any>, value?: any): void;
     beforeEach(guard: RouteBeforeGuardFn): void;
-    beforeResolve(guard: RouteAfterGuardFn): void;
-    afterEach(guard: RouteAfterGuardFn): void;
-    addRoutes(routes: UserConfigRoute[] | ConfigRouteArray, parentRoute?: ConfigRoute): void;
+    beforeResolve(guard: RouteAfterGuardFn): (() => void) | undefined;
+    afterUpdate(guard: RouteAfterGuardFn): (() => void) | undefined;
+    afterEach(guard: RouteAfterGuardFn, options?: {
+        watchUpdate?: boolean;
+    }): (() => void) | undefined;
+    addRoutes(routes: UserConfigRoute[] | ConfigRoute[], parentRoute?: ConfigRoute): void;
     parseQuery(query: string, queryProps?: ParseQueryProps): any;
     stringifyQuery(obj: Partial<any>): any;
     onError(callback: RouteErrorCallback): () => void;
@@ -127,4 +138,5 @@ declare class ReactViewRouter {
         App: any;
     }): void;
 }
+export { version };
 export default ReactViewRouter;

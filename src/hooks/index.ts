@@ -10,9 +10,9 @@ export {
   default as useRouteTitle,
 
   isCommonPage,
-  walkRouteTitle,
 
   readRouteTitle,
+  readRouteTitles,
 
   filterCallback,
   RouteTitleInfo,

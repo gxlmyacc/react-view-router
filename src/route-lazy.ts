@@ -42,18 +42,22 @@ export class RouteLazy<P = any> {
 
   toResolve(router: ReactViewRouter, route: ConfigRoute, key: string): Promise<ReactAllComponentType | null> {
     return new Promise(async (resolve, reject) => {
+      const _resolve = (v: ReactAllComponentType<P> | EsModule<ReactAllComponentType<P>>) => {
+        v = isEsModule(v) ? v.default : v;
+        const updaters = this.updaters.splice(0, this.updaters.length);
+        updaters.forEach(updater => v = updater(v as any, router) as any || v);
+        if (!this.resolved) {
+          this._result = v;
+          this.resolved = true;
+        }
+        resolve(v as any);
+      };
+
       if (this.resolved) {
-        resolve(this._result as any);
+        _resolve(this._result as any);
         return;
       }
 
-      let _resolve = (v: ReactAllComponentType<P> | EsModule<ReactAllComponentType<P>>) => {
-        v = isEsModule(v) ? v.default : v;
-        this.updaters.forEach(updater => v = updater(v as any) as any || v);
-        this._result = v;
-        this.resolved = true;
-        resolve(v as any);
-      };
       let component = (this._ctor as LazyImportMethod<P>).__lazyImportMethod
         ? (this._ctor as LazyImportMethod<P>)(route, key, router, this.options)
         : (this._ctor as ReactAllComponentType<P>|Promise<ReactAllComponentType<P>>);
@@ -86,7 +90,7 @@ export function hasRouteLazy(route: MatchedRoute | ConfigRoute) {
   const config = route.config || route;
   if (config.components instanceof RouteLazy) return true;
   if (config.components) {
-    for (let key of Object.keys(config.components)) {
+    for (const key of Object.keys(config.components)) {
       if (config.components[key] instanceof RouteLazy) return true;
     }
   }

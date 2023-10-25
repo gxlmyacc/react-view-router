@@ -29,39 +29,39 @@ export declare enum Action {
      */
     Replace = "REPLACE"
 }
-export declare type HashType = 'slash' | 'noslash';
+export type HashType = 'slash' | 'noslash';
 /**
  * A URL pathname, beginning with a /.
  *
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#location.pathname
  */
-export declare type Pathname = string;
+export type Pathname = string;
 /**
  * A URL search string, beginning with a ?.
  *
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#location.search
  */
-export declare type Search = string;
+export type Search = string;
 /**
  * A URL fragment identifier, beginning with a #.
  *
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#location.hash
  */
-export declare type Hash = string;
+export type Hash = string;
 /**
  * An object that is used to associate some arbitrary data with a location, but
  * that does not appear in the URL path.
  *
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#location.state
  */
-export declare type State = object | null;
+export type State = object | null;
 /**
  * A unique string associated with a location. May be used to safely store
  * and retrieve data in some other storage API, like `localStorage`.
  *
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#location.key
  */
-export declare type Key = string;
+export type Key = string;
 /**
  * The pathname, search, and hash values of a URL.
  */
@@ -179,7 +179,7 @@ export interface Update<S extends State = State> {
 export interface Listener<S extends State = State> {
     (update: Update<S>): void;
 }
-export declare type TransitionCallback = (ok: boolean, payload?: any) => void;
+export type TransitionCallback = (ok: boolean, payload?: any) => void;
 /**
  * A change to the current location that was blocked. May be retried
  * after obtaining user confirmation.
@@ -204,7 +204,7 @@ export interface Blocker<S extends State = State> {
  * `history.push` or `history.replace`. May be either a URL or the pieces of a
  * URL path.
  */
-export declare type To = string | PartialPath;
+export type To = string | PartialPath;
 export interface PopAction<S extends State = State> extends Update<S> {
     prevIndex: number;
     delta: number;
@@ -269,6 +269,11 @@ export interface History<S extends State = State> {
      *
      */
     getIndexAndLocation(): [number, Location];
+    /**
+     * Refresh current index and location from window.location
+     *
+     */
+    refresh(): [number, Location];
     /**
      * Pushes a new location onto the history stack, increasing its length by one.
      * If there were any entries in the stack after the current one, they are
@@ -342,7 +347,7 @@ export interface History<S extends State = State> {
      */
     block(blocker: Blocker<S>): () => void;
 }
-export declare type HistoryState = {
+export type HistoryState = {
     usr: State;
     key?: string;
     idx: number;

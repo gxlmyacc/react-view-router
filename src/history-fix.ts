@@ -9,6 +9,10 @@ import {
   History,
   Location,
   HistoryType,
+  readonly,
+  To,
+  Path,
+  PartialPath,
 } from './history';
 import {
   innumerable,
@@ -17,6 +21,7 @@ import {
   getSessionStorage,
   setSessionStorage,
   isFunction,
+  isString
 } from './util';
 import {
   HistoryFix,
@@ -80,16 +85,38 @@ function createStackInfo(index: number, location: Location) {
 }
 
 function createHistory4(history: HistoryFix, options: History4Options = {}) {
+  let { basename = '' } = options;
+  if (basename && basename.endsWith('/')) basename = basename.substr(0, basename.length - 1);
+
+  const ensurceSlash = (pathname?: string) => pathname && (pathname.startsWith('/') ? pathname : '/' + pathname);
+  const encodeLocation = (location: To) => {
+    if (!basename) return location;
+    if (isString(location)) return basename + ensurceSlash(location);
+    return {
+      ...location,
+      pathname: basename + ensurceSlash(location.pathname)
+    };
+  };
+  const decodeLocation = (location: string|PartialPath|Path) => {
+    if (!basename) return location;
+    if (isString(location) && location.startsWith(basename)) return location.replace(basename, '');
+    const ret = { ...(location as PartialPath) };
+    if (ret.pathname?.startsWith(basename)) {
+      ret.pathname = ret.pathname.replace(basename, '');
+    }
+    return ret;
+  };
+
   const history4 = {
     isHistory4: true,
     goBack: () => history.back(),
     goForward: () => history.forward(),
-    listen: listener => history.listen(({ location, action }) => listener(location, action)),
-    block: prompt => history.block(({ location, action, callback }) => {
+    listen: (listener) => history.listen(({ location, action }) => listener(decodeLocation(location) as any, action)),
+    block: (prompt) => history.block(({ location, action, callback }) => {
       if (prompt != null) {
-        const result = typeof prompt === 'function' ? prompt(location, action) : prompt;
+        const result = typeof prompt === 'function' ? prompt(decodeLocation(location) as any, action) : prompt;
 
-        if (typeof result === 'string') {
+        if (isString(result)) {
           if (typeof options.getUserConfirmation === 'function') {
             options.getUserConfirmation(result, callback);
           } else {
@@ -107,9 +134,26 @@ function createHistory4(history: HistoryFix, options: History4Options = {}) {
   } as History4;
   innumerable(history4, 'owner', history);
 
-  ['length', 'type', 'action', 'location', 'createHref', 'push', 'replace', 'go'].forEach(key => {
+  innumerable(history, 'locationCached', null);
+  readonly(history4, 'location', function () {
+    const newLocation = history.location;
+    const locationCached = this.locationCached;
+    if (!locationCached
+      || locationCached.pathname !== newLocation.pathname
+      || locationCached.search !== newLocation.search
+      || locationCached.hash !== newLocation.hash) {
+      this.locationCached = encodeLocation(newLocation);
+    }
+    return this.locationCached;
+  });
+  history4.createHref = location => history.createHref(encodeLocation(location));
+  history4.push = (path, state) => history.push(encodeLocation(path), state);
+  history4.replace = (path, state) => history.replace(encodeLocation(path), state);
+
+  ['length', 'type', 'action', 'go'].forEach(key => {
+    const get = () => (history as any)[key];
     Object.defineProperty(history4, key, {
-      get: () => (history as any)[key],
+      get,
       enumerable: true,
       configurable: true
     });
@@ -149,7 +193,7 @@ function createHistory(options: any, fn: () => HistoryFix, type: HistoryType) {
       }
     }
     if (newRouter && newRouter.basename) {
-      let basename = newRouter.basename;
+      const basename = newRouter.basename;
       let parentRouter: ReactViewRouter | null = null;
       this.interceptors.forEach((v: RouteInterceptorItem) => {
         if (!v.router || v.router === newRouter || !basename.includes(v.router.basename)) return;

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, RefObject } from 'react';
 import {
   RouterViewComponent,
   renderRoute,
@@ -8,7 +8,8 @@ import {
   RouterViewProps,
   RouterViewState,
   RouterViewDefaultProps,
-} from 'react-view-router';
+// eslint-disable-next-line import/no-relative-packages
+} from '../..';
 
 import Drawer from './drawer';
 
@@ -65,7 +66,7 @@ class RouterDrawer<
     const currentRoute = super._refreshCurrentRoute(state, newState, callback);
     let openDrawer;
     if (this.isNull(prevRoute) && !this.isNull(currentRoute)) {
-      let r = state._routerParent && state._routerParent.state.currentRoute;
+      let r = state.parent && state.parent.state.currentRoute;
       r && Object.keys(r.componentInstances).forEach(key => {
         const c = r && r.componentInstances[key];
         if (c && c.componentWillUnactivate) c.componentWillUnactivate();
@@ -73,7 +74,7 @@ class RouterDrawer<
       openDrawer = true;
     }
     if (!this.isNull(prevRoute) && this.isNull(currentRoute)) {
-      let r = state._routerParent && state._routerParent.state.currentRoute;
+      let r = state.parent && state.parent.state.currentRoute;
       r && Object.keys(r.componentInstances).forEach(key => {
         const c = r && r.componentInstances[key];
         if (c && c.componentDidActivate) c.componentDidActivate();
@@ -87,7 +88,7 @@ class RouterDrawer<
         && !this.isNull(this.state.prevRoute)) newState.prevRoute = prevRoute;
     }
 
-    if (this.state && this.state._routerInited) this.setState(newState);
+    if (this.state && this.state.inited) this.setState(newState);
     else Object.assign(state, newState);
 
     return currentRoute;
@@ -154,7 +155,10 @@ class RouterDrawer<
     return ret;
   }
 
-  renderContainer(current: ReactNode|null, currentRoute: MatchedRoute | null): ReactNode | null {
+  renderContainer(
+    current: ReactNode|null,
+    currentRoute: MatchedRoute | null,
+  ): ReactNode | null  {
     let result = super.renderContainer(current, currentRoute);
     if (this.isNull(currentRoute)) return result;
 
@@ -195,7 +199,11 @@ RouterDrawer.defaultProps = {
   ]
 };
 
-export default React.forwardRef((props, ref) => React.createElement(RouterDrawer as any, {
+const RouterDrawerWrapper: React.ForwardRefExoticComponent<
+  RouterDrawerProps & React.RefAttributes<RouterDrawer>
+> = React.forwardRef((props, ref) => React.createElement(RouterDrawer as any, {
   ...props,
   _updateRef: ref
 }));
+
+export default RouterDrawerWrapper;

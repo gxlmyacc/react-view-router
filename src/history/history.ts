@@ -2,7 +2,7 @@ import {
   History, Transition, PopAction, Location, Action, Blocker, State, HistoryType, To,
   Listener, HistoryState, PartialPath
 } from './types';
-import { createPath, readOnly, createEvents, parsePath, createKey, allowTx } from './utils';
+import { createPath, freeze, createEvents, parsePath, createKey, allowTx } from './utils';
 
 // const BeforeUnloadEventType = 'beforeunload';
 export const HashChangeEventType = 'hashchange';
@@ -17,16 +17,16 @@ export function createHistory(
     extra?: any,
   }
 ): History {
-  const { window, type, getLocationPath, createHref } = options;
+  const { window: _window, type, getLocationPath, createHref } = options;
 
-  let globalHistory = window.history;
+  let globalHistory = _window.history;
 
   function getIndexAndLocation(): [number, Location] {
     let { pathname = '/', search = '', hash = '' } = getLocationPath();
     let state = globalHistory.state || {};
     return [
       state.idx,
-      readOnly<Location>({
+      freeze<Location>({
         pathname,
         search,
         hash,
@@ -48,7 +48,7 @@ export function createHistory(
   }
 
   function getNextLocation(to: To, state: State = null): Location {
-    return readOnly<Location>({
+    return freeze<Location>({
       ...location,
       ...(typeof to === 'string' ? parsePath(to) : to),
       state,
@@ -100,7 +100,7 @@ export function createHistory(
     } catch (error) {
       // They are going to lose state here, but there is no real
       // way to warn them about it since the page will refresh...
-      window.location.assign(url);
+      _window.location.assign(url);
     }
 
     return index;
@@ -129,10 +129,12 @@ export function createHistory(
     let [nextIndex, nextLocation] = getIndexAndLocation();
     if (nextIndex == null) {
       if (index == null || isNaN(index)) index = 0;
-      nextIndex = replaceHistoryState(nextLocation, index + 1);
+      nextIndex = createPath(nextLocation) === createPath(location) ? index : index + 1;
+      replaceHistoryState(nextLocation, nextIndex);
+      if (!blockedPopAp && !blockedPopTx && nextIndex === index) return;
     }
     let delta = index - nextIndex;
-    let nextAction = delta > 0 ? Action.Pop : Action.Push;
+    let nextAction = !delta ? Action.Replace : (delta > 0 ? Action.Pop : Action.Push);
 
     if (blockedPopDc) {
       blockedPopDc({ index: nextIndex, location: nextLocation });
@@ -182,15 +184,14 @@ export function createHistory(
     }
   }
 
-  window.addEventListener(PopStateEventType, handlePop);
+  _window.addEventListener(PopStateEventType, handlePop);
   if (type === HistoryType.hash) {
     // popstate does not fire on hashchange in IE 11 and old (trident) Edge
     // https://developer.mozilla.org/de/docs/Web/API/Window/popstate_event
-    window.addEventListener(HashChangeEventType, e => {
+    _window.addEventListener(HashChangeEventType, e => {
       if (blockedPopTx || blockedPopAp) return;
 
       let [, nextLocation] = getIndexAndLocation();
-
       // Ignore extraneous hashchange events.
       if (createPath(nextLocation) !== createPath(location)) {
         handlePop(e);
@@ -319,6 +320,10 @@ export function createHistory(
       historyState.usr = state;
       globalHistory.replaceState(historyState, '');
       return state;
+    },
+    refresh() {
+      [index, location] = getIndexAndLocation();
+      return [index, location];
     },
     go,
     back() {

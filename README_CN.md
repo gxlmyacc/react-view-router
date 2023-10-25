@@ -95,7 +95,7 @@ router.beforeEach((to, from, next) => {
 
 function App() {
 
-  const filter = routes => routes.filter(r => !r.meta.hide);
+  const filter = routes => routes.filter(r => r.meta.visible !== false);
 
   return (
     <div>
@@ -372,6 +372,7 @@ export default function HomeIndex() {
 
   - `rememberInitialRoute: boolean` 是否记住`initialRoute`。当为`true`时，在刷新浏览器页面时，`initialRoute`不再是记录的当前url中的路由信息，而是从sessionStroage中检索到的第一次的路由信息。该功能主要是为了解决刷新页面导致初始化url参数丢失的问题
 
+  - `holdInitialQueryProps: boolean` - 是否在调用`push`、`replace`等路由跳转方法时，把初始路由(`initialRoute`)的`query`合并到跳转路由的`query`中。该参数在一些需要一直保持url参数的系统中将会比较有效；
 ### ReactViewRouter属性
 - `currentRoute` 当前匹配的路由信息:
 ```javascript
@@ -809,7 +810,7 @@ interface ReactViewRoutePlugin {
   // 路由离开的守卫事件
   onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, prevRes?: any): void;
   // 当路由发生改变，正在解析、判断路由是否可以跳转的过程前后被调用
-  onRouteing?(next: boolean|onRouteingNextCallback|Route, prevRes?: any): void;
+  onRouteing?(next: (ok: boolean|onRouteingNextCallback|Route) => void, prevRes?: any): void;
   // 当路由发生改变时被调用
   onRouteChange?: onRouteChangeEvent;
   // 当路由meta发生改变时被调用
@@ -1322,7 +1323,7 @@ export default Test;
 
 为指定的`router`注册一个路由变更回调事件，函数签名如下：
 
-```javascript
+```ts
 /**
  * @return {RouterView}
  **/
@@ -1342,9 +1343,69 @@ useRouteChanged(router, (route) => {
 });
 ```
 
+### useViewActivate
+
+当当前路由组件启用了keepAlive后，并且在再次进入时会会触发激活事件；
+
+```ts
+interface KeepAliveEventObject {
+  type: keyof RouterViewEvents,
+  router: ReactViewRouter,
+  source: RouterView,
+  target: MatchedRoute,
+  to: MatchedRoute|null,
+  from: MatchedRoute|null,
+}
+
+type KeepAliveChangeEvent = (event: KeepAliveEventObject) => void;
+/**
+ * @return {RouterView}
+ **/
+const useViewActivate = (onEvent: KeepAliveChangeEvent) => void
+```
+示例：
+
+```js
+import { useViewActivate } from 'react-view-router';
+
+useViewActivate((event) => {
+  // dosomethine
+});
+```
+
+### useViewDeactivate
+
+当当前路由组件启用了keepAlive后，等离开当前路由时会触发失活事件；
+
+```ts
+interface KeepAliveEventObject {
+  type: keyof RouterViewEvents,
+  router: ReactViewRouter,
+  source: RouterView,
+  target: MatchedRoute,
+  to: MatchedRoute|null,
+  from: MatchedRoute|null,
+}
+
+type KeepAliveChangeEvent = (event: KeepAliveEventObject) => void;
+/**
+ * @return {RouterView}
+ **/
+const useViewDeactivate = (onEvent: KeepAliveChangeEvent) => void
+```
+示例：
+
+```js
+import { useViewDeactivate } from 'react-view-router';
+
+useViewDeactivate((event) => {
+  // dosomethine
+});
+```
+
 ### useRouteTitle
 
-遍历路由配置，检索出路由配置中`meta.title`、`meta.visible`过滤出来的信息，其中`meta.title`、`meta.visible`可以是一个函数。你可以根据该信息来创建菜单、标签页等。函数签名如下：
+遍历路由配置，检索出组件当前所在层级的路由配置中`meta.title`、`meta.visible`过滤出来的信息，其中`meta.title`、`meta.visible`可以是一个函数。你可以根据该信息来创建菜单、标签页等。函数签名如下：
 
 ```ts
 // `meta.title`、`meta.visible`可以是boolean值，也可以下面这样的函数
@@ -1662,7 +1723,7 @@ export default MainSider;
 
 ## 路由转场动效
 
-你可以通过`import RouterView from 'react-view-router/transition'`引用支持路由转场动效的`RouterView`来为页面添加简单的转场动效。目前支持`fade|slide|carousel`三种动效：
+你可以通过`import RouterView from 'react-view-router/transition'`引用支持路由跳转动效的`RouterView`来为页面添加简单的转场动效。目前支持`fade|slide|carousel`三种动效：
 
 ```js
 import React from 'react';

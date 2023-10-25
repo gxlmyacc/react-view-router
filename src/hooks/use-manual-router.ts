@@ -1,22 +1,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  ConfigRouteArray,
+  NormalizedConfigRouteArray,
   HistoryFix,
-  RouteResolveNameFn
+  RouteResolveNameFn,
+  UserConfigRoute,
+  ConfigRoute,
+  History4
 } from '../types';
 import ReactViewRouter from '../router';
 import { HashType, HistoryType } from '../history';
+import { isHistory4 } from '../history-fix';
 // import { RouterContext } from '../context';
 
 type ManualRouterOptions = {
   basename?: string,
   pathname?: string,
-  history?: HistoryFix,
+  history?: HistoryFix|History4,
   mode?: HistoryType|HistoryFix,
   routerMode?: HistoryType|HistoryFix,
   hashType?: HashType,
   resolveRouteName?: RouteResolveNameFn,
-  routes?: ConfigRouteArray,
+  routes?: NormalizedConfigRouteArray|UserConfigRoute[]|ConfigRoute[],
   manual?: boolean,
 };
 
@@ -28,8 +32,10 @@ function useManualRouter(router: ReactViewRouter, options: ManualRouterOptions =
   const [$refs] = useState({
     isRunning: false,
     router,
-    options
+    options,
+    seed: 0,
   });
+  const [, setSeed] = useState(0);
   $refs.router = router;
   $refs.options = options;
 
@@ -45,7 +51,8 @@ function useManualRouter(router: ReactViewRouter, options: ManualRouterOptions =
 
       const mode = getModeFromOptions(overrideOptions) || getModeFromOptions(options) || HistoryType.hash;
       const hashType =  overrideOptions.hashType || options.hashType;
-      const history = (overrideOptions.history || options.history);
+      let history = (overrideOptions.history || options.history);
+      if (isHistory4(history)) history = history.owner;
       // || (mode === HistoryType.memory && parentRouter && parentRouter.mode === HistoryType.memory ? parentRouter.history : undefined);
       router.start({
         basename: overrideOptions.basename || options.basename || '',
@@ -57,6 +64,8 @@ function useManualRouter(router: ReactViewRouter, options: ManualRouterOptions =
 
       const resolveRouteName = overrideOptions.resolveRouteName || options.resolveRouteName;
       resolveRouteName && router.resolveRouteName(resolveRouteName);
+
+      if (options.manual) setSeed(seed => seed + 1);
     }
   }, [$refs]);
   if (!options.manual) start();

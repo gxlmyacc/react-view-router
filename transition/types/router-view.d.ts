@@ -1,5 +1,5 @@
 import React, { StyleHTMLAttributes } from 'react';
-import { RouterViewComponent, RouterView, RouterViewProps, RouterViewState } from '../..';
+import { RouterViewComponent, RouterViewProps, RouterViewState, RouteSavedPosition, Route } from '../..';
 
 import './router-view.css';
 
@@ -15,12 +15,15 @@ interface TransitionRouterViewProps extends RouterViewProps {
   transitionPrefix?: string,
   transitionZIndex?: number,
   transitionFallback?: TransitionName|((to: Route) => TransitionName),
-  routerView?: RouterViewComponent | RouterView,
+  routerView?: RouterViewComponent,
   containerStyle?: StyleHTMLAttributes<HTMLDivElement>,
+
+  onScrollToPosition?: (node?: HTMLElement, savedPosition: RouteSavedPosition) => void,
+  onSavePosition?: (node?: HTMLElement, options: { to: Route, from: Route|null }) => RouteSavedPosition,
 }
 
 declare const RouterViewTransition: React.ForwardRefExoticComponent<
-  Pick<TransitionRouterViewProps, keyof TransitionRouterViewProps>
+  TransitionRouterViewProps
   & React.RefAttributes<RouterViewComponent<TransitionRouterViewProps, RouterViewState, any>
   >
 >;

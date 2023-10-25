@@ -1,8 +1,9 @@
 import { PartialPath, To, HashType, Blocker, State, Action, Location } from './types';
-export declare const readOnly: <T extends unknown>(obj: T) => T;
-export declare function getPossibleHashType(window?: Window): "slash" | "noslash";
+export declare const CAN_USE_DOM: boolean;
+export declare const freeze: <T extends unknown>(obj: T) => T;
+export declare function getPossibleHashType(_window?: Window): "slash" | "noslash";
 export declare function clamp(n: number, lowerBound: number, upperBound: number): number;
-export declare type Events<F> = {
+export type Events<F> = {
     length: number;
     push: (fn: F) => () => void;
     call: (arg: any, payload?: any) => void;
