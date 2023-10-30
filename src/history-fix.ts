@@ -323,19 +323,13 @@ export {
   createMemoryHistoryNew as createMemoryHistory,
   getBaseHref,
   getPossibleHistory,
-  History,
-  HistoryFix,
   confirmInterceptors,
   REACT_VIEW_ROUTER_GLOBAL,
 
   isHistory4
 };
 
-// export {
-//   createHashHistory,
-//   createBrowserHistory,
-//   createMemoryHistory,
-//   History,
-//   HistoryFix,
-//   LocationState
-// };
+export type {
+  History,
+  HistoryFix,
+}

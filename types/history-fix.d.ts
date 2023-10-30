@@ -15,4 +15,5 @@ declare function createMemoryHistoryNew(options: {
     pathname?: string;
 }, router: ReactViewRouter): HistoryFix;
 declare function getPossibleHistory(options?: ReactViewRouterMoreOptions): HistoryFix | null;
-export { createHashHistoryNew as createHashHistory, createBrowserHistoryNew as createBrowserHistory, createMemoryHistoryNew as createMemoryHistory, getBaseHref, getPossibleHistory, History, HistoryFix, confirmInterceptors, REACT_VIEW_ROUTER_GLOBAL, isHistory4 };
+export { createHashHistoryNew as createHashHistory, createBrowserHistoryNew as createBrowserHistory, createMemoryHistoryNew as createMemoryHistory, getBaseHref, getPossibleHistory, confirmInterceptors, REACT_VIEW_ROUTER_GLOBAL, isHistory4 };
+export type { History, HistoryFix, };
