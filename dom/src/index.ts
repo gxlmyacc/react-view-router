@@ -8,9 +8,9 @@ const renderUtils: ReactRenderUtils = {
   unmountComponentAtNode: ReactDOM.unmountComponentAtNode,
 
   /** document */
-  createElement: (...args) => global.document.createElement(...args),
-  createDocumentFragment: () => global.document.createDocumentFragment(),
-  createComment: (data: string) => global.document.createComment(data),
+  createElement: (...args) => globalThis.document.createElement(...args),
+  createDocumentFragment: () => globalThis.document.createDocumentFragment(),
+  createComment: (data: string) => globalThis.document.createComment(data),
 
   /** Node */
   appendChild: (el, child) => el.appendChild(child),

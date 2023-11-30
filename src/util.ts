@@ -765,26 +765,26 @@ function isAbsoluteUrl(to: any) {
 }
 
 function getCurrentPageHash(to: string) {
-  if (!to || !global.location) return '';
+  if (!to || !globalThis.location) return '';
   const [, host = '', hash = ''] = to.match(/(.+)#(.+)$/) || [];
-  return global.location.href.startsWith(host) ? hash : '';
+  return globalThis.location.href.startsWith(host) ? hash : '';
 }
 
 function getSessionStorage(key: string, json: boolean = false) {
-  if (!global.sessionStorage) return null;
+  if (!globalThis.sessionStorage) return null;
 
-  const v = global.sessionStorage[key];
+  const v = globalThis.sessionStorage[key];
   if (v === undefined) return json ? null : '';
   return json ? JSON.parse(v) : v;
 }
 
 function setSessionStorage(key: string, value?: any, replacer?: (number | string)[]|((this: any, key: string, value: any) => any)) {
-  if (!global.sessionStorage) return;
+  if (!globalThis.sessionStorage) return;
 
   const isNull = value === undefined || value === null;
   const v = isString(value) ? value : JSON.stringify(value, replacer as any);
-  if (!v || isNull) global.sessionStorage.removeItem(key);
-  else global.sessionStorage[key] = v;
+  if (!v || isNull) globalThis.sessionStorage.removeItem(key);
+  else globalThis.sessionStorage[key] = v;
 }
 
 function getRouterViewPath(routerView: RouterView) {

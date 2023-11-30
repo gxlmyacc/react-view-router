@@ -26,8 +26,8 @@ export interface HashHistoryOptions extends HistoryOptions {
   hashType?: HashType,
 }
 
-export function createHashHref(to: To, hashType?: HashType, _window: any = global) {
-  let path = createHref(to, hashType);
+export function createHashHref(to: To, hashType?: HashType, _window: any = globalThis) {
+  let path = createHref(to, hashType, _window);
 
   const searchIndex = path.indexOf('?');
   if (searchIndex > 0 && _window?.location?.search) {
@@ -57,7 +57,7 @@ export function createHashHistory(
   options: HashHistoryOptions = {}
 ): HashHistory {
   const {
-    window: _window = global.document?.defaultView!,
+    window: _window = globalThis.document?.defaultView!,
   } = options;
   const {
     hashType = getPossibleHashType(_window)

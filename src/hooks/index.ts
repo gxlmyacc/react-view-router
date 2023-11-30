@@ -11,7 +11,6 @@ export {
   default as useRouteTitle,
 
   isCommonPage,
-
   readRouteTitle,
   readRouteTitles,
 } from './use-route-title';

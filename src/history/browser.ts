@@ -35,7 +35,7 @@ export function createBrowserHistory(
   options: BrowserHistoryOptions = {}
 ): BrowserHistory {
   const {
-    window: _window = global.document?.defaultView!,
+    window: _window = globalThis.document?.defaultView!,
   } = options;
   const {
     hashType = getPossibleHashType(_window)

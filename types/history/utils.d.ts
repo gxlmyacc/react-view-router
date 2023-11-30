@@ -1,7 +1,7 @@
 import { PartialPath, To, HashType, Blocker, State, Action, Location } from './types';
 export declare const CAN_USE_DOM: boolean;
 export declare const freeze: <T extends unknown>(obj: T) => T;
-export declare function getPossibleHashType(_window?: Window): "slash" | "noslash";
+export declare function getPossibleHashType(_window?: Window, hash?: string): "slash" | "noslash";
 export declare function clamp(n: number, lowerBound: number, upperBound: number): number;
 export type Events<F> = {
     length: number;
@@ -23,6 +23,6 @@ export declare function createPath({ pathname, search, hash }: PartialPath): str
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#parsepath
  */
 export declare function parsePath(path: string): PartialPath;
-export declare function createHref(to: To, hashType?: HashType): string;
+export declare function createHref(to: To, hashType?: HashType, _window?: any): string;
 export declare function allowTx(blockers: Events<Blocker<State>>, action: Action, location: Location, index: number, nextIndex: number, cb: ((ok: boolean, payload?: any) => void) | null): boolean;
 export declare function readonly<T extends object>(obj: T, key: string, get: () => any, options?: PropertyDescriptor): T;

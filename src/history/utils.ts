@@ -14,8 +14,9 @@ export const freeze: <T extends unknown>(obj: T) => T = false /** __DEV__* */
   : obj => obj;
 
 
-export function getPossibleHashType(_window: Window = document.defaultView!) {
-  let locationHash = _window.location.hash.substr(1, 1);
+export function getPossibleHashType(_window: Window = document.defaultView!, hash: string = '') {
+  if (!hash || !hash.startsWith('#')) hash = _window.location.hash;
+  let locationHash = hash.substr(1, 1);
   return (!locationHash || locationHash === '/') ? 'slash' : 'noslash';
 }
 
@@ -63,11 +64,11 @@ export function createKey() {
 
 export function getBaseHref() {
   if (!CAN_USE_DOM) return '';
-  let base = global.document.querySelector('base');
+  let base = globalThis.document.querySelector('base');
   let href = '';
 
   if (base && base.getAttribute('href')) {
-    let url = global.location.href;
+    let url = globalThis.location.href;
     let hashIndex = url.indexOf('#');
     href = hashIndex === -1 ? url : url.slice(0, hashIndex);
   }
@@ -120,18 +121,26 @@ export function parsePath(path: string) {
   return partialPath;
 }
 
-export function createHref(to: To, hashType?: HashType) {
-  if (!hashType) hashType = getPossibleHashType();
-
+export function createHref(to: To, hashType?: HashType, _window: any = globalThis) {
   let path = typeof to === 'string' ? to : createPath(to);
 
+  if (!hashType) hashType = getPossibleHashType(_window, path);
+
   if (hashType != null) {
+    let pathPrefix =  '';
+    if (path.startsWith('#')) {
+      pathPrefix = '#';
+      path = path.substr(1, path.length);
+    }
+
     let slashChar = path.substr(0, 1);
     if (hashType === 'slash') {
       if (slashChar !== '/') path = '/' + path;
     } else  if (hashType === 'noslash') {
       if (slashChar === '/') path = path.substr(1);
     }
+
+    path = pathPrefix + path;
   }
 
   return path;

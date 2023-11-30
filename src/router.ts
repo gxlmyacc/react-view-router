@@ -364,8 +364,8 @@ class ReactViewRouter {
           pathname: stack.pathname,
           search: stack.search,
         }) as RouteHistoryLocation;
-        if (!this.isMemoryMode && global?.location?.search) {
-          const query = this.parseQuery(global.location.search, this.queryProps);
+        if (!this.isMemoryMode && globalThis?.location?.search) {
+          const query = this.parseQuery(globalThis.location.search, this.queryProps);
           if (this.isHashMode) {
             Object.assign(historyLocation.query, query);
           } else if (this.isBrowserMode) {
@@ -1081,9 +1081,9 @@ class ReactViewRouter {
         return;
       }
 
-      if (_to.fullPath && isAbsoluteUrl(_to.fullPath) && global?.location) {
-        if (replace) global.location.replace(_to.fullPath);
-        else global.location.href = _to.fullPath;
+      if (_to.fullPath && isAbsoluteUrl(_to.fullPath) && globalThis?.location) {
+        if (replace) globalThis.location.replace(_to.fullPath);
+        else globalThis.location.href = _to.fullPath;
         return;
       }
 
@@ -1100,7 +1100,7 @@ class ReactViewRouter {
 
       let history = this.history;
 
-      if ((_to as RouteLocation).absolute && global.location) {
+      if ((_to as RouteLocation).absolute && globalThis.location) {
         let url = '';
         if (this.basename) {
           if (this.top && !this.top.basename) {
@@ -1130,8 +1130,8 @@ class ReactViewRouter {
           // if (mode === HistoryType.hash) url = getBaseHref() + (url.startsWith('#') ? '' : '#') + url;
         }
         if (url) {
-          if (replace) global.location.replace(url);
-          else global.location.href = url;
+          if (replace) globalThis.location.replace(url);
+          else globalThis.location.href = url;
           return;
         }
       }

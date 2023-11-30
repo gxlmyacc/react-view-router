@@ -317,6 +317,11 @@ function getPossibleHistory(options?: ReactViewRouterMoreOptions) {
   return null;
 }
 
+export type {
+  History,
+  HistoryFix,
+}
+
 export {
   createHashHistoryNew as createHashHistory,
   createBrowserHistoryNew as createBrowserHistory,
@@ -329,7 +334,11 @@ export {
   isHistory4
 };
 
-export type {
-  History,
-  HistoryFix,
-}
+// export {
+//   createHashHistory,
+//   createBrowserHistory,
+//   createMemoryHistory,
+//   History,
+//   HistoryFix,
+//   LocationState
+// };
