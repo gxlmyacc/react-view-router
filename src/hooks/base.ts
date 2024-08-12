@@ -160,6 +160,25 @@ function useRouteState<T extends Record<string, any> = any>(
   return [state as T, setRouteState];
 }
 
+function useRouteParams<T extends Record<string, any> = any>(
+  defaultRouter?: ReactViewRouter|null,
+  options?: UseMatchedRouteOptions
+): T {
+  const router = useRouter(defaultRouter);
+  const route = useMatchedRoute(router || defaultRouter, options);
+  const params = route ? route.params as any : {}
+  return params;
+}
+
+function useRouteQuery<T extends Record<string, any> = any>(
+  defaultRouter?: ReactViewRouter|null,
+  options?: UseRouteOptions
+): T {
+  const router = useRouter(defaultRouter);
+  const route = useRoute(router || defaultRouter, options);
+  return route ? route.query as any : {};
+}
+
 function useRouteChanged(router: ReactViewRouter, onChange: onRouteChangeEvent, deps: string[] = []) {
   const [plugin] = useState({} as ReactViewRoutePlugin);
   plugin.onRouteChange = onChange;
@@ -260,6 +279,8 @@ export {
   useRoute,
   useRouteMeta,
   useRouteState,
+  useRouteParams,
+  useRouteQuery,
   useRouterView,
   useMatchedRouteIndex,
   useMatchedRoute,

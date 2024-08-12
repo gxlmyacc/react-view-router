@@ -24,6 +24,8 @@ declare function useRouteMeta(metaKey: string | string[], defaultRouter?: ReactV
     ignoreConfigRoute?: boolean;
 } & UseMatchedRouteOptions): [Partial<any> | null, (key: string, value: any) => void];
 declare function useRouteState<T extends Record<string, any> = any>(defaultRouter?: ReactViewRouter | null, stateAction?: T | (() => T), options?: UseMatchedRouteOptions): [routeState: T, setRouteState: (newState: T) => void];
+declare function useRouteParams<T extends Record<string, any> = any>(defaultRouter?: ReactViewRouter | null, options?: UseMatchedRouteOptions): T;
+declare function useRouteQuery<T extends Record<string, any> = any>(defaultRouter?: ReactViewRouter | null, options?: UseRouteOptions): T;
 declare function useRouteChanged(router: ReactViewRouter, onChange: onRouteChangeEvent, deps?: string[]): void;
 declare function useRouteMetaChanged(router: ReactViewRouter, onChange: onRouteMetaChangeEvent, deps?: string[]): void;
 declare function createRouteGuardsRef(ref: Partial<any>): Partial<any>;
@@ -31,4 +33,4 @@ declare function useRouteGuardsRef<T extends RouteGuardsInfo>(ref: Ref<T> | unde
 declare function useRouterViewEvent<T extends keyof RouterViewEvents>(name: T, onEvent: RouterViewEvents[T] extends Array<infer U> ? U : any, unshift?: boolean): void;
 declare function useViewActivate(onEvent: RouterViewEvents['activate'] extends Array<infer U> ? U : never): void;
 declare function useViewDeactivate(onEvent: RouterViewEvents['deactivate'] extends Array<infer U> ? U : never): void;
-export { isCommonPage, getRouteMatched, useRouter, useRouteChanged, useRouteMetaChanged, useRoute, useRouteMeta, useRouteState, useRouterView, useMatchedRouteIndex, useMatchedRoute, useMatchedRouteAndIndex, useRouteGuardsRef, useRouterViewEvent, useViewActivate, useViewDeactivate, createRouteGuardsRef };
+export { isCommonPage, getRouteMatched, useRouter, useRouteChanged, useRouteMetaChanged, useRoute, useRouteMeta, useRouteState, useRouteParams, useRouteQuery, useRouterView, useMatchedRouteIndex, useMatchedRoute, useMatchedRouteAndIndex, useRouteGuardsRef, useRouterViewEvent, useViewActivate, useViewDeactivate, createRouteGuardsRef };

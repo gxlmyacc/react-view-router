@@ -133,7 +133,6 @@ function createHistory4(history: HistoryFix, options: History4Options = {}) {
     })
   } as History4;
   innumerable(history4, 'owner', history);
-
   innumerable(history, 'locationCached', null);
   readonly(history4, 'location', function () {
     const newLocation = history.location;
@@ -150,13 +149,8 @@ function createHistory4(history: HistoryFix, options: History4Options = {}) {
   history4.push = (path, state) => history.push(encodeLocation(path), state);
   history4.replace = (path, state) => history.replace(encodeLocation(path), state);
 
-  ['length', 'type', 'action', 'go'].forEach(key => {
-    const get = () => (history as any)[key];
-    Object.defineProperty(history4, key, {
-      get,
-      enumerable: true,
-      configurable: true
-    });
+  ['length', 'type', 'action', 'go', 'state'].forEach(key => {
+    readonly(history4, key, () => (history as any)[key]);
   });
 
   return history4 as History4;

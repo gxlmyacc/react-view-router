@@ -89,7 +89,9 @@ function normalizeRoute(
   } else {
     innumerable(r, 'children', normalizeRoutes(route.children || [], r, options));
   }
-  r.exact = route.exact !== undefined ? (route.exact || false) : Boolean(route.redirect || route.index);
+  r.exact = route.exact !== undefined
+    ? (route.exact || false)
+    : Boolean(route.redirect || route.index || subpath === '/');
   r.components = { ...route.components, default: route.component };
   Object.keys(r.components).forEach(key => {
     const comp = r.components[key];
@@ -287,19 +289,11 @@ function normalizeLocation(
 
   if (to.basename == null && basename != null) to.basename = to.absolute ? '' : basename;
 
-  Object.defineProperty(to, 'search', {
-    enumerable: true,
-    configurable: true,
-    get() {
-      return config.stringifyQuery(this.query);
-    }
+  readonly(to, 'search', function () {
+    return config.stringifyQuery(this.query);
   });
-  Object.defineProperty(to, 'fullPath', {
-    enumerable: true,
-    configurable: true,
-    get() {
-      return `${this.path}${this.search || ''}` || '/';
-    }
+  readonly(to, 'fullPath', function () {
+    return `${this.path}${this.search || ''}` || '/';
   });
   if (!to.query) to.query = {};
   innumerable(to, '_routeNormalized', true);
@@ -655,8 +649,8 @@ function renderRoute(
   return result;
 }
 
-function flatten(array: any[]) {
-  const flattend: any[] = [];
+function flatten<T>(array: T[]) {
+  const flattend: T[] = [];
   (function flat(array) {
     array.forEach(function (el) {
       if (Array.isArray(el)) flat(el);

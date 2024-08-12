@@ -191,6 +191,9 @@ export function createMemoryHistory(
     get length() {
       return entries.length;
     },
+    get state() {
+      return location.state;
+    },
     get realtimeLocation() {
       return location;
     },

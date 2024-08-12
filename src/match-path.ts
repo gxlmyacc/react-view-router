@@ -43,7 +43,10 @@ function matchPath(pathname: string, options: (
 
   const { subpath, exact = false, strict = false, sensitive = false } = options;
   let { path = '' } = options;
-  if (subpath === '*') path = path.replace(/\*$/, ':fallback([^\\/]*)');
+
+  if (subpath === '*') {
+    path = path.replace(/\*$/, ':fallback([^\\/]*)');
+  }
 
   const paths = ([] as string[]).concat(path || []);
 

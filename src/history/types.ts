@@ -295,6 +295,11 @@ export interface History<S extends State = State> {
   readonly length: number;
 
   /**
+   * The history state
+   */
+  readonly state: State,
+
+  /**
    * The current realtimie location
    */
   readonly realtimeLocation: Location<S>;

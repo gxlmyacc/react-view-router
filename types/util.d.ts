@@ -68,7 +68,7 @@ type RenderRouteOption = {
 };
 declare function configRouteProps(_props: Record<string, any>, configs: UserConfigRouteProps, obj: any, name?: string): void;
 declare function renderRoute(route: ConfigRoute | MatchedRoute | null | undefined, routes: ConfigRoute[], props: any, children: React.ReactNode | null, options?: RenderRouteOption): ReactNode | null;
-declare function flatten(array: any[]): any[];
+declare function flatten<T>(array: T[]): T[];
 declare function camelize(str: string): string;
 declare function isPropChanged(prev: Record<string, any> | null, next: Record<string, any> | null, onChanged?: ((key: string, newVal: any, oldVal: any) => boolean) | null, keys?: string[]): boolean;
 declare function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRoute | MatchedRoute | null): boolean;

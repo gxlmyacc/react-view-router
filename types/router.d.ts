@@ -2,7 +2,7 @@ import { ComponentType } from 'react';
 import { HistoryFix } from './history-fix';
 import { normalizeLocation, nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactViewRouterOptions, ReactViewRouterMoreOptions, NormalizedConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, OnBindInstance, OnGetLazyResovle, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
+import { ReactViewRouterOptions, ReactViewRouterMoreOptions, NormalizedConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, LazyResolveFn, OnBindInstance, OnGetLazyResovle, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
 import { Action, HistoryType } from './history';
 declare const version: string;
 declare class ReactViewRouter {
@@ -78,10 +78,10 @@ declare class ReactViewRouter {
         count?: number | ((ret: MatchedRoute[], tr: MatchedRoute, fr: MatchedRoute) => number);
         compare?: null | ((tr: MatchedRoute, fr: MatchedRoute) => boolean);
     }): MatchedRoute[];
-    _getBeforeEachGuards(to: Route, from: Route | null, current?: Route | null): any[];
-    _getBeforeResolveGuards(to: Route, from: Route | null): any[];
+    _getBeforeEachGuards(to: Route, from: Route | null, current?: Route | null): (RouteBeforeGuardFn | LazyResolveFn)[];
+    _getBeforeResolveGuards(to: Route, from: Route | null): RouteAfterGuardFn[];
     _getRouteUpdateGuards(to: Route, from: Route | null): RouteAfterGuardFn[];
-    _getAfterEachGuards(to: Route, from: Route | null): any[];
+    _getAfterEachGuards(to: Route, from: Route | null): RouteAfterGuardFn[];
     _isMatchBasename(location: RouteHistoryLocation | Route): boolean;
     _transformLocation(location: RouteHistoryLocation | Route): Route | RouteHistoryLocation<import("./history").State>;
     _getInterceptor(interceptors: RouteGuardInterceptor[], index: number): Promise<any>;

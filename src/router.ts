@@ -683,16 +683,17 @@ class ReactViewRouter {
         }
       }
       if (!/\/$/.test(pathname)) pathname += '/';
-      const isCurrentBasename = pathname.startsWith(this.basenameNoSlash);
       location = { ...location, absolute: false };
-      location.pathname = isCurrentBasename
-        ? (location.pathname.substr(this.basename.length - 1) || '/')
-        : '';
-      if (location.path !== undefined) location.path = location.pathname;
-      location.fullPath = isCurrentBasename
-        ? location.pathname + location.search
-        : '';
-      if (isCurrentBasename && location.basename == null) location.basename = this.basename;
+      const isCurrentBasename = pathname.startsWith(this.basenameNoSlash);
+      if (isCurrentBasename) {
+        location.pathname =  (location.pathname.substr(this.basename.length - 1) || '/');
+        location.fullPath = location.pathname + location.search;
+        location.basename = this.basename;
+      } else {
+        location.pathname = '';
+        location.fullPath =  '';
+      }
+      if (location.path != null) location.path = location.pathname;
     }
     return location;
   }
@@ -708,7 +709,6 @@ class ReactViewRouter {
 
     return interceptor as any;
   }
-
 
   async _routetInterceptors(
     interceptors: RouteGuardInterceptor[],

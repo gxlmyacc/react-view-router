@@ -419,6 +419,10 @@ export interface History4<S extends State = State> {
      */
     readonly action: Action;
     /**
+     * The state of current location.
+     */
+    readonly state: S;
+    /**
      * The current location. This value is mutable.
      *
      * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#history.location

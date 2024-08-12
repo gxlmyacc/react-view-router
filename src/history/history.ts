@@ -305,6 +305,9 @@ export function createHistory(
     get length() {
       return globalHistory.length;
     },
+    get state() {
+      return getHistoryState(location, index).usr;
+    },
     get realtimeLocation() {
       const [, current] = getIndexAndLocation();
       return (current.pathname === location.pathname && current.search === location.search && current.hash === location.hash)
