@@ -2,7 +2,7 @@ import {
   History, Transition, PopAction, Location, Action, Blocker, State, HistoryType, To,
   Listener, HistoryState, PartialPath
 } from './types';
-import { createPath, freeze, createEvents, parsePath, createKey, allowTx } from './utils';
+import { createPath, freeze, createEvents, parsePath, createKey, allowTx, allowTxWithParams, copyOwnProperties } from './utils';
 
 // const BeforeUnloadEventType = 'beforeunload';
 export const HashChangeEventType = 'hashchange';
@@ -48,12 +48,16 @@ export function createHistory(
   }
 
   function getNextLocation(to: To, state: State = null): Location {
-    return freeze<Location>({
-      ...location,
-      ...(typeof to === 'string' ? parsePath(to) : to),
-      state,
-      key: createKey()
-    });
+    return freeze<Location>(
+      copyOwnProperties(
+        copyOwnProperties({ ...location, }, typeof to === 'string' ? parsePath(to) : to, true),
+        {
+          state,
+          key: createKey()
+        },
+        true
+      )
+    );
   }
 
   function getHistoryState(nextLocation: Location, index: number) {
@@ -178,7 +182,7 @@ export function createHistory(
           go(blockedPopAp.delta);
         }
       };
-      blockers.call(blockedPopTx);
+      allowTxWithParams(blockers, blockedPopTx);
     } else {
       applyTx(nextAction);
     }

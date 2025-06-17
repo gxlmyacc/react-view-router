@@ -14,6 +14,7 @@ import { RouterViewComponent as RouterView, RouterViewWrapper  } from './router-
 import ReactViewRouter from './router';
 import { HistoryFix } from './history-fix';
 import { HistoryType, Action, readonly } from './history';
+import { hasOwnProp, copyOwnProperties, copyOwnProperty } from './history/utils';
 
 const DEFAULT_STATE_NAME = '[root]';
 
@@ -39,11 +40,7 @@ function ignoreCatch<
   };
 }
 
-const _hasOwnProperty = Object.prototype.hasOwnProperty;
 
-function hasOwnProp(obj: any, key: PropertyKey) {
-  return Boolean(obj) && _hasOwnProperty.call(obj, key);
-}
 
 function innumerable<T extends object>(
   obj: T,
@@ -340,21 +337,6 @@ function normalizeProps(props: UserConfigRouteProps) {
     });
   } else return false;
   return res;
-}
-
-function copyOwnProperty(target: any, key: string, source: any): PropertyDescriptor | undefined {
-  if (!target || !source) return;
-  const d = Object.getOwnPropertyDescriptor(source, key);
-  d && Object.defineProperty(target, key, d);
-  return d;
-}
-function copyOwnProperties<T>(target: T, source: any, overwrite?: boolean): T {
-  if (!target || !source) return target;
-  Object.getOwnPropertyNames(source).forEach(key => {
-    if (!overwrite && hasOwnProp(target, key)) return;
-    copyOwnProperty(target, key, source);
-  });
-  return target;
 }
 
 type MatchRegxList =RegExp|string|(RegExp|string)[];

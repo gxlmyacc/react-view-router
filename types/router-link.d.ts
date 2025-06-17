@@ -50,9 +50,9 @@ declare class RouterLink extends React.Component<RouterLinkProps, RouterLinkStat
     componentDidUpdate(prevProps: RouterLinkProps): void;
     render(): React.ReactNode[] | React.ReactElement<{
         [x: string]: any;
-        disabled?: boolean | undefined;
-        className?: string | undefined;
-        href?: string | undefined;
+        disabled?: boolean;
+        className?: string;
+        href?: string;
     }, string | React.JSXElementConstructor<any>> | null;
 }
 export { RouterLinkProps, RouterLink, guardEvent };

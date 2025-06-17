@@ -42,7 +42,7 @@ function useRoute(
   anotherWatch: UseRouteWatchEvent|null = null
 ) {
   const router = useRouter(defaultRouter);
-  const [route, setRoute] = useState(router ? (router.currentRoute || router.initialRoute) : null);
+  const [, setSeed] = useState(0);
   if (options.watch && router) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const onRouteChange: onRouteChangeEvent = useCallback(async (route, prevRoute, router) => {
@@ -50,13 +50,18 @@ function useRoute(
       if (anotherWatch && await anotherWatch(route, prevRoute, router) === false) return;
       if (isFunction(options.watch) && await options.watch(route, prevRoute, router) === false) return;
 
-      if (options.delay) setTimeout(() => setRoute(route), isNumber(options.delay) ? options.delay : 0);
-      else setRoute(route);
+      if (options.delay) {
+        setTimeout(
+          () => setSeed((seed) => seed + 1),
+          isNumber(options.delay) ? options.delay : 0
+        );
+      } else setSeed((seed) => seed + 1);
     }, [options, anotherWatch]);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useRouteChanged(router, onRouteChange);
   }
-  return route;
+
+  return router ? (router.currentRoute || router.initialRoute) : null;
 }
 
 function useRouterView() {

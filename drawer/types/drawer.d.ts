@@ -33,7 +33,7 @@ declare class Drawer extends React.Component<DrawerProps, DrawerState> {
     removeContainer(): void;
     getContainer(): HTMLElement;
     getZIndexStyle(): {
-        zIndex?: number | undefined;
+        zIndex?: number;
     };
     getWrapStyle(): any;
     getMaskStyle(): any;

@@ -1,4 +1,3 @@
-/// <reference types="react" />
 import ReactViewRouter from '../router';
 import { ConfigRoute, MatchedRoute, RouteChildrenFn } from '../types';
 import { isCommonPage } from './base';

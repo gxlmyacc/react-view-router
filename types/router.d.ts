@@ -104,7 +104,7 @@ declare class ReactViewRouter {
     }): undefined;
     createMatchedRoute(route: ConfigRoute, match: matchPathResult): MatchedRoute;
     getMatched(to: Route | RouteHistoryLocation | string, from?: Route | null, parent?: ConfigRoute): MatchedRouteArray;
-    getMatchedComponents(to: Route, from?: Route, parent?: ConfigRoute): ComponentType<{}>[];
+    getMatchedComponents(to: Route, from?: Route, parent?: ConfigRoute): ComponentType[];
     getMatchedViews(to: Route, from?: Route, parent?: ConfigRoute): RouterView<import("./router-view").RouterViewProps, import("./router-view").RouterViewState, any>[];
     getMatchedPath(path?: string): string;
     createRoute(to: RouteHistoryLocation | string | Route | null, options?: {

@@ -41,10 +41,10 @@ export function createMemoryHref(to: To) {
 export function createMemoryHistory(
   options: MemoryHistoryOptions = {}
 ): MemoryHistory {
-  let { initialEntries = ['/'], initialIndex } = options;
+  const { initialEntries = ['/'], initialIndex } = options;
 
-  let entries: Location[] = initialEntries.map(entry => {
-    let location = freeze<Location>({
+  const entries: Location[] = initialEntries.map(entry => {
+    const location = freeze<Location>({
       pathname: '/',
       search: '',
       hash: '',
@@ -61,16 +61,16 @@ export function createMemoryHistory(
     entries.length - 1
   );
 
-  let type = HistoryType.memory;
+  const type = HistoryType.memory;
   let action = Action.Push;
   let location = entries[index];
-  let listeners = createEvents<Listener>();
-  let blockers = createEvents<Blocker>();
+  const listeners = createEvents<Listener>();
+  const blockers = createEvents<Blocker>();
 
   const createHref = (to: To) => createMemoryHref(to);
 
   function getNextLocation(to: To, state: State = null): Location {
-    let { pathname = '/', search = '', hash = '' } = location;
+    const { pathname = '/', search = '', hash = '' } = location;
     return freeze<Location>({
       pathname,
       search,
@@ -89,7 +89,7 @@ export function createMemoryHistory(
   }
 
   function getIndex(delta?: number) {
-    let ret = index;
+    const ret = index;
     if (delta) {
       index = clamp(index + delta, 0, entries.length - 1);
     }
@@ -97,8 +97,8 @@ export function createMemoryHistory(
   }
 
   function push(to: To, state?: State) {
-    let nextAction = Action.Push;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Push;
+    const nextLocation = getNextLocation(to, state);
 
     const callback = (ok: boolean, payload?: any) => {
       if (!ok) return;
@@ -121,8 +121,8 @@ export function createMemoryHistory(
   }
 
   function replace(to: To, state?: State) {
-    let nextAction = Action.Replace;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Replace;
+    const nextLocation = getNextLocation(to, state);
 
     const callback = (ok: boolean, payload?: any) => {
       if (!ok) return;
@@ -148,9 +148,9 @@ export function createMemoryHistory(
   }
 
   function go(delta: number) {
-    let nextIndex = clamp(index + delta, 0, entries.length - 1);
-    let nextAction = Action.Pop;
-    let nextLocation = entries[nextIndex];
+    const nextIndex = clamp(index + delta, 0, entries.length - 1);
+    const nextAction = Action.Pop;
+    const nextLocation = entries[nextIndex];
 
     const callback = (ok: boolean, payload?: any) => {
       if (!ok) return;
@@ -172,7 +172,7 @@ export function createMemoryHistory(
     }
   }
 
-  let history: MemoryHistory = {
+  const history: MemoryHistory = {
     get extra() {
       return options.extra;
     },

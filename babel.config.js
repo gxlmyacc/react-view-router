@@ -9,11 +9,10 @@ const config = {
         targets: { browsers: ['chrome >= 49', 'firefox >= 52'] }
       }
     ],
-    '@babel/typescript',
+    '@babel/preset-typescript',
     '@babel/preset-react'
   ],
   plugins: [
-    ['@babel/plugin-proposal-decorators', { legacy: true }],
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-syntax-dynamic-import',
     ['@babel/plugin-transform-runtime', { useESModules: false, }],
@@ -24,7 +23,17 @@ const config = {
 module.exports = process.env.BUILD_ENV === 'es'
   ? {
     presets: [
-      '@babel/typescript',
+      [
+        '@babel/preset-env',
+        {
+          modules: false,
+          useBuiltIns: 'usage',
+          corejs: 2,
+          targets: { browsers: ['chrome >= 122']}
+        }
+      ],
+      '@babel/preset-typescript',
+      '@babel/preset-react'
     ],
     plugins: [
       '@babel/plugin-proposal-class-properties',

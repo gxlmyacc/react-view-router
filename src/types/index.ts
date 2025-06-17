@@ -664,4 +664,6 @@ declare global {
   interface window {
     __REACT_VIEW_ROUTER_GLOBAL__?: ReactViewRouterGlobal
   }
+
 }
+

@@ -94,7 +94,7 @@ declare class RouterView<P extends RouterViewProps = RouterViewProps, S extends 
     static getDerivedStateFromProps(nextProps: RouterViewProps): null;
     getComponentProps(): {
         props: Omit<Readonly<P> & Readonly<{
-            children?: React.ReactNode;
+            children?: ReactNode;
         }>, "children">;
         children: (P["children"] & (boolean | React.ReactChild | React.ReactFragment | React.ReactPortal | null)) | undefined;
     };

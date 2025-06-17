@@ -25,9 +25,9 @@ module.exports = {
     //     config: './build/webpack-dev.config.js'
     //   },
     // },
-    react: {
-      version: require('./package.json').dependencies.react,
-    },
+    // react: {
+    //   version: require('./package.json').dependencies.react,
+    // },
   },
   globals: {
     define: true,

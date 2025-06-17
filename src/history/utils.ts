@@ -2,25 +2,25 @@ import {
   PartialPath, To, HashType, Blocker, State, Action, Location
 } from './types';
 
-export const CAN_USE_DOM = !!(
+const CAN_USE_DOM = !!(
   typeof window !== 'undefined'
   && window.document
   && window.document.createElement
 );
 
 // eslint-disable-next-line no-constant-condition
-export const freeze: <T extends unknown>(obj: T) => T = false /** __DEV__* */
+const freeze: <T extends unknown>(obj: T) => T = false /** __DEV__* */
   ? obj => Object.freeze(obj)
   : obj => obj;
 
 
-export function getPossibleHashType(_window: Window = document.defaultView!, hash: string = '') {
+function getPossibleHashType(_window: Window = document.defaultView!, hash: string = '') {
   if (!hash || !hash.startsWith('#')) hash = _window.location.hash;
   let locationHash = hash.substr(1, 1);
   return (!locationHash || locationHash === '/') ? 'slash' : 'noslash';
 }
 
-export function clamp(n: number, lowerBound: number, upperBound: number) {
+function clamp(n: number, lowerBound: number, upperBound: number) {
   return Math.min(Math.max(n, lowerBound), upperBound);
 }
 
@@ -31,13 +31,13 @@ export function clamp(n: number, lowerBound: number, upperBound: number) {
 //   event.returnValue = '';
 // }
 
-export type Events<F> = {
+ type Events<F> = {
   length: number;
   push: (fn: F) => () => void;
   call: (arg: any, payload?: any) => void;
 };
 
-export function createEvents<F extends Function>(): Events<F> {
+function createEvents<F extends Function>(): Events<F> {
   let handlers: F[] = [];
 
   return {
@@ -56,13 +56,13 @@ export function createEvents<F extends Function>(): Events<F> {
   };
 }
 
-export function createKey() {
+function createKey() {
   return Math.random()
     .toString(36)
     .substr(2, 8);
 }
 
-export function getBaseHref() {
+function getBaseHref() {
   if (!CAN_USE_DOM) return '';
   let base = globalThis.document.querySelector('base');
   let href = '';
@@ -82,10 +82,10 @@ export function getBaseHref() {
  *
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#createpath
  */
-export function createPath({
+function createPath({
   pathname = '/',
   search = '',
-  hash = ''
+  hash = '',
 }: PartialPath) {
   return pathname + search + hash;
 }
@@ -95,7 +95,7 @@ export function createPath({
  *
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#parsepath
  */
-export function parsePath(path: string) {
+function parsePath(path: string) {
   let partialPath: PartialPath = {};
 
   if (path) {
@@ -121,7 +121,7 @@ export function parsePath(path: string) {
   return partialPath;
 }
 
-export function createHref(to: To, hashType?: HashType, _window: any = globalThis) {
+function createHref(to: To, hashType?: HashType, _window: any = globalThis) {
   let path = typeof to === 'string' ? to : createPath(to);
 
   if (!hashType) hashType = getPossibleHashType(_window, path);
@@ -146,16 +146,19 @@ export function createHref(to: To, hashType?: HashType, _window: any = globalThi
   return path;
 }
 
-export function allowTx(
+function allowTxWithParams(
   blockers: Events<Blocker<State>>,
-  action: Action,
-  location: Location,
-  index: number,
-  nextIndex: number,
-  cb: ((ok: boolean, payload?: any) => void)|null
+  params: {
+    action: Action,
+    location: Location,
+    index: number,
+    nextIndex: number,
+    callback: ((ok: boolean, payload?: any) => void)|null
+  }
 ) {
   let resultPayload: any;
   let count = blockers.length;
+  let cb = params.callback;
   function callback(ok: boolean, payload?: any) {
     if (!cb) return;
     if (!ok) {
@@ -171,16 +174,30 @@ export function allowTx(
   }
   return (
     !blockers.length || (blockers.call({
-      action,
-      location,
-      index,
-      nextIndex,
+      ...params,
       callback
     }), false)
   );
 }
 
-export function readonly<T extends object>(
+function allowTx(
+  blockers: Events<Blocker<State>>,
+  action: Action,
+  location: Location,
+  index: number,
+  nextIndex: number,
+  callback: ((ok: boolean, payload?: any) => void)|null
+) {
+  return allowTxWithParams(blockers, {
+    action,
+    location,
+    index,
+    nextIndex,
+    callback
+  });
+}
+
+function readonly<T extends object>(
   obj: T,
   key: string,
   get: () => any,
@@ -189,4 +206,53 @@ export function readonly<T extends object>(
   const { configurable = true, enumerable = true, ...restOptions } = options || {};
   Object.defineProperty(obj, key, { get, configurable, enumerable, ...restOptions });
   return obj;
+}
+
+const _hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function hasOwnProp(obj: any, key: PropertyKey) {
+  return Boolean(obj) && _hasOwnProperty.call(obj, key);
+}
+
+function copyOwnProperty(target: any, key: string, source: any): PropertyDescriptor | undefined {
+  if (!target || !source) return;
+  const d = Object.getOwnPropertyDescriptor(source, key);
+  d && Object.defineProperty(target, key, d);
+  return d;
+}
+function copyOwnProperties<
+ T extends Record<string, any>,
+ S extends Record<string, any>
+>(target: T|null, source: S|null, overwrite?: boolean): T & S {
+  if (!target || !source) {
+    return target as any;
+  }
+  Object.getOwnPropertyNames(source).forEach(key => {
+    if (!overwrite && hasOwnProp(target, key)) return;
+    copyOwnProperty(target, key, source);
+  });
+  return target as any;
+}
+
+export type {
+  Events
+}
+
+export {
+  CAN_USE_DOM,
+  freeze,
+  getPossibleHashType,
+  clamp,
+  createEvents,
+  createKey,
+  getBaseHref,
+  createPath,
+  parsePath,
+  createHref,
+  allowTxWithParams,
+  allowTx,
+  readonly,
+  hasOwnProp,
+  copyOwnProperty,
+  copyOwnProperties,
 }
