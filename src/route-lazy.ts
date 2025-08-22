@@ -26,7 +26,7 @@ export class RouteLazy<P = any> {
   updaters: RouteLazyUpdater[] = [];
 
   constructor(
-    ctor: ReactAllComponentType<P> | LazyImportMethod<P> | Promise<ReactAllComponentType<P>>,
+    ctor: ReactAllComponentType<any> | LazyImportMethod<P> | Promise<ReactAllComponentType<any>>,
     options: Partial<any> = {}
   ) {
     this._ctor = ctor;

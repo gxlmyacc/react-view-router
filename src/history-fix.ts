@@ -88,13 +88,13 @@ function createHistory4(history: HistoryFix, options: History4Options = {}) {
   let { basename = '' } = options;
   if (basename && basename.endsWith('/')) basename = basename.substr(0, basename.length - 1);
 
-  const ensurceSlash = (pathname?: string) => pathname && (pathname.startsWith('/') ? pathname : '/' + pathname);
+  const ensureSlash = (pathname?: string) => pathname && (pathname.startsWith('/') ? pathname : '/' + pathname);
   const encodeLocation = (location: To) => {
     if (!basename) return location;
-    if (isString(location)) return basename + ensurceSlash(location);
+    if (isString(location)) return basename + ensureSlash(location);
     return {
       ...location,
-      pathname: basename + ensurceSlash(location.pathname)
+      pathname: basename + ensureSlash(location.pathname)
     };
   };
   const decodeLocation = (location: string|PartialPath|Path) => {
@@ -246,13 +246,13 @@ function createHashHistoryNew(options: HashHistoryOptions & {
     return isHistory4(options.history) ? options.history.owner : options.history;
   }
   if (REACT_VIEW_ROUTER_GLOBAL.historys.hash) {
-    router.isHistoryCreater = REACT_VIEW_ROUTER_GLOBAL.historys.hash.extra === router;
+    router.isHistoryCreator = REACT_VIEW_ROUTER_GLOBAL.historys.hash.extra === router;
     return REACT_VIEW_ROUTER_GLOBAL.historys.hash;
   }
   return REACT_VIEW_ROUTER_GLOBAL.historys.hash = createHistory(
     options,
     () => {
-      router.isHistoryCreater = true;
+      router.isHistoryCreator = true;
       return createHashHistory({ ...options, extra: router }) as any;
     },
     HistoryType.hash
@@ -267,13 +267,13 @@ function createBrowserHistoryNew(options: BrowserHistoryOptions & {
     return isHistory4(options.history) ? options.history.owner : options.history;
   }
   if (REACT_VIEW_ROUTER_GLOBAL.historys.browser) {
-    router.isHistoryCreater = REACT_VIEW_ROUTER_GLOBAL.historys.browser.extra === router;
+    router.isHistoryCreator = REACT_VIEW_ROUTER_GLOBAL.historys.browser.extra === router;
     return REACT_VIEW_ROUTER_GLOBAL.historys.browser;
   }
   return REACT_VIEW_ROUTER_GLOBAL.historys.browser = createHistory(
     options,
     () => {
-      router.isHistoryCreater = true;
+      router.isHistoryCreator = true;
       return createBrowserHistory({ ...options, extra: router }) as any;
     },
     HistoryType.browser,
@@ -290,7 +290,7 @@ function createMemoryHistoryNew(options: {
   return createHistory(
     options,
     () => {
-      router.isHistoryCreater = true;
+      router.isHistoryCreator = true;
       return createMemoryHistory({
         initialEntries: options.pathname ? [options.pathname] : ['/'],
         extra: router

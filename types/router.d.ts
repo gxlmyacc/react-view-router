@@ -2,7 +2,7 @@ import { ComponentType } from 'react';
 import { HistoryFix } from './history-fix';
 import { normalizeLocation, nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactViewRouterOptions, ReactViewRouterMoreOptions, NormalizedConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, LazyResolveFn, OnBindInstance, OnGetLazyResovle, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
+import { ReactViewRouterOptions, ReactViewRouterMoreOptions, NormalizedConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, LazyResolveFn, OnBindInstance, OnGetLazyResolve, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
 import { Action, HistoryType } from './history';
 declare const version: string;
 declare class ReactViewRouter {
@@ -37,7 +37,7 @@ declare class ReactViewRouter {
     apps: any[];
     Apps: React.ComponentClass[];
     isRunning: boolean;
-    isHistoryCreater: boolean;
+    isHistoryCreator: boolean;
     rememberInitialRoute: boolean;
     getHostRouterView: typeof getHostRouterView;
     nextTick: typeof nextTick;
@@ -71,7 +71,7 @@ declare class ReactViewRouter {
     _refreshInitialRoute(): void;
     _callEvent<E extends Exclude<keyof ReactViewRoutePlugin, 'name' | 'install' | 'uninstall'>>(event: E, ...args: Parameters<ReactViewRoutePlugin[E]>): ReturnType<ReactViewRoutePlugin[E]>;
     _isVuelikeComponent(comp: any): any;
-    _getComponentGurads<T extends RouteGuardInterceptor>(mr: MatchedRoute, guardName: string, onBindInstance?: OnBindInstance<Exclude<T, 'LazyResolveFn'>>, onGetLazyResovle?: OnGetLazyResovle | null): T[];
+    _getComponentGuards<T extends RouteGuardInterceptor>(mr: MatchedRoute, guardName: string, onBindInstance?: OnBindInstance<Exclude<T, 'LazyResolveFn'>>, onGetLazyResolve?: OnGetLazyResolve | null): T[];
     _getSameMatched(route: Route | null, compare?: Route): MatchedRoute[];
     _getChangeMatched(route: Route, route2?: Route | null, options?: {
         containLazy?: boolean;
@@ -85,7 +85,7 @@ declare class ReactViewRouter {
     _isMatchBasename(location: RouteHistoryLocation | Route): boolean;
     _transformLocation(location: RouteHistoryLocation | Route): Route | RouteHistoryLocation<import("./history").State>;
     _getInterceptor(interceptors: RouteGuardInterceptor[], index: number): Promise<any>;
-    _routetInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn): Promise<void>;
+    _routeInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn): Promise<void>;
     _handleRouteInterceptor(location: null | RouteHistoryLocation | Route, callback: (ok: boolean | RouteInterceptorCallback, route?: Route | null) => void, isInit?: boolean): Promise<void>;
     _normalizeLocation(to: Parameters<typeof normalizeLocation>[0], options?: Parameters<typeof normalizeLocation>[1]): RouteHistoryLocation<import("./history").State> | null;
     _internalHandleRouteInterceptor(location: RouteHistoryLocation | Route, callback: (ok: boolean | RouteInterceptorCallback, route?: Route | null) => void, isInit?: boolean): void;

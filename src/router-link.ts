@@ -22,7 +22,6 @@ function guardEvent(e: any) {
     const target = e.currentTarget.getAttribute('target');
     if (/\b_blank\b/i.test(target)) return;
   }
-  // this may be a Weex event which doesn't have this method
   if (e.preventDefault) {
     e.preventDefault();
   }

@@ -134,7 +134,7 @@ export interface RouteAfterGuardFn {
 }
 export type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | LazyResolveFn;
 export type OnBindInstance<T = any> = (fn: T, name: string, ci: any, r: MatchedRoute) => RouteGuardInterceptor | null;
-export type OnGetLazyResovle = (lazyResovleFn: LazyResolveFn, hook: (cb: () => void) => void) => void;
+export type OnGetLazyResolve = (lazyResolveFn: LazyResolveFn, hook: (cb: () => void) => void) => void;
 export type RouteComponentToResolveFn<T = any> = (c: any, componentKey: string) => T[];
 export type RouteLocation = {
     path?: string;
@@ -144,7 +144,7 @@ export type RouteLocation = {
     absolute?: boolean | HistoryType;
     delta?: number;
     route?: ConfigRoute;
-    backIfVisited?: boolean | 'full-matcth';
+    backIfVisited?: boolean | 'full-match';
     pendingIfNotPrepared?: boolean;
     readonly _routeNormalized?: boolean;
 };
@@ -315,7 +315,7 @@ export interface RouteMeta {
     visible?: boolean | RouteMetaFunction<boolean>;
     commonPage?: boolean | RouteMetaFunction<boolean>;
     savePosition?: boolean | RouteMetaFunction<boolean>;
-    [key: string]: any | RouteMetaFunction;
+    [key: string]: boolean | string | object | number | null | undefined | RouteMetaFunction;
 }
 export interface RouteComputedMeta {
     readonly title?: string;
@@ -380,11 +380,11 @@ export interface ReactViewRoutePlugin {
     onRouteMetaChange?: onRouteMetaChangeEvent;
     onLazyResolveComponent?(nc: ReactAllComponentType | null, route: ConfigRoute, prevRes?: any): ReactAllComponentType | undefined;
     onWalkRoute?(route: ConfigRoute, routeIndex: number, routes: ConfigRoute[], prevRes?: any): void;
-    onGetRouteComponentGurads?(interceptors: RouteGuardInterceptor[], route: ConfigRoute, component: any, componentKey: string, guardName: string, options: {
+    onGetRouteComponentGuards?(interceptors: RouteGuardInterceptor[], route: ConfigRoute, component: any, componentKey: string, guardName: string, options: {
         router: ReactViewRouter;
         onBindInstance?: OnBindInstance | null;
-        onGetLazyResovle?: OnGetLazyResovle | null;
-        toResovle: RouteComponentToResolveFn;
+        onGetLazyResolve?: OnGetLazyResolve | null;
+        toResolve: RouteComponentToResolveFn;
         getGuard: (obj: any, guardName: string) => any;
         replaceInterceptors: (newInterceptors: any[], interceptors: RouteGuardInterceptor[], index: number) => any[];
     }, prevRes?: any): void | boolean;

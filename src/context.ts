@@ -3,7 +3,6 @@ import ReactViewRouter from './router';
 import { RouterViewComponent } from './router-view';
 import { REACT_VIEW_ROUTER_GLOBAL } from './global';
 
-
 const RouterContext = REACT_VIEW_ROUTER_GLOBAL.contexts.RouterContext || React.createContext<ReactViewRouter|null>(null);
 const RouterViewContext = REACT_VIEW_ROUTER_GLOBAL.contexts.RouterViewContext || React.createContext<RouterViewComponent|null>(null);
 

@@ -8,7 +8,7 @@ import {
   flatten, isAbsoluteUrl, innumerable, isPlainObject, getRouterViewPath, getCompleteRoute,
   normalizeRoutes, normalizeLocation, resolveRedirect, resolveAbort, copyOwnProperties,
   matchRoutes, isFunction, isLocation, nextTick, once, isRouteGuardInfoHooks, isReadonly,
-  afterInterceptors, getRouteChildren, readRouteMeta, readonly, getLoactionAction,
+  afterInterceptors, getRouteChildren, readRouteMeta, readonly, getLocationAction,
   getHostRouterView, camelize, reverseArray, isMatchedRoutePropsChanged,
   isRoute, walkRoutes, warn, createEmptyRouteState,
   DEFAULT_STATE_NAME,
@@ -23,7 +23,7 @@ import {
   RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteNextResult, RouteLocation, RouteBranchInfo,
   matchPathResult, ConfigRoute, RouteErrorCallback,
   ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, LazyResolveFn, OnBindInstance,
-  OnGetLazyResovle, RouteComponentToResolveFn,
+  OnGetLazyResolve, RouteComponentToResolveFn,
   VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, MatchedRouteGuard,
   RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps, RouteInterceptorItem,
   onRouteingNextCallback, // ReactViewRouterScrollBehavior,
@@ -98,7 +98,7 @@ class ReactViewRouter {
 
   isRunning: boolean = false;
 
-  isHistoryCreater: boolean = false;
+  isHistoryCreator: boolean = false;
 
   rememberInitialRoute: boolean = false;
 
@@ -139,7 +139,7 @@ class ReactViewRouter {
   }
 
   _initRouter(options: ReactViewRouterOptions) {
-    let { name, mode, basename, ...moreOptions  } = options;
+    let { name, mode, basename, ...moreOptions } = options;
     if (name != null) this.name = name;
 
     if (mode != null) {
@@ -163,7 +163,7 @@ class ReactViewRouter {
     Object.assign(this.options, moreOptions);
 
     if (this.options.keepAlive && !this.options.renderUtils) {
-      throw new Error('endable keepAlive need "renderUtils", but it cannot be found from router\'s options!');
+      throw new Error('enable keepAlive need "renderUtils", but it cannot be found from router\'s options!');
     }
   }
 
@@ -267,7 +267,7 @@ class ReactViewRouter {
     this._history = null;
     this._interceptorCounter = 0;
     this.isRunning = false;
-    this.isHistoryCreater = false;
+    this.isHistoryCreator = false;
 
     if (!options.ignoreClearRoute) {
       this.initialRoute = { location: {} } as any;
@@ -410,11 +410,11 @@ class ReactViewRouter {
     );
   }
 
-  _getComponentGurads<T extends RouteGuardInterceptor>(
+  _getComponentGuards<T extends RouteGuardInterceptor>(
     mr: MatchedRoute,
     guardName: string,
     onBindInstance?: OnBindInstance<Exclude<T, 'LazyResolveFn'>>,
-    onGetLazyResovle?: OnGetLazyResovle|null
+    onGetLazyResolve?: OnGetLazyResolve|null
   ) {
     const ret: T[] = [];
 
@@ -433,7 +433,7 @@ class ReactViewRouter {
     const guards = r[routeGuardName];
     if (guards) ret.push(guards);
 
-    const toResovle: RouteComponentToResolveFn<T> = (c, componentKey) => {
+    const toResolve: RouteComponentToResolveFn<T> = (c, componentKey) => {
       let ret: T[] = [];
       if (c) {
         const cc = c.__component ? getGuardsComponent(c, true) : c;
@@ -485,7 +485,7 @@ class ReactViewRouter {
       if (!c) return;
 
       const isResolved = this._callEvent(
-        'onGetRouteComponentGurads',
+        'onGetRouteComponentGuards',
         ret,
         r,
         c,
@@ -494,8 +494,8 @@ class ReactViewRouter {
         {
           router: this,
           onBindInstance,
-          onGetLazyResovle,
-          toResovle,
+          onGetLazyResolve,
+          toResolve,
           getGuard,
           replaceInterceptors: replaceInterceptors as any
         }
@@ -503,22 +503,22 @@ class ReactViewRouter {
       if (isResolved === true) return ret;
 
       if (c instanceof RouteLazy) {
-        let lazyResovleCb: () => void;
-        const lazyResovle: LazyResolveFn = async (interceptors: any[], index: number) => {
-          lazyResovleCb && lazyResovleCb();
+        let lazyResolveCb: () => void;
+        const lazyResolve: LazyResolveFn = async (interceptors: any[], index: number) => {
+          lazyResolveCb && lazyResolveCb();
           let nc = await c.toResolve(this, r, key);
           nc = this._callEvent('onLazyResolveComponent', nc, r) || nc;
-          const ret = toResovle(nc, key);
+          const ret = toResolve(nc, key);
           return replaceInterceptors(ret, interceptors, index);
         };
-        lazyResovle.lazy = true;
-        lazyResovle.route = mr;
-        onGetLazyResovle && onGetLazyResovle(lazyResovle, cb => lazyResovleCb = cb);
-        ret.push(lazyResovle as any);
+        lazyResolve.lazy = true;
+        lazyResolve.route = mr;
+        onGetLazyResolve && onGetLazyResolve(lazyResolve, cb => lazyResolveCb = cb);
+        ret.push(lazyResolve as any);
         return;
       }
 
-      ret.push(...toResovle(c, key));
+      ret.push(...toResolve(c, key));
     });
 
     return ret;
@@ -710,7 +710,7 @@ class ReactViewRouter {
     return interceptor as any;
   }
 
-  async _routetInterceptors(
+  async _routeInterceptors(
     interceptors: RouteGuardInterceptor[],
     to: Route,
     from: Route | null,
@@ -726,7 +726,7 @@ class ReactViewRouter {
           route: interceptor.route,
         });
         v = _to && this.createRoute(_to, {
-          action: getLoactionAction(to),
+          action: getLocationAction(to),
           from: to,
           matchedProvider: getCompleteRoute(to) || getCompleteRoute(from),
           isRedirect: true,
@@ -887,7 +887,7 @@ class ReactViewRouter {
         this.nextTick(() => {
           if (!checkIsContinue()) return;
           if (!isInit && (!current || current.fullPath !== to.fullPath)) {
-            this._routetInterceptors(this._getRouteUpdateGuards(to, current), to, current);
+            this._routeInterceptors(this._getRouteUpdateGuards(to, current), to, current);
           }
         });
       };
@@ -918,7 +918,7 @@ class ReactViewRouter {
       }
 
       fallbackViews.forEach(fallbackView => fallbackView._updateResolving(true, to));
-      this._routetInterceptors(this._getBeforeEachGuards(to, from, current), to, from, ok => {
+      this._routeInterceptors(this._getBeforeEachGuards(to, from, current), to, from, ok => {
         this._nexting = null;
         fallbackViews.length && setTimeout(() => fallbackViews.forEach(
           fallbackView => fallbackView._updateResolving(false)
@@ -958,7 +958,7 @@ class ReactViewRouter {
 
         const onNext = (newOk: boolean) => {
           isContinue = newOk;
-          if (isContinue) this._routetInterceptors(this._getBeforeResolveGuards(to, current), to, current);
+          if (isContinue) this._routeInterceptors(this._getBeforeResolveGuards(to, current), to, current);
 
           // callback(isContinue, to);
           const okIsLocation = isLocation(ok);
@@ -982,7 +982,7 @@ class ReactViewRouter {
           this.nextTick(() => {
             if (isFunction(ok)) ok = ok(to);
             if (to && isFunction(to.onComplete)) to.onComplete(Boolean(ok), to);
-            this._routetInterceptors(this._getAfterEachGuards(to, current), to, current);
+            this._routeInterceptors(this._getAfterEachGuards(to, current), to, current);
           });
         };
 
@@ -1139,7 +1139,7 @@ class ReactViewRouter {
       if ((_to as RouteLocation).backIfVisited && _to.basename === this.basename) {
         const historyIndex = this.history.index;
         const isMatch: (to: RouteHistoryLocation, s: HistoryStackInfo) => boolean
-          = (_to as RouteLocation).backIfVisited === 'full-matcth'
+          = (_to as RouteLocation).backIfVisited === 'full-match'
             ? (to, s) => to.search === s.search
             : (to, s) =>  Object.keys(to.query).every(key => to.query[key] == s.query[key]);
         const stack = reverseArray(this.stacks).find(s => {
@@ -1281,11 +1281,11 @@ class ReactViewRouter {
         get beforeEnter() {
           if (beforeEnter) return beforeEnter;
           beforeEnter = [];
-          that._getComponentGurads<RouteBeforeGuardFn|LazyResolveFn>(
+          that._getComponentGuards<RouteBeforeGuardFn|LazyResolveFn>(
             ret,
             'beforeRouteEnter',
             (fn, name, ci, r) => {
-              const ret = function beforeRouteEnterWraper(to: Route, from: Route | null, next: RouteNextFn) {
+              const ret = function beforeRouteEnterWrapper(to: Route, from: Route | null, next: RouteNextFn) {
                 return fn(to as any, from as any, (cb, ...args) => {
                   if (isFunction(cb)) {
                     const _cb = cb;
@@ -1303,10 +1303,10 @@ class ReactViewRouter {
               beforeEnter.push(guardInfo);
               return guardInfo.guard;
             },
-            (lazyResovleFn, hook) => {
+            (lazyResolveFn, hook) => {
               const guardInfo = {
                 lazy: true,
-                guard: lazyResovleFn,
+                guard: lazyResolveFn,
               };
               hook(() => {
                 const idx = beforeEnter.indexOf(guardInfo);
@@ -1319,22 +1319,22 @@ class ReactViewRouter {
         },
         get beforeResolve() {
           if (beforeResolve) return beforeResolve;
-          beforeResolve = guardsToMatchedRouteGuards(that._getComponentGurads<RouteAfterGuardFn>(ret, 'beforeRouteResolve'));
+          beforeResolve = guardsToMatchedRouteGuards(that._getComponentGuards<RouteAfterGuardFn>(ret, 'beforeRouteResolve'));
           return beforeResolve;
         },
         get update() {
           if (update) return update;
-          update = guardsToMatchedRouteGuards(that._getComponentGurads<RouteAfterGuardFn>(ret, 'beforeRouteUpdate'));
+          update = guardsToMatchedRouteGuards(that._getComponentGuards<RouteAfterGuardFn>(ret, 'beforeRouteUpdate'));
           return update;
         },
         get beforeLeave() {
           if (beforeLeave) return beforeLeave;
           beforeLeave = [];
-          that._getComponentGurads<RouteBeforeGuardFn>(
+          that._getComponentGuards<RouteBeforeGuardFn>(
             ret,
             'beforeRouteLeave',
             (fn, name, ci, r) => {
-              const ret = function beforeRouteLeaveWraper(to: Route, from: Route | null, next: RouteNextFn) {
+              const ret = function beforeRouteLeaveWrapper(to: Route, from: Route | null, next: RouteNextFn) {
                 return fn.call(ci, to, from, (cb?: RouteNextResult, ...args: any[]) => {
                   if (isFunction(cb)) {
                     const _cb = cb;
@@ -1356,7 +1356,7 @@ class ReactViewRouter {
         },
         get afterLeave() {
           if (afterLeave) return afterLeave;
-          afterLeave = guardsToMatchedRouteGuards(that._getComponentGurads<RouteAfterGuardFn>(ret, 'afterRouteLeave'));
+          afterLeave = guardsToMatchedRouteGuards(that._getComponentGuards<RouteAfterGuardFn>(ret, 'afterRouteLeave'));
           return afterLeave;
         },
       },
@@ -1366,11 +1366,12 @@ class ReactViewRouter {
     readonly(ret, 'meta', () => meta);
 
     let metaComputed: RouteComputedMeta|undefined;
+    const router = this;
     Object.defineProperty(ret, 'metaComputed', {
       get() {
         if (metaComputed) return metaComputed;
         metaComputed = Object.keys(meta).reduce((p, key) => {
-          readonly(p, key, () => readRouteMeta(route, key, { router: this }));
+          readonly(p, key, () => readRouteMeta(route, key, { router }));
           return p;
         }, {} as any);
         return metaComputed;
@@ -1469,7 +1470,7 @@ class ReactViewRouter {
     Object.assign(params, last.params);
 
     const ret: any = {
-      action: action || getLoactionAction(to as any) || this.history.action,
+      action: action || getLocationAction(to as any) || this.history.action,
       url: last.url,
       basename: this.basename,
       path,
@@ -1831,11 +1832,11 @@ class ReactViewRouter {
 
     if (vuelike.config.inheritMergeStrategies) {
       if (!vuelike.config.inheritMergeStrategies.$route) {
-        vuelike.config.inheritMergeStrategies.$route = config.createMergeStrategie(this);
+        vuelike.config.inheritMergeStrategies.$route = config.createMergeStrategies(this);
       }
     } else if (vuelike.config.optionMergeStrategies) {
       if (!vuelike.config.optionMergeStrategies.$route) {
-        vuelike.config.optionMergeStrategies.$route = config.createMergeStrategie(this);
+        vuelike.config.optionMergeStrategies.$route = config.createMergeStrategies(this);
       }
     }
 

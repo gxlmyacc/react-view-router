@@ -139,7 +139,7 @@ const RouterViewTransition = React.forwardRef(
         onEnter: maybeNode => {
           // if (maybeNode && $refs.route) {
           //   maybeNode.childNodes.forEach(node => {
-          //     if (!node[KEEP_ALIVE_REPLACOR]
+          //     if (!node[KEEP_ALIVE_REPLACER]
           //       || node.$refs.mountRoot === maybeNode) return;
           //     node.mountView(maybeNode, node);
           //   })
@@ -168,7 +168,7 @@ const RouterViewTransition = React.forwardRef(
         onExited: maybeNode => {
           // if (maybeNode) {
           //   maybeNode.childNodes.forEach(node => {
-          //     if (!node[KEEP_ALIVE_REPLACOR]
+          //     if (!node[KEEP_ALIVE_REPLACER]
           //       || node.$refs.mountRoot !== maybeNode) return;
           //     node.unmountView();
           //   })

@@ -16,7 +16,7 @@ export * from './hocs';
 export * from './hooks';
 export {
   KEEP_ALIVE_ANCHOR,
-  KEEP_ALIVE_REPLACOR,
+  KEEP_ALIVE_REPLACER,
   KEEP_ALIVE_KEEP_COPIES
 } from './keep-alive';
 

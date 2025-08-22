@@ -170,8 +170,8 @@ export interface RouteAfterGuardFn {
 export type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | LazyResolveFn;
 export type OnBindInstance<T = any> = (fn: T, name: string, ci: any, r: MatchedRoute)
   => RouteGuardInterceptor | null;
-export type OnGetLazyResovle = (
-  lazyResovleFn: LazyResolveFn,
+export type OnGetLazyResolve = (
+  lazyResolveFn: LazyResolveFn,
   hook: (cb: () => void) => void
 ) => void;
 export type RouteComponentToResolveFn<T = any> = (c: any, componentKey: string) => T[];
@@ -184,7 +184,7 @@ export type RouteLocation = {
   absolute?: boolean | HistoryType,
   delta?: number,
   route?: ConfigRoute,
-  backIfVisited?: boolean|'full-matcth',
+  backIfVisited?: boolean|'full-match',
   pendingIfNotPrepared?: boolean,
   readonly _routeNormalized?: boolean;
 }
@@ -381,7 +381,7 @@ export interface RouteMeta {
   visible?: boolean|RouteMetaFunction<boolean>,
   commonPage?: boolean|RouteMetaFunction<boolean>,
   savePosition?: boolean|RouteMetaFunction<boolean>,
-  [key: string]: any|RouteMetaFunction;
+  [key: string]: boolean|string|object|number|null|undefined|RouteMetaFunction;
 }
 
 export interface RouteComputedMeta {
@@ -479,7 +479,7 @@ export interface ReactViewRoutePlugin {
   ): ReactAllComponentType | undefined;
   onWalkRoute?(route: ConfigRoute, routeIndex: number, routes: ConfigRoute[], prevRes?: any): void;
 
-  onGetRouteComponentGurads?(
+  onGetRouteComponentGuards?(
     interceptors: RouteGuardInterceptor[],
     route: ConfigRoute,
     component: any,
@@ -488,8 +488,8 @@ export interface ReactViewRoutePlugin {
      options: {
       router: ReactViewRouter,
       onBindInstance?: OnBindInstance|null,
-      onGetLazyResovle?: OnGetLazyResovle|null,
-      toResovle: RouteComponentToResolveFn,
+      onGetLazyResolve?: OnGetLazyResolve|null,
+      toResolve: RouteComponentToResolveFn,
       getGuard: (obj: any, guardName: string) => any,
       replaceInterceptors: (newInterceptors: any[], interceptors: RouteGuardInterceptor[], index: number) => any[]
     },
@@ -649,7 +649,6 @@ export interface VuelikeComponent  {
   componentWillUnactivate?: () => void,
   componentDidActivate?: () => void,
 }
-
 declare global {
 
   interface EsModule<T = any> {

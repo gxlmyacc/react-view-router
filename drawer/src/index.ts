@@ -107,7 +107,7 @@ class RouterDrawer<
     this.setState({ openDrawer: false });
   }
 
-  getZindex() {
+  getZIndex() {
     const currentRoute = this.state.currentRoute;
     if (!currentRoute) return config.zIndexStart;
     const { zIndex } = this.props;
@@ -178,7 +178,7 @@ class RouterDrawer<
       touch: touch && needAnimation,
       transitionName: (needAnimation && position) ? `rvr-slide-${position}` : '',
       open: Boolean(openDrawer && result),
-      zIndex: this.getZindex(),
+      zIndex: this.getZIndex(),
       onAnimateLeave: this._handleAnimationEnd,
       onClose: this._handleClose,
     } as any, result);

@@ -181,7 +181,7 @@ function useRouteQuery<T extends Record<string, any> = any>(
 ): T {
   const router = useRouter(defaultRouter);
   const route = useRoute(router || defaultRouter, options);
-  return route ? route.query as any : {};
+  return route ? route.query as any : {} as T;
 }
 
 function useRouteChanged(router: ReactViewRouter, onChange: onRouteChangeEvent, deps: string[] = []) {

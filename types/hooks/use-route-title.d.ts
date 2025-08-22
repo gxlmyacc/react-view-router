@@ -1,5 +1,5 @@
 import ReactViewRouter from '../router';
-import { ConfigRoute, MatchedRoute, RouteChildrenFn } from '../types';
+import { ConfigRoute, MatchedRoute, RouteChildrenFn, RouteMeta } from '../types';
 import { isCommonPage } from './base';
 type filterCallback = (r: ConfigRoute, routes: ConfigRoute[], props: {
     router: ReactViewRouter;
@@ -8,6 +8,7 @@ type filterCallback = (r: ConfigRoute, routes: ConfigRoute[], props: {
     refresh?: () => void;
     title?: string;
     visible?: boolean;
+    meta: Partial<RouteMeta>;
 }) => boolean;
 type RouteTitleInfo = {
     title: string;

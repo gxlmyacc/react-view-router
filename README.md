@@ -381,7 +381,7 @@
 
   - `manual: boolean` Whether it is manual mode, which means that the `start` method is not automatically called when `new ReactViewRouter()` is called. In this case, you need to manually call the `start` method to enable the route listener, and the `ReactViewRouter` instance will not start working until the `start` method is called
 
-  - `rememberInitialRoute: boolean` Whether to remember the `initialRoute`. When it is `true`, when refreshing the browser page, the `initialRoute` is no longer the route information recorded in the current url, but the route information of the first time retrieved from the sessionStroage. This function is mainly used to solve the problem of losing the initialized url parameters when refreshing the page
+  - `rememberInitialRoute: boolean` Whether to remember the `initialRoute`. When it is `true`, when refreshing the browser page, the `initialRoute` is no longer the route information recorded in the current url, but the route information of the first time retrieved from the sessionStorage. This function is mainly used to solve the problem of losing the initialized url parameters when refreshing the page
 
   - `holdInitialQueryProps: boolean` - Whether to merge the `query` of the initial route (`initialRoute`) into the `query` of the jump route when calling the `push`, `replace` and other route jump methods. This parameter will be more effective in some systems that need to keep the url parameters all the time;
 
@@ -500,7 +500,7 @@ See: [Route Object Properties](https://router.vuejs.org/api/#route-object-proper
 
 - `isPrepared` - Whether the current route is ready - `root route`, `currentRoute` has been generated;
 
-- `isHistoryCreater` - Whether it is the creator of the internal `history`;
+- `isHistoryCreator` - Whether it is the creator of the internal `history`;
 
 - `isBrowserMode` - Whether it is the `browser` route mode;
 
@@ -667,7 +667,7 @@ The first parameter object format of `router.push`, `router.replace`, `router.re
 
 #### `parseQuery`, `stringifyQuery` 
 
-Internal url query parsing/stringifying methods, can be overridden by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`.
+Internal url query parse/stringify methods, can be overridden by `new ReactViewRouter({ parseQuery: parseQueryMethod, stringifyQuery: stringifyQueryMethod });`.
 
 Note: The default parser will parse `true`, `false`, `null`, `undefined`, `JSON object/array` in the query of the query into the corresponding type, not string.
 
@@ -841,7 +841,7 @@ interface ReactViewRoutePlugin {
   // Called when registering routes in the router, called when the route is not in the routes for the first time when the router first traverses the routes
   onWalkRoute?(route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray, prevRes?: any): void;
 
-  onGetRouteComponentGurads?(
+  onGetRouteComponentGuards?(
     interceptors: RouteGuardInterceptor[],
     route: ConfigRoute,
     component: any,
@@ -850,8 +850,8 @@ interface ReactViewRoutePlugin {
      options: {
       router: ReactViewRouter,
       onBindInstance?: OnBindInstance,
-      onGetLazyResovle?: OnGetLazyResovle,
-      toResovle: RouteComponentToResolveFn,
+      onGetLazyResolve?: OnGetLazyResolve,
+      toResolve: RouteComponentToResolveFn,
       getGuard: (obj: any, guardName: string) => any,
       replaceInterceptors: (newInterceptors: any[], interceptors: RouteGuardInterceptor[], index: number) => any[]
     },
@@ -1384,7 +1384,7 @@ Example:
 import { useViewActivate } from 'react-view-router';
 
 useViewActivate((event) => {
-  // dosomethine
+  // dosomething
 });
 ```
 
@@ -1414,7 +1414,7 @@ Example:
 import { useViewDeactivate } from 'react-view-router';
 
 useViewDeactivate((event) => {
-  // dosomethine
+  // dosomething
 });
 ```
 

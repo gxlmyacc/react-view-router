@@ -8,7 +8,7 @@ import type { ReactRenderUtils } from './types';
 import { innumerable } from './util';
 
 const KEEP_ALIVE_ANCHOR = 'keep-alive-anchor';
-const KEEP_ALIVE_REPLACOR = 'keep-alive-replacor';
+const KEEP_ALIVE_REPLACER = 'keep-alive-replacer';
 const KEEP_ALIVE_POSITION = 'keep-alive-position';
 const KEEP_ALIVE_KEEP_COPIES = 'keep-alive-keep-copies';
 interface KeepAliveComponentProps {
@@ -58,7 +58,7 @@ function Component(props: KeepAliveComponentProps) {
       el: any,
       methodName: string,
       cb?: (...args: any[]) => any,
-      replacor?: (origin: Function, ...args: any[]) => any,
+      replacer?: (origin: Function, ...args: any[]) => any,
     ) => {
       const old = el[methodName];
       if (!old || old._hooked) {
@@ -71,7 +71,7 @@ function Component(props: KeepAliveComponentProps) {
         // @ts-ignore
         // eslint-disable-next-line prefer-spread
         cb && cb.apply(this, arguments);
-        if (replacor) return replacor(old, ...arguments);
+        if (replacer) return replacer(old, ...arguments);
         // eslint-disable-next-line prefer-spread
         return (mountRoot as any)[methodName].apply(mountRoot, arguments);
       };
@@ -108,9 +108,9 @@ function Component(props: KeepAliveComponentProps) {
     $refs.childNodes.forEach(child => {
       if (inner) appendChild(mountRoot, child);
       else insertBefore(mountRoot, child, anchor);
-      // if (child && child[KEEP_ALIVE_REPLACOR] && child.mountName) {
-      //   let replacor = (child as any)[KEEP_ALIVE_REPLACOR];
-      //   let item = replacor[child.mountName];
+      // if (child && child[KEEP_ALIVE_REPLACER] && child.mountName) {
+      //   let replacer = (child as any)[KEEP_ALIVE_REPLACER];
+      //   let item = replacer[child.mountName];
       //   item && item.mountView(mountRoot, child);
       // }
     });
@@ -133,7 +133,7 @@ function Component(props: KeepAliveComponentProps) {
       const isValidChild = anchor && mountRoot.contains(anchor);
       const nodes = childNodes.splice(0, childNodes.length);
       nodes.forEach(child => {
-        if (child && child[KEEP_ALIVE_REPLACOR]) child.unmountView();
+        if (child && child[KEEP_ALIVE_REPLACER]) child.unmountView();
         else {
           const p = { x: child.scrollLeft, y: child.scrollTop };
           innumerable(child, KEEP_ALIVE_POSITION, p.x || p.y ? p : null);
@@ -157,18 +157,18 @@ function Component(props: KeepAliveComponentProps) {
     if (!anchor) return;
     if (!(anchor as any).unmountView) {
       (anchor as any).unmountView = function () {
-        if (!this.mountName || !this[KEEP_ALIVE_REPLACOR]) return;
-        let replacor = this[KEEP_ALIVE_REPLACOR];
-        let item = replacor && replacor[this.mountName];
+        if (!this.mountName || !this[KEEP_ALIVE_REPLACER]) return;
+        let replacer = this[KEEP_ALIVE_REPLACER];
+        let item = replacer && replacer[this.mountName];
         item && item.unmountView();
       }
     }
-    let replacor = (anchor as any)[KEEP_ALIVE_REPLACOR];
-    if (!replacor){
-      replacor = {};
-      innumerable(anchor, KEEP_ALIVE_REPLACOR, replacor);
+    let replacer = (anchor as any)[KEEP_ALIVE_REPLACER];
+    if (!replacer){
+      replacer = {};
+      innumerable(anchor, KEEP_ALIVE_REPLACER, replacer);
     }
-    let item = replacor[$refs.name] = {} as any;
+    let item = replacer[$refs.name] = {} as any;
     item.$refs = $refs;
     item.unmountView = unmountView;
     item.mountView = mountView;
@@ -347,7 +347,7 @@ export {
   createAnchor,
   createAnchorText,
   KEEP_ALIVE_ANCHOR,
-  KEEP_ALIVE_REPLACOR,
+  KEEP_ALIVE_REPLACER,
   KEEP_ALIVE_KEEP_COPIES
 };
 

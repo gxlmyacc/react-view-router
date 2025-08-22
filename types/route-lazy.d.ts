@@ -9,7 +9,7 @@ export declare class RouteLazy<P = any> {
     $$typeof: Symbol | number;
     options: Partial<any>;
     updaters: RouteLazyUpdater[];
-    constructor(ctor: ReactAllComponentType<P> | LazyImportMethod<P> | Promise<ReactAllComponentType<P>>, options?: Partial<any>);
+    constructor(ctor: ReactAllComponentType<any> | LazyImportMethod<P> | Promise<ReactAllComponentType<any>>, options?: Partial<any>);
     toResolve(router: ReactViewRouter, route: ConfigRoute, key: string): Promise<ReactAllComponentType | null>;
     render(props: any, ref: any): React.DetailedReactHTMLElement<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement> | null;
 }

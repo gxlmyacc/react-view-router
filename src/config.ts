@@ -105,8 +105,8 @@ const config = {
     return this._stringifyQuery;
   },
 
-  createMergeStrategie(router: ReactViewRouter) {
-    return function routeMergeStrategie(parent: any, child: any, vm: any) {
+  createMergeStrategies(router: ReactViewRouter) {
+    return function routeMergeStrategies(parent: any, child: any, vm: any) {
       if (vm._isVuelikeRoot) {
         if (router.Apps.some(App => vm instanceof App)) {
           router.apps.push(vm);

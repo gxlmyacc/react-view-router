@@ -251,9 +251,9 @@ function normalizeLocation(
   if (!to || (isPlainObject(to) && !to.path && !to.pathname)) return null;
   if (to._routeNormalized) return to;
   if (isString(to)) {
-    const searchs = to.match(/\?[^#]+/g) || ([] as string[]);
-    const pathname = searchs.reduce((p, v) => p.replace(v, ''), to);
-    const search = searchs.sort().reduce((p, v, i) => {
+    const searches = to.match(/\?[^#]+/g) || ([] as string[]);
+    const pathname = searches.reduce((p, v) => p.replace(v, ''), to);
+    const search = searches.sort().reduce((p, v, i) => {
       if (!i) return v;
       const s = v.substr(1);
       return p + (s ? `&${s}` : '');
@@ -632,14 +632,14 @@ function renderRoute(
 }
 
 function flatten<T>(array: T[]) {
-  const flattend: T[] = [];
+  const list: T[] = [];
   (function flat(array) {
     array.forEach(function (el) {
       if (Array.isArray(el)) flat(el);
-      else flattend.push(el);
+      else list.push(el);
     });
   })(array);
-  return flattend;
+  return list;
 }
 
 function camelize(str: string): string {
@@ -849,9 +849,9 @@ function getCompleteRoute(route: Route|null) {
   return null;
 }
 
-function getLoactionAction(to?: Route): undefined|Action {
+function getLocationAction(to?: Route): undefined|Action {
   if (!to) return;
-  return (to.isRedirect && !to.isComplete) ? getLoactionAction(to.redirectedFrom) : to.action;
+  return (to.isRedirect && !to.isComplete) ? getLocationAction(to.redirectedFrom) : to.action;
 }
 
 function reverseArray<T>(originArray: T[]) {
@@ -866,18 +866,17 @@ function createUserConfigRoute(route: UserConfigRoute): UserConfigRoute {
   return route;
 }
 
-function createUserConfigRoutes<T extends RouteChildrenFn | NormalizedRouteChildrenFn>(routes: T): T
-function createUserConfigRoutes(routes: Array<UserConfigRoute|ConfigRoute>) {
+function createUserConfigRoutes(routes: Array<UserConfigRoute|ConfigRoute> | RouteChildrenFn | NormalizedRouteChildrenFn) {
   return routes;
 }
 
-const EMPTY_ROTUE_STATE_NAME = 'empty-state';
+const EMPTY_ROUTE_STATE_NAME = 'empty-state';
 function createEmptyRouteState() {
-  return innumerable({}, EMPTY_ROTUE_STATE_NAME, true);
+  return innumerable({}, EMPTY_ROUTE_STATE_NAME, true);
 }
 
 function isEmptyRouteState(state: any) {
-  return !state || state[EMPTY_ROTUE_STATE_NAME];
+  return !state || state[EMPTY_ROUTE_STATE_NAME];
 }
 
 export {
@@ -946,7 +945,7 @@ export {
   getCurrentPageHash,
   getRouterViewPath,
   getCompleteRoute,
-  getLoactionAction,
+  getLocationAction,
 
   getSessionStorage,
   setSessionStorage,

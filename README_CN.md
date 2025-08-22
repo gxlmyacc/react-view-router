@@ -370,7 +370,7 @@ export default function HomeIndex() {
 
   - `manual: boolean` 是否手动模式，表示在`new ReactViewRouter()`时不自动调用`start`方法。这时需要你手动调用`start`方法来启用路由监听后，`ReactViewRouter`实例才真正开始工作
 
-  - `rememberInitialRoute: boolean` 是否记住`initialRoute`。当为`true`时，在刷新浏览器页面时，`initialRoute`不再是记录的当前url中的路由信息，而是从sessionStroage中检索到的第一次的路由信息。该功能主要是为了解决刷新页面导致初始化url参数丢失的问题
+  - `rememberInitialRoute: boolean` 是否记住`initialRoute`。当为`true`时，在刷新浏览器页面时，`initialRoute`不再是记录的当前url中的路由信息，而是从sessionStorage中检索到的第一次的路由信息。该功能主要是为了解决刷新页面导致初始化url参数丢失的问题
 
   - `holdInitialQueryProps: boolean` - 是否在调用`push`、`replace`等路由跳转方法时，把初始路由(`initialRoute`)的`query`合并到跳转路由的`query`中。该参数在一些需要一直保持url参数的系统中将会比较有效；
 ### ReactViewRouter属性
@@ -484,7 +484,7 @@ export default function HomeIndex() {
 
   - `isPrepared` - 当前路由是否已准备好 - `根路由`、`currentRoute`已经生成完成；
 
-  - `isHistoryCreater` - 是否是内部的`history`的创建者；
+  - `isHistoryCreator` - 是否是内部的`history`的创建者；
 
   - `isBrowserMode` - 是否是`browser`路由模式；
 
@@ -824,7 +824,7 @@ interface ReactViewRoutePlugin {
   // 当向router中注册routes时，router初次遍历routes中没有route时被调用
   onWalkRoute?(route: ConfigRoute, routeIndex: number, routes: ConfigRouteArray, prevRes?: any): void;
 
-  onGetRouteComponentGurads?(
+  onGetRouteComponentGuards?(
     interceptors: RouteGuardInterceptor[],
     route: ConfigRoute,
     component: any,
@@ -833,8 +833,8 @@ interface ReactViewRoutePlugin {
      options: {
       router: ReactViewRouter,
       onBindInstance?: OnBindInstance,
-      onGetLazyResovle?: OnGetLazyResovle,
-      toResovle: RouteComponentToResolveFn,
+      onGetLazyResolve?: OnGetLazyResolve,
+      toResolve: RouteComponentToResolveFn,
       getGuard: (obj: any, guardName: string) => any,
       replaceInterceptors: (newInterceptors: any[], interceptors: RouteGuardInterceptor[], index: number) => any[]
     },
@@ -1369,7 +1369,7 @@ const useViewActivate = (onEvent: KeepAliveChangeEvent) => void
 import { useViewActivate } from 'react-view-router';
 
 useViewActivate((event) => {
-  // dosomethine
+  // dosomething
 });
 ```
 
@@ -1399,7 +1399,7 @@ const useViewDeactivate = (onEvent: KeepAliveChangeEvent) => void
 import { useViewDeactivate } from 'react-view-router';
 
 useViewDeactivate((event) => {
-  // dosomethine
+  // dosomething
 });
 ```
 

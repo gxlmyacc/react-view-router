@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import ReactViewRouter from '../router';
-import { ConfigRoute, MatchedRoute, RouteChildrenFn } from '../types';
+import { ConfigRoute, MatchedRoute, RouteChildrenFn, RouteMeta } from '../types';
 import {
   isCommonPage, getRouteMatched,
   useRouter, useMatchedRouteAndIndex, useRouteChanged, useRouteMetaChanged
@@ -15,7 +15,8 @@ type filterCallback = (r: ConfigRoute, routes: ConfigRoute[], props: {
   maxLevel: number,
   refresh?: () => void,
   title?: string,
-  visible?: boolean
+  visible?: boolean,
+  meta: Partial<RouteMeta>
 }) => boolean;
 
 type RouteTitleInfo = {
@@ -38,12 +39,12 @@ function readRouteTitle(
   } = {}
 ) {
   const ret = { visible: false, title: '' };
-  const visible = readRouteMeta(route, 'visible', options);
+  const visible = readRouteMeta(route, 'visible', options) as boolean;
   if (visible === false) return ret;
 
   const titleName = options.titleName || DEFAULT_TITLE_NAME;
-  ret.title = readRouteMeta(route, titleName, options) || '';
-  ret.visible = (visible !== false) && Boolean(ret.title);
+  ret.title = readRouteMeta(route, titleName, options) as string || '';
+  ret.visible = Boolean(ret.title);
 
   return ret;
 }
@@ -62,18 +63,18 @@ function readRouteTitles(
   const {
     refresh,
     filter,
-    titleName,
+    titleName = DEFAULT_TITLE_NAME,
     maxLevel = 99,
     level = 1,
   } = options;
   routes = getRouteChildren(routes);
   return routes
-    .filter(r => r.meta.title)
+    .filter(r => r.meta[titleName])
     .map(r => {
       const { visible, title } = readRouteTitle(r, { router, titleName, level, maxLevel, refresh });
       if (visible === false) return;
 
-      if (filter && filter(r, routes as ConfigRoute[], { title, visible, router, level, maxLevel, refresh }) === false) return;
+      if (filter && filter(r, routes as ConfigRoute[], { title, visible, router, meta: r.meta, level, maxLevel, refresh }) === false) return;
 
       const ret: RouteTitleInfo = {
         title,

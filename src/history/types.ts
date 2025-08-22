@@ -300,7 +300,7 @@ export interface History<S extends State = State> {
   readonly state: State,
 
   /**
-   * The current realtimie location
+   * The current realtime location
    */
   readonly realtimeLocation: Location<S>;
 

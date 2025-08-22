@@ -23,7 +23,7 @@ declare class RouterDrawer<P extends RouterDrawerProps = RouterDrawerProps, S ex
     _refreshCurrentRoute(state?: S, newState?: any, callback?: () => void): MatchedRoute | null;
     _handleAnimationEnd(): void;
     _handleClose(): void;
-    getZindex(): any;
+    getZIndex(): any;
     shouldComponentUpdate(nextProps: P, nextState: S): boolean;
     renderCurrent(currentRoute: MatchedRoute | null): React.ReactNode;
     renderContainer(current: ReactNode | null, currentRoute: MatchedRoute | null): ReactNode | null;
