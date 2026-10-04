@@ -4458,19 +4458,6 @@ babel-plugin-alias-config@^0:
     lodash.template "^4.5.0"
     require-json5 "^1.1.0"
 
-babel-plugin-alias-config@^0.0.14:
-  version "0.0.14"
-  resolved "https://registry.npmjs.org/babel-plugin-alias-config/-/babel-plugin-alias-config-0.0.14.tgz#8ea6143b52d9a9d5f33e11cfa40a6f24ad6a7df2"
-  integrity sha512-Rh5LwGhwvnKVPwOxsAGMvZCYoKaOhPqFM3DIhPfPaECravyWWM4lSL8BUfwqKlUJeZ/mONtZKyejOyFqTB9FHQ==
-  dependencies:
-    "@babel/helper-plugin-utils" "^7.0.0"
-    babel-types "^6.26.0"
-    escape-string-regexp "^2.0.0"
-    find-up "^4.1.0"
-    lodash.some "^4.6.0"
-    lodash.template "^4.5.0"
-    require-json5 "^1.1.0"
-
 babel-plugin-define-variables@^0, babel-plugin-define-variables@^0.0.3:
   version "0.0.3"
   resolved "https://registry.npmjs.org/babel-plugin-define-variables/-/babel-plugin-define-variables-0.0.3.tgz#6c53bc39bcd87ed4675fe63ddd9a23143e9d3f21"
