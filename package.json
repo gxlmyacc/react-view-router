@@ -10,58 +10,82 @@
   ],
   "sideEffects": false,
   "main": "esm/index.js",
-  "module": "es/index.js",
+  "module": "esm/index.js",
   "typings": "types/index.d.ts",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./es/index.js",
+      "import": "./esm/index.js",
       "require": "./esm/index.js",
       "default": "./esm/index.js"
     },
     "./dom": {
       "types": "./dom/types/index.d.ts",
-      "import": "./dom/es/index.js",
+      "import": "./dom/esm/index.js",
       "require": "./dom/esm/index.js",
       "default": "./dom/esm/index.js"
     },
     "./drawer": {
       "types": "./drawer/types/index.d.ts",
-      "import": "./drawer/es/index.js",
+      "import": "./drawer/esm/index.js",
       "require": "./drawer/esm/index.js",
       "default": "./drawer/esm/index.js"
     },
-    "./drawer/index.css": {
-      "import": "./drawer/es/index.css",
-      "require": "./drawer/esm/index.css",
-      "default": "./drawer/esm/index.css"
-    },
     "./transition": {
       "types": "./transition/types/index.d.ts",
-      "import": "./transition/es/index.js",
+      "import": "./transition/esm/index.js",
       "require": "./transition/esm/index.js",
       "default": "./transition/esm/index.js"
     },
-    "./transition/router-view.css": {
-      "import": "./transition/es/router-view.css",
-      "require": "./transition/esm/router-view.css",
-      "default": "./transition/esm/router-view.css"
-    },
-    "./transition/es/router-view.css": "./transition/es/router-view.css",
-    "./transition/esm/router-view.css": "./transition/esm/router-view.css",
     "./standalone-modern": {
       "types": "./types/standalone-modern.d.ts",
-      "import": "./es/standalone-modern.js",
+      "import": "./esm/standalone-modern.js",
       "require": "./esm/standalone-modern.js",
       "default": "./esm/standalone-modern.js"
     },
     "./standalone-legacy": {
       "types": "./types/standalone-legacy.d.ts",
-      "import": "./es/standalone-legacy.js",
+      "import": "./esm/standalone-legacy.js",
       "require": "./esm/standalone-legacy.js",
       "default": "./esm/standalone-legacy.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./es": {
+      "types": "./types/index.d.ts",
+      "import": "./es/index.js",
+      "require": "./es/index.js",
+      "default": "./es/index.js"
+    },
+    "./es/dom": {
+      "types": "./dom/types/index.d.ts",
+      "import": "./dom/es/index.js",
+      "require": "./dom/es/index.js",
+      "default": "./dom/es/index.js"
+    },
+    "./es/drawer": {
+      "types": "./drawer/types/index.d.ts",
+      "import": "./drawer/es/index.js",
+      "require": "./drawer/es/index.js",
+      "default": "./drawer/es/index.js"
+    },
+    "./es/transition": {
+      "types": "./transition/types/index.d.ts",
+      "import": "./transition/es/index.js",
+      "require": "./transition/es/index.js",
+      "default": "./transition/es/index.js"
+    },
+    "./es/standalone-modern": {
+      "types": "./types/standalone-modern.d.ts",
+      "import": "./es/standalone-modern.js",
+      "require": "./es/standalone-modern.js",
+      "default": "./es/standalone-modern.js"
+    },
+    "./es/standalone-legacy": {
+      "types": "./types/standalone-legacy.d.ts",
+      "import": "./es/standalone-legacy.js",
+      "require": "./es/standalone-legacy.js",
+      "default": "./es/standalone-legacy.js"
+    }
   },
   "engines": {
     "node": ">= 12"
@@ -83,14 +107,14 @@
     "standalone-legacy"
   ],
   "scripts": {
-    "build-transition": "npm run build-transition:js && npm run build-transition:es && node scripts/normalize-transition-style-import.js",
+    "build-transition": "npm run build-transition:js && npm run build-transition:es && node scripts/normalize-transition-style-import.js && node scripts/normalize-es-core-imports.js transition",
     "build-transition:js": "cross-env BUILD_ENV=js babel transition/src -d transition/esm --extensions \".ts,.tsx\" && sass --no-source-map transition/src/RouterView.scss transition/esm/router-view.css",
     "build-transition:es": "cross-env BUILD_ENV=es babel transition/src -d transition/es --extensions \".ts,.tsx\" && sass --no-source-map transition/src/RouterView.scss transition/es/router-view.css",
-    "build-drawer": "npm run build-drawer:types && npm run build-drawer:js && npm run build-drawer:es && sass --no-source-map drawer/src/index.scss drawer/es/index.css && sass --no-source-map drawer/src/index.scss drawer/esm/index.css && node scripts/normalize-drawer-style-import.js",
+    "build-drawer": "npm run build-drawer:types && npm run build-drawer:js && npm run build-drawer:es && sass --no-source-map drawer/src/index.scss drawer/es/index.css && sass --no-source-map drawer/src/index.scss drawer/esm/index.css && node scripts/normalize-drawer-style-import.js && node scripts/normalize-es-core-imports.js drawer",
     "build-drawer:types": "tsc -p drawer --emitDeclarationOnly",
     "build-drawer:js": "cross-env BUILD_ENV=js babel drawer/src -d drawer/esm --extensions \".ts,.tsx\" --source-maps",
     "build-drawer:es": "cross-env BUILD_ENV=es babel drawer/src -d drawer/es --extensions \".ts,.tsx\"",
-    "build-dom": "npm run build-dom:types && npm run build-dom:js && npm run build-dom:es",
+    "build-dom": "npm run build-dom:types && npm run build-dom:js && npm run build-dom:es && node scripts/normalize-es-core-imports.js dom",
     "build-dom:types": "tsc -p dom --emitDeclarationOnly",
     "build-dom:js": "cross-env BUILD_ENV=js babel dom/src -d dom/esm --extensions \".ts,.tsx\" --source-maps",
     "build-dom:es": "cross-env BUILD_ENV=es babel dom/src -d dom/es --extensions \".ts,.tsx\"",
@@ -128,7 +152,7 @@
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
   },
-  "devDependencies":{
+  "devDependencies": {
     "@babel/cli": "^7.25.9",
     "@babel/core": "^7.26.0",
     "@babel/eslint-parser": "^7.25.9",
@@ -172,6 +196,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "sass": "^1.50.1",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "acorn": "^8.8.0"
   }
 }

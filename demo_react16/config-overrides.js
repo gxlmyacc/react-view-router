@@ -4,6 +4,8 @@ const { configureWebpack, configureDevServer } = require('../scripts/configure-d
 const ReactScopeStyleWebpackPlugin = require('babel-preset-react-scope-style/webpack');
 
 module.exports = function override(config) {
+  const production = config.mode === 'production';
+  const artifact = production ? 'esm' : 'es';
   const sharedSource = path.resolve(__dirname, '../demo_react_shared/src');
   const transitionSource = path.resolve(__dirname, '../transition/src');
   const drawerSource = path.resolve(__dirname, '../drawer/src');
@@ -11,11 +13,11 @@ module.exports = function override(config) {
   // SHA-256 works in both modern Node and the Node 14 compatibility runtime.
   config.output.hashFunction = 'sha256';
   config.resolve.alias['react-view-router-react-demo-shared'] = path.join(sharedSource, 'index.ts');
-  config.resolve.alias['react-view-router/transition$'] = path.join(transitionSource, 'index.ts');
-  config.resolve.alias['react-view-router/drawer$'] = path.join(drawerSource, 'index.ts');
-  config.resolve.alias['react-view-router/dom$'] = path.resolve(__dirname, '../dom/es/index.js');
+  config.resolve.alias['react-view-router/transition$'] = production ? path.resolve(__dirname, '../transition/esm/index.js') : path.join(transitionSource, 'index.ts');
+  config.resolve.alias['react-view-router/drawer$'] = production ? path.resolve(__dirname, '../drawer/esm/index.js') : path.join(drawerSource, 'index.ts');
+  config.resolve.alias['react-view-router/dom$'] = path.resolve(__dirname, '../dom', artifact, 'index.js');
   config.resolve.alias['react-error-overlay$'] = path.resolve(__dirname, '../scripts/dev-error-overlay.js');
-  config.resolve.alias['react-view-router'] = path.resolve(__dirname, '../es');
+  config.resolve.alias['react-view-router'] = path.resolve(__dirname, '..', artifact);
   // Shared sources live outside this launcher. Force every package to use the
   // launcher's React instance so Hooks never cross React versions.
   config.resolve.alias.react = path.resolve(__dirname, 'node_modules/react');
@@ -29,6 +31,13 @@ module.exports = function override(config) {
     rule => rule.loader && rule.loader.indexOf('babel-loader') >= 0 && rule.include,
   );
   babelRule.include = [babelRule.include, sharedSource, transitionSource, drawerSource];
+  if (production) {
+    // Shared files resolve Browserslist outside this launcher; pin the release target.
+    babelRule.options = babelRule.options || {};
+    babelRule.options.presets = (babelRule.options.presets || []).concat([
+      [require.resolve('@babel/preset-env'), { targets: { chrome: '49' }, modules: false }],
+    ]);
+  }
   config.plugins.push(new ReactScopeStyleWebpackPlugin({
     babel: { scopePrefix: 'rr-demo-', scopeNamespace: 'react-view-router-demos' },
   }));

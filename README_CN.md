@@ -68,8 +68,8 @@ const routes = [{
 | 普通 browser/hash/memory 路由 | `react-view-router` | 保持原有用法 |
 | React Router v4/v5 协作 | `router.history.createHistory4()` | 在 ReactViewRouter 共享 history 上提供兼容 `history@4.10.1` 的适配器 |
 | DOM 渲染工具 | `react-view-router/dom` | 已配置显式 package export |
-| Drawer RouterView | `react-view-router/drawer` | 已配置显式 package export；样式入口为 `react-view-router/drawer/index.css` |
-| Transition RouterView | `react-view-router/transition` | 已配置显式 package export；样式入口为 `react-view-router/transition/router-view.css` |
+| Drawer RouterView | `react-view-router/drawer` | 已配置显式 package export；入口自动引入样式 |
+| Transition RouterView | `react-view-router/transition` | 已配置显式 package export；入口自动引入样式 |
 | React 18+ 独立 SSR island | `react-view-router/standalone-modern` | 已实现并测试 |
 | React 16.8/17 独立 SSR island | `react-view-router/standalone-legacy` | 已实现并测试 |
 | React Native | core memory router | 支持；不加载 DOM/hydration adapter |

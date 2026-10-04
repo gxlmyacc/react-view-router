@@ -3,7 +3,7 @@ import React, {
   useState, RefObject
 } from 'react';
 import type { ReactNode } from 'react';
-import type { ReactRenderUtils } from './types';
+import type { KeepAliveRenderUtils } from './render-utils';
 import { innumerable } from './util';
 
 const KEEP_ALIVE_ANCHOR = 'keep-alive-anchor';
@@ -11,7 +11,7 @@ const KEEP_ALIVE_REPLACER = 'keep-alive-replacer';
 const KEEP_ALIVE_KEEP_COPIES = 'keep-alive-keep-copies';
 
 interface KeepAliveComponentProps {
-  utils: ReactRenderUtils,
+  utils: KeepAliveRenderUtils,
   children?: ReactNode,
   active: boolean
   name: string
@@ -27,14 +27,14 @@ interface KeepAliveComponentProps {
  */
 function KeepAliveActiveComponent(props: KeepAliveComponentProps) {
   const { utils, active, children, name, anchor = null, inner } = props;
-  const { appendChild, insertBefore } = utils;
+  const { appendChild, insertBefore } = utils.node;
   const [$refs] = useState(() => {
     // The portal target must remain an ancestor of its children while visible.
     // Moving children out of a DocumentFragment breaks React's delegated events.
-    const holder = utils.createElement('div') as HTMLElement;
+    const holder = utils.document.createElement('div') as HTMLElement;
     holder.style.display = 'contents';
     if (holder.style.display !== 'contents') holder.style.display = 'block';
-    const cache = utils.createDocumentFragment();
+    const cache = utils.document.createDocumentFragment();
     return {
       name,
       inner,
@@ -126,12 +126,12 @@ function KeepAliveActiveComponent(props: KeepAliveComponentProps) {
   }, [$refs, unmountView]);
 
   return (
-    $refs.active ? utils.createPortal(children, $refs.holder, name) : null
+    $refs.active ? utils.reactDOM.createPortal(children, $refs.holder, name) : null
   );
 }
 
 export interface KeepAliveAnchorProps {
-  utils: ReactRenderUtils,
+  utils: KeepAliveRenderUtils,
   children?: string,
 }
 
@@ -172,7 +172,7 @@ KeepAliveAnchorProps & React.RefAttributes<HTMLElement|null>
  * @param text 锚点文本
  * @returns React 节点
  */
-function createAnchor(utils: ReactRenderUtils, ref: RefObject<any>|null, text: string = ''): ReactNode {
+function createAnchor(utils: KeepAliveRenderUtils, ref: RefObject<any>|null, text: string = ''): ReactNode {
   return React.createElement<any>(KeepAliveAnchor, { ref, utils }, text);
 }
 

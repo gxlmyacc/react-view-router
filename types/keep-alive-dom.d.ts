@@ -1,11 +1,11 @@
 import React, { RefObject } from 'react';
 import type { ReactNode } from 'react';
-import type { ReactRenderUtils } from './types';
+import type { KeepAliveRenderUtils } from './render-utils';
 declare const KEEP_ALIVE_ANCHOR = "keep-alive-anchor";
 declare const KEEP_ALIVE_REPLACER = "keep-alive-replacer";
 declare const KEEP_ALIVE_KEEP_COPIES = "keep-alive-keep-copies";
 interface KeepAliveComponentProps {
-    utils: ReactRenderUtils;
+    utils: KeepAliveRenderUtils;
     children?: ReactNode;
     active: boolean;
     name: string;
@@ -20,7 +20,7 @@ interface KeepAliveComponentProps {
  */
 declare function KeepAliveActiveComponent(props: KeepAliveComponentProps): React.ReactPortal | null;
 export interface KeepAliveAnchorProps {
-    utils: ReactRenderUtils;
+    utils: KeepAliveRenderUtils;
     children?: string;
 }
 declare const KeepAliveAnchor: React.ForwardRefExoticComponent<KeepAliveAnchorProps & React.RefAttributes<HTMLElement | null>>;
@@ -31,7 +31,7 @@ declare const KeepAliveAnchor: React.ForwardRefExoticComponent<KeepAliveAnchorPr
  * @param text 锚点文本
  * @returns React 节点
  */
-declare function createAnchor(utils: ReactRenderUtils, ref: RefObject<any> | null, text?: string): ReactNode;
+declare function createAnchor(utils: KeepAliveRenderUtils, ref: RefObject<any> | null, text?: string): ReactNode;
 /**
  * 生成锚点展示文本。
  * @param anchorName 锚点名称

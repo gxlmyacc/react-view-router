@@ -2,8 +2,8 @@ import { createHash } from 'crypto';
 import ts from 'typescript';
 
 // Includes navigation loop protection configuration and diagnostic error types.
-const PUBLIC_API_EXPORT_COUNT = 293;
-const PUBLIC_API_EXPORT_SHA256 = '22a5917a478d590e854afb1875958e8e4f690c870c0921d6c1d99f4105e3a9ea';
+const PUBLIC_API_EXPORT_COUNT = 295;
+const PUBLIC_API_EXPORT_SHA256 = 'cb92b0d7fd0cae67b29f01db058237ea5683ecfd17739bf8a7c26b8165476b81';
 
 function readPublicApiExports() {
   const program = ts.createProgram(

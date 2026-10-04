@@ -67,10 +67,10 @@ describe('runtime package boundaries', () => {
     const legacy = JSON.parse(fs.readFileSync('standalone-legacy/package.json', 'utf8'));
 
     expect(root.main).toBe('esm/index.js');
-    expect(root.module).toBe('es/index.js');
-    expect(drawer.module).toBe('es/index.js');
-    expect(dom.module).toBe('es/index.js');
-    expect(transition.module).toBe('es/index.js');
+    expect(root.module).toBe('esm/index.js');
+    expect(drawer.module).toBe('esm/index.js');
+    expect(dom.module).toBe('esm/index.js');
+    expect(transition.module).toBe('esm/index.js');
     expect(modern.main).toBe('../esm/standalone-modern.js');
     expect(modern.types).toBe('../types/standalone-modern.d.ts');
     expect(legacy.main).toBe('../esm/standalone-legacy.js');

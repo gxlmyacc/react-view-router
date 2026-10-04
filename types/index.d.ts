@@ -19,3 +19,4 @@ export * from './history';
 export * from './util';
 export { version };
 export default ReactViewRouter;
+export { default as defaultRenderUtils } from './render-utils';

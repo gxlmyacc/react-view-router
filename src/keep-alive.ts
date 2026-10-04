@@ -4,7 +4,7 @@ import React, {
   useState, RefObject
 } from 'react';
 import type { ReactNode } from 'react';
-import type { ReactRenderUtils } from './types';
+import type { KeepAliveRenderUtils } from './render-utils';
 import {
   KeepAliveActiveComponent,
   createAnchor,
@@ -23,7 +23,7 @@ export interface KeepAliveNode {
 }
 
 export interface KeepAliveProps {
-  utils: ReactRenderUtils,
+  utils: KeepAliveRenderUtils,
   activeName: string,
   children?: ReactNode,
   extra?: Record<string, any>,

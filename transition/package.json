@@ -2,23 +2,22 @@
   "name": "react-view-router-transition",
   "version": "1.0.0",
   "main": "esm/index.js",
-  "module": "es/index.js",
+  "module": "esm/index.js",
   "typings": "types/index.d.ts",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./es/index.js",
+      "import": "./esm/index.js",
       "require": "./esm/index.js",
       "default": "./esm/index.js"
     },
-    "./router-view.css": {
-      "import": "./es/router-view.css",
-      "require": "./esm/router-view.css",
-      "default": "./esm/router-view.css"
-    },
-    "./es/router-view.css": "./es/router-view.css",
-    "./esm/router-view.css": "./esm/router-view.css",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./es": {
+      "types": "./types/index.d.ts",
+      "import": "./es/index.js",
+      "require": "./es/index.js",
+      "default": "./es/index.js"
+    }
   },
   "files": [
     "es",

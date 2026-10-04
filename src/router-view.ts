@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, ReactNode } from 'react';
+import { assertKeepAliveRenderUtils } from './render-utils';
 import {
   renderRoute, normalizeRoute, isFunction,
   isRouteChanged, isRoutesChanged, isPropChanged, nextTick, isMatchedRoutePropsChanged,
@@ -273,11 +274,11 @@ class RouterView<
   _checkEnableKeepAlive(route: MatchedRoute|null = this.state.currentRoute) {
     const key = 'keepAlive';
     if (this._kaRef) return true;
-    if (hasOwnProp(this.props, key)) return true;
+    if (hasOwnProp(this.props, key) && this.props.keepAlive) return true;
     const { router } = this.state;
-    if (hasOwnProp(route?.config, key)) return true;
+    if (hasOwnProp(route?.config, key) && route?.config.keepAlive) return true;
     const keepAliveProps = router?.options.keepAlive;
-    if (isFunction(keepAliveProps) || keepAliveProps instanceof RegExp) return true;
+    if (keepAliveProps) return true;
     return false;
   }
 
@@ -618,7 +619,8 @@ class RouterView<
 
     let ret = this.renderCurrent(currentRoute);
 
-    if (enableKeepAlive && renderUtils) {
+    if (enableKeepAlive) {
+      assertKeepAliveRenderUtils(renderUtils);
       const activeName = currentRoute ? currentRoute.path : '';
       const extra: Record<string, any> = {};
       if (isFunction(renderKeepAlive)) extra.beforeActivate = renderKeepAlive;

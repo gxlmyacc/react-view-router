@@ -17,6 +17,7 @@ export default function SavePositionApp({ basename, mode }: SavePositionAppProps
   const container = useRef<HTMLDivElement>(null);
   const [animate, setAnimate] = useState(false);
   const [enabled, setEnabled] = useState(true);
+  const [scoped, setScoped] = useState(false);
   const [offset, setOffset] = useState(0);
   const route = useRoute(router, { watch: true });
   const { start } = useManualRouter(router, { basename, mode, routes, manual: true });
@@ -37,6 +38,8 @@ export default function SavePositionApp({ basename, mode }: SavePositionAppProps
   return (
     <section className="position-example">
       <p>{t('positionInstructions')}</p>
+      <p>{t('positionContainerHelp')}</p>
+      <p>{t('positionSettingHelp')}</p>
       <div className="position-controls">
         <label>
           <input type="checkbox" checked={enabled} disabled={route?.path !== '/list'}
@@ -51,6 +54,11 @@ export default function SavePositionApp({ basename, mode }: SavePositionAppProps
         <button type="button" disabled={route?.path !== '/list'} onClick={() => router.push('/preview')}>
           {t('positionLeave')}
         </button>
+        <label>
+          <input type="checkbox" checked={scoped} disabled={animate || route?.path !== '/list'}
+            onChange={event => setScoped(event.target.checked)} />
+          {t('positionScoped')}
+        </label>
         <span>{t('positionOffset')}: <output data-testid="position-offset">{Math.round(offset)} px</output></span>
       </div>
       <div className="position-view" ref={container} onScrollCapture={event => {
@@ -61,14 +69,14 @@ export default function SavePositionApp({ basename, mode }: SavePositionAppProps
           // Transition supplies its content container. The selector locates the inner scroll area.
           <TransitionRouterView router={router} transition="slide" containerStyle={{ height: '100%' }} />
         ) : (
-          // Plain RouterView needs the application-owned container getter.
-          <RouterView router={router} getContainerRef={() => container.current} />
+          // Omitted getter uses body; an explicit getter scopes lookup to this view.
+          <RouterView router={router} getContainerRef={scoped ? () => container.current : undefined} />
         )}
       </div>
       <pre><code>{animate
         ? '<TransitionRouterView router={router} transition="slide" />'
-        : '<RouterView router={router} getContainerRef={() => container.current} />'}
-      {'\nmeta: { savePosition: ".save-position-scroll" }\nnew ReactViewRouter({ routes, renderUtils })'}</code></pre>
+        : scoped ? '<RouterView router={router} getContainerRef={() => container.current} />' : '<RouterView router={router} />'}
+      {'\nmeta: { savePosition: ".save-position-scroll" }\nnew ReactViewRouter({ routes })'}</code></pre>
       <p>{t('positionAdapterHelp')}</p>
     </section>
   );

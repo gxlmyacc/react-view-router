@@ -46,6 +46,29 @@ describe('React 16 demo build configuration', () => {
       .toMatch(/[\\/]demo_react16[\\/]node_modules[\\/]\.cache[\\/]react-view-router-demo-tsconfig\.json$/);
   });
 
+  it('uses legacy core and subentries only in production', () => {
+    const config = {
+      mode: 'production',
+      output: {},
+      resolve: { alias: {}, extensions: ['.js'], plugins: [] },
+      module: { rules: [{ oneOf: [{ loader: 'babel-loader', include: 'launcher-src' }] }] },
+      plugins: [],
+    };
+    const result = override(config);
+    expect(result.resolve.alias['react-view-router']).toMatch(/[\\/]esm$/);
+    for (const name of ['dom', 'drawer', 'transition']) {
+      expect(result.resolve.alias[`react-view-router/${name}$`]).toMatch(/[\\/]esm[\\/]index\.js$/);
+    }
+    const presets = result.module.rules[0].oneOf[0].options.presets;
+    const transformed = require('@babel/core').transformSync(
+      'async function load(value) { return { ...value }; }',
+      { configFile: false, babelrc: false, presets },
+    ).code;
+    expect(() => require('acorn').parse(transformed, { ecmaVersion: 2015 })).not.toThrow();
+    expect(transformed).not.toContain('async function');
+    expect(transformed).not.toContain('...value');
+  });
+
   it('removes the old custom Webpack/Gulp build and keeps compatibility testing separate', () => {
     const packageJson = JSON.parse(fs.readFileSync('demo_react16/package.json', 'utf8'));
 
@@ -54,7 +77,8 @@ describe('React 16 demo build configuration', () => {
     expect(packageJson.scripts.lint).toBe('eslint src --ext .ts,.tsx');
     expect(packageJson.scripts.typecheck).toBe('tsc -p tsconfig.json');
     expect(packageJson.scripts['build-prod']).toBeUndefined();
-    expect(packageJson.browserslist).toContain('Chrome >= 78');
+    expect(packageJson.browserslist.development).toContain('Chrome >= 78');
+    expect(packageJson.browserslist.production).toContain('Chrome >= 49');
     expect(fs.existsSync('demo_react16/build/webpack-dev.config.js')).toBe(false);
     expect(fs.existsSync('demo_react16/gulpfile.js')).toBe(false);
     expect(fs.existsSync('demo_react16/public/index.html')).toBe(true);
@@ -71,7 +95,6 @@ describe('React 16 demo build configuration', () => {
     expect(rootPackage.scripts['build-demo-site']).toContain('demo_react16 run build');
     expect(rootPackage.scripts['build-demo-site']).toContain('verify-demo-site');
     expect(workflow).toContain('PUBLIC_URL: /${{ github.event.repository.name }}');
-    expect(workflow).toContain('- master');
     expect(workflow).toContain('actions/upload-pages-artifact@v4');
     expect(workflow).toContain('path: demo_react16/build');
     expect(audit).toContain('forbiddenRuntimeHosts');

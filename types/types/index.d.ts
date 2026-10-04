@@ -62,24 +62,40 @@ export interface RouteSavedPosition {
 }
 export type ReactViewRouterScrollBehavior = (to: Route, from: Route | null, savedPosition: RouteSavedPosition) => RouteSavedPosition | void;
 export interface ReactRenderUtils<TContainer = HTMLElement> {
-    /** Optional host storage; unavailable storage uses a router-local cache. */
-    getSessionStorage?: () => Pick<Storage, 'getItem' | 'setItem'> | null;
-    getPosition?: (container: TContainer) => RouteSavedPosition | null | undefined;
-    setPosition?: (container: TContainer, position: RouteSavedPosition) => void;
-    queryPositionTarget?: (container: TContainer, selector: string) => TContainer | null;
-    createPortal(children: React.ReactNode, container: Element | DocumentFragment, key?: null | string): React.ReactPortal;
-    findDOMNode(instance: React.ReactInstance | null | undefined): Element | null | Text;
-    unmountComponentAtNode(container: Element | DocumentFragment): boolean;
-    createElement(tagName: string): Element;
-    createDocumentFragment(): DocumentFragment;
-    createComment(data: string): Comment;
-    appendChild(el: Node, node: ChildNode): void;
-    removeChild(el: Node, node: ChildNode): void;
-    insertBefore<T extends Node>(el: Node, newNode: T, referenceNode: Node | null): T;
-    replaceChild<T extends Node>(el: Node, node: Node, child: T): T;
-    replaceWith(el: ChildNode, ...nodes: (Node | string)[]): void;
-    remove(el: ChildNode): void;
+    position: {
+        getPosition?: (container: TContainer) => RouteSavedPosition | null | undefined;
+        setPosition?: (container: TContainer, position: RouteSavedPosition) => void;
+        queryPositionTarget?: (container: TContainer, selector: string) => TContainer | null;
+        /** Optional host container used when RouterView has no getContainerRef. */
+        getDefaultPositionContainer?: () => TContainer | null;
+    };
+    storage: {
+        /** Optional host storage; unavailable storage uses a router-local cache. */
+        getSessionStorage?: () => Pick<Storage, 'getItem' | 'setItem'> | null;
+    };
+    reactDOM: {
+        createPortal(children: React.ReactNode, container: Element | DocumentFragment, key?: null | string): React.ReactPortal;
+        findDOMNode(instance: React.ReactInstance | null | undefined): Element | null | Text;
+        unmountComponentAtNode(container: Element | DocumentFragment): boolean;
+    };
+    document: {
+        createElement(tagName: string): Element;
+        createDocumentFragment(): DocumentFragment;
+        createComment(data: string): Comment;
+    };
+    node: {
+        appendChild(el: Node, node: ChildNode): void;
+        removeChild(el: Node, node: ChildNode): void;
+        insertBefore<T extends Node>(el: Node, newNode: T, referenceNode: Node | null): T;
+        replaceChild<T extends Node>(el: Node, node: Node, child: T): T;
+        replaceWith(el: ChildNode, ...nodes: (Node | string)[]): void;
+        remove(el: ChildNode): void;
+    };
 }
+/** Each host capability group and its methods can be supplied independently. */
+export type PartialReactRenderUtils<TContainer = HTMLElement> = {
+    [Group in keyof ReactRenderUtils<TContainer>]?: Partial<ReactRenderUtils<TContainer>[Group]>;
+};
 export interface ReactViewRouterMoreOptions extends Record<string, any> {
     /** Enabled by default (1000ms / 10 attempts); false disables protection. */
     navigationLoopProtection?: false | NavigationLoopProtectionOptions;
@@ -93,7 +109,8 @@ export interface ReactViewRouterMoreOptions extends Record<string, any> {
     holdInitialQueryProps?: boolean | string[] | ((initialQuery: Record<string, string>) => Record<string, string>);
     history?: HistoryFix;
     pathname?: string;
-    renderUtils?: ReactRenderUtils<any>;
+    /** Defaults to browser operations without ReactDOM. Custom adapters replace the default entirely. */
+    renderUtils?: PartialReactRenderUtils<any>;
     keepAlive?: boolean | CheckKeepAliveFunction | RegExp;
     beforeViewActivate?: CheckKeepAliveResultFunction;
     install?: (vuelike: any, options: {

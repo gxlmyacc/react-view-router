@@ -20,24 +20,8 @@ interface CompiledWorkspace {
   css: string;
 }
 
-const STORAGE_KEY = 'react-view-router.playground.workspace.v2';
-
 function cloneDefaultWorkspace(): PlaygroundWorkspace {
   return JSON.parse(JSON.stringify(defaultWorkspace)) as PlaygroundWorkspace;
-}
-
-function readWorkspace(): PlaygroundWorkspace {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return cloneDefaultWorkspace();
-    const workspace = JSON.parse(stored) as PlaygroundWorkspace;
-    if (!workspace.entry || !Array.isArray(workspace.files) || !workspace.files.length) {
-      return cloneDefaultWorkspace();
-    }
-    return workspace;
-  } catch (_error) {
-    return cloneDefaultWorkspace();
-  }
 }
 
 function createChannel(): string {
@@ -51,7 +35,7 @@ export default function PlaygroundPage(): React.ReactElement {
   const localeRef = useRef(locale);
   localeRef.current = locale;
   const originalWorkspaceRef = useRef<PlaygroundWorkspace | null>(null);
-  const [workspace, setWorkspace] = useState(readWorkspace);
+  const [workspace, setWorkspace] = useState(cloneDefaultWorkspace);
   const [status, setStatus] = useState<PlaygroundStatus>('idle');
   const [errors, setErrors] = useState<string[]>([]);
   const [codeCollapsed, setCodeCollapsed] = useState(false);
@@ -62,16 +46,17 @@ export default function PlaygroundPage(): React.ReactElement {
   const compiledWorkspaceRef = useRef<CompiledWorkspace | null>(null);
 
   useEffect(() => {
-    if (!exampleId) {
-      originalWorkspaceRef.current = null;
-      return undefined;
-    }
-    let cancelled = false;
     originalWorkspaceRef.current = null;
-    setStatus('loading');
     setErrors([]);
     compiledWorkspaceRef.current = null;
     requestIdRef.current += 1;
+    if (!exampleId) {
+      setWorkspace(cloneDefaultWorkspace());
+      setStatus('idle');
+      return undefined;
+    }
+    let cancelled = false;
+    setStatus('loading');
     loadExampleSources().then(manifest => {
       const source = manifest[`demo_react_shared/src/examples/${exampleId}`];
       if (!source) throw new Error(`Unknown example: ${exampleId}`);
@@ -145,7 +130,6 @@ export default function PlaygroundPage(): React.ReactElement {
   };
 
   const run = (): void => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace));
     setStatus('compiling');
     setErrors([]);
     requestIdRef.current += 1;
@@ -159,7 +143,6 @@ export default function PlaygroundPage(): React.ReactElement {
 
   const reset = (): void => {
     const nextWorkspace = originalWorkspaceRef.current || cloneDefaultWorkspace();
-    localStorage.removeItem(STORAGE_KEY);
     setWorkspace(nextWorkspace);
     setStatus('idle');
     setErrors([]);

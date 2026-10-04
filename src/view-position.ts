@@ -1,5 +1,5 @@
 import type ReactViewRouter from './router';
-import type { Route, RouteSavedPosition, ReactRenderUtils } from './types';
+import type { Route, RouteSavedPosition, PartialReactRenderUtils } from './types';
 import type { RouterViewProps } from './router-view';
 import { warn } from './util';
 
@@ -12,7 +12,7 @@ function getPositions(router: ReactViewRouter): Positions {
   let positions = caches.get(router);
   if (!positions) {
     try {
-      const value = router.options.renderUtils?.getSessionStorage?.()?.getItem(SAVED_POSITION_KEY);
+      const value = router.options.renderUtils?.storage?.getSessionStorage?.()?.getItem(SAVED_POSITION_KEY);
       const parsed = value ? JSON.parse(value) : null;
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) positions = parsed;
     } catch (_) { /* unavailable storage */ }
@@ -38,9 +38,12 @@ export default class ViewPosition {
     warn(`[RouterView] savePosition skipped: ${reason}.`);
   }
 
-  private container(props: RouterViewProps<any>): any {
-    if (!props.getContainerRef) { this.warning('getContainerRef is missing'); return null; }
-    const container = props.getContainerRef();
+  private container(props: RouterViewProps<any>, utils: PartialReactRenderUtils<any> | undefined): any {
+    const getter = props.getContainerRef || utils?.position?.getDefaultPositionContainer;
+    if (!getter) {
+      this.warning('getContainerRef is missing and renderUtils.position.getDefaultPositionContainer is missing'); return null;
+    }
+    const container = getter();
     if (container == null) this.warning('getContainerRef returned no container');
     return container;
   }
@@ -48,14 +51,14 @@ export default class ViewPosition {
   private target(
     container: any,
     setting: any,
-    utils: ReactRenderUtils<any> | undefined,
+    utils: PartialReactRenderUtils<any> | undefined,
     navigation: PositionNavigation,
     type: 'enter' | 'leave'
   ): any {
     if (typeof setting === 'function') return setting(container, { ...navigation, type });
     if (typeof setting === 'string') {
-      if (!utils?.queryPositionTarget) { this.warning('renderUtils.queryPositionTarget is missing'); return null; }
-      return utils.queryPositionTarget(container, setting) || container;
+      if (!utils?.position?.queryPositionTarget) { this.warning('renderUtils.position.queryPositionTarget is missing'); return null; }
+      return utils.position!.queryPositionTarget(container, setting) || container;
     }
     return container;
   }
@@ -70,7 +73,7 @@ export default class ViewPosition {
 
   private persist(router: ReactViewRouter, positions: Positions) {
     try {
-      router.options.renderUtils?.getSessionStorage?.()?.setItem(SAVED_POSITION_KEY, JSON.stringify(positions));
+      router.options.renderUtils?.storage?.getSessionStorage?.()?.setItem(SAVED_POSITION_KEY, JSON.stringify(positions));
     } catch (_) { /* keep the router cache */ }
   }
 
@@ -79,15 +82,15 @@ export default class ViewPosition {
     if (!(to.action === 'PUSH' || to.params.isPush || to.query.isPush)) return;
     const setting = from?.metaComputed.savePosition;
     if (!setting && !props.onSavePosition) return;
-    const container = this.container(props);
-    if (container == null) return;
     const utils = router.options.renderUtils;
+    const container = this.container(props, utils);
+    if (container == null) return;
     let position: RouteSavedPosition | null | undefined;
     if (setting) {
       const target = this.target(container, setting, utils, navigation, 'leave');
       if (target == null) return;
-      if (!utils?.getPosition) { this.warning('renderUtils.getPosition is missing'); return; }
-      position = utils.getPosition(target);
+      if (!utils?.position?.getPosition) { this.warning('renderUtils.position.getPosition is missing'); return; }
+      position = utils.position!.getPosition(target);
     } else position = props.onSavePosition!(container, navigation);
     if (!position || !Number.isFinite(position.x ?? 0) || !Number.isFinite(position.y ?? 0)) return;
     const { positions, records } = this.records(router, name, depth);
@@ -102,15 +105,16 @@ export default class ViewPosition {
     const key = `[${router.basenameNoSlash}]${to.path}`;
     const position = records[key];
     if (!position) return;
-    const container = this.container(props);
+    const utils = router.options.renderUtils;
+    const setting = to.metaComputed.savePosition;
+    const container = this.container(props, utils);
     if (container == null) return;
     if (props.onScrollToPosition) props.onScrollToPosition(container, position);
     else {
-      const utils = router.options.renderUtils;
-      const target = this.target(container, to.metaComputed.savePosition, utils, navigation, 'enter');
+      const target = this.target(container, setting, utils, navigation, 'enter');
       if (target == null) return;
-      if (!utils?.setPosition) { this.warning('renderUtils.setPosition is missing'); return; }
-      utils.setPosition(target, position);
+      if (!utils?.position?.setPosition) { this.warning('renderUtils.position.setPosition is missing'); return; }
+      utils.position!.setPosition(target, position);
     }
     delete records[key];
     this.persist(router, positions);

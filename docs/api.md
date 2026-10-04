@@ -16,6 +16,8 @@ This document describes the public browser-router API and the standalone SSR add
 npm install react-view-router
 ```
 
+Default entries use Chrome 49 compatible `esm` artifacts (CommonJS). Modern ES Modules are available explicitly from `react-view-router/es`, `react-view-router/es/dom`, `react-view-router/es/drawer`, and `react-view-router/es/transition`. Use one entry family consistently within an application. Drawer and Transition import their styles automatically.
+
 The core peer baseline is React 16.8 or newer.
 
 ## Basic use
@@ -187,20 +189,30 @@ Important props:
 
 ### Saving and restoring positions
 
-`RouterView` accepts `getContainerRef: () => TContainer | null`, with `HTMLElement` as the default container type. Route `meta.savePosition` supports `true`, a container-scoped selector, or a target-returning function supplied by a metadata computation; the function receives `{ to, from, type: 'leave' | 'enter' }`. PUSH saves before the view updates; POP restores after the new view commits. Initial mounts, canceled navigation, and prop-only updates do not trigger position operations.
+`RouterView` accepts `getContainerRef: () => TContainer | null`, with `HTMLElement` as the default container type. Route `meta.savePosition` supports `true`, a selector (scoped when a container is supplied), or a target-returning function supplied by a metadata computation; the function receives `{ to, from, type: 'leave' | 'enter' }`. PUSH saves before the view updates; POP restores after the new view commits. Initial mounts, canceled navigation, and prop-only updates do not trigger position operations.
 
 `onSavePosition(container, { to, from })` returns `RouteSavedPosition` and is used when metadata does not enable saving. `onScrollToPosition(container, position)` overrides default restoration. Both belong to `RouterViewProps<TContainer>` and are inherited by Transition. Records include zero offsets, are isolated by basename, view name, depth, and route path, and are consumed after successful restoration.
 
-Optional `renderUtils` methods are `getPosition(container)`, `setPosition(container, position)`, `queryPositionTarget(container, selector)`, and `getSessionStorage()`. The storage getter returns an object with `getItem` and `setItem`, or `null`; it uses the existing `_REACT_VIEW_ROUTER_TRANSITION_POSITIONS_` key. Missing or unavailable storage falls back to a router-local cache. Core provides no DOM operation fallback. Missing containers, getters, or required methods skip the operation and emit a deduplicated warning. Custom callbacks can replace the corresponding read/write methods.
+Without `getContainerRef`, the default adapter supplies `document.body` through `position.getDefaultPositionContainer()`. An explicit getter supplies the container; a null result never falls back to body. `savePosition: true` saves that container (body operations map to the browser's actual page scroll root). A string searches within the container for the scroll element, falling back to the container when unmatched. Selectors should be unique within the default body scope. Functions and position callbacks also receive the current container. Custom adapters must supply the optional `position.getDefaultPositionContainer()` to support omitted getters; defaults are not merged. Transition supplies its content container, with an explicit getter taking precedence.
+
+`ReactRenderUtils` groups methods by responsibility. Router configuration uses `PartialReactRenderUtils<TContainer>`, allowing individual groups and methods to be omitted. Custom adapters replace the defaults entirely, including within a group.
+
+| Group | Methods |
+| --- | --- |
+| position | getDefaultPositionContainer、getPosition、setPosition、queryPositionTarget |
+| storage | getSessionStorage |
+| document | createElement、createDocumentFragment、createComment |
+| node | appendChild、removeChild、insertBefore、replaceChild、replaceWith、remove |
+| reactDOM | createPortal、findDOMNode、unmountComponentAtNode |
+
+Optional `renderUtils` methods are `position.getPosition(container)`, `position.setPosition(container, position)`, `position.queryPositionTarget(container, selector)`, and `storage.getSessionStorage()`. The storage getter returns an object with `getItem` and `setItem`, or `null`; it uses the existing `_REACT_VIEW_ROUTER_TRANSITION_POSITIONS_` key. Missing or unavailable storage falls back to a router-local cache. When `renderUtils` is omitted, the router uses the exported `defaultRenderUtils`: browser position, selector, storage, and node operations without importing ReactDOM. Globals are accessed only when a method is called. An explicit custom adapter replaces these defaults entirely; missing methods are not filled in. Missing containers, getters, or required methods skip the operation and emit a deduplicated warning. Custom callbacks can replace the corresponding read/write methods.
 
 ```tsx
 import React from 'react';
 import ReactViewRouter, { RouterView } from 'react-view-router';
-import renderUtils from 'react-view-router/dom';
 
 const router = new ReactViewRouter({
   routes: [{ path: '/home', component: Home, meta: { savePosition: true } }],
-  renderUtils,
 });
 function App() {
   const container = React.useRef<HTMLDivElement>(null);
@@ -210,21 +222,24 @@ function App() {
 }
 ```
 
-Transition supplies its content container automatically, including for `transition="none"`. An explicit `getContainerRef` takes precedence. Existing Transition applications must configure the updated `react-view-router/dom` renderUtils or supply equivalent custom methods. Server rendering performs no position operations.
+Transition supplies its content container automatically, including for `transition="none"`. An explicit `getContainerRef` takes precedence. The default adapter supports browser positions; custom adapters must provide the corresponding methods. Server rendering performs no position operations.
 
 Non-DOM hosts provide their own handles and operations without emulating DOM scroll properties:
 
 ```ts
-import type { ReactRenderUtils, RouterViewProps } from 'react-view-router';
+import type { PartialReactRenderUtils, RouterViewProps } from 'react-view-router';
 type HostContainer = { offset: { x: number; y: number } };
 // hostRenderUtils and hostContainer come from the platform's rendering integration.
-const utils: ReactRenderUtils<HostContainer> = {
+const utils: PartialReactRenderUtils<HostContainer> = {
   ...hostRenderUtils,
-  getPosition: (container) => ({ ...container.offset }),
-  setPosition: (container, position) => {
-    container.offset = { x: position.x || 0, y: position.y || 0 };
+  position: {
+    ...hostRenderUtils.position,
+    getPosition: (container) => ({ ...container.offset }),
+    setPosition: (container, position) => {
+      container.offset = { x: position.x || 0, y: position.y || 0 };
+    },
   },
-  getSessionStorage: () => hostSessionStorage, // May also return null.
+  storage: { getSessionStorage: () => hostSessionStorage }, // May also return null.
 };
 const viewProps: RouterViewProps<HostContainer> = {
   getContainerRef: () => hostContainer,
@@ -281,7 +296,7 @@ Important options:
 | `rememberInitialRoute` | Recover the original initial route from session storage. |
 | `holdInitialQueryProps` | Merge initial query values into later navigations. |
 | `keepAlive` | Global keep-alive setting. |
-| `renderUtils` | Host operations for keep-alive and position support. |
+| `renderUtils` | `PartialReactRenderUtils`; defaults to browser operations without ReactDOM. An explicit adapter replaces the defaults entirely. |
 | `routeRuntimeAdapters` | Optional runtime adapters. |
 
 SSR is not a constructor mode. Hydration remains a per-`RouteLazy` declaration.
@@ -611,13 +626,12 @@ The result contains `titles`, `setTitles`, `refreshTitles`, `matchedRoutes`, `ma
 
 ## Keep alive and transitions
 
-Core keep-alive behavior is configured on routes, views, or the router. The package exports keep-alive anchor constants and lifecycle hooks.
+Core keep-alive behavior is configured on routes, views, or the router. It requires `reactDOM.createPortal`, `document.createElement`, `document.createDocumentFragment`, `node.appendChild`, and `node.insertBefore`; missing capabilities throw an error listing the methods. The default adapter has no `reactDOM.createPortal`. Configure the complete adapter from `react-view-router/dom` or provide these methods yourself. The package exports keep-alive anchor constants and lifecycle hooks.
 
 Transition components and CSS are separate package entries:
 
 ```ts
 import { RouterView } from 'react-view-router/transition';
-import 'react-view-router/transition/router-view.css';
 ```
 
 The transition view keeps one live route tree. During an exit it animates an inert DOM snapshot of the old page, while KeepAlive continues to own the real component and its state.
@@ -649,11 +663,10 @@ Drawer and DOM utilities are also explicit exports:
 
 ```ts
 import RouterDrawer from 'react-view-router/drawer';
-import 'react-view-router/drawer/index.css';
 import { render } from 'react-view-router/dom';
 ```
 
-`RouterDrawer` composes the base `RouterView` with a drawer presenter. It renders inline by default inside a page-owned viewport with an explicit height and `position: relative; overflow: hidden;`. `portalContainer` accepts only a container getter: use `portalContainer={() => document.body}` for a body portal, or return another HTMLElement. An omitted getter or null result renders inline without `createPortal`. Its SCSS source is `drawer/src/index.scss`, while the published stylesheet is `react-view-router/drawer/index.css`.
+`RouterDrawer` composes the base `RouterView` with a drawer presenter. It renders inline by default inside a page-owned viewport with an explicit height and `position: relative; overflow: hidden;`. `portalContainer` accepts only a container getter: use `portalContainer={() => document.body}` for a body portal, or return another HTMLElement. An omitted getter or null result renders inline without `reactDOM.createPortal`. Its SCSS source is `drawer/src/index.scss`. The component entry imports its stylesheet automatically.
 
 `position` supports `'right' | 'left' | 'bottom' | 'top' | 'center'` (default: `'right'`). The panel aligns with that edge, animates along the corresponding axis, and supports outward swipe-to-close. `maxWidth` and `maxHeight` accept CSS dimensions: numbers are pixels, strings can use units such as `'70%'`. The panel fills its container when width/height are unspecified; limits constrain the panel rather than the mask or portal container.
 

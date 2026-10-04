@@ -24,12 +24,17 @@ describe('package exports', () => {
   const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   const exportsMap = packageJson.exports as Record<string, ConditionalExport | string>;
 
-  it('maps every public JavaScript module to types, ESM, and CommonJS artifacts', () => {
+  it('defaults all public modules to legacy artifacts and exposes explicit modern entries', () => {
     PUBLIC_JS_SUBPATHS.forEach((subpath) => {
       const entry = exportsMap[subpath] as ConditionalExport;
 
       expect(Object.keys(entry)).toEqual(['types', 'import', 'require', 'default']);
       expect(entry.default).toBe(entry.require);
+      expect(entry.import).toBe(entry.require);
+      const modern = exportsMap[subpath === '.' ? './es' : `./es/${subpath.slice(2)}`] as ConditionalExport;
+      expect(modern.import).toContain('/es/');
+      expect(modern.types).toBe(entry.types);
+      expect(fs.existsSync(path.resolve(modern.import))).toBe(true);
       Object.values(entry).forEach((target) => {
         expect(target.startsWith('./')).toBe(true);
         expect(fs.existsSync(path.resolve(target))).toBe(true);
@@ -37,16 +42,12 @@ describe('package exports', () => {
     });
   });
 
-  it('preserves public style and package metadata subpaths without exposing internals', () => {
-    expect(exportsMap['./drawer/index.css']).toEqual(expect.objectContaining({
-      import: './drawer/es/index.css',
-      require: './drawer/esm/index.css',
-    }));
-    expect(exportsMap['./drawer/style/drawer.css']).toBeUndefined();
-    expect(exportsMap['./transition/router-view.css']).toEqual(expect.objectContaining({
-      import: './transition/es/router-view.css',
-      require: './transition/esm/router-view.css',
-    }));
+  it('keeps styles internal to their component entries', () => {
+    expect(Object.keys(exportsMap).some((key) => key.endsWith('.css'))).toBe(false);
+    for (const moduleName of ['drawer', 'transition']) {
+      const childPackage = JSON.parse(fs.readFileSync(moduleName + '/package.json', 'utf8'));
+      expect(Object.keys(childPackage.exports).some((key) => key.endsWith('.css'))).toBe(false);
+    }
     expect(exportsMap['./package.json']).toBe('./package.json');
     expect(exportsMap['./next-app']).toBeUndefined();
     expect(exportsMap['./next-pages']).toBeUndefined();
@@ -72,7 +73,7 @@ describe('package exports', () => {
       const childPackage = JSON.parse(fs.readFileSync(`${moduleName}/package.json`, 'utf8'));
       expect(childPackage.exports['.']).toEqual({
         types: './types/index.d.ts',
-        import: './es/index.js',
+        import: './esm/index.js',
         require: './esm/index.js',
         default: './esm/index.js',
       });

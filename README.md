@@ -68,8 +68,8 @@ Multiple SSR pages still share this single `routes` tree. On the server, `resolv
 | Browser/hash/memory routing | `react-view-router` | Existing API preserved |
 | React Router v4/v5 collaboration | `router.history.createHistory4()` | `history@4.10.1`-compatible adapter over the shared ReactViewRouter history |
 | DOM render utilities | `react-view-router/dom` | Explicit package export |
-| Drawer router view | `react-view-router/drawer` | Explicit package export; CSS at `react-view-router/drawer/index.css` |
-| Transition router view | `react-view-router/transition` | Explicit package export; CSS at `react-view-router/transition/router-view.css` |
+| Drawer router view | `react-view-router/drawer` | Explicit package export; styles are imported automatically |
+| Transition router view | `react-view-router/transition` | Explicit package export; styles are imported automatically |
 | React 18+ standalone SSR island | `react-view-router/standalone-modern` | Implemented and tested |
 | React 16.8/17 standalone SSR island | `react-view-router/standalone-legacy` | Implemented and tested |
 | React Native | core memory router | Supported without DOM/hydration adapters |

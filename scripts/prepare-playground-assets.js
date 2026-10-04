@@ -118,7 +118,7 @@ function collectReferenceDocuments(rootDirectory) {
   return documents;
 }
 
-function preparePlaygroundAssets(directory) {
+function preparePlaygroundAssets(directory, production = false) {
   const demoDirectory = path.resolve(directory || process.cwd());
   const outputDirectory = path.join(demoDirectory, 'public/playground');
   const referenceDirectory = path.join(demoDirectory, 'public/reference');
@@ -132,8 +132,14 @@ function preparePlaygroundAssets(directory) {
 
   fs.mkdirSync(outputDirectory, { recursive: true });
   fs.mkdirSync(referenceDirectory, { recursive: true });
-  fs.copyFileSync(typescriptSource, path.join(outputDirectory, 'typescript.js'));
-  fs.copyFileSync(workerSource, path.join(outputDirectory, 'compiler-worker.js'));
+  if (production) {
+    const { execFileSync } = require('child_process');
+    const args = parseInt(process.versions.node) >= 17 ? ['--openssl-legacy-provider'] : [];
+    execFileSync(process.execPath, [...args, path.join(__dirname, 'build-playground-legacy.js'), demoDirectory], { stdio: 'inherit' });
+  } else {
+    fs.copyFileSync(typescriptSource, path.join(outputDirectory, 'typescript.js'));
+    fs.copyFileSync(workerSource, path.join(outputDirectory, 'compiler-worker.js'));
+  }
   fs.writeFileSync(
     path.join(outputDirectory, 'examples.json'),
     `${JSON.stringify(exampleSources)}\n`,

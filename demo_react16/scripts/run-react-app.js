@@ -5,7 +5,7 @@ const cliPath = require.resolve('react-app-rewired/bin/index.js');
 const nodeArgs = [];
 const childEnv = Object.assign({}, process.env);
 
-require('../../scripts/prepare-playground-assets')(__dirname + '/..');
+require('../../scripts/prepare-playground-assets')(__dirname + '/..', process.argv[2] === 'build');
 
 // CRA 4 uses Webpack 4, whose MD4 hashing is disabled by OpenSSL 3.
 // Node 14 does not need or understand this flag, so only enable it on Node 17+.

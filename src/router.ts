@@ -3,6 +3,7 @@ import {
   getPossibleHistory, HistoryFix
 } from './history-fix';
 import config from './config';
+import defaultRenderUtils, { assertKeepAliveRenderUtils } from './render-utils';
 import NavigationLoopProtection from './navigation-loop-protection';
 import {
   flatten, isAbsoluteUrl, innumerable, isPlainObject, getRouterViewPath, getCompleteRoute,
@@ -290,9 +291,8 @@ class ReactViewRouter {
     Object.assign(this.options, moreOptions);
     this._navigationLoopProtection.configure(this.options.navigationLoopProtection);
 
-    if (this.options.keepAlive && !this.options.renderUtils) {
-      throw new Error('enable keepAlive need "renderUtils", but it cannot be found from router\'s options!');
-    }
+    if (this.options.renderUtils === undefined) this.options.renderUtils = defaultRenderUtils;
+    if (this.options.keepAlive) assertKeepAliveRenderUtils(this.options.renderUtils);
   }
 
   _updateParent(parent: ReactViewRouter | null) {
@@ -507,6 +507,7 @@ class ReactViewRouter {
 
   _walkRoutes(routes: ConfigRoute[]|RouteChildrenFn, parent?: ConfigRoute) {
     walkRoutes(routes, (route, routeIndex, rs) => {
+      if (route.keepAlive) assertKeepAliveRenderUtils(this.options.renderUtils);
       this._callEvent('onWalkRoute', route, routeIndex, rs);
 
       if (route.name) {

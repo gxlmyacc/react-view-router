@@ -8,6 +8,7 @@ const COVERAGE_FILES = [
   'src/keep-alive.ts',
   'src/match-path.ts',
   'src/navigation-signal.ts',
+  'src/render-utils.ts',
   'src/route-guard.ts',
   'src/route-hydration-server.ts',
   'src/route-lazy.ts',

@@ -1,6 +1,6 @@
 {
   "main": "../esm/standalone-modern.js",
-  "module": "../es/standalone-modern.js",
+  "module": "../esm/standalone-modern.js",
   "types": "../types/standalone-modern.d.ts",
   "sideEffects": false
 }

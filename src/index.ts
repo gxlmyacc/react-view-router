@@ -49,3 +49,5 @@ export {
 };
 
 export default ReactViewRouter;
+
+export { default as defaultRenderUtils } from './render-utils';

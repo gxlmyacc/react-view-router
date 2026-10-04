@@ -14,12 +14,12 @@ describe('RouterView positions', () => {
   }
 
   it.each(['plain', 'none', 'slide', 'fade'])('%s saves before commit and restores after POP once', async (mode) => {
-    const getPosition = jest.fn(renderUtils.getPosition);
-    const setPosition = jest.fn(renderUtils.setPosition);
+    const getPosition = jest.fn(renderUtils.position.getPosition);
+    const setPosition = jest.fn(renderUtils.position.setPosition);
     const router = createTestRouter([
       { path: '/', component: Home, meta: { savePosition: true }, keepAlive: true },
       { path: '/about', component: About },
-    ], { keepAlive: true, renderUtils: { ...renderUtils, getPosition, setPosition } });
+    ], { keepAlive: true, renderUtils: { ...renderUtils, position: { ...renderUtils.position, getPosition, setPosition } } });
     syncNavigate(router, '/');
     const container = document.createElement('div');
     container.scrollTop = 123;
@@ -64,7 +64,7 @@ describe('RouterView positions', () => {
     const router = createTestRouter([
       { path: '/', component: Home, meta: { savePosition: true } },
       { path: '/about', component: About },
-    ], { renderUtils: { ...renderUtils, getPosition: read, setPosition: write } });
+    ], { renderUtils: { ...renderUtils, position: { ...renderUtils.position, getPosition: read, setPosition: write } } });
     syncNavigate(router, '/');
     const first = document.createElement('div');
     const second = document.createElement('div');
@@ -129,7 +129,7 @@ describe('RouterView positions', () => {
   it('SSR does not read containers or host storage', () => {
     const getContainerRef = jest.fn();
     const getSessionStorage = jest.fn();
-    const router = createTestRouter([], { renderUtils: { ...renderUtils, getSessionStorage } });
+    const router = createTestRouter([], { renderUtils: { ...renderUtils, storage: { ...renderUtils.storage, getSessionStorage } } });
     renderToString(React.createElement(RouterView, { router, getContainerRef }));
     expect(getContainerRef).not.toHaveBeenCalled();
     expect(getSessionStorage).not.toHaveBeenCalled();
@@ -152,7 +152,7 @@ describe('RouterView positions', () => {
   });
 
   it('ignores non-navigation, missing settings, and invalid callback positions', () => {
-    const f = fixture(false, { ...renderUtils });
+    const f = fixture(false, { ...renderUtils, position: { ...renderUtils.position }, storage: { ...renderUtils.storage } });
     const callback = jest.fn(() => ({ x: Number.NaN, y: 4 }));
     Object.assign(f.props, { onSavePosition: callback });
     f.to.action = 'REPLACE';
@@ -162,14 +162,14 @@ describe('RouterView positions', () => {
     f.save();
     expect(callback).toHaveBeenCalledTimes(1);
     f.from.metaComputed.savePosition = true;
-    (f.router.options.renderUtils as any).getPosition = () => ({ x: 1, y: Number.POSITIVE_INFINITY });
+    (f.router.options.renderUtils as any).position.getPosition = () => ({ x: 1, y: Number.POSITIVE_INFINITY });
     f.save();
     expect(f.container.scrollTop).toBe(0);
     f.router.stop();
   });
 
   it('leaves saved records intact when a position target cannot be resolved', () => {
-    const utils = { ...renderUtils };
+    const utils = { ...renderUtils, position: { ...renderUtils.position }, storage: { ...renderUtils.storage } };
     const f = fixture(() => null, utils);
     f.save();
     expect(() => f.restore()).not.toThrow();
@@ -178,7 +178,7 @@ describe('RouterView positions', () => {
     f.from.metaComputed.savePosition = () => null;
     expect(() => f.restore()).not.toThrow();
     f.from.metaComputed.savePosition = '.missing';
-    f.router.options.renderUtils = { ...renderUtils, queryPositionTarget: () => null };
+    f.router.options.renderUtils = { ...renderUtils, position: { ...renderUtils.position, queryPositionTarget: () => null } };
     f.save();
     expect(f.container.scrollTop).toBe(0);
     f.router.stop();
@@ -198,7 +198,7 @@ describe('RouterView positions', () => {
   });
 
   it('accepts empty finite positions and ignores an absent callback position', () => {
-    const f = fixture(false, { ...renderUtils });
+    const f = fixture(false, { ...renderUtils, position: { ...renderUtils.position }, storage: { ...renderUtils.storage } });
     const onSavePosition = jest.fn(() => undefined);
     Object.assign(f.props, { onSavePosition });
     f.save();
@@ -276,9 +276,12 @@ describe('RouterView positions', () => {
     };
     const f = fixture(true, {
       ...renderUtils,
-      getSessionStorage,
-      getPosition: (node: typeof handle) => ({ y: node.offset }),
-      setPosition: (node: typeof handle, p: { y: number }) => { node.offset = p.y; },
+      storage: { ...renderUtils.storage, getSessionStorage },
+      position: {
+        ...renderUtils.position,
+        getPosition: (node: typeof handle) => ({ y: node.offset }),
+        setPosition: (node: typeof handle, p: { y: number }) => { node.offset = p.y; },
+      },
     });
     (f.props as any).getContainerRef = () => handle;
     f.save(); handle.offset = 0; f.restore();
@@ -289,7 +292,7 @@ describe('RouterView positions', () => {
   it('uses adapter storage and loads the original storage key for a new router', () => {
     const values = new Map<string, string>();
     const storage = { getItem: (key: string) => values.get(key) || null, setItem: jest.fn((key, value) => values.set(key, value)) };
-    const utils = { ...renderUtils, getSessionStorage: () => storage };
+    const utils = { ...renderUtils, storage: { ...renderUtils.storage, getSessionStorage: () => storage } };
     const first = fixture(true, utils);
     first.container.scrollTop = 64; first.save();
     expect(storage.setItem.mock.calls[0][0]).toBe(SAVED_POSITION_KEY);
@@ -299,16 +302,18 @@ describe('RouterView positions', () => {
   });
 
   it.each(['getter', 'container', 'getPosition', 'setPosition', 'queryPositionTarget'])('warns once for missing %s; retains records', (missing) => {
-    const utils = { ...renderUtils };
+    const utils = { ...renderUtils, position: { ...renderUtils.position }, storage: { ...renderUtils.storage } };
     const f = fixture(missing === 'queryPositionTarget' ? '.target' : true, utils);
     const warning = jest.spyOn(console, 'error').mockImplementation(() => {});
     try {
       f.container.scrollTop = 39;
       f.save();
       const originalGetter = f.props.getContainerRef;
-      if (missing === 'getter') delete (f.props as any).getContainerRef;
-      else if (missing === 'container') (f.props as any).getContainerRef = () => null;
-      else delete (utils as any)[missing];
+      if (missing === 'getter') {
+        delete (f.props as any).getContainerRef;
+        delete utils.position.getDefaultPositionContainer;
+      } else if (missing === 'container') (f.props as any).getContainerRef = () => null;
+      else delete (utils.position as any)[missing];
       if (missing === 'setPosition') { f.restore(); f.restore(); } else { f.save(); f.save(); }
       expect(warning).toHaveBeenCalledTimes(1);
       Object.assign(utils, renderUtils);

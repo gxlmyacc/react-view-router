@@ -15,9 +15,14 @@
     "test": "cross-env SKIP_PREFLIGHT_CHECK=true node scripts/run-react-app.js test --env=jsdom",
     "eject": "node scripts/run-react-app.js eject"
   },
-  "browserslist": [
-    "Chrome >= 78"
-  ],
+  "browserslist": {
+    "production": [
+      "Chrome >= 49"
+    ],
+    "development": [
+      "Chrome >= 78"
+    ]
+  },
   "dependencies": {
     "prop-types": "15.8.1",
     "react-view-router": "link:..",

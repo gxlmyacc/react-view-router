@@ -2,21 +2,22 @@
   "name": "react-view-router-drawer",
   "version": "1.0.0",
   "main": "esm/index.js",
-  "module": "es/index.js",
+  "module": "esm/index.js",
   "typings": "types/index.d.ts",
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
-      "import": "./es/index.js",
+      "import": "./esm/index.js",
       "require": "./esm/index.js",
       "default": "./esm/index.js"
     },
-    "./index.css": {
-      "import": "./es/index.css",
-      "require": "./esm/index.css",
-      "default": "./esm/index.css"
-    },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./es": {
+      "types": "./types/index.d.ts",
+      "import": "./es/index.js",
+      "require": "./es/index.js",
+      "default": "./es/index.js"
+    }
   },
   "files": [
     "es",

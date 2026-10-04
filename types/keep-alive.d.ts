@@ -1,6 +1,6 @@
 import React, { RefObject } from 'react';
 import type { ReactNode } from 'react';
-import type { ReactRenderUtils } from './types';
+import type { KeepAliveRenderUtils } from './render-utils';
 import { createAnchor, createAnchorText, KEEP_ALIVE_ANCHOR, KEEP_ALIVE_REPLACER, KEEP_ALIVE_KEEP_COPIES } from './keep-alive-dom';
 import type { KeepAliveAnchorProps } from './keep-alive-dom';
 export interface KeepAliveNode {
@@ -10,7 +10,7 @@ export interface KeepAliveNode {
     [key: string]: any;
 }
 export interface KeepAliveProps {
-    utils: ReactRenderUtils;
+    utils: KeepAliveRenderUtils;
     activeName: string;
     children?: ReactNode;
     extra?: Record<string, any>;

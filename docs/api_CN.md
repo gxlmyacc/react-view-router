@@ -10,6 +10,8 @@
 npm install react-view-router
 ```
 
+默认入口使用兼容 Chrome 49 的 `esm` 产物（CommonJS）。需要现代 ES Modules 时，可显式引入 `react-view-router/es`、`react-view-router/es/dom`、`react-view-router/es/drawer` 或 `react-view-router/es/transition`。同一应用应统一使用相同版本的入口。Drawer 和 Transition 会自动引入样式。
+
 | 入口 | 用途 | 运行环境 |
 |---|---|---|
 | `react-view-router` | Router、组件、HOC、Hooks、history、匹配与运行时类型 | Browser、Memory、React Native |
@@ -177,7 +179,7 @@ const router = new ReactViewRouter(options);
 | `rememberInitialRoute` | `boolean` | `false` | 从 session history stacks 恢复初始路由。 |
 | `holdInitialQueryProps` | boolean、字段数组或函数 | `false` | 将初始 query 合并到后续导航。 |
 | `keepAlive` | boolean、RegExp 或判断函数 | `false` | Router 级视图保留规则。 |
-| `renderUtils` | `ReactRenderUtils` | — | KeepAlive 与位置保存所需的宿主操作适配器。 |
+| `renderUtils` | `PartialReactRenderUtils` | 默认浏览器工具 | 不依赖 ReactDOM；自定义对象完全接管，不补齐默认方法。KeepAlive 需完整适配器或相应能力。 |
 | `routeRuntimeAdapters` | `RouteRuntimeAdapter[]` | — | 可选的运行时导航/水合适配器。 |
 
 SSR 不是 Router mode；是否允许水合由每个 `RouteLazy` 的 `hydrate` 配置声明。
@@ -298,20 +300,30 @@ router.beforeEach((to, from, next) => {
 
 ### 位置保存与恢复
 
-`RouterViewProps<TContainer = HTMLElement>` 新增 `getContainerRef: () => TContainer | null`、`onSavePosition(container, { to, from })` 和 `onScrollToPosition(container, position)`。后两个回调由 Transition 继承。路由 `meta.savePosition` 支持 boolean、容器内选择器，以及由元信息计算函数返回的目标选择函数；目标选择函数接收 `{ to, from, type: 'leave' | 'enter' }`。
+`RouterViewProps<TContainer = HTMLElement>` 新增 `getContainerRef: () => TContainer | null`、`onSavePosition(container, { to, from })` 和 `onScrollToPosition(container, position)`。后两个回调由 Transition 继承。路由 `meta.savePosition` 支持 boolean、字符串选择器（提供容器时在容器内查找），以及由元信息计算函数返回的目标选择函数；目标选择函数接收 `{ to, from, type: 'leave' | 'enter' }`。
 
 PUSH 在视图更新前保存，POP 在新视图提交后恢复；首次挂载、取消导航和属性更新不触发。保存优先使用元信息，否则调用 `onSavePosition`；恢复优先调用 `onScrollToPosition`。零位置也会保存，恢复成功后删除记录。记录按 basename、视图名称、深度和路由路径隔离。
 
-`renderUtils` 新增可选的 `getPosition(container)`、`setPosition(container, position)`、`queryPositionTarget(container, selector)` 和 `getSessionStorage()`。存储 getter 返回具有 `getItem`、`setItem` 的对象或 `null`，保留 `_REACT_VIEW_ROUTER_TRANSITION_POSITIONS_` 存储键。存储缺失或不可用时使用 router 实例内缓存。核心不内置 DOM 回退；缺少容器 getter、容器或本次操作所需方法时跳过，并按原因去重警告。自定义回调可代替对应的读取、恢复方法。
+未提供 `getContainerRef` 时，默认工具通过 `position.getDefaultPositionContainer()` 使用 `document.body` 作为容器；显式提供 getter 时使用其返回值，空值不会回退到 body。`savePosition: true` 保存当前容器的位置（body 的读写映射到浏览器实际页面滚动根节点）；字符串选择器在当前容器内查找滚动元素，未匹配时仍使用容器。默认 body 范围内的选择器应唯一。函数及位置回调也收到当前容器。自定义适配器如需省略 getter，应自行提供可选的 `position.getDefaultPositionContainer()`，不会自动补齐。Transition 自动提供内容容器，显式 getter 优先。
+
+`ReactRenderUtils` 按职责分组；router 配置使用 `PartialReactRenderUtils<TContainer>`，各组及组内方法均可省略。自定义适配器完全接管，组内也不补齐默认方法。
+
+| 分组 | 方法 |
+| --- | --- |
+| position | getDefaultPositionContainer、getPosition、setPosition、queryPositionTarget |
+| storage | getSessionStorage |
+| document | createElement、createDocumentFragment、createComment |
+| node | appendChild、removeChild、insertBefore、replaceChild、replaceWith、remove |
+| reactDOM | createPortal、findDOMNode、unmountComponentAtNode |
+
+`renderUtils` 新增可选的 `position.getPosition(container)`、`position.setPosition(container, position)`、`position.queryPositionTarget(container, selector)` 和 `storage.getSessionStorage()`。存储 getter 返回具有 `getItem`、`setItem` 的对象或 `null`，保留 `_REACT_VIEW_ROUTER_TRANSITION_POSITIONS_` 存储键。存储缺失或不可用时使用 router 实例内缓存。未配置 `renderUtils` 时，router 使用公开导出的 `defaultRenderUtils`，支持浏览器位置读写、选择器、存储及节点操作，不引入 ReactDOM；仅在调用方法时访问全局对象。显式传入自定义对象时完全使用该对象，不自动补齐默认方法。缺少容器 getter、容器或本次操作所需方法时跳过，并按原因去重警告。自定义回调可代替对应的读取、恢复方法。
 
 ```tsx
 import React from 'react';
 import ReactViewRouter, { RouterView } from 'react-view-router';
-import renderUtils from 'react-view-router/dom';
 
 const router = new ReactViewRouter({
   routes: [{ path: '/home', component: Home, meta: { savePosition: true } }],
-  renderUtils,
 });
 function App() {
   const container = React.useRef<HTMLDivElement>(null);
@@ -321,21 +333,24 @@ function App() {
 }
 ```
 
-Transition 自动提供实际内容容器，包括 `transition="none"`；显式 getter 优先。现有 Transition 用户需配置更新后的 `react-view-router/dom` renderUtils，或提供相应自定义方法。服务端渲染不执行位置操作。
+Transition 自动提供实际内容容器，包括 `transition="none"`；显式 getter 优先。默认适配器支持浏览器位置操作；自定义适配器需提供相应方法。服务端渲染不执行位置操作。
 
 非 DOM 环境可以通过宿主适配方法使用抽象容器：
 
 ```ts
-import type { ReactRenderUtils, RouterViewProps } from 'react-view-router';
+import type { PartialReactRenderUtils, RouterViewProps } from 'react-view-router';
 type HostContainer = { offset: { x: number; y: number } };
 // hostRenderUtils 是平台已有渲染实现，hostContainer 是宿主提供的容器。
-const utils: ReactRenderUtils<HostContainer> = {
+const utils: PartialReactRenderUtils<HostContainer> = {
   ...hostRenderUtils,
-  getPosition: (container) => ({ ...container.offset }),
-  setPosition: (container, position) => {
-    container.offset = { x: position.x || 0, y: position.y || 0 };
+  position: {
+    ...hostRenderUtils.position,
+    getPosition: (container) => ({ ...container.offset }),
+    setPosition: (container, position) => {
+      container.offset = { x: position.x || 0, y: position.y || 0 };
+    },
   },
-  getSessionStorage: () => hostSessionStorage, // 也可以返回 null
+  storage: { getSessionStorage: () => hostSessionStorage }, // 也可以返回 null
 };
 const viewProps: RouterViewProps<HostContainer> = {
   getContainerRef: () => hostContainer,
@@ -492,11 +507,10 @@ const uninstall = router.plugin({
 
 ## KeepAlive 与换页动画
 
-KeepAlive 可以配置在 route、RouterView 或 Router 上。DOM 节点保留需要 `renderUtils`；`useViewActivate` 和 `useViewDeactivate` 用于监听缓存视图状态变化。
+KeepAlive 可以配置在 route、RouterView 或 Router 上。DOM 节点保留需要 `reactDOM.createPortal`、`document.createElement`、`document.createDocumentFragment`、`node.appendChild` 和 `node.insertBefore`，缺失时抛出列明方法的错误。默认工具不包含 `reactDOM.createPortal`，请配置 `react-view-router/dom` 完整适配器或提供相应方法；`useViewActivate` 和 `useViewDeactivate` 用于监听缓存视图状态变化。
 
 ```ts
 import { RouterView } from 'react-view-router/transition';
-import 'react-view-router/transition/router-view.css';
 ```
 
 `transition` 支持以下名称，也可传入包含 `name`、`zIndex`、`containerStyle`、`containerTag` 的对象：
@@ -520,7 +534,7 @@ import 'react-view-router/transition/router-view.css';
 <TransitionRouterView transition="slide-up" />
 ```
 
-`RouterDrawer` 使用基础 `RouterView` 的 `viewPresenter` 渲染子路由。默认在当前位置渲染，由外层提供 `position: relative; overflow: hidden;` 和明确高度。`portalContainer` 仅接受容器 getter：`portalContainer={() => document.body}` 可挂载到 body，也可返回其他 HTMLElement；未提供 getter 或返回 null 时不调用 `createPortal`。样式源码是 `drawer/src/index.scss`，发布样式入口是 `react-view-router/drawer/index.css`。
+`RouterDrawer` 使用基础 `RouterView` 的 `viewPresenter` 渲染子路由。默认在当前位置渲染，由外层提供 `position: relative; overflow: hidden;` 和明确高度。`portalContainer` 仅接受容器 getter：`portalContainer={() => document.body}` 可挂载到 body，也可返回其他 HTMLElement；未提供 getter 或返回 null 时不调用 `reactDOM.createPortal`。样式源码是 `drawer/src/index.scss`，入口自动引入样式，无需手动导入 CSS。
 
 `position` 支持 `'right' | 'left' | 'bottom' | 'top' | 'center'`，默认 `'right'`。面板贴合对应边缘，沿对应坐标轴执行进出动画，并支持向该方向滑动关闭。`maxWidth`、`maxHeight` 接受 CSS 尺寸：数字表示 px，字符串可以是 `'70%'` 等单位。未指定宽高时面板填满容器；最大尺寸限制作用于面板，不影响遮罩或 portal 容器。
 
