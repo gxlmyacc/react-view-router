@@ -262,13 +262,45 @@ $scrollbar-size: 5px;
     overflow: hidden;
 
     .route-stage {
+      position: relative;
       min-width: 0;
       min-height: 0;
       flex: 1;
       > * {
         height: 100%;
       }
+
+      .route-loading {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, .9);
+        color: #53645c;
+      }
+
+      .route-loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #d9e8dd;
+        border-top-color: $theme-primary;
+        border-radius: 50%;
+        animation: route-loading-spin .7s linear infinite;
+      }
     }
+  }
+}
+
+@keyframes route-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .route-loading-spinner {
+    animation: none;
   }
 }
 

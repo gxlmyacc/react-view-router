@@ -147,7 +147,16 @@ export default function App({ router: appRouter = workspaceRouter }: AppProps): 
                 appRouter.push({ path: '/playground', query: { exampleId } });
               }} />}
               <div className="route-stage">
-                <RouterView router={appRouter} mode={appRouter.history} />
+                <RouterView
+                  router={appRouter}
+                  mode={appRouter.history}
+                  fallback={(
+                    <div className="route-loading" role="status" aria-live="polite">
+                      <span className="route-loading-spinner" aria-hidden="true" />
+                      <span>{t('pageLoading')}</span>
+                    </div>
+                  )}
+                />
               </div>
             </main>
           </div>

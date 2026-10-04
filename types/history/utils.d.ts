@@ -1,6 +1,7 @@
 import { PartialPath, To, HashType, Blocker, State, Action, Location } from './types';
 declare const CAN_USE_DOM: boolean;
-declare const freeze: <T extends unknown>(obj: T) => T;
+/** 保留历史工具入口；location 的 state、fromEvent 等字段需要保持可修改。 */
+declare function freeze<T>(obj: T): T;
 declare function getPossibleHashType(_window?: Window, hash?: string): "slash" | "noslash";
 declare function clamp(n: number, lowerBound: number, upperBound: number): number;
 type Events<F> = {
