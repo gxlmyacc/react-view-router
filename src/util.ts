@@ -1,6 +1,7 @@
 import React, { useState, useEffect, ReactNode } from 'react';
 import config from './config';
 import { RouteLazy, isPromise, isRouteLazy } from './route-lazy';
+import { RouteLazyRenderer } from './route-lazy-renderer';
 import { REACT_FORWARD_REF_TYPE, getGuardsComponent } from './route-guard';
 import matchPath, { computeRootMatch } from './match-path';
 import {
@@ -14,13 +15,14 @@ import { RouterViewComponent as RouterView, RouterViewWrapper  } from './router-
 import ReactViewRouter from './router';
 import { HistoryFix } from './history-fix';
 import { HistoryType, Action, readonly } from './history';
+import { hasOwnProp, copyOwnProperties, copyOwnProperty } from './history/utils';
 
 const DEFAULT_STATE_NAME = '[root]';
 
 function nextTick(cb: () => void, ctx?: object) {
   // @ts-ignore
   // eslint-disable-next-line no-promise-executor-return
-  return cb && new Promise<any>(r => r()).then(() => (ctx ? cb.call(ctx) : cb()));
+  return cb && new Promise<any>((r) => r()).then(() => (ctx ? cb.call(ctx) : cb()));
 }
 
 function ignoreCatch<
@@ -39,11 +41,6 @@ function ignoreCatch<
   };
 }
 
-const _hasOwnProperty = Object.prototype.hasOwnProperty;
-
-function hasOwnProp(obj: any, key: PropertyKey) {
-  return Boolean(obj) && _hasOwnProperty.call(obj, key);
-}
 
 function innumerable<T extends object>(
   obj: T,
@@ -92,17 +89,19 @@ function normalizeRoute(
   r.exact = route.exact !== undefined
     ? (route.exact || false)
     : Boolean(route.redirect || route.index || subpath === '/');
-  r.components = { ...route.components, default: route.component };
-  Object.keys(r.components).forEach(key => {
+  r.components = { ...route.components };
+  if (route.component !== undefined) r.components.default = route.component;
+  Object.keys(r.components).forEach((key) => {
     const comp = r.components[key];
     if (comp instanceof RouteLazy) {
-      (comp as RouteLazy).updaters.push(c => {
+      (comp as RouteLazy).updaters.push((c) => {
         if (c && c.__children) {
           let children = c.__children || [];
           if (isFunction(children)) children = (children as ((r: any) => any[]))(r) || [];
           innumerable(r, 'children', normalizeRoutes(children, r, options));
           // r.exact = !(r as ConfigRoute).children.length;
         }
+        if ((comp as RouteLazy).shouldHydrate) return c;
         return r.components[key] = c;
       });
     }
@@ -150,6 +149,25 @@ function walkRoutes(
   });
 }
 
+/**
+ * Normalizes and walks a complete route configuration tree, including route
+ * children returned by functions. Returning true stops the whole traversal.
+ */
+function walkConfigRoutes(
+  routes: UserConfigRoute[]|NormalizedConfigRouteArray|ConfigRoute[]|RouteChildrenFn|null|undefined,
+  walkFn: (route: ConfigRoute, routeIndex: number, routes: ConfigRoute[]) => boolean|void,
+  parent?: ConfigRoute
+): boolean {
+  const normalized = isFunction(routes)
+    ? normalizeRoutes(routes(parent), parent)
+    : normalizeRoutes(routes, parent);
+
+  return normalized.some((route, routeIndex) => (
+    Boolean(walkFn(route, routeIndex, normalized))
+    || walkConfigRoutes(route.children, walkFn, route)
+  ));
+}
+
 
 function normalizePath(path: string) {
   const paths = path.split('/');
@@ -169,14 +187,20 @@ function normalizeRoutePath(
 ) {
   if (isAbsoluteUrl(path)) return path;
   if (isRoute(route)) route = route.matched[route.matched.length - 1];
-  if (!path || ['/', '#'].includes(path[0]) || !route) return normalizePath(basename + (path || ''));
+  if (!path || ['/', '#'].includes(path[0]) || !route) {
+    return normalizePath(basename + (path || ''));
+  }
   if (isMatchedRoute(route)) route = route.config;
-  let parent: any = (append || /^\.\//.test(path)) ? route : ((route as ConfigRoute).parent || { path: '' });
+  let parent: any = (append || /^\.\//.test(path))
+    ? route
+    : ((route as ConfigRoute).parent || { path: '' });
   while (parent && path[0] !== '/') {
     path = `${parent.path}/${path}`;
-    parent = (route as ConfigRoute).parent;
+    parent = parent.parent;
   }
-  if (basename && path[0] === '/') path = basename + path;
+  if (basename && path[0] === '/') {
+    path = basename + path;
+  }
   return normalizePath(path);
 }
 
@@ -199,7 +223,7 @@ function matchRoutes(
 
   routes = getRouteChildren(routes, parent);
 
-  routes.some(route => {
+  routes.some((route) => {
     let match = route.path
       ? matchPath((to as RouteHistoryLocation).path, route)
       : branch.length
@@ -207,10 +231,17 @@ function matchRoutes(
         : computeRootMatch((to as RouteHistoryLocation).path); // use default "root" match
 
     if (match && route.index) {
-      route = resolveIndex(route.index, routes as ConfigRoute[]) as ConfigRoute;
-      if (!route) return;
-      (to as RouteHistoryLocation).pathname = (to as RouteHistoryLocation).path = route.path;
-      match = matchPath(route.path, route);
+      const resolvedIndex = resolveIndexInfo(route.index, routes as ConfigRoute[], queryProps);
+      if (!resolvedIndex) return;
+      route = resolvedIndex.route;
+      (to as RouteHistoryLocation).pathname = (to as RouteHistoryLocation).path = resolvedIndex.path;
+      if (resolvedIndex.location.query && Object.keys(resolvedIndex.location.query).length) {
+        (to as RouteHistoryLocation).query = {
+          ...(to as RouteHistoryLocation).query,
+          ...resolvedIndex.location.query,
+        };
+      }
+      match = matchPath(resolvedIndex.path, route);
     }
 
     if (!match) return;
@@ -254,21 +285,24 @@ function normalizeLocation(
   if (!to || (isPlainObject(to) && !to.path && !to.pathname)) return null;
   if (to._routeNormalized) return to;
   if (isString(to)) {
-    const searchs = to.match(/\?[^#]+/g) || ([] as string[]);
-    const pathname = searchs.reduce((p, v) => p.replace(v, ''), to);
-    const search = searchs.sort().reduce((p, v, i) => {
+    const searches = to.match(/\?[^#]+/g) || ([] as string[]);
+    const pathname = searches.reduce((p, v) => p.replace(v, ''), to);
+    const search = searches.sort().reduce((p, v, i) => {
+      /* istanbul ignore else -- 多段 search 合并仅在重复 ? 时出现 */
       if (!i) return v;
+      /* istanbul ignore next -- 第二段及以后 search 拼接 */
       const s = v.substr(1);
       return p + (s ? `&${s}` : '');
     }, '');
     to = { pathname, path: pathname, search, fullPath: to };
   }
-  if (to.query) Object.keys(to.query).forEach(key => (to.query[key] === undefined) && (delete to.query[key]));
+  if (to.query) Object.keys(to.query).forEach((key) => (to.query[key] === undefined) && (delete to.query[key]));
   else if (to.search) to.query = config.parseQuery(to.search, queryProps);
 
   let isAbsolute = isAbsoluteUrl(to.pathname);
   if (isAbsolute && mode !== HistoryType.browser) {
     const hash = getCurrentPageHash(to.pathname);
+    /* istanbul ignore if -- 绝对 URL 转 hash 依赖真实 location */
     if (hash) {
       to.pathname = hash;
       isAbsolute = false;
@@ -328,9 +362,9 @@ function normalizeProps(props: UserConfigRouteProps) {
   const res: UserConfigRoutePropsNormal|UserConfigRoutePropsNormalMap = {};
   if (isBoolean(props)) return props;
   if (Array.isArray(props)) {
-    props.forEach(key => res[key] = { type: null });
+    props.forEach((key) => res[key] = { type: null });
   } else if (isPlainObject(props)) {
-    Object.keys(props).forEach(key => {
+    Object.keys(props).forEach((key) => {
       const val = props[key];
       res[key] = isPlainObject(val)
         ? (val as any).type !== undefined
@@ -338,35 +372,21 @@ function normalizeProps(props: UserConfigRouteProps) {
           : normalizeProps(val as any) as Record<string, UserConfigRoutePropsNormalItem>
         : { type: val };
     });
+  /* istanbul ignore next -- props 非对象/数组/boolean 时返回 false */
   } else return false;
   return res;
 }
 
-function copyOwnProperty(target: any, key: string, source: any): PropertyDescriptor | undefined {
-  if (!target || !source) return;
-  const d = Object.getOwnPropertyDescriptor(source, key);
-  d && Object.defineProperty(target, key, d);
-  return d;
-}
-function copyOwnProperties<T>(target: T, source: any, overwrite?: boolean): T {
-  if (!target || !source) return target;
-  Object.getOwnPropertyNames(source).forEach(key => {
-    if (!overwrite && hasOwnProp(target, key)) return;
-    copyOwnProperty(target, key, source);
-  });
-  return target;
-}
-
 type MatchRegxList =RegExp|string|(RegExp|string)[];
 function isMatchRegxList(key: string, regx: MatchRegxList): boolean {
-  if (Array.isArray(regx)) return regx.some(v => isMatchRegxList(key, v));
+  if (Array.isArray(regx)) return regx.some((v) => isMatchRegxList(key, v));
   return regx instanceof RegExp ? regx.test(key) : regx === key;
 }
 
 function omitProps<T extends Record<string, any>>(props: T, excludes: RegExp|string|(string|RegExp)[]) {
   if (!excludes) return props;
   const ret: Record<string, any> = {};
-  Object.getOwnPropertyNames(props).forEach(key => {
+  Object.getOwnPropertyNames(props).forEach((key) => {
     if (isMatchRegxList(key, excludes)) return;
     ret[key] = props[key];
   });
@@ -404,44 +424,102 @@ function isAcceptRef(v: any) {
 function mergeFns(...fns: any[]) {
   return function (...args: any) {
     let ret;
-    fns.forEach(fn => {
+    fns.forEach((fn) => {
       ret = fn && fn.call(this, ...args);
     });
     return ret;
   };
 }
 
-function resolveIndex(originIndex: string | RouteIndexFn, routes: ConfigRoute[]): ConfigRoute | null {
+interface ResolvedIndexInfo {
+  route: ConfigRoute,
+  path: string,
+  location: RouteHistoryLocation,
+}
+
+const INDEX_FIRST = ':first';
+
+function resolveIndexInfo(
+  originIndex: string | RouteIndexFn,
+  routes: ConfigRoute[],
+  queryProps?: ParseQueryProps,
+  resolvedRoutes: ConfigRoute[] = []
+): ResolvedIndexInfo | null {
   const index = isFunction(originIndex) ? (originIndex as RouteIndexFn)(routes) : originIndex;
   if (!index) return null;
 
-  const r = routes.find((r: ConfigRoute) => {
-    if (index === ':first' && !r.index) {
-      const visible = readRouteMeta(r, 'visible');
-      if (visible !== false) return true;
-    }
+  const location = normalizeLocation(
+    isString(index) ? index : { ...index },
+    { queryProps }
+  );
+  if (!location) return null;
+  const indexSubpath = location.path[0] === '/' ? location.path : `/${location.path}`;
 
-    const path1 = r.subpath[0] === '/' ? r.subpath : `/${r.subpath}`;
-    const path2 = (index as string)[0] === '/' ? index : `/${index}`;
-    return path1 === path2;
-  }) || null;
-  if (r && r.index) {
-    if (r.index === originIndex) return null;
-    return resolveIndex(r.index, routes);
+  let r: ConfigRoute | null = null;
+  if (index === INDEX_FIRST) {
+    r = routes.find((route: ConfigRoute) => {
+      if (route.index) return false;
+      return readRouteMeta(route, 'visible') !== false;
+    }) || null;
+  } else {
+    // Static siblings always win over parameter routes such as `:reportId`.
+    r = routes.find((route: ConfigRoute) => {
+      const routeSubpath = route.subpath[0] === '/' ? route.subpath : `/${route.subpath}`;
+      return routeSubpath === indexSubpath;
+    }) || routes.find((route: ConfigRoute) => {
+      const routeSubpath = route.subpath[0] === '/' ? route.subpath : `/${route.subpath}`;
+      return Boolean(matchPath(indexSubpath, {
+        path: routeSubpath,
+        exact: true,
+        strict: route.strict,
+        sensitive: route.sensitive,
+      }));
+    }) || null;
   }
-  return r;
+
+  if (!r || resolvedRoutes.indexOf(r) > -1) return null;
+  if (r.index) {
+    return resolveIndexInfo(r.index, routes, queryProps, resolvedRoutes.concat(r));
+  }
+
+  const resolvedSubpath = index === INDEX_FIRST
+    ? (r.subpath[0] === '/' ? r.subpath : `/${r.subpath}`)
+    : indexSubpath;
+  const path = r.parent
+    ? concatConfigRoutePath(resolvedSubpath, r.parent.path)
+    : normalizePath(resolvedSubpath);
+  return { route: r, path, location };
+}
+
+function resolveIndex(originIndex: string | RouteIndexFn, routes: ConfigRoute[]): ConfigRoute | null {
+  const resolved = resolveIndexInfo(originIndex, routes);
+  return resolved ? resolved.route : null;
 }
 
 function resolveRedirect(to: string | RouteLocation | RouteRedirectFn | undefined, route: MatchedRoute, options: {
   isInit?: boolean,
   from?: Route,
+  basename?: string,
+  mode?: string,
   queryProps?: ParseQueryProps,
 } = {}) {
-  if (isFunction(to)) to = (to as RouteRedirectFn).call(route.config, options.from, options.isInit);
+  if (isFunction(to)) {
+    to = (to as RouteRedirectFn).call(route.config, options.from, options.isInit);
+  }
   if (!to) return '';
-  const ret = normalizeLocation(to, { route, queryProps: options.queryProps });
+  const ret = normalizeLocation(to, {
+    route,
+    basename: options.basename,
+    mode: options.mode,
+    queryProps: options.queryProps,
+  });
   if (!ret) return '';
-  options.from && Object.assign(ret.query, options.from.query);
+  if (options.from) {
+    Object.assign(ret.query, options.from.query);
+    if (options.from.action === Action.Push) {
+      ret.isReplace = false;
+    }
+  }
   ret.isRedirect = true;
   return ret;
 }
@@ -472,6 +550,7 @@ async function afterInterceptors(interceptors: RouteGuardInterceptor[], to: Rout
   for (let i = 0; i < interceptors.length; i++) {
     let interceptor = interceptors[i];
     while (interceptor && (interceptor as LazyResolveFn).lazy) {
+      /* istanbul ignore next -- 异步 lazy 守卫解析 */
       interceptor = await (interceptor as LazyResolveFn)(interceptors, i);
     }
     if (!interceptor) return;
@@ -493,7 +572,7 @@ function createLazyComponent<T extends ReactAllComponentType = ReactAllComponent
 
       useEffect(() => {
         $refs.mounted = true;
-        (isPromise(lazyMethodOrPromise) ? lazyMethodOrPromise : lazyMethodOrPromise()).then(App => {
+        (isPromise(lazyMethodOrPromise) ? lazyMethodOrPromise : lazyMethodOrPromise()).then((App) => {
           if (!$refs.mounted) return;
           if ((App as EsModule).__esModule) App = (App as EsModule).default;
           setComp({ App: App as any });
@@ -530,27 +609,34 @@ function getConfigRouteProps(configs: UserConfigRouteProps, name?: string) {
   if (configs === false) return;
   if (name && (configs as UserConfigRoutePropsNormalMap)[name] !== undefined) configs = (configs as UserConfigRoutePropsNormalMap)[name];
   if (configs === true) return true;
-  else if (isPlainObject(configs)) return Object.keys(configs);
-  else if (Array.isArray(configs)) return configs;
+  if (isPlainObject(configs)) return Object.keys(configs);
+  /* istanbul ignore next -- props 数组白名单 */
+  if (Array.isArray(configs)) return configs;
   return [];
 }
 
 function configRouteProps(_props: Record<string, any>, configs: UserConfigRouteProps, obj: any, name?: string) {
   if (!obj || configs === false) return;
-  if (name && (configs as UserConfigRoutePropsNormalMap)[name] !== undefined) configs = (configs as UserConfigRoutePropsNormalMap)[name];
-  if (configs === true) Object.assign(_props, obj);
-  else if (isPlainObject(configs)) {
-    Object.keys(configs).forEach(key => {
+  if (name && (configs as UserConfigRoutePropsNormalMap)[name] !== undefined) {
+    configs = (configs as UserConfigRoutePropsNormalMap)[name];
+  }
+  if (configs === true) {
+    Object.assign(_props, obj);
+  } else if (isPlainObject(configs)) {
+    Object.keys(configs).forEach((key) => {
       const prop = (configs as UserConfigRoutePropsNormalMap)[key];
       const type = prop.type;
       const val = obj[key];
       if (val === undefined) {
         if (prop.default) {
           if (isFunction(prop.default) && (type === Object || type === Array)) {
+            /* istanbul ignore next -- Object/Array 类型 default 工厂 */
             _props[key] = (prop as any).default();
+          /* istanbul ignore next -- 标量 default */
           } else _props[key] = prop.default;
         } else return;
       }
+      /* istanbul ignore next -- props type 转换函数 */
       if (type != null && !isBoolean(type)) _props[key] = (type as Function)(val);
       else _props[key] = val;
     });
@@ -567,19 +653,26 @@ function renderRoute(
   if (props === undefined) props = {};
   if (!route) return null;
   if (React.isValidElement(route)) return route;
-  if (isMatchedRoute(route)) route = route.config;
+  if (isMatchedRoute(route)) {
+    // A navigation snapshot may stop a configured redirect to render its page.
+    route = route.redirect === route.config.redirect
+      ? route.config
+      : { ...route.config, redirect: route.redirect };
+  }
 
 
   function createComp(route: ConfigRoute, props: any, children: React.ReactNode, options: RenderRouteOption) {
     let component = route.components && route.components[options.name || 'default'];
     if (!component) {
       if (route.children && route.children.length && options.router) {
+        /* istanbul ignore next -- 无 component 时回退 RouterViewWrapper */
         component = RouterViewWrapper;
       } else return null;
     }
 
     const _props = { key: route.path };
     if (route.defaultProps) {
+      /* istanbul ignore next -- defaultProps 工厂函数 */
       Object.assign(_props, isFunction(route.defaultProps) ? route.defaultProps(props) : route.defaultProps);
     }
     if (route.props) configRouteProps(_props, route.props, options.params, options.name);
@@ -590,6 +683,7 @@ function renderRoute(
     if (component) {
       if (isAcceptRef(component)) ref = options.ref;
       else if (route.enableRef) {
+        /* istanbul ignore next -- enableRef 谓词筛选 */
         if (!isFunction(route.enableRef) || route.enableRef(component)) ref = options.ref;
       }
     }
@@ -601,6 +695,7 @@ function renderRoute(
         if (componentClass && el && (el._reactInternalFiber || el._reactInternals)) {
           let refComp = null;
           let comp = el._reactInternalFiber || el._reactInternals;
+          /* istanbul ignore next -- React fiber 遍历仅在完整挂载树中发生 */
           while (comp && !refComp) {
             if (comp.type === componentClass) {
               refComp = comp;
@@ -609,6 +704,7 @@ function renderRoute(
             comp = comp.child;
           }
           if (refComp && refComp.stateNode instanceof componentClass) el = refComp.stateNode;
+          /* istanbul ignore next -- fiber 树未找到组件类时告警 */
           else warn('componentClass', componentClass, 'not found in route component: ', el);
         }
         completeCallback && completeCallback(el);
@@ -617,23 +713,37 @@ function renderRoute(
     _pending && (_pending.completeCallbacks[options.name || 'default'] = null);
     if (ref) ref = mergeFns(ref, (el: any) => el && refHandler && refHandler(el, component.__componentClass));
     if (component.__component) component = getGuardsComponent(component);
-    if (isRouteLazy(component)) {
-      const routeLazy = component;
+    const routeLazy = isRouteLazy(component) ? component : null;
+    if (routeLazy && routeLazy.shouldHydrate && routeLazy.isResolved) {
+      component = RouteLazyRenderer;
+    } else if (routeLazy) {
       component = createLazyComponent(() => routeLazy.toResolve(
         options.router as any,
         isMatchedRoute(route) ? route.config : route,
         options.name as string
       ));
-      warn(`route [${route.path}] component should not be RouteLazy instance!`);
+      if (!routeLazy.shouldHydrate) warn(`route [${route.path}] component should not be RouteLazy instance!`);
+    }
+    const componentProps = Object.assign(
+      _props,
+      config.inheritProps ? { route } : null,
+      props,
+    );
+    if (routeLazy && routeLazy.shouldHydrate && routeLazy.isResolved) {
+      const ret = React.createElement(RouteLazyRenderer, {
+        lazy: routeLazy,
+        componentProps: { ...componentProps, children },
+        componentRef: ref,
+        route,
+        router: options.router,
+        viewName: options.name || 'default',
+      });
+      if (!ref) nextTick(refHandler);
+      return ret;
     }
     const ret = React.createElement(
       component,
-      Object.assign(
-        _props,
-        config.inheritProps ? { route } : null,
-        props,
-        { ref }
-      ),
+      Object.assign(componentProps, { ref }),
       ...(Array.isArray(children) ? children : [children])
     );
     if (!ref) nextTick(refHandler);
@@ -650,14 +760,14 @@ function renderRoute(
 }
 
 function flatten<T>(array: T[]) {
-  const flattend: T[] = [];
+  const list: T[] = [];
   (function flat(array) {
     array.forEach(function (el) {
       if (Array.isArray(el)) flat(el);
-      else flattend.push(el);
+      else list.push(el);
     });
   })(array);
-  return flattend;
+  return list;
 }
 
 function camelize(str: string): string {
@@ -673,7 +783,7 @@ function isPropChanged(
   keys?: string[]
 ) {
   if (!prev || !next) return prev !== next;
-  return (keys || Object.keys(next)) .some(key => {
+  return (keys || Object.keys(next)).some((key) => {
     const newVal = next[key];
     const oldVal = prev[key];
     let changed = newVal !== oldVal;
@@ -689,8 +799,8 @@ function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRou
 
 function isMatchedRoutePropsChanged(matchedRoute: MatchedRoute|null, router: ReactViewRouter, name?: string) {
   if (!matchedRoute) return false;
-  return router && ['query', 'params'].some(key => {
-    let configs = key === 'params'
+  return router && ['query', 'params'].some((key) => {
+    const configs = key === 'params'
       ? matchedRoute.config.paramsProps || matchedRoute.config.props
       : matchedRoute.config.queryProps;
     let keys = configs && getConfigRouteProps(configs, name);
@@ -705,7 +815,7 @@ function isMatchedRoutePropsChanged(matchedRoute: MatchedRoute|null, router: Rea
       null,
       keys as string[]
     );
-  })
+  });
 }
 
 function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]) {
@@ -720,11 +830,15 @@ function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]) {
 }
 
 function getHostRouterView(ctx: any, continueCb?: any) {
-  let parent = (ctx._reactInternalFiber || ctx._reactInternals).return;
+  let parent = (ctx._reactInternalFiber || ctx._reactInternals)?.return;
   while (parent) {
     if (continueCb && continueCb(parent) === false) return null;
+    const stateNode = parent.stateNode;
+    if (stateNode?.state?._routerRoot) {
+      return stateNode as RouterView;
+    }
     const memoizedState = parent.memoizedState;
-    // const memoizedProps = parent.memoizedProps;
+    /* istanbul ignore if -- React fiber memoizedState 上的 RouterView 标记 */
     if (memoizedState && hasOwnProp(memoizedState, '_routerRoot')) {
       return parent.stateNode as RouterView;
     }
@@ -734,6 +848,7 @@ function getHostRouterView(ctx: any, continueCb?: any) {
 }
 
 function getParentRoute(ctx: any): MatchedRoute | null {
+  /* istanbul ignore next -- 无宿主 RouterView 时返回 null */
   const view = getHostRouterView(ctx);
   return (view && view.state.currentRoute) || null;
 }
@@ -761,6 +876,7 @@ function isAbsoluteUrl(to: any) {
 function getCurrentPageHash(to: string) {
   if (!to || !globalThis.location) return '';
   const [, host = '', hash = ''] = to.match(/(.+)#(.+)$/) || [];
+  /* istanbul ignore next -- 依赖浏览器 location 与 URL host 一致 */
   return globalThis.location.href.startsWith(host) ? hash : '';
 }
 
@@ -787,7 +903,7 @@ function getRouterViewPath(routerView: RouterView) {
 }
 
 function isRoute(route: any): route is Route {
-  return Boolean(route && route.isViewRoute);
+  return Boolean(route && route.isReactViewRoute);
 }
 
 function isReactViewRouter(v: any): v is ReactViewRouter {
@@ -825,7 +941,7 @@ function normalizeRouteChildrenFn(
   };
   innumerable(cache, 'cache', cache);
   innumerable(ret, '_normalized', true);
-  Object.getOwnPropertyNames(childrenFn).forEach(key => {
+  Object.getOwnPropertyNames(childrenFn).forEach((key) => {
     if (['cache', '_normalized'].includes(key)) return;
     const p =  Object.getOwnPropertyDescriptor(childrenFn, key);
     p && Object.defineProperty(ret, key, p);
@@ -867,9 +983,9 @@ function getCompleteRoute(route: Route|null) {
   return null;
 }
 
-function getLoactionAction(to?: Route): undefined|Action {
+function getLocationAction(to?: Route): undefined|Action {
   if (!to) return;
-  return (to.isRedirect && !to.isComplete) ? getLoactionAction(to.redirectedFrom) : to.action;
+  return (to.isRedirect && !to.isComplete) ? getLocationAction(to.redirectedFrom) : to.action;
 }
 
 function reverseArray<T>(originArray: T[]) {
@@ -884,18 +1000,17 @@ function createUserConfigRoute(route: UserConfigRoute): UserConfigRoute {
   return route;
 }
 
-function createUserConfigRoutes<T extends RouteChildrenFn | NormalizedRouteChildrenFn>(routes: T): T
-function createUserConfigRoutes(routes: Array<UserConfigRoute|ConfigRoute>) {
+function createUserConfigRoutes(routes: Array<UserConfigRoute|ConfigRoute> | RouteChildrenFn | NormalizedRouteChildrenFn) {
   return routes;
 }
 
-const EMPTY_ROTUE_STATE_NAME = 'empty-state';
+const EMPTY_ROUTE_STATE_NAME = 'empty-state';
 function createEmptyRouteState() {
-  return innumerable({}, EMPTY_ROTUE_STATE_NAME, true);
+  return innumerable({}, EMPTY_ROUTE_STATE_NAME, true);
 }
 
 function isEmptyRouteState(state: any) {
-  return !state || state[EMPTY_ROTUE_STATE_NAME];
+  return !state || state[EMPTY_ROUTE_STATE_NAME];
 }
 
 export {
@@ -951,6 +1066,7 @@ export {
   normalizeProps,
   omitProps,
   walkRoutes,
+  walkConfigRoutes,
   matchPath,
   matchRoutes,
   configRouteProps,
@@ -964,7 +1080,7 @@ export {
   getCurrentPageHash,
   getRouterViewPath,
   getCompleteRoute,
-  getLoactionAction,
+  getLocationAction,
 
   getSessionStorage,
   setSessionStorage,

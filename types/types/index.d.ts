@@ -1,6 +1,6 @@
 import React from 'react';
 import { Location, History, State, HashType, TransitionCallback, Action, To, HistoryType } from '../history';
-import { RouteLazy } from '../route-lazy';
+import { RouteLazy, RouteLazyOptions } from '../route-lazy';
 import { RouteComponentGuards } from '../route-guard';
 import ReactViewRouter from '../router';
 import { RouterViewComponent } from '../router-view';
@@ -27,7 +27,7 @@ export type RouteInterceptorItem = {
     payload?: any;
 };
 export interface LazyImportMethod<P = any> {
-    (route: ConfigRoute, key: string, router: ReactViewRouter, options: Partial<any>): P | Promise<P>;
+    (route: ConfigRoute, key: string, router: ReactViewRouter, options: RouteLazyOptions): P | Promise<P>;
     readonly __lazyImportMethod?: true;
 }
 export type ReactAllComponentType<P = any> = React.ComponentType<P> | React.ForwardRefExoticComponent<P>;
@@ -37,6 +37,8 @@ export interface HistoryStackInfo {
     index: number;
     timestamp: number;
     query: RouteQuery;
+    /** Navigation API entry key used to bypass descendant iframe history entries. */
+    navigationKey?: string;
 }
 export type History4Options = {
     getUserConfirmation?: GetUserConfirmation;
@@ -59,7 +61,12 @@ export interface RouteSavedPosition {
     y?: number;
 }
 export type ReactViewRouterScrollBehavior = (to: Route, from: Route | null, savedPosition: RouteSavedPosition) => RouteSavedPosition | void;
-export interface ReactRenderUtils {
+export interface ReactRenderUtils<TContainer = HTMLElement> {
+    /** Optional host storage; unavailable storage uses a router-local cache. */
+    getSessionStorage?: () => Pick<Storage, 'getItem' | 'setItem'> | null;
+    getPosition?: (container: TContainer) => RouteSavedPosition | null | undefined;
+    setPosition?: (container: TContainer, position: RouteSavedPosition) => void;
+    queryPositionTarget?: (container: TContainer, selector: string) => TContainer | null;
     createPortal(children: React.ReactNode, container: Element | DocumentFragment, key?: null | string): React.ReactPortal;
     findDOMNode(instance: React.ReactInstance | null | undefined): Element | null | Text;
     unmountComponentAtNode(container: Element | DocumentFragment): boolean;
@@ -73,7 +80,9 @@ export interface ReactRenderUtils {
     replaceWith(el: ChildNode, ...nodes: (Node | string)[]): void;
     remove(el: ChildNode): void;
 }
-export interface ReactViewRouterMoreOptions extends Partial<any> {
+export interface ReactViewRouterMoreOptions extends Record<string, any> {
+    /** Enabled by default (1000ms / 10 attempts); false disables protection. */
+    navigationLoopProtection?: false | NavigationLoopProtectionOptions;
     manual?: boolean;
     rememberInitialRoute?: boolean;
     inheritProps?: boolean;
@@ -84,12 +93,24 @@ export interface ReactViewRouterMoreOptions extends Partial<any> {
     holdInitialQueryProps?: boolean | string[] | ((initialQuery: Record<string, string>) => Record<string, string>);
     history?: HistoryFix;
     pathname?: string;
-    renderUtils?: ReactRenderUtils;
+    renderUtils?: ReactRenderUtils<any>;
     keepAlive?: boolean | CheckKeepAliveFunction | RegExp;
     beforeViewActivate?: CheckKeepAliveResultFunction;
     install?: (vuelike: any, options: {
         App?: any;
     }) => void;
+}
+export interface NavigationLoopProtectionOptions {
+    /** Rolling window in milliseconds. Defaults to 1000. */
+    windowMs?: number;
+    /** Stop redirects at the target when this count is reached. Defaults to 10. */
+    maxVisits?: number;
+}
+export interface NavigationLoopError extends Error {
+    code: 'NAVIGATION_LOOP_DETECTED';
+    pathname: string;
+    windowMs: number;
+    maxVisits: number;
 }
 export interface ReactViewRouterOptions extends ReactViewRouterMoreOptions {
     name?: string;
@@ -134,7 +155,7 @@ export interface RouteAfterGuardFn {
 }
 export type RouteGuardInterceptor = RouteBeforeGuardFn | RouteAfterGuardFn | LazyResolveFn;
 export type OnBindInstance<T = any> = (fn: T, name: string, ci: any, r: MatchedRoute) => RouteGuardInterceptor | null;
-export type OnGetLazyResovle = (lazyResovleFn: LazyResolveFn, hook: (cb: () => void) => void) => void;
+export type OnGetLazyResolve = (lazyResolveFn: LazyResolveFn, hook: (cb: () => void) => void) => void;
 export type RouteComponentToResolveFn<T = any> = (c: any, componentKey: string) => T[];
 export type RouteLocation = {
     path?: string;
@@ -144,7 +165,9 @@ export type RouteLocation = {
     absolute?: boolean | HistoryType;
     delta?: number;
     route?: ConfigRoute;
-    backIfVisited?: boolean | 'full-matcth';
+    state?: Record<string, any>;
+    preserveState?: boolean;
+    backIfVisited?: boolean | 'full-match';
     pendingIfNotPrepared?: boolean;
     readonly _routeNormalized?: boolean;
 };
@@ -310,18 +333,23 @@ export type RouteMetaFunction<T = any> = (route: ConfigRoute, routes: ConfigRout
     refresh?: () => void;
     [key: string]: any;
 }) => T;
+export type SavePositionFunction<TContainer = HTMLElement> = (node: TContainer, options: {
+    from: Route;
+    to: Route;
+    type: 'leave' | 'enter';
+} | null) => (TContainer | void);
 export interface RouteMeta {
     title?: string | RouteMetaFunction<string>;
     visible?: boolean | RouteMetaFunction<boolean>;
     commonPage?: boolean | RouteMetaFunction<boolean>;
-    savePosition?: boolean | RouteMetaFunction<boolean>;
-    [key: string]: any | RouteMetaFunction;
+    savePosition?: boolean | string | RouteMetaFunction<boolean | string | SavePositionFunction>;
+    [key: string]: boolean | string | object | number | null | undefined | RouteMetaFunction;
 }
 export interface RouteComputedMeta {
     readonly title?: string;
     readonly visible?: boolean;
     readonly commonPage?: boolean;
-    readonly savePosition?: boolean;
+    readonly savePosition?: boolean | string | SavePositionFunction;
     readonly [key: string]: any;
 }
 export interface RouteParams {
@@ -372,19 +400,19 @@ export interface ReactViewRoutePlugin {
         ignoreClearRoute?: boolean;
     }, prevRes?: any): void;
     onRoutesChange?(routes: ConfigRoute[], originRoutes: ConfigRoute[], parent?: ConfigRoute | null, parentChildren?: ConfigRoute[], prevRes?: any): void;
-    onRouteGo?(to: RouteHistoryLocation, onComplete: (res: any, _to: Route | null) => void, onAbort: (res: any, _to: Route | null) => void, isReplace: boolean, prevRes?: any): void;
-    onRouteEnterNext?(route: MatchedRoute, ci: React.Component, prevRes?: any): void;
-    onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, prevRes?: any): void;
+    onRouteGo?(to: RouteHistoryLocation, onComplete: (res: any, _to: Route | null) => void, onAbort: (res: any, _to: Route | null) => void, isReplace: boolean, prevRes?: any): void | boolean;
+    onRouteEnterNext?(route: MatchedRoute, ci: React.Component, result?: any, prevRes?: any): void;
+    onRouteLeaveNext?(route: MatchedRoute, ci: React.Component, result?: any, prevRes?: any): void;
     onRouteing?(next: (ok: boolean | onRouteingNextCallback | Route) => void, prevRes?: any): void;
     onRouteChange?: onRouteChangeEvent;
     onRouteMetaChange?: onRouteMetaChangeEvent;
     onLazyResolveComponent?(nc: ReactAllComponentType | null, route: ConfigRoute, prevRes?: any): ReactAllComponentType | undefined;
     onWalkRoute?(route: ConfigRoute, routeIndex: number, routes: ConfigRoute[], prevRes?: any): void;
-    onGetRouteComponentGurads?(interceptors: RouteGuardInterceptor[], route: ConfigRoute, component: any, componentKey: string, guardName: string, options: {
+    onGetRouteComponentGuards?(interceptors: RouteGuardInterceptor[], route: ConfigRoute, component: any, componentKey: string, guardName: string, options: {
         router: ReactViewRouter;
         onBindInstance?: OnBindInstance | null;
-        onGetLazyResovle?: OnGetLazyResovle | null;
-        toResovle: RouteComponentToResolveFn;
+        onGetLazyResolve?: OnGetLazyResolve | null;
+        toResolve: RouteComponentToResolveFn;
         getGuard: (obj: any, guardName: string) => any;
         replaceInterceptors: (newInterceptors: any[], interceptors: RouteGuardInterceptor[], index: number) => any[];
     }, prevRes?: any): void | boolean;
@@ -501,11 +529,9 @@ export interface History4<S extends State = State> {
      *
      * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#history.block
      */
-    block(prompt: (location: Location, action: Action) => string | boolean, options?: {
-        getUserConfirmation?: GetUserConfirmation;
-    }): () => void;
+    block(prompt?: string | boolean | ((location: Location, action: Action) => string | boolean)): () => void;
 }
-export interface VuelikeComponent {
+export interface ReactViewComponent {
     _willUnmount(): void;
     readonly $route: Route | null;
     readonly $routeIndex: number;

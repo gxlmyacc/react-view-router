@@ -1,0 +1,26 @@
+{
+  "name": "react-view-router-react-demo-shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "index.d.ts",
+    "tsconfig.json",
+    "README.md",
+    "README_CN.md"
+  ],
+  "peerDependencies": {
+    "react": ">=16.9.0",
+    "react-view-router": ">=0.0.6"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

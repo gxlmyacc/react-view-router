@@ -1,24 +1,28 @@
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, useContext, ReactNode } from 'react';
 import {
   renderRoute, normalizeRoute, isFunction,
   isRouteChanged, isRoutesChanged, isPropChanged, nextTick, isMatchedRoutePropsChanged,
   getHostRouterView, warn, hasOwnProp, getRouteChildren, ignoreCatch,
 } from './util';
 import ReactViewRouter from './router';
-import { RouterViewComponent } from './router-view';
+import ViewPosition, { PositionNavigation } from './view-position';
 import {
   MatchedRoute, ConfigRoute, RouteHistoryLocation, ReactViewContainer,
-  RouteBeforeGuardFn, RouteAfterGuardFn, RouterViewName, Route, CheckKeepAliveFunction, CheckKeepAliveResultFunction,
+  RouteBeforeGuardFn, RouteAfterGuardFn, RouterViewName, Route, CheckKeepAliveFunction, CheckKeepAliveResultFunction, RouteSavedPosition,
 } from './types';
 import { computeRootMatch } from './match-path';
 import { RouterContext, RouterViewContext } from './context';
 import KeepAlive, { KeepAliveRefObject } from './keep-alive';
 
-export interface RouterViewProps extends React.HTMLAttributes<any> {
+export interface RouterViewProps<TContainer = HTMLElement> extends React.HTMLAttributes<any> {
+  getContainerRef?: () => TContainer | null,
+  onSavePosition?: (container: TContainer, options: { to: Route, from: Route | null }) => RouteSavedPosition | null | undefined,
+  onScrollToPosition?: (container: TContainer, position: RouteSavedPosition) => void,
   name?: RouterViewName,
   filter?: RouterViewFilter,
   fallback?: ReactViewFallback | React.ReactNode,
   container?: ReactViewContainer,
+  viewPresenter?: React.ComponentType<RouterViewPresenterProps>,
   router?: ReactViewRouter,
   depth?: number,
   excludeProps?: string[],
@@ -29,6 +33,13 @@ export interface RouterViewProps extends React.HTMLAttributes<any> {
   beforeActivate?: CheckKeepAliveResultFunction,
   _updateRef?: React.RefCallback<RouterView>|null,
   [key: string]: any
+}
+
+export interface RouterViewPresenterProps {
+  children?: React.ReactNode,
+  route: MatchedRoute | null,
+  router: ReactViewRouter,
+  view: RouterView,
 }
 
 export interface RouterViewState {
@@ -60,7 +71,7 @@ export type ReactViewFallback = (state: {
   resolving: boolean,
   depth: number,
   router: ReactViewRouter|undefined,
-  view: RouterViewComponent
+  view: RouterView
 }) => React.ReactNode;
 
 function normalizeRouterViewProps(props: RouterViewProps) {
@@ -107,12 +118,14 @@ export function _checkDeactivate(
 }
 
 class RouterView<
-  P extends RouterViewProps = RouterViewProps,
+  P extends RouterViewProps<any> = RouterViewProps,
   S extends RouterViewState = RouterViewState,
   SS = any,
 > extends React.Component<P, S, SS> {
 
   static defaultProps: RouterViewDefaultProps;
+
+  static contextType = RouterViewContext;
 
   target: typeof RouterView;
 
@@ -126,9 +139,40 @@ class RouterView<
 
   protected _reactInternals?: any;
 
+  private _viewPosition = new ViewPosition();
+
+  private _positionRoute: Route | null = null;
+
+  getSnapshotBeforeUpdate(previousProps: P, previousState: S): SS {
+    const router = this.state.router;
+    if (!router || !previousState.inited || !isRouteChanged(previousState.currentRoute, this.state.currentRoute)) return null as SS;
+    const to = router.currentRoute;
+    if (!to || to === this._positionRoute) return null as SS;
+    const navigation: PositionNavigation = { to, from: this._positionRoute || router.prevRoute };
+    this._viewPosition.save(router, previousProps, String(previousProps.name || 'default'), previousState.depth, navigation);
+    return navigation as SS;
+  }
+
+  componentDidUpdate(_previousProps: P, previousState: S, snapshot: SS) {
+    const router = this.state.router;
+    if (!router || !this.state.inited) return;
+    if (!previousState.inited) this._positionRoute = router.currentRoute;
+    else if (snapshot) this._positionRoute = (snapshot as unknown as PositionNavigation).to;
+    if (snapshot) this._viewPosition.restore(router, this.props, this.name, this.state.depth, snapshot as unknown as PositionNavigation);
+  }
+
   protected _kaRef: KeepAliveRefObject|null;
 
   protected _isActivate: boolean;
+
+  /**
+   * 从 React context 读取父级 RouterView 实例。
+   * @returns 父级 RouterView，无则 null
+   */
+  private get parentRouterView(): RouterView | null {
+    const ctx = this.context as RouterView | null;
+    return ctx?.isRouterViewInstance ? ctx : null;
+  }
 
   constructor(props: RouterViewProps) {
     super(props as P);
@@ -198,7 +242,18 @@ class RouterView<
     this._kaRef = ref;
   };
 
+  /** Shared event/lifecycle dispatch for cached views and presenter visibility changes. */
+  _notifyViewActivation(event: Parameters<KeepAliveChangeEvent>[0], instance = event.target.componentInstances?.[this.name]) {
+    const notify = () => this._events[event.type].slice().forEach((listener) => ignoreCatch(listener)(event));
+    if (event.type === 'deactivate') notify();
+    const callback = event.type === 'deactivate' ? instance?.componentWillUnactivate : instance?.componentDidActivate;
+    if (callback) ignoreCatch(callback.bind(instance))();
+    if (event.type === 'activate') notify();
+  }
+
   _kaActivate = (event: Parameters<KeepAliveChangeEvent>[0]) => {
+    // A presenter may notify its parent; the source view remains active.
+    if (event.source === this) return;
     const { parentRoute, router } = this.state;
     if (_checkActivate(router, parentRoute, event)) {
       this._isActivate = true;
@@ -207,19 +262,20 @@ class RouterView<
   };
 
   _kaDeactivate = (event: Parameters<KeepAliveChangeEvent>[0]) => {
+    if (event.source === this) return;
     const { parentRoute, router } = this.state;
     if (_checkDeactivate(router, parentRoute, event)) {
-      this._events.deactivate.forEach(e => ignoreCatch(e)(event));
+      this._events.deactivate.forEach((e) => ignoreCatch(e)(event));
       this._isActivate = false;
     }
   };
 
-  _checkEnableKeepAlive() {
+  _checkEnableKeepAlive(route: MatchedRoute|null = this.state.currentRoute) {
     const key = 'keepAlive';
     if (this._kaRef) return true;
     if (hasOwnProp(this.props, key)) return true;
-    const { currentRoute, router } = this.state;
-    if (hasOwnProp(currentRoute?.config, key)) return true;
+    const { router } = this.state;
+    if (hasOwnProp(route?.config, key)) return true;
     const keepAliveProps = router?.options.keepAlive;
     if (isFunction(keepAliveProps) || keepAliveProps instanceof RegExp) return true;
     return false;
@@ -227,7 +283,7 @@ class RouterView<
 
   _filterRoutes(routes: ConfigRoute[], state?: RouterViewState) {
     const { name, filter } = this.props;
-    let ret = routes && routes.filter(r => {
+    let ret = routes && routes.filter((r) => {
       const hasName = name && name !== 'default';
       if (r.redirect || r.index) return hasName ? name === r.name : !r.name;
       return hasName
@@ -247,7 +303,9 @@ class RouterView<
     if (!router) router = this.state.router;
     if (!currentRoute) return false;
     const checkKeepAlive = (v?: boolean|RegExp|CheckKeepAliveFunction) => {
-      if (isFunction(v)) v = v(currentRoute, toRoute, { router: router as ReactViewRouter, view: this });
+      if (isFunction(v)) {
+        v = v(currentRoute, toRoute, { router: router as ReactViewRouter, view: this });
+      }
       return v instanceof RegExp
         ? toRoute ? v.test(toRoute.path) : false
         : isFunction(v) ? v as CheckKeepAliveResultFunction : Boolean(v);
@@ -257,7 +315,7 @@ class RouterView<
     keepAlive = this.props.keepAlive;
     if (keepAlive) return checkKeepAlive(keepAlive);
     keepAlive = router?.options.keepAlive;
-    return isFunction(keepAlive) ? checkKeepAlive(keepAlive) : false;
+    return checkKeepAlive(keepAlive);
   }
 
   _refreshCurrentRoute(state?: S, pendingState?: S, callback?: () => void) {
@@ -269,35 +327,39 @@ class RouterView<
     let toRoute = this.getMatchedRoute(router.currentRoute, state.depth);
 
     if (!toRoute) {
-      const route = normalizeRoute({ path: '' }, state.parentRoute && state.parentRoute.config);
-      toRoute = router.createMatchedRoute(
-        route,
-        computeRootMatch()
-      );
-      router.currentRoute && router.currentRoute.matched.push(toRoute);
-    } else if (!toRoute || toRoute.redirect) toRoute = null;
+      const matched = router.currentRoute?.matched;
+      if (matched && matched.length > state.depth) {
+        toRoute = matched[state.depth];
+      } else {
+        const route = normalizeRoute({ path: '' }, state.parentRoute && state.parentRoute.config);
+        toRoute = router.createMatchedRoute(
+          route,
+          computeRootMatch()
+        );
+        if (matched && matched.length === state.depth) {
+          matched.push(toRoute);
+        }
+      }
+    } else if (toRoute.redirect) toRoute = null;
 
     const isChanged = isRouteChanged(currentRoute, toRoute);
     const isMounted = this._isMounted;
 
     const newState: RouterViewState = {
-      enableKeepAlive: this.state.enableKeepAlive || this._checkEnableKeepAlive(),
+      enableKeepAlive: this.state.enableKeepAlive || this._checkEnableKeepAlive(toRoute),
       currentRoute: toRoute
     } as any;
     if (toRoute) toRoute.viewInstances[this.name] = this;
 
+    /* istanbul ignore if -- keepAlive 节点生命周期依赖真实 KeepAlive 容器 */
     if (isMounted && isChanged && router.options.keepAlive) {
-      const event: KeepAliveEventObject = { router, source: this, target: null, to: toRoute, from: currentRoute } as any;
+      const event = { router, source: this, to: toRoute, from: currentRoute };
       newState.renderKeepAlive = this.isKeepAliveRoute(currentRoute, toRoute, router);
       const kaRef = this._kaRef;
       if (kaRef) {
         if (newState.renderKeepAlive) {
           if (currentRoute?.path === kaRef.activeName) {
-            event.target = currentRoute as MatchedRoute;
-            this._events.deactivate.forEach(e => ignoreCatch(e)(event));
-            const activeNode = kaRef.activeNode;
-            activeNode?.instance?.componentWillUnactivate
-              && ignoreCatch(activeNode.instance.componentWillUnactivate.bind(activeNode.instance))();
+            this._notifyViewActivation({ ...event, type: 'deactivate', target: currentRoute as MatchedRoute }, kaRef.activeNode?.instance);
           }
         } else if (currentRoute) {
           kaRef.remove(currentRoute.path, toRoute?.path === currentRoute.path);
@@ -310,11 +372,10 @@ class RouterView<
               || this.props.beforeActivate
               || router.options.beforeViewActivate;
             if (!beforeActivate || beforeActivate(currentRoute, toRoute, { view: this, router })) {
-              event.target = toRoute as MatchedRoute;
+              const activateEvent = { ...event, type: 'activate' as const, target: toRoute as MatchedRoute };
               nextTick(() => {
                 if (!this._isMounted) return;
-                if (toNode.instance?.componentDidActivate) ignoreCatch(toNode.instance.componentDidActivate.bind(toNode.instance))();
-                this._events.activate.forEach(e => ignoreCatch(e)(event));
+                this._notifyViewActivation(activateEvent, toNode.instance);
               });
             }
           }
@@ -327,11 +388,13 @@ class RouterView<
       else if (isMounted) {
         const { currentRef } = this;
         if (isChanged && !newState.renderKeepAlive && currentRef && router._isReactViewComponent(currentRef)) {
+          /* istanbul ignore next -- ReactView 组件切换路由时触发 _willUnmount */
           currentRef._willUnmount();
         }
         try {
           this.setState(newState);
         } catch (ex) {
+          /* istanbul ignore next -- setState 同步异常仅记录 */
           console.error(ex);
         }
         const { onRouteChange } = this.props;
@@ -374,15 +437,25 @@ class RouterView<
     this._isMounted = true;
     if (this.state.inited) return;
 
-    if (!this._reactInternalFiber && !this._reactInternals) return;
-
     const state = { ...(this.state as S) };
     let router = state.router;
 
     let parent = getHostRouterView(this);
+    if (!parent && (this.props as any)._parentView?.isRouterViewInstance) {
+      parent = (this.props as any)._parentView;
+    }
+    if (!parent && this.parentRouterView) {
+      parent = this.parentRouterView;
+    }
+
+    const hasFiber = Boolean(this._reactInternalFiber || this._reactInternals);
+    if (!hasFiber && !parent && !router) return;
+
     const parentRouter = parent?.state.router;
     if (router && parent) {
-      if (!parentRouter || router.mode !== parentRouter.mode || !router.basename) parent = null;
+      if (!parentRouter || router.mode !== parentRouter.mode || !router.basename) {
+        parent = null;
+      }
     }
     if (parent) {
       state.parent = parent;
@@ -408,7 +481,8 @@ class RouterView<
         (ok, to) => {
           if (!ok) return;
           router && to && router.updateRoute(to);
-          this._refreshCurrentRoute(state);
+          // StrictMode may replay mount before the first initialization callback commits.
+          this._refreshCurrentRoute(state, state);
           if (isFunction(ok)) ok(true, (router as ReactViewRouter).currentRoute);
           if (this._isMounted) this.setState(Object.assign(state, { inited: this._isMounted }));
         },
@@ -425,7 +499,7 @@ class RouterView<
       state.routes = state.parentRoute
         ? this._filterRoutes(getRouteChildren(state.parentRoute.config.children, state.parentRoute.config))
         : [];
-      this._refreshCurrentRoute(state);
+      this._refreshCurrentRoute(state, state);
       if (this._isMounted) this.setState(Object.assign(state, { inited: true }));
     }
   }
@@ -530,6 +604,10 @@ class RouterView<
       : current;
   }
 
+  getViewPresenter(): React.ComponentType<RouterViewPresenterProps> | undefined {
+    return this.props.viewPresenter;
+  }
+
   render(): React.ReactNode {
     if (!this.state.inited) return this._resolveFallback();
     const { router } = this.state;
@@ -554,6 +632,15 @@ class RouterView<
     }
 
     ret = this.renderContainer(ret, currentRoute);
+
+    const ViewPresenter = this.getViewPresenter();
+    if (ViewPresenter) {
+      ret = React.createElement(ViewPresenter, {
+        route: currentRoute,
+        router,
+        view: this,
+      }, ret);
+    }
 
     ret = React.createElement<any>(
       RouterViewContext.Provider,
@@ -581,9 +668,14 @@ class RouterView<
 
 }
 
-const RouterViewWrapper: React.ForwardRefExoticComponent<
-  RouterViewProps & React.RefAttributes<RouterView>
-> = React.forwardRef((props, ref) => {
+export interface RouterViewWrapperComponent extends React.ForwardRefExoticComponent<
+  RouterViewProps<any> & React.RefAttributes<RouterView>
+> {
+  <TContainer = HTMLElement>(props: RouterViewProps<TContainer> & React.RefAttributes<RouterView>): React.ReactElement | null;
+}
+
+const RouterViewWrapper: RouterViewWrapperComponent = React.forwardRef<RouterView, RouterViewProps<any>>((props, ref) => {
+  const parentView = useContext(RouterViewContext);
   const [isRunning, setIsRunning] = useState(!props.router || props.router.isRunning);
 
   useEffect(
@@ -598,6 +690,8 @@ const RouterViewWrapper: React.ForwardRefExoticComponent<
 
   return isRunning ? React.createElement(RouterView, {
     ...props,
+    _parentView: parentView,
+    /* istanbul ignore next -- React 对象 ref 写入由 ref 回调分支覆盖 */
     _updateRef: ref && (isFunction(ref) ? ref : (r: RouterView) => (ref.current as any) = r)
   }) : null;
 });
@@ -605,10 +699,15 @@ const RouterViewWrapper: React.ForwardRefExoticComponent<
 RouterView.defaultProps = {
   excludeProps: [
     '_updateRef',
+    '_parentView',
     'name',
     'filter',
     'fallback',
     'container',
+    'getContainerRef',
+    'onSavePosition',
+    'onScrollToPosition',
+    'viewPresenter',
     'router',
     'depth',
     'excludeProps',

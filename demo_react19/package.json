@@ -1,0 +1,30 @@
+{
+  "name": "react-view-router-demo-react19",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ../scripts/prepare-playground-assets.js . && cross-env GENERATE_SOURCEMAP=true SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true react-app-rewired start",
+    "build": "node ../scripts/prepare-playground-assets.js . && cross-env SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true react-app-rewired build",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "cross-env SKIP_PREFLIGHT_CHECK=true react-app-rewired test --env=jsdom"
+  },
+  "browserslist": [
+    "Chrome >= 78"
+  ],
+  "dependencies": {
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-scripts": "5.0.1",
+    "react-view-router": "link:..",
+    "react-view-router-react-demo-shared": "file:../demo_react_shared"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "babel-preset-react-scope-style": "0.1.0-alpha.5",
+    "cross-env": "7.0.3",
+    "react-app-rewired": "2.2.1",
+    "sass": "1.62.1",
+    "typescript": "6.0.3"
+  }
+}

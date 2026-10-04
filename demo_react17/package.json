@@ -6,11 +6,12 @@
     "react",
     "starter"
   ],
-  "main": "src/index.js",
+  "main": "src/index.tsx",
   "scripts": {
-    "start": "cross-env GENERATE_SOURCEMAP=true react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
+    "start": "cross-env GENERATE_SOURCEMAP=true SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true node scripts/run-react-app.js start",
+    "build": "cross-env SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true node scripts/run-react-app.js build",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "cross-env SKIP_PREFLIGHT_CHECK=true node scripts/run-react-app.js test --env=jsdom",
     "eject": "react-scripts eject"
   },
   "browserslist": [
@@ -18,15 +19,21 @@
   ],
   "dependencies": {
     "prop-types": "15.8.1",
+    "react-view-router": "link:..",
+    "react-view-router-react-demo-shared": "file:../demo_react_shared",
     "react": "17.0.2",
     "react-dom": "17.0.2",
-    "react-scripts": "4.0.3",
-    "react-view-router": "2.1.6"
+    "react-scripts": "4.0.3"
   },
   "devDependencies": {
     "@babel/runtime": "7.17.9",
+    "@types/react": "17.0.93",
+    "@types/react-dom": "17.0.26",
+    "babel-preset-react-scope-style": "0.1.0-alpha.5",
     "cross-env": "7.0.3",
+    "react-app-rewired": "2.2.1",
     "react-hooks": "^1.0.1",
-    "typescript": "4.6.3"
+    "sass": "1.62.1",
+    "typescript": "6.0.3"
   }
 }

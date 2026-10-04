@@ -1,0 +1,159 @@
+$guard-border: #d1d5db;
+
+.guard-log {
+  display: flex;
+  width: 43%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  margin-left: 14px;
+  padding: 12px;
+  flex-direction: column;
+  border: 1px solid $guard-border;
+  border-radius: 7px;
+  background: #fff;
+
+  small {
+    display: block;
+    margin-top: 4px;
+    color: #6b7280;
+  }
+}
+
+.guard-log-heading {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.guard-log-help {
+  flex: none;
+  margin: 7px 0 9px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.guard-navigation-list {
+  min-height: 0;
+  padding-right: 4px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.guard-navigation {
+  overflow: hidden;
+  border: 1px solid $guard-border;
+  border-radius: 6px;
+
+  & + & {
+    margin-top: 8px;
+  }
+
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    padding: 5px 8px;
+    border-top: 1px solid #e5e7eb;
+  }
+}
+
+.guard-navigation-heading,
+.guard-log-event,
+.guard-log-route {
+  display: flex;
+  align-items: center;
+}
+
+.guard-navigation-heading {
+  padding: 7px 9px;
+  background: #f9fafb;
+
+  > * {
+    margin-right: 8px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+  }
+
+  > .guard-log-route {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+.guard-navigation-result,
+.guard-log-step,
+.guard-log-outcome {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.guard-navigation-result.is-completed,
+.guard-log-outcome.is-continue,
+.guard-log-outcome.is-completed,
+.guard-log-outcome.is-callback {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.guard-navigation-result.is-abort,
+.guard-navigation-result.is-redirect,
+.guard-log-outcome.is-abort,
+.guard-log-outcome.is-redirect {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.guard-navigation-reason {
+  margin: 0;
+  padding: 6px 9px;
+  background: #fff7ed;
+  color: #4b5563;
+  font-size: 12px;
+}
+
+.guard-log-event {
+  flex-wrap: nowrap;
+
+  code {
+    min-width: 0;
+    margin: 0 6px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.guard-log-route {
+  flex-wrap: wrap;
+  color: #4b5563;
+  font-size: 12px;
+
+  > * {
+    margin-right: 6px;
+  }
+
+  code {
+    word-break: break-all;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 900px) {
+  .guard-log {
+    width: 100%;
+    height: 360px;
+    min-height: 260px;
+    margin: 10px 0 0;
+  }
+}

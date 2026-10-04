@@ -12,7 +12,7 @@ type UseRouteOptions = {
     ignoreSamePath?: boolean;
 };
 declare function useRoute(defaultRouter?: ReactViewRouter | null, options?: UseRouteOptions, anotherWatch?: UseRouteWatchEvent | null): Route | null;
-declare function useRouterView(): import("../router-view").RouterViewComponent<import("../router-view").RouterViewProps, import("../router-view").RouterViewState, any> | null;
+declare function useRouterView(): import("../router-view").RouterViewComponent<import("../router-view").RouterViewProps<HTMLElement>, import("../router-view").RouterViewState, any> | null;
 declare function useMatchedRouteIndex(matchedOffset?: number): number;
 type UseMatchedRouteOptions = {
     commonPageName?: string;
@@ -22,7 +22,7 @@ declare function useMatchedRouteAndIndex(defaultRouter?: ReactViewRouter | null,
 declare function useMatchedRoute(defaultRouter?: ReactViewRouter | null, options?: UseMatchedRouteOptions): MatchedRoute | null;
 declare function useRouteMeta(metaKey: string | string[], defaultRouter?: ReactViewRouter | null, options?: {
     ignoreConfigRoute?: boolean;
-} & UseMatchedRouteOptions): [Partial<any> | null, (key: string, value: any) => void];
+} & UseMatchedRouteOptions): [Partial<any> | null, (newValue: any, setAll?: boolean) => void];
 declare function useRouteState<T extends Record<string, any> = any>(defaultRouter?: ReactViewRouter | null, stateAction?: T | (() => T), options?: UseMatchedRouteOptions): [routeState: T, setRouteState: (newState: T) => void];
 declare function useRouteParams<T extends Record<string, any> = any>(defaultRouter?: ReactViewRouter | null, options?: UseMatchedRouteOptions): T;
 declare function useRouteQuery<T extends Record<string, any> = any>(defaultRouter?: ReactViewRouter | null, options?: UseRouteOptions): T;

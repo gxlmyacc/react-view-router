@@ -1,0 +1,63 @@
+.history-stack-example {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid #d8e5d5;
+  border-radius: 8px;
+  background: #fff;
+
+  &:scope {
+    .history-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      margin-bottom: 12px;
+      padding: 9px 11px;
+      border-radius: 6px;
+      background: #eff8ec;
+
+      code {
+        color: #278f1c;
+      }
+    }
+
+    .history-page {
+      max-width: 720px;
+      padding: 16px;
+      border: 1px dashed #72bd68;
+      border-radius: 8px;
+
+      h3 {
+        margin: 0;
+      }
+
+      p {
+        color: #64748b;
+        line-height: 1.55;
+      }
+
+      iframe {
+        width: 100%;
+        height: 160px;
+        box-sizing: border-box;
+        margin-bottom: 12px;
+        border: 1px solid #b9d8b3;
+        border-radius: 6px;
+      }
+
+      button {
+        padding: 8px 11px;
+        border: 1px solid #72bd68;
+        border-radius: 5px;
+        background: #fff;
+        color: #278f1c;
+        cursor: pointer;
+      }
+
+      .navigation-support {
+        color: #475569;
+      }
+    }
+  }
+}

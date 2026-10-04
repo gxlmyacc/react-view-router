@@ -1,0 +1,298 @@
+$workspace-background: #f3f9f1;
+$theme-primary: #3d6e35;
+$theme-primary-dark: #294f25;
+$theme-primary-soft: #eaf8e6;
+$theme-header: #15392d;
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  color: #1f2937;
+  background: $workspace-background;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+
+$scrollbar-size: 5px;
+
+/* Let's get this party started */
+::-webkit-scrollbar {
+  width: 8px;
+  height: $scrollbar-size + 3px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  /* -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3); */
+  border-radius: $scrollbar-size + 1px;
+  border-radius: $scrollbar-size + 1px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  border-radius: $scrollbar-size + 1px;
+  border-radius: $scrollbar-size + 1px;
+  background: #d1d3d8;
+  width: 0;
+
+  /* -webkit-box-shadow: inset 0 0 6px rgba(232, 197, 197, 0.5); */
+}
+
+:hover::-webkit-scrollbar-thumb {
+  background-color: #9297a1;
+  border-radius: 10px;
+}
+
+.dpl-table-scroll {
+  .dpl-table-header {
+    margin-bottom: 0 !important;
+  }
+}
+
+.app-shell {
+  display: flex;
+  height: 100vh;
+  min-height: 560px;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  min-height: 64px;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 8px 20px;
+  border-top: 3px solid transparent;
+  border-bottom: 1px solid #173e59;
+  background:
+    linear-gradient($theme-header, $theme-header) padding-box,
+    linear-gradient(90deg, #42cf19, #ffd20a, #ff9f08, #ff423c, #b75bd8, #209ee8) border-box;
+  color: #fff;
+
+  .brand {
+    display: flex;
+    min-width: 245px;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      flex: none;
+    }
+
+    .brand-copy {
+      display: flex;
+      flex-direction: column;
+
+      strong {
+        font-size: 18px;
+      }
+
+      > span {
+        margin-top: 2px;
+        color: #b8d5e5;
+        font-size: 11px;
+      }
+    }
+  }
+
+  .top-navigation {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    gap: 3px;
+
+    button {
+      padding: 7px 10px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: #cbd5e1;
+      cursor: pointer;
+
+      &.is-active,
+      &:hover {
+        background: rgba(32, 158, 232, .2);
+        color: #fff;
+      }
+
+      &.is-active {
+        box-shadow: inset 0 -2px 0 $theme-primary;
+      }
+    }
+  }
+
+  .language-switch {
+    padding: 6px 11px;
+    border: 1px solid #72bd68;
+    border-radius: 5px;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+  }
+}
+
+.app-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+
+  .site-sidebar {
+    width: 224px;
+    box-sizing: border-box;
+    padding: 14px 10px;
+    overflow: auto;
+    border-right: 1px solid #dbe2ea;
+    background: #fff;
+
+    section {
+      margin-bottom: 16px;
+    }
+
+    section > strong {
+      display: block;
+      padding: 0 10px 6px;
+      color: #94a3b8;
+      font-size: 11px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .site-menu-item {
+      width: 100%;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      color: #334155;
+      text-align: left;
+      cursor: pointer;
+
+      &.is-active,
+      &:hover {
+        background: $theme-primary-soft;
+        color: $theme-primary-dark;
+      }
+
+      &.is-active {
+        box-shadow: inset 3px 0 0 $theme-primary;
+        font-weight: bold;
+      }
+    }
+  }
+
+  .workspace-content {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .route-tabs {
+    display: flex;
+    min-height: 38px;
+    box-sizing: border-box;
+    align-items: flex-end;
+    gap: 3px;
+    padding: 6px 12px 0;
+    overflow-x: auto;
+    border-bottom: 1px solid #dbe2ea;
+    background: #fff;
+
+    .route-tab {
+      display: flex;
+      flex: none;
+      align-items: center;
+      border: 1px solid transparent;
+      border-bottom: 0;
+      border-radius: 6px 6px 0 0;
+
+      &.is-active {
+        border-color: #bfe4b8;
+        background: $workspace-background;
+        box-shadow: inset 0 2px 0 $theme-primary;
+      }
+
+      button {
+        padding: 6px 4px 6px 10px;
+        border: 0;
+        background: transparent;
+        color: #475569;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .close-tab {
+        padding: 6px 8px 6px 3px;
+        color: #94a3b8;
+        font-size: 16px;
+        line-height: 1;
+      }
+    }
+  }
+
+  .site-main {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    overflow: hidden;
+
+    .route-stage {
+      min-width: 0;
+      min-height: 0;
+      flex: 1;
+      > * {
+        height: 100%;
+      }
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .app-header {
+    .brand {
+      min-width: 90px;
+      .brand-copy > span {
+        display: none;
+      }
+    }
+
+    .top-navigation {
+      display: none;
+    }
+  }
+
+  .app-body {
+    .site-sidebar {
+      width: 145px;
+    }
+
+    .site-main {
+      padding: 9px;
+    }
+  }
+}

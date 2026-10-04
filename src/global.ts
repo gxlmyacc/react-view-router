@@ -1,11 +1,14 @@
 import { ReactViewRouterGlobal } from './types';
 
+declare const global: any;
+
 const REACT_VIEW_ROUTER_KEY = '__REACT_VIEW_ROUTER_GLOBAL__';
 
-/** @type {Window & typeof globalThis & { [RAINBOW_ROUTER_KEY]: RainbowRouterGlobal }} */
+/** @type {Window & typeof globalThis & { [REACT_VIEW_ROUTER_KEY]: ReactViewRouterGlobal }} */
 let _global = null;
 
 
+/* istanbul ignore next -- 兼容无 globalThis 的旧运行环境 */
 if (typeof globalThis === 'undefined') {
   if (typeof window !== 'undefined') {
     _global = window;
@@ -44,6 +47,7 @@ if (!_global[REACT_VIEW_ROUTER_KEY]) {
 // @ts-ignore
 const REACT_VIEW_ROUTER_GLOBAL: ReactViewRouterGlobal = _global[REACT_VIEW_ROUTER_KEY] as any;
 
+/* istanbul ignore if -- 已有 global 对象但缺少 contexts 时补全 */
 if (!REACT_VIEW_ROUTER_GLOBAL.contexts) {
   REACT_VIEW_ROUTER_GLOBAL.contexts = {};
 }

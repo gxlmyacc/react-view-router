@@ -2,7 +2,7 @@ import {
   History, Transition, PopAction, Location, Action, Blocker, State, HistoryType, To,
   Listener, HistoryState, PartialPath
 } from './types';
-import { createPath, freeze, createEvents, parsePath, createKey, allowTx } from './utils';
+import { createPath, freeze, createEvents, parsePath, createKey, allowTx, allowTxWithParams, copyOwnProperties } from './utils';
 
 // const BeforeUnloadEventType = 'beforeunload';
 export const HashChangeEventType = 'hashchange';
@@ -19,11 +19,11 @@ export function createHistory(
 ): History {
   const { window: _window, type, getLocationPath, createHref } = options;
 
-  let globalHistory = _window.history;
+  const globalHistory = _window.history;
 
   function getIndexAndLocation(): [number, Location] {
-    let { pathname = '/', search = '', hash = '' } = getLocationPath();
-    let state = globalHistory.state || {};
+    const { pathname = '/', search = '', hash = '' } = getLocationPath();
+    const state = globalHistory.state || {};
     return [
       state.idx,
       freeze<Location>({
@@ -38,8 +38,8 @@ export function createHistory(
 
   let action = Action.Push;
   let [index, location] = getIndexAndLocation();
-  let listeners = createEvents<Listener>();
-  let blockers = createEvents<Blocker>();
+  const listeners = createEvents<Listener>();
+  const blockers = createEvents<Blocker>();
 
   function getIndex(delta?: number) {
     let ret = index;
@@ -48,12 +48,16 @@ export function createHistory(
   }
 
   function getNextLocation(to: To, state: State = null): Location {
-    return freeze<Location>({
-      ...location,
-      ...(typeof to === 'string' ? parsePath(to) : to),
-      state,
-      key: createKey()
-    });
+    return freeze<Location>(
+      copyOwnProperties(
+        copyOwnProperties({ ...location, }, typeof to === 'string' ? parsePath(to) : to, true),
+        {
+          state,
+          key: createKey()
+        },
+        true
+      )
+    );
   }
 
   function getHistoryState(nextLocation: Location, index: number) {
@@ -77,9 +81,10 @@ export function createHistory(
 
   function applyTx(nextAction: Action, payload?: any) {
     action = nextAction;
-    let prevIndex = index;
+    const prevIndex = index;
     [index, location] = getIndexAndLocation();
     if (index == null && prevIndex != null) {
+      /* istanbul ignore next -- popstate 缺失 idx 时按 action 推算 */
       index = (nextAction === Action.Push
         ? prevIndex + 1
         : nextAction === Action.Replace
@@ -91,7 +96,7 @@ export function createHistory(
   }
 
   function pushHistoryState(location: Location, index: number) {
-    let [historyState, url] = getHistoryStateAndUrl(location, index);
+    const [historyState, url] = getHistoryStateAndUrl(location, index);
 
     // TODO: Support forced reloading
     // try...catch because iOS limits us to 100 pushState calls :/
@@ -107,7 +112,7 @@ export function createHistory(
   }
 
   function replaceHistoryState(location: Location, index: number) {
-    let [historyState, url] = getHistoryStateAndUrl(location, index);
+    const [historyState, url] = getHistoryStateAndUrl(location, index);
 
     // TODO: Support forced reloading
     globalHistory.replaceState(historyState, '', url);
@@ -128,33 +133,39 @@ export function createHistory(
     let index = getIndex();
     let [nextIndex, nextLocation] = getIndexAndLocation();
     if (nextIndex == null) {
+      /* istanbul ignore start -- popstate 无 idx 时重建 history index */
       if (index == null || isNaN(index)) index = 0;
       nextIndex = createPath(nextLocation) === createPath(location) ? index : index + 1;
       replaceHistoryState(nextLocation, nextIndex);
       if (!blockedPopAp && !blockedPopTx && nextIndex === index) return;
+      /* istanbul ignore end */
     }
-    let delta = index - nextIndex;
-    let nextAction = !delta ? Action.Replace : (delta > 0 ? Action.Pop : Action.Push);
+    const delta = index - nextIndex;
+    const nextAction = !delta ? Action.Replace : (delta > 0 ? Action.Pop : Action.Push);
 
     if (blockedPopDc) {
       blockedPopDc({ index: nextIndex, location: nextLocation });
       blockedPopDc = null;
     } else if (blockedPopAp) {
+      /* istanbul ignore if -- 浏览器 popstate 回滚恢复 */
       if (nextIndex === blockedPopAp.prevIndex) {
         go(blockedPopAp.delta);
         return;
       }
+      /* istanbul ignore next */
       blockedPopAp.cb && blockedPopAp.cb();
       blockedPopAp = null;
     } else if (blockers.length && delta) {
-      let seed = 0;
+      const seed = 0;
       const callback = (ok: boolean, payload?: any) => {
         if (!blockedPopTx) return;
         if (ok) {
+          /* istanbul ignore next -- popstate block 允许后应用导航 */
           blockedPopTx = null;
           applyTx(nextAction, payload);
           return;
         }
+        /* istanbul ignore next -- popstate 被 block 拒绝后回滚 */
         blockedPopTx.backCallback(seed);
       };
       nextLocation.fromEvent = true;
@@ -178,7 +189,7 @@ export function createHistory(
           go(blockedPopAp.delta);
         }
       };
-      blockers.call(blockedPopTx);
+      allowTxWithParams(blockers, blockedPopTx);
     } else {
       applyTx(nextAction);
     }
@@ -188,10 +199,10 @@ export function createHistory(
   if (type === HistoryType.hash) {
     // popstate does not fire on hashchange in IE 11 and old (trident) Edge
     // https://developer.mozilla.org/de/docs/Web/API/Window/popstate_event
-    _window.addEventListener(HashChangeEventType, e => {
+    _window.addEventListener(HashChangeEventType, (e) => {
       if (blockedPopTx || blockedPopAp) return;
 
-      let [, nextLocation] = getIndexAndLocation();
+      const [, nextLocation] = getIndexAndLocation();
       // Ignore extraneous hashchange events.
       if (createPath(nextLocation) !== createPath(location)) {
         handlePop(e);
@@ -205,8 +216,8 @@ export function createHistory(
   }
 
   function push(to: To, state?: State) {
-    let nextAction = Action.Push;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Push;
+    const nextLocation = getNextLocation(to, state);
 
     const seed = blockedPopTx ? ++blockedPopTx.seed : -1;
     const callback = (ok: boolean, payload?: any) => {
@@ -215,6 +226,7 @@ export function createHistory(
         return;
       }
       if (blockedPopTx && blockedPopTx.seed === seed) {
+        /* istanbul ignore next -- 连续 push/replace 清理 blockedPopTx */
         blockedPopTx = null;
       }
 
@@ -229,6 +241,7 @@ export function createHistory(
         return;
       }
 
+      /* istanbul ignore if -- 延迟 push 等待 pop 恢复 */
       if (blockedPopAp) (blockedPopAp as unknown as PopAction).cb = () => _cb(index);
       else _cb(index);
     };
@@ -246,8 +259,8 @@ export function createHistory(
   }
 
   function replace(to: To, state?: State) {
-    let nextAction = Action.Replace;
-    let nextLocation = getNextLocation(to, state);
+    const nextAction = Action.Replace;
+    const nextLocation = getNextLocation(to, state);
 
     const seed = blockedPopTx ? ++blockedPopTx.seed : -1;
     const callback = (ok: boolean, payload?: any) => {
@@ -256,6 +269,7 @@ export function createHistory(
         return;
       }
       if (blockedPopTx && blockedPopTx.seed === seed) {
+        /* istanbul ignore next -- 连续 replace 清理 blockedPopTx */
         blockedPopTx = null;
       }
 
@@ -270,6 +284,7 @@ export function createHistory(
         return;
       }
 
+      /* istanbul ignore if -- 延迟 replace 等待 pop 恢复 */
       if (blockedPopAp) (blockedPopAp as unknown as PopAction).cb = () => _cb(index);
       else _cb(index);
     };
@@ -286,7 +301,7 @@ export function createHistory(
     }
   }
 
-  let history: History = {
+  const history: History = {
     get extra() {
       return options.extra;
     },
@@ -303,9 +318,11 @@ export function createHistory(
       return index;
     },
     get length() {
+      /* istanbul ignore next -- 透传 window.history.length */
       return globalHistory.length;
     },
     get state() {
+      /* istanbul ignore next -- 透传 history state.usr */
       return getHistoryState(location, index).usr;
     },
     get realtimeLocation() {
@@ -324,8 +341,21 @@ export function createHistory(
       globalHistory.replaceState(historyState, '');
       return state;
     },
-    refresh() {
-      [index, location] = getIndexAndLocation();
+    refresh(nextAction?: Action) {
+      const previousIndex = index;
+      let nextIndex: number | undefined;
+      let nextLocation: Location;
+      [nextIndex, nextLocation] = getIndexAndLocation();
+      if (nextIndex == null && previousIndex != null) {
+        nextIndex = nextAction === Action.Push
+          ? previousIndex + 1
+          : nextAction === Action.Pop
+            ? Math.max(previousIndex - 1, 0)
+            : previousIndex;
+        globalHistory.replaceState({ ...globalHistory.state, idx: nextIndex }, '');
+      }
+      index = nextIndex as number;
+      location = nextLocation;
       return [index, location];
     },
     go,

@@ -1,0 +1,46 @@
+.api-document-page {
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+
+  &:scope {
+    .api-document-source-note,
+    .api-document-message {
+      margin: 0 0 18px;
+      border: 1px solid #cce4c7;
+      border-radius: 7px;
+      padding: 10px 13px;
+      background: #f4fbf2;
+      color: #52665b;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .api-document-message.is-error {
+      border-color: #f2b8b5;
+      background: #fff2f1;
+      color: #a62a21;
+    }
+
+    .api-document-source-note {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+
+      button {
+        flex: none;
+        border: 1px solid #72bd68;
+        border-radius: 5px;
+        padding: 5px 9px;
+        background: #fff;
+        color: #2d6a31;
+        cursor: pointer;
+      }
+    }
+  }
+}

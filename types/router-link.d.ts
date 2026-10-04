@@ -5,10 +5,10 @@ import { RouterViewComponent } from './router-view';
 declare function guardEvent(e: any): true | undefined;
 interface RouterLinkProps {
     router?: ReactViewRouter;
-    tag: string;
-    event: string | string[];
-    activeClass: string;
-    exactActiveClass: string;
+    tag?: string;
+    event?: string | string[];
+    activeClass?: string;
+    exactActiveClass?: string;
     to: string | {
         path: string;
     };
@@ -16,7 +16,7 @@ interface RouterLinkProps {
     replace?: boolean;
     append?: boolean;
     disabled?: boolean;
-    children: React.ReactNode[];
+    children?: React.ReactNode;
     className?: string;
     onRouteChange?: (route: Route, routerLinkInstance: RouterLink) => void;
     onRouteActive?: (route: Route, routerLinkInstance: RouterLink) => void;
@@ -48,12 +48,7 @@ declare class RouterLink extends React.Component<RouterLinkProps, RouterLinkStat
     componentWillUnmount(): void;
     shouldComponentUpdate(nextProps: RouterLinkProps, nextState: RouterLinkState): boolean;
     componentDidUpdate(prevProps: RouterLinkProps): void;
-    render(): React.ReactNode[] | React.ReactElement<{
-        [x: string]: any;
-        disabled?: boolean | undefined;
-        className?: string | undefined;
-        href?: string | undefined;
-    }, string | React.JSXElementConstructor<any>> | null;
+    render(): React.ReactNode;
 }
 export { RouterLinkProps, RouterLink, guardEvent };
 export default function createRouterLink(router: ReactViewRouter): React.ForwardRefExoticComponent<Pick<RouterLinkProps, keyof RouterLinkProps> & React.RefAttributes<RouterLink>>;

@@ -1,21 +1,14 @@
 import React, { RefObject } from 'react';
 import type { ReactNode } from 'react';
 import type { ReactRenderUtils } from './types';
-declare const KEEP_ALIVE_ANCHOR = "keep-alive-anchor";
-declare const KEEP_ALIVE_REPLACOR = "keep-alive-replacor";
-declare const KEEP_ALIVE_KEEP_COPIES = "keep-alive-keep-copies";
+import { createAnchor, createAnchorText, KEEP_ALIVE_ANCHOR, KEEP_ALIVE_REPLACER, KEEP_ALIVE_KEEP_COPIES } from './keep-alive-dom';
+import type { KeepAliveAnchorProps } from './keep-alive-dom';
 export interface KeepAliveNode {
     name: string;
     node?: ReactNode;
     instance?: any;
     [key: string]: any;
 }
-interface KeepAliveAnchorProps {
-    utils: ReactRenderUtils;
-    children?: string;
-}
-declare function createAnchor(utils: ReactRenderUtils, ref: RefObject<any> | null, text?: string): ReactNode;
-declare function createAnchorText(anchorName: string): string;
 export interface KeepAliveProps {
     utils: ReactRenderUtils;
     activeName: string;
@@ -36,5 +29,5 @@ export interface KeepAliveRefObject {
     find: (name: string) => KeepAliveNode | undefined;
 }
 declare const KeepAlive: React.ForwardRefExoticComponent<KeepAliveProps & React.RefAttributes<KeepAliveRefObject>>;
-export { KeepAliveAnchorProps, createAnchor, createAnchorText, KEEP_ALIVE_ANCHOR, KEEP_ALIVE_REPLACOR, KEEP_ALIVE_KEEP_COPIES };
+export { KeepAliveAnchorProps, createAnchor, createAnchorText, KEEP_ALIVE_ANCHOR, KEEP_ALIVE_REPLACER, KEEP_ALIVE_KEEP_COPIES };
 export default KeepAlive;

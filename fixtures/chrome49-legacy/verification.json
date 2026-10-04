@@ -1,0 +1,15 @@
+{
+  "verifiedAt": "2026-08-15",
+  "platform": "Windows",
+  "browser": {
+    "name": "Google Chrome",
+    "version": "49.0.2623.75"
+  },
+  "node": "14.19.0",
+  "status": "passed",
+  "scenarios": [
+    "guard rejection",
+    "Promise-based lazyImport navigation",
+    "browser POP navigation"
+  ]
+}

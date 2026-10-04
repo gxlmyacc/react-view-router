@@ -1,0 +1,17 @@
+{
+  "name": "react-view-router-react-native-demo",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios"
+  },
+  "dependencies": {
+    "expo": "^53.0.0",
+    "react-view-router": "file:..",
+    "react": "19.0.0",
+    "react-native": "0.79.5",
+    "react-swipeable": "^7.0.2"
+  }
+}

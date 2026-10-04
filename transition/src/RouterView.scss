@@ -1,0 +1,184 @@
+$transition-duration: 300ms;
+$slide-shadow: -3px -1px 12px 0 rgba(127, 132, 146, 0.45);
+
+/* slide — 使用 transform 替代 left，避免 iOS Safari 布局动画闪烁/重复 */
+.react-view-router-slide-left-enter,
+.react-view-router-slide-left-enter-active,
+.react-view-router-slide-right-exit,
+.react-view-router-slide-right-exit-active {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  z-index: 1000;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.react-view-router-slide-left-enter,
+.react-view-router-slide-left-enter-active,
+.react-view-router-slide-right-exit,
+.react-view-router-slide-right-exit-active {
+  box-shadow: $slide-shadow;
+}
+.react-view-router-slide-left-enter {
+  -webkit-transform: translate3d(100%, 0, 0);
+  transform: translate3d(100%, 0, 0);
+}
+.react-view-router-slide-left-enter-active {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-transition: -webkit-transform $transition-duration;
+  transition: transform $transition-duration;
+}
+.react-view-router-slide-right-exit {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+}
+.react-view-router-slide-right-exit-active {
+  -webkit-transform: translate3d(100%, 0, 0);
+  transform: translate3d(100%, 0, 0);
+  -webkit-transition: -webkit-transform $transition-duration;
+  transition: transform $transition-duration;
+}
+
+/* fade */
+.react-view-router-fade {
+  &-enter { opacity: 0; }
+  &-exit { opacity: 1; }
+  &-enter-active { opacity: 1; }
+  &-exit-active { opacity: 0; }
+}
+.react-view-router-fade-enter-active,
+.react-view-router-fade-exit-active {
+  -webkit-transition: opacity $transition-duration;
+  transition: opacity $transition-duration;
+}
+
+/* carousel */
+.react-view-router-carousel-left-enter,
+.react-view-router-carousel-left-enter-active,
+.react-view-router-carousel-left-exit,
+.react-view-router-carousel-left-exit-active,
+.react-view-router-carousel-right-enter,
+.react-view-router-carousel-right-enter-active,
+.react-view-router-carousel-right-exit,
+.react-view-router-carousel-right-exit-active {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.react-view-router-carousel-left-enter {
+  -webkit-transform: translate3d(100%, 0, 0);
+  transform: translate3d(100%, 0, 0);
+}
+.react-view-router-carousel-left-enter-active {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-transition: -webkit-transform $transition-duration;
+  transition: transform $transition-duration;
+}
+
+/* Vertical covers: slide-up enters from above; slide-down enters from below. */
+@each $direction, $offset in (up: -100%, down: 100%) {
+  .react-view-router-slide-#{$direction}-enter,
+  .react-view-router-slide-#{$direction}-enter-active,
+  .react-view-router-slide-#{$direction}-back-exit,
+  .react-view-router-slide-#{$direction}-back-exit-active {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    overflow: hidden;
+    z-index: 1000;
+    box-shadow: $slide-shadow;
+    backface-visibility: hidden;
+  }
+  .react-view-router-slide-#{$direction}-enter-active,
+  .react-view-router-slide-#{$direction}-back-exit-active {
+    transition: transform $transition-duration;
+  }
+  .react-view-router-slide-#{$direction}-enter {
+    transform: translate3d(0, $offset, 0);
+  }
+  .react-view-router-slide-#{$direction}-enter-active,
+  .react-view-router-slide-#{$direction}-back-exit {
+    transform: translate3d(0, 0, 0);
+  }
+  .react-view-router-slide-#{$direction}-back-exit-active {
+    transform: translate3d(0, $offset, 0);
+  }
+}
+
+/* Small directional movement with a cross-fade. */
+@each $direction, $offset in (left: 24px, right: -24px) {
+  .react-view-router-fade-slide-#{$direction} {
+    &-enter { opacity: 0; transform: translate3d($offset, 0, 0); }
+    &-enter-active { opacity: 1; transform: translate3d(0, 0, 0); }
+    &-exit { opacity: 1; transform: translate3d(0, 0, 0); }
+    &-exit-active { opacity: 0; transform: translate3d(-$offset, 0, 0); }
+    &-enter-active, &-exit-active {
+      transition: opacity $transition-duration, transform $transition-duration;
+    }
+  }
+}
+
+/* Forward zooms in; returning reverses the scale change. */
+@each $direction, $scale in (in: 0.96, out: 1.04) {
+  .react-view-router-zoom-#{$direction} {
+    &-enter { opacity: 0; transform: scale($scale); }
+    &-enter-active { opacity: 1; transform: scale(1); }
+    &-exit { opacity: 1; transform: scale(1); }
+    &-exit-active { opacity: 0; transform: scale(2 - $scale); }
+    &-enter-active, &-exit-active {
+      transition: opacity $transition-duration, transform $transition-duration;
+    }
+  }
+}
+
+/* Exit for 40% of the duration, then enter for the remaining 60%. */
+.react-view-router-fade-through {
+  &-enter { opacity: 0; transform: scale(0.96); }
+  &-enter-active { opacity: 1; transform: scale(1); }
+  &-exit { opacity: 1; }
+  &-exit-active { opacity: 0; }
+  &-enter-active, &-exit-active {
+    transition: opacity $transition-duration, transform $transition-duration;
+  }
+}
+.react-view-router-carousel-left-exit {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+}
+.react-view-router-carousel-left-exit-active {
+  -webkit-transform: translate3d(-100%, 0, 0);
+  transform: translate3d(-100%, 0, 0);
+  -webkit-transition: -webkit-transform $transition-duration;
+  transition: transform $transition-duration;
+}
+
+.react-view-router-carousel-right-enter {
+  -webkit-transform: translate3d(-100%, 0, 0);
+  transform: translate3d(-100%, 0, 0);
+}
+.react-view-router-carousel-right-enter-active {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-transition: -webkit-transform $transition-duration;
+  transition: transform $transition-duration;
+}
+.react-view-router-carousel-right-exit {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+}
+.react-view-router-carousel-right-exit-active {
+  -webkit-transform: translate3d(100%, 0, 0);
+  transform: translate3d(100%, 0, 0);
+  -webkit-transition: -webkit-transform $transition-duration;
+  transition: transform $transition-duration;
+}

@@ -1,0 +1,187 @@
+.playground-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+
+  .playground-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+
+    h2,
+    p {
+      margin: 0;
+    }
+
+    p {
+      margin-top: 6px;
+      color: #5d7168;
+    }
+  }
+
+  .playground-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+
+    button {
+      border: 1px solid #b7cfc0;
+      border-radius: 6px;
+      padding: 8px 14px;
+      background: #fff;
+      cursor: pointer;
+
+      &.is-primary {
+        border-color: #278f1c;
+        background: #42c929;
+        color: #102d20;
+        font-weight: 700;
+      }
+    }
+  }
+
+  .playground-status {
+    border-radius: 999px;
+    padding: 5px 10px;
+    background: #edf2ef;
+    color: #53645c;
+    font-size: 12px;
+
+    &.is-success {
+      background: #e5f8df;
+      color: #237218;
+    }
+
+    &.is-error {
+      background: #ffe9e7;
+      color: #a62a21;
+    }
+    &.is-compiling,
+    &.is-running {
+      background: #fff4cf;
+      color: #7c5b00;
+    }
+  }
+
+  .playground-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+
+    &.is-code-collapsed {
+      grid-template-columns: 0 minmax(0, 1fr);
+      gap: 0;
+
+      .playground-workspace {
+        display: none;
+      }
+    }
+  }
+
+  .playground-workspace,
+  .playground-preview {
+    overflow: hidden;
+    border: 1px solid #c9d9cf;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .playground-workspace {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .playground-preview {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+
+    > strong {
+      padding: 9px 12px;
+      border-bottom: 1px solid #dce7e0;
+      background: #f3f8f4;
+      color: #315044;
+      font-size: 13px;
+    }
+  }
+
+  .code-editor {
+    min-height: 0;
+  }
+
+  iframe {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    border: 0;
+    background: #fff;
+  }
+
+  .playground-errors {
+    overflow: auto;
+    max-height: 140px;
+    margin: 0;
+    border-left: 4px solid #c73a2d;
+    padding: 12px;
+    background: #fff0ee;
+    color: #8f241c;
+    white-space: pre-wrap;
+  }
+
+  .playground-security {
+    margin: 0;
+    color: #65776f;
+    font-size: 12px;
+  }
+
+  @media (max-width: 980px) {
+    .playground-toolbar {
+      flex-direction: column;
+    }
+
+    .playground-grid {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(260px, 1fr) minmax(260px, 1fr);
+      flex-shrink: 0;
+
+      &.is-code-collapsed {
+        grid-template-rows: 0 minmax(260px, 1fr);
+        gap: 0;
+
+        .playground-workspace {
+          display: none;
+        }
+      }
+
+    }
+
+    .playground-workspace {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .playground-preview {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .playground-workspace, .playground-preview {
+      min-height: 260px;
+    }
+  }
+
+}

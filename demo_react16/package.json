@@ -1,0 +1,42 @@
+{
+  "name": "react-view-router-demo-react16",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ReactViewRouter React 16 demo",
+  "main": "src/index.tsx",
+  "engines": {
+    "node": ">=14.17"
+  },
+  "scripts": {
+    "start": "cross-env PORT=8081 GENERATE_SOURCEMAP=true SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true node scripts/run-react-app.js start",
+    "build": "cross-env SKIP_PREFLIGHT_CHECK=true DISABLE_ESLINT_PLUGIN=true node scripts/run-react-app.js build",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "cross-env SKIP_PREFLIGHT_CHECK=true node scripts/run-react-app.js test --env=jsdom",
+    "eject": "node scripts/run-react-app.js eject"
+  },
+  "browserslist": [
+    "Chrome >= 78"
+  ],
+  "dependencies": {
+    "prop-types": "15.8.1",
+    "react-view-router": "link:..",
+    "react-view-router-react-demo-shared": "file:../demo_react_shared",
+    "react": "16.14.0",
+    "react-dom": "16.14.0",
+    "react-scripts": "4.0.3"
+  },
+  "devDependencies": {
+    "@babel/core": "7.12.3",
+    "@types/react": "16.14.70",
+    "@types/react-dom": "16.9.25",
+    "@types/webpack-env": "1.18.8",
+    "babel-preset-react-scope-style": "0.1.0-alpha.5",
+    "cross-env": "7.0.3",
+    "eslint": "8.35.0",
+    "eslint-config-react-app": "7.0.1",
+    "react-app-rewired": "2.2.1",
+    "sass": "1.62.1",
+    "typescript": "6.0.3"
+  }
+}

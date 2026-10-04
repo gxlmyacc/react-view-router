@@ -1,0 +1,8 @@
+{
+  "expo": {
+    "name": "ReactViewRouter Native demo",
+    "slug": "react-view-router-native-demo",
+    "version": "1.0.0",
+    "platforms": ["ios", "android"]
+  }
+}

@@ -1,0 +1,139 @@
+.guard-navigation-example {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: 16px;
+  flex-direction: column;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  background: #fff;
+
+  &:scope {
+    .guard-navigation-actions {
+      display: flex;
+      flex: none;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      button {
+        padding: 7px 10px;
+        border: 1px solid #b8d7b3;
+        border-radius: 6px;
+        background: #f4fbf2;
+        color: #237a1a;
+        cursor: pointer;
+      }
+    }
+
+    .guard-navigation-grid {
+      display: grid;
+      min-height: 0;
+      margin-top: 14px;
+      flex: 1;
+      grid-template-columns: minmax(220px, 0.8fr) minmax(360px, 1.2fr);
+      gap: 12px;
+    }
+
+    .guard-navigation-promise {
+      margin: 10px 0 0;
+      color: #64748b;
+      font-size: 13px;
+
+      &.is-resolved {
+        color: #15803d;
+      }
+
+      &.is-rejected {
+        color: #b45309;
+      }
+    }
+
+    .guard-navigation-preview,
+    .guard-takeover-log {
+      min-height: 0;
+      padding: 14px;
+      overflow: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .guard-navigation-page {
+      h3 {
+        margin: 0 0 10px;
+      }
+    }
+
+    .guard-takeover-log {
+      background: #f8fafc;
+
+      section {
+        overflow: hidden;
+        border: 1px solid #d8e0e8;
+        border-radius: 7px;
+
+        & + section {
+          margin-top: 8px;
+        }
+      }
+
+      header,
+      li > div {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      header {
+        padding: 7px 9px;
+        background: #eef5ed;
+      }
+
+      ol {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      li {
+        padding: 7px 9px;
+        border-top: 1px solid #e2e8f0;
+
+        strong {
+          color: #237a1a;
+          font-size: 11px;
+        }
+
+        .is-takeover,
+        .is-ignored,
+        .is-abort,
+        .is-rejected {
+          color: #b45309;
+        }
+
+        .is-resolved {
+          color: #15803d;
+        }
+
+        small {
+          display: block;
+          margin-top: 3px;
+          color: #64748b;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 840px) {
+  .guard-navigation-example:scope {
+    .guard-navigation-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .guard-takeover-log {
+      max-height: 360px;
+    }
+  }
+}

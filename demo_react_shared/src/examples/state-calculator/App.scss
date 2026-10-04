@@ -1,0 +1,66 @@
+.state-calculator-example {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  overflow: auto;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  background: #fff;
+
+  &:scope {
+    section {
+      max-width: 560px;
+      padding: 18px;
+      border: 1px dashed #94a3b8;
+      border-radius: 8px;
+    }
+
+    h3, p {
+      margin: 0;
+    }
+
+    p {
+      margin-top: 8px;
+      color: #64748b;
+    }
+
+    label {
+      display: flex;
+      margin-top: 12px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    input {
+      width: 180px;
+      padding: 7px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+    }
+
+    button {
+      margin: 14px 8px 0 0;
+      padding: 7px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      background: #fff;
+      color: #278f1c;
+      cursor: pointer;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+    }
+
+    dt, dd {
+      margin: 0;
+      padding: 5px;
+    }
+
+    dt {
+      color: #64748b;
+    }
+  }
+}

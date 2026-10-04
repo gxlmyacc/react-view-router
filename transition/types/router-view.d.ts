@@ -1,25 +1,26 @@
-import React, { StyleHTMLAttributes } from 'react';
-import { RouterViewComponent, RouterViewProps, RouterViewState, RouteSavedPosition, Route } from '../..';
+import React from 'react';
+import { RouterViewComponent, RouterViewProps, RouterViewState, Route } from '../..';
 
 import './router-view.css';
 
-type TransitionName = 'slide' | 'fade' | 'carousel' | '';
+type TransitionName = 'slide' | 'slide-up' | 'slide-down' | 'fade' | 'fade-slide' | 'zoom' | 'fade-through' | 'carousel' | 'none' | '';
 
 interface TransitionRouterViewProps extends RouterViewProps {
   transition?: TransitionName | {
     name: TransitionName,
     zIndex?: number,
-    containerStyle?: React.HTMLAttributes<HTMLDivElement | HTMLElement>,
+    containerStyle?: React.CSSProperties,
     containerTag?: keyof HTMLElementTagNameMap | React.ComponentType | React.ForwardRefExoticComponent<any>
   },
   transitionPrefix?: string,
+  /** Total duration of a page transition in milliseconds; defaults to 300. */
+  transitionDuration?: number,
   transitionZIndex?: number,
   transitionFallback?: TransitionName|((to: Route) => TransitionName),
   routerView?: RouterViewComponent,
-  containerStyle?: StyleHTMLAttributes<HTMLDivElement>,
+  containerStyle?: React.CSSProperties,
 
-  onScrollToPosition?: (node?: HTMLElement, savedPosition: RouteSavedPosition) => void,
-  onSavePosition?: (node?: HTMLElement, options: { to: Route, from: Route|null }) => RouteSavedPosition,
+
 }
 
 declare const RouterViewTransition: React.ForwardRefExoticComponent<
@@ -28,6 +29,6 @@ declare const RouterViewTransition: React.ForwardRefExoticComponent<
   >
 >;
 
-export { TransitionRouterViewProps };
+export { TransitionName, TransitionRouterViewProps };
 
 export default RouterViewTransition;

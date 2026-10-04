@@ -4,7 +4,8 @@ import {
   camelize,
   normalizeLocation,
   getHostRouterView,
-  isPropChanged
+  isPropChanged,
+  isPlainObject
 } from './util';
 import ReactViewRouter from './router';
 import { Route } from './types';
@@ -22,7 +23,6 @@ function guardEvent(e: any) {
     const target = e.currentTarget.getAttribute('target');
     if (/\b_blank\b/i.test(target)) return;
   }
-  // this may be a Weex event which doesn't have this method
   if (e.preventDefault) {
     e.preventDefault();
   }
@@ -32,10 +32,10 @@ function guardEvent(e: any) {
 interface RouterLinkProps {
   router?: ReactViewRouter,
 
-  tag: string,
-  event: string | string[],
-  activeClass: string,
-  exactActiveClass: string,
+  tag?: string,
+  event?: string | string[],
+  activeClass?: string,
+  exactActiveClass?: string,
   to: string | { path: string },
 
   exact?: boolean,
@@ -43,7 +43,7 @@ interface RouterLinkProps {
   append?: boolean,
   disabled?: boolean
 
-  children: React.ReactNode[],
+  children?: React.ReactNode,
 
   className?: string;
 
@@ -145,12 +145,16 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
         activeClass = activeClass ? `${activeClass} ${router.linkActiveClass}` : router.linkActiveClass;
       }
       if (router.linkExactActiveClass) {
-        exactActiveClass = exactActiveClass ? `${exactActiveClass} ${router.linkExactActiveClass}` : router.linkExactActiveClass;
+        exactActiveClass = exactActiveClass
+          ? `${exactActiveClass} ${router.linkExactActiveClass}`
+          : router.linkExactActiveClass;
       }
     }
 
     let fallbackClass = '';
-    if (isMatched) fallbackClass = exact ? exactActiveClass : activeClass;
+    if (isMatched) {
+      fallbackClass = (exact ? exactActiveClass : activeClass) || '';
+    }
 
     return fallbackClass;
   }
@@ -174,7 +178,7 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
     if (to && currentRoute) {
       isMatched = exact
         ? to.path === currentRoute.path
-        : currentRoute.path.startsWith(to.path);
+        : (to.path === currentRoute.path || currentRoute.path.startsWith(`${to.path}/`));
     }
     return isMatched;
   }
@@ -199,15 +203,25 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
 
   componentDidUpdate(prevProps: RouterLinkProps) {
     const newState: Partial<any> = {};
-    if (this.props.router !== prevProps.router) newState.router = this.props.router;
-    // if (this.props.to !== prevProps.to) {
-    //   if (!isPlainObject(this.props.to) || !isPlainObject(prevProps.to)
-    //     || isPropChanged(this.props.to, prevProps.to)) {
-    //     newState.to = this.props.to;
-    //   }
-    // }
+    let needRemount = false;
+    if (this.props.router !== prevProps.router) {
+      newState.router = this.props.router;
+      needRemount = true;
+    }
+    if (this.props.to !== prevProps.to) {
+      if (!isPlainObject(this.props.to) || !isPlainObject(prevProps.to)
+        || isPropChanged(this.props.to, prevProps.to)) {
+        needRemount = true;
+      }
+    }
+    if (this.props.exact !== prevProps.exact || this.props.append !== prevProps.append) {
+      needRemount = true;
+    }
+    if (!needRemount) return;
     if (Object.keys(newState).length) {
       this.setState(newState as any, () => this._remount());
+    } else {
+      this._remount();
     }
   }
 
@@ -222,7 +236,8 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
       // eslint-disable-next-line prefer-const
       children = [], ...remainProps
     } = this.props;
-    const { router, isMatched, routerView } = this.state;
+    const { router, routerView } = this.state;
+    const activeMatched = this.isMatched(router?.currentRoute ?? null, routerView);
 
     const events: { [key: string]: (e: any) => void; } = {};
 
@@ -235,7 +250,7 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
       }
     ) as { path: string };
 
-    const fallbackClass = this.getFallbackClassName(isMatched);
+    const fallbackClass = this.getFallbackClassName(activeMatched);
     if (fallbackClass) {
       if (remainProps.className) remainProps.className = `${fallbackClass} ${remainProps.className}`;
       else remainProps.className = fallbackClass;
@@ -243,14 +258,14 @@ class RouterLink extends React.Component<RouterLinkProps, RouterLinkState> {
 
     if (!Array.isArray(event)) event = event ? [event] : [];
 
-    event.forEach(evt => {
+    event.forEach((evt) => {
       if (!evt) return;
       const eventName = evt.startsWith('on') ? evt : camelize(`on-${evt}`);
       events[eventName] = (e: any) => {
         if (!to || !router || remainProps.disabled) return;
         if (remainProps[eventName] && remainProps[eventName](e, to) === false) return;
 
-        guardEvent(e);
+        if (!guardEvent(e)) return;
         if (replace) router.replace(to);
         else router.push(to);
       };

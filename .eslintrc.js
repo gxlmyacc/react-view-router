@@ -19,15 +19,21 @@ module.exports = {
     'react-app'
   ],
   plugins: [],
+  overrides: [
+    {
+      files: ['__tests__/**/*.{js,jsx,ts,tsx}', 'jest.setup.js'],
+      env: { jest: true }
+    }
+  ],
   settings: {
     // "import/resolver": {
     //   webpack: {
     //     config: './build/webpack-dev.config.js'
     //   },
     // },
-    react: {
-      version: require('./package.json').dependencies.react,
-    },
+    // react: {
+    //   version: require('./package.json').dependencies.react,
+    // },
   },
   globals: {
     define: true,
@@ -37,8 +43,9 @@ module.exports = {
     __WATCH__: true,
   },
   rules: {
+    '@typescript-eslint/no-unused-vars': 0,
     'array-callback-return': 0,
-    'arrow-parens': [2, 'as-needed'],
+    'arrow-parens': [2, 'always'],
     'class-methods-use-this': 0,
     'comma-dangle': [0, {
       arrays: 'ignore',
@@ -106,10 +113,10 @@ module.exports = {
       allowShortCircuit: true,
       allowTernary: true
     }],
-    'no-unused-vars': [2, {
-      args: 'none',
-      vars: 'all'
-    }],
+    // 'no-unused-vars': [2, {
+    //   args: 'none',
+    //   vars: 'all'
+    // }],
     'no-useless-escape': 2,
     'object-curly-newline': [2, {
       consistent: true,

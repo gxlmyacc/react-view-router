@@ -1,0 +1,28 @@
+.page {
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid #dbe2ea;
+  border-radius: 6px;
+  background: #fff;
+
+  h3,
+  h4,
+  h5 {
+    margin-top: 0;
+  }
+
+  nav {
+    display: flex;
+    margin: 12px 0;
+
+    > * {
+      margin-right: 12px;
+    }
+  }
+}
+
+.page-nested {
+  margin-top: 12px;
+  padding: 12px;
+  border-left: 3px solid #b75bd8;
+}

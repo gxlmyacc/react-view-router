@@ -65,7 +65,7 @@ function stringifyQuery(obj: Partial<any> | null | undefined, prefix = '?') {
 
     if (Array.isArray(val)) {
       const result: string[] = [];
-      val.forEach(val2 => {
+      val.forEach((val2) => {
         if (val2 === undefined) return;
         if (val2 === null) {
           result.push(encode(key));
@@ -105,10 +105,10 @@ const config = {
     return this._stringifyQuery;
   },
 
-  createMergeStrategie(router: ReactViewRouter) {
-    return function routeMergeStrategie(parent: any, child: any, vm: any) {
-      if (vm._isVuelikeRoot) {
-        if (router.Apps.some(App => vm instanceof App)) {
+  createMergeStrategies(router: ReactViewRouter) {
+    return function routeMergeStrategies(parent: any, child: any, vm: any) {
+      if (vm._isReactViewRoot) {
+        if (router.Apps.some((App) => vm instanceof App)) {
           router.apps.push(vm);
           vm.$on('componentDidUnmount', () => {
             const idx = router.apps.indexOf(vm);
@@ -122,7 +122,7 @@ const config = {
       });
       vm.$computed(vm, '$routeIndex', function () {
         if (this._routeIndex !== undefined) return this._routeIndex;
-        const routeView = router.getHostRouterView(this, (v: any) => !v._isVuelikeRoot);
+        const routeView = router.getHostRouterView(this, (v: any) => !v._isReactViewRoot);
         return this._routeIndex = routeView ? routeView.state.depth : -1;
       });
       vm.$computed(vm, '$matchedRoute', function () {

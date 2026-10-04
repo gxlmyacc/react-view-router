@@ -1,0 +1,59 @@
+.index-redirect-example {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  overflow: auto;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  background: #fff;
+
+  &:scope {
+    .index-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      padding: 7px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      background: #fff;
+      color: #278f1c;
+      cursor: pointer;
+    }
+
+    .route-facts {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      margin: 14px 0 0;
+      padding: 10px;
+      border-radius: 6px;
+      background: #f1f5f9;
+    }
+
+    dt, dd {
+      margin: 0;
+      padding: 4px;
+    }
+
+    dt {
+      color: #64748b;
+    }
+
+    .index-preview {
+      margin-top: 14px;
+      padding: 18px;
+      border: 1px dashed #94a3b8;
+      border-radius: 8px;
+    }
+
+    h3, p {
+      margin: 0;
+    }
+
+    p {
+      margin-top: 8px;
+      color: #64748b;
+    }
+  }
+}

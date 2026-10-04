@@ -1,0 +1,63 @@
+.drawer-example {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  background: #fff;
+
+  &:scope {
+    > p {
+      margin: 0 0 12px;
+      color: #526b5a;
+      line-height: 1.6;
+    }
+
+    .drawer-route code {
+      margin-left: 6px;
+      color: #236a37;
+    }
+
+    .drawer-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 250px;
+      gap: 16px;
+      flex: 1;
+      min-height: 300px;
+    }
+
+    .drawer-view {
+      min-width: 0;
+    }
+
+    .drawer-log {
+      min-width: 0;
+      padding: 14px;
+      border-radius: 8px;
+      background: #f4faf2;
+
+      p {
+        color: #64748b;
+        line-height: 1.6;
+      }
+
+      ol {
+        max-height: 230px;
+        overflow: auto;
+        padding-left: 22px;
+      }
+
+      li {
+        margin: 6px 0;
+      }
+    }
+  }
+}
+
+@media (max-width: 850px) {
+  .drawer-example .drawer-layout {
+    grid-template-columns: 1fr;
+  }
+}

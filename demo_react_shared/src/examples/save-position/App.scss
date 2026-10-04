@@ -1,0 +1,48 @@
+.position-example {
+  padding: 18px;
+
+  &:scope {
+    .position-controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: 1px solid #b8d7b3;
+      border-radius: 6px;
+      background: #fff;
+      color: #22591b;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
+    .position-view {
+      height: 320px;
+      border: 1px solid #dce4ee;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    pre {
+      overflow: auto;
+      padding: 14px;
+      background: #f3f6fa;
+      border-radius: 8px;
+    }
+  }
+}

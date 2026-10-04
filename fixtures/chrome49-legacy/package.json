@@ -1,0 +1,32 @@
+{
+  "name": "react-view-router-chrome49-legacy-fixture",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "bootstrap": "node scripts/install-rainbow-package.js",
+    "build": "webpack --mode production",
+    "check:es5": "node scripts/check-es5.js",
+    "serve": "node scripts/serve.js",
+    "test:chrome49": "node scripts/run-chrome49.js",
+    "verify": "npm run build && npm run check:es5"
+  },
+  "engines": {
+    "node": ">=14.14.0"
+  },
+  "dependencies": {
+    "core-js": "^3.50.0",
+    "react": "16.14.0",
+    "react-dom": "16.14.0",
+    "react-swipeable": "5.5.1"
+  },
+  "devDependencies": {
+    "@babel/core": "7.28.4",
+    "@babel/preset-env": "7.28.3",
+    "@babel/preset-react": "7.27.1",
+    "acorn": "8.15.0",
+    "babel-loader": "8.4.1",
+    "webpack": "4.47.0",
+    "webpack-cli": "3.3.12",
+    "ws": "7.5.10"
+  }
+}

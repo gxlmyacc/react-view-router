@@ -1,0 +1,27 @@
+.keep-alive-draft-page {
+  &:scope {
+    h3 {
+      margin-top: 0;
+    }
+
+    p {
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      box-sizing: border-box;
+      padding: 10px;
+      border: 1px solid #a9c3a4;
+      border-radius: 6px;
+      font: inherit;
+    }
+  }
+}

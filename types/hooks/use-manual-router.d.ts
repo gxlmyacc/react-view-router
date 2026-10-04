@@ -14,7 +14,7 @@ type ManualRouterOptions = {
 };
 declare function useManualRouter(router: ReactViewRouter, options?: ManualRouterOptions): {
     router: ReactViewRouter;
-    start: (overrideOptions?: Omit<ManualRouterOptions, 'manual'>) => void;
+    start: (overrideOptions?: Omit<ManualRouterOptions, "manual">) => void;
 };
 export { ManualRouterOptions };
 export default useManualRouter;

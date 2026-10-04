@@ -6,14 +6,19 @@ import { RouterViewComponent as RouterView } from './router-view';
 import ReactViewRouter from './router';
 import { HistoryFix } from './history-fix';
 import { Action, readonly } from './history';
+import { hasOwnProp, copyOwnProperties, copyOwnProperty } from './history/utils';
 declare const DEFAULT_STATE_NAME = "[root]";
 declare function nextTick(cb: () => void, ctx?: object): Promise<void>;
 declare function ignoreCatch<T extends ((...args: any) => any)>(fn: T, onCatch?: (ex: any) => void): (...args: Parameters<T>) => void | ReturnType<T>;
-declare function hasOwnProp(obj: any, key: PropertyKey): boolean;
 declare function innumerable<T extends object>(obj: T, key: string, value: any, options?: PropertyDescriptor): T;
 declare function normalizeRoute(route: UserConfigRoute | ConfigRoute, parent?: ConfigRoute | null, options?: NormalizeRouteOptions): ConfigRoute;
 declare function normalizeRoutes(routes: UserConfigRoute[] | NormalizedConfigRouteArray | ConfigRoute[] | null | undefined, parent?: ConfigRoute | null, options?: NormalizeRouteOptions): NormalizedConfigRouteArray;
 declare function walkRoutes(routes: ConfigRoute[] | RouteChildrenFn, walkFn: (route: ConfigRoute, routeIndex: number, routes: ConfigRoute[]) => boolean | void, parent?: ConfigRoute): boolean;
+/**
+ * Normalizes and walks a complete route configuration tree, including route
+ * children returned by functions. Returning true stops the whole traversal.
+ */
+declare function walkConfigRoutes(routes: UserConfigRoute[] | NormalizedConfigRouteArray | ConfigRoute[] | RouteChildrenFn | null | undefined, walkFn: (route: ConfigRoute, routeIndex: number, routes: ConfigRoute[]) => boolean | void, parent?: ConfigRoute): boolean;
 declare function normalizePath(path: string): string;
 declare function normalizeRoutePath(path: string, route?: Route | MatchedRoute | ConfigRoute | RouteHistoryLocation | RouteLocation | null, append?: boolean, basename?: string): string;
 declare function matchRoutes(routes: ConfigRoute[] | RouteChildrenFn, to: RouteHistoryLocation | Route | string, parent?: ConfigRoute, options?: {
@@ -37,8 +42,6 @@ declare function isLocation(v: any): v is RouteLocation;
 declare function isHistoryLocation(v: any): v is RouteHistoryLocation;
 declare function isBoolean(v: any): v is boolean;
 declare function normalizeProps(props: UserConfigRouteProps): boolean | UserConfigRoutePropsNormal | UserConfigRoutePropsNormalMap;
-declare function copyOwnProperty(target: any, key: string, source: any): PropertyDescriptor | undefined;
-declare function copyOwnProperties<T>(target: T, source: any, overwrite?: boolean): T;
 type MatchRegxList = RegExp | string | (RegExp | string)[];
 declare function isMatchRegxList(key: string, regx: MatchRegxList): boolean;
 declare function omitProps<T extends Record<string, any>>(props: T, excludes: RegExp | string | (string | RegExp)[]): Record<string, any>;
@@ -49,6 +52,8 @@ declare function resolveIndex(originIndex: string | RouteIndexFn, routes: Config
 declare function resolveRedirect(to: string | RouteLocation | RouteRedirectFn | undefined, route: MatchedRoute, options?: {
     isInit?: boolean;
     from?: Route;
+    basename?: string;
+    mode?: string;
     queryProps?: ParseQueryProps;
 }): "" | RouteHistoryLocation<import("./history").State>;
 declare function resolveAbort(abort: boolean | string | RouteAbortFn | undefined | Error, route: MatchedRoute, options?: {
@@ -74,7 +79,7 @@ declare function isPropChanged(prev: Record<string, any> | null, next: Record<st
 declare function isRouteChanged(prev: ConfigRoute | MatchedRoute | null, next: ConfigRoute | MatchedRoute | null): boolean;
 declare function isMatchedRoutePropsChanged(matchedRoute: MatchedRoute | null, router: ReactViewRouter, name?: string): boolean;
 declare function isRoutesChanged(prevs: ConfigRoute[], nexts: ConfigRoute[]): boolean;
-declare function getHostRouterView(ctx: any, continueCb?: any): RouterView<import("./router-view").RouterViewProps, import("./router-view").RouterViewState, any> | null;
+declare function getHostRouterView(ctx: any, continueCb?: any): RouterView<import("./router-view").RouterViewProps<HTMLElement>, import("./router-view").RouterViewState, any> | null;
 declare function getParentRoute(ctx: any): MatchedRoute | null;
 declare function isConfigRoute(value: any): value is ConfigRoute;
 declare function isNormalizedConfigRouteArray(value: any): value is NormalizedConfigRouteArray;
@@ -96,12 +101,12 @@ declare function getRouteChildren(children: ConfigRoute[] | RouteChildrenFn, par
 declare function readRouteMeta(configOrMatchedRoute: ConfigRoute | MatchedRoute, key?: string, props?: {
     router?: ReactViewRouter | null;
     [key: string]: any;
-}): any;
+}): string | number | boolean | object | null | undefined;
 declare function getCompleteRoute(route: Route | null): Route | null;
-declare function getLoactionAction(to?: Route): undefined | Action;
+declare function getLocationAction(to?: Route): undefined | Action;
 declare function reverseArray<T>(originArray: T[]): T[];
 declare function createUserConfigRoute(route: UserConfigRoute): UserConfigRoute;
-declare function createUserConfigRoutes<T extends RouteChildrenFn | NormalizedRouteChildrenFn>(routes: T): T;
+declare function createUserConfigRoutes(routes: Array<UserConfigRoute | ConfigRoute> | RouteChildrenFn | NormalizedRouteChildrenFn): RouteChildrenFn | (ConfigRoute | UserConfigRoute)[] | NormalizedRouteChildrenFn;
 declare function createEmptyRouteState(): {};
 declare function isEmptyRouteState(state: any): any;
-export { DEFAULT_STATE_NAME, MatchRegxList, camelize, flatten, warn, once, ignoreCatch, mergeFns, reverseArray, copyOwnProperty, copyOwnProperties, isAcceptRef, nextTick, hasOwnProp, isNull, isBoolean, isString, isNumber, isPlainObject, isFunction, isMatchedRoute, isLocation, isConfigRoute, isNormalizedConfigRouteArray, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isMatchedRoutePropsChanged, isAbsoluteUrl, isRoute, isReactViewRouter, isRouteGuardInfoHooks, isHistory, isReadonly, isPromise, isRouteLazy, isRouteChildrenNormalized, isMatchRegxList, resolveRedirect, resolveAbort, resolveIndex, normalizePath, normalizeRoute, normalizeRoutes, normalizeRouteChildrenFn, normalizeRoutePath, normalizeLocation, normalizeProps, omitProps, walkRoutes, matchPath, matchRoutes, configRouteProps, renderRoute, innumerable, readonly, afterInterceptors, getParentRoute, getRouteChildren, getHostRouterView, getCurrentPageHash, getRouterViewPath, getCompleteRoute, getLoactionAction, getSessionStorage, setSessionStorage, readRouteMeta, createLazyComponent, createUserConfigRoute, createUserConfigRoutes, createEmptyRouteState, isEmptyRouteState };
+export { DEFAULT_STATE_NAME, MatchRegxList, camelize, flatten, warn, once, ignoreCatch, mergeFns, reverseArray, copyOwnProperty, copyOwnProperties, isAcceptRef, nextTick, hasOwnProp, isNull, isBoolean, isString, isNumber, isPlainObject, isFunction, isMatchedRoute, isLocation, isConfigRoute, isNormalizedConfigRouteArray, isHistoryLocation, isPropChanged, isRouteChanged, isRoutesChanged, isMatchedRoutePropsChanged, isAbsoluteUrl, isRoute, isReactViewRouter, isRouteGuardInfoHooks, isHistory, isReadonly, isPromise, isRouteLazy, isRouteChildrenNormalized, isMatchRegxList, resolveRedirect, resolveAbort, resolveIndex, normalizePath, normalizeRoute, normalizeRoutes, normalizeRouteChildrenFn, normalizeRoutePath, normalizeLocation, normalizeProps, omitProps, walkRoutes, walkConfigRoutes, matchPath, matchRoutes, configRouteProps, renderRoute, innumerable, readonly, afterInterceptors, getParentRoute, getRouteChildren, getHostRouterView, getCurrentPageHash, getRouterViewPath, getCompleteRoute, getLocationAction, getSessionStorage, setSessionStorage, readRouteMeta, createLazyComponent, createUserConfigRoute, createUserConfigRoutes, createEmptyRouteState, isEmptyRouteState };

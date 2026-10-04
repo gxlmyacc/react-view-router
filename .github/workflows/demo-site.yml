@@ -1,0 +1,75 @@
+name: Deploy React 16 demo site
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: |
+            yarn.lock
+            demo_react16/yarn.lock
+
+      - name: Install library dependencies
+        run: yarn install --frozen-lockfile --registry https://registry.npmjs.org
+
+      - name: Install React 16 launcher dependencies
+        run: yarn --cwd demo_react16 install --frozen-lockfile --registry https://registry.npmjs.org
+
+      - name: Build library
+        run: yarn build
+
+      - name: Typecheck shared demo
+        working-directory: demo_react_shared
+        run: node ../node_modules/typescript/bin/tsc -p tsconfig.json
+
+      - name: Lint shared demo
+        working-directory: demo_react_shared
+        run: node ../node_modules/eslint/bin/eslint.js src --ext .ts,.tsx
+
+      - name: Test shared demo
+        run: yarn test --runInBand __tests__/demo-site.integration.test.tsx __tests__/react-demo-guard-order.integration.test.tsx
+
+      - name: Build static site
+        env:
+          PUBLIC_URL: /${{ github.event.repository.name }}
+        run: yarn --cwd demo_react16 build
+
+      - name: Audit static runtime dependencies
+        run: yarn verify-demo-site
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: demo_react16/build
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

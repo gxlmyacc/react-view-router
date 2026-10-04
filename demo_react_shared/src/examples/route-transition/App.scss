@@ -1,0 +1,72 @@
+.route-transition-example {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .transition-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .transition-types,
+  .transition-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  button {
+    border: 1px solid #b7cfc0;
+    border-radius: 6px;
+    padding: 7px 12px;
+    background: #fff;
+    color: #29483b;
+    cursor: pointer;
+
+    &.is-active {
+      border-color: #278f1c;
+      background: #e5f8df;
+      color: #1d6e15;
+      font-weight: 700;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: .45;
+    }
+  }
+
+  .transition-route {
+    margin: 0;
+    color: #62756c;
+  }
+
+  .transition-speed {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #62756c;
+
+    input {
+      width: 180px;
+      accent-color: #278f1c;
+    }
+
+    output {
+      min-width: 60px;
+      color: #1d6e15;
+    }
+  }
+
+  .transition-viewport {
+    position: relative;
+    overflow: hidden;
+    height: 360px;
+    border: 1px solid #c9d9cf;
+    border-radius: 12px;
+    background: #f4f8f5;
+  }
+}

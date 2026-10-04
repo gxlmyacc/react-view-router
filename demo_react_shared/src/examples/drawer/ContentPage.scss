@@ -1,0 +1,7 @@
+.drawer-content-page {
+  position: relative;
+  min-height: 240px;
+  padding: 12px;
+  background: #f2faf0;
+  &:scope { input { max-width: 100%; } }
+}

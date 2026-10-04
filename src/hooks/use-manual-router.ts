@@ -65,7 +65,7 @@ function useManualRouter(router: ReactViewRouter, options: ManualRouterOptions =
       const resolveRouteName = overrideOptions.resolveRouteName || options.resolveRouteName;
       resolveRouteName && router.resolveRouteName(resolveRouteName);
 
-      if (options.manual) setSeed(seed => seed + 1);
+      if (options.manual) setSeed((seed) => seed + 1);
     }
   }, [$refs]);
   if (!options.manual) start();

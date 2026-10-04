@@ -31,14 +31,14 @@ export function createHashHref(to: To, hashType?: HashType, _window: any = globa
 
   const searchIndex = path.indexOf('?');
   if (searchIndex > 0 && _window?.location?.search) {
-    const searchs = path.substr(searchIndex + 1).split('&');
+    const searches = path.substr(searchIndex + 1).split('&');
     path = path.substr(0, searchIndex);
     _window.location?.search.substr(1)
       .split('&').forEach((value: string) => {
-        let idx = searchs.indexOf(value);
-        if (~idx) searchs.splice(idx, 1);
+        const idx = searches.indexOf(value);
+        if (~idx) searches.splice(idx, 1);
       });
-    if (searchs.length) path += '?' + searchs.join('&');
+    if (searches.length) path += '?' + searches.join('&');
   }
 
   if (!path.startsWith('#')) path = '#' + path;
@@ -73,7 +73,7 @@ export function createHashHistory(
       if (path && !path.startsWith('/')) path = '/' + path;
       if (_window?.location?.search) {
         const search = _window.location.search;
-        let searchIndex = path.indexOf('?');
+        const searchIndex = path.indexOf('?');
         if (searchIndex >= 0) {
           path = path.substr(0, searchIndex) + search + '&' + path.substr(searchIndex + 1);
         } else path += search;

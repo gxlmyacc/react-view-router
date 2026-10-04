@@ -1,0 +1,110 @@
+$guard-border: #d1d5db;
+
+.guard-example {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+
+  &:scope {
+    .example-heading {
+      display: flex;
+      flex: none;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+
+      h2,
+      p {
+        margin: 0;
+      }
+
+      p {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 13px;
+      }
+    }
+
+    .router-ownership {
+      display: flex;
+      margin-top: 7px;
+      align-items: center;
+      color: #476078;
+      font-size: 11px;
+
+      > * {
+        margin-right: 5px;
+      }
+
+      span {
+        &:first-child,
+        &:last-child {
+          padding: 2px 6px;
+          border-radius: 999px;
+          background: #e2e8f0;
+        }
+      }
+    }
+
+    .route-navigation {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      margin-left: 16px;
+
+      a {
+        margin: 0 0 6px 8px;
+        padding: 6px 9px;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        color: #334155;
+        text-decoration: none;
+      }
+    }
+
+    .guard-demo-grid {
+      display: flex;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .route-preview {
+      min-width: 0;
+      min-height: 0;
+      box-sizing: border-box;
+      border: 1px solid $guard-border;
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .route-preview {
+      flex: 1;
+      padding: 14px;
+      overflow: auto;
+    }
+  }
+
+  @media (max-width: 900px) {
+    &:scope {
+      .example-heading,
+      .guard-demo-grid {
+        display: block;
+      }
+
+      .route-navigation {
+        justify-content: flex-start;
+        margin: 10px 0 0 -8px;
+      }
+
+      .guard-demo-grid {
+        overflow-y: auto;
+      }
+
+      .route-preview {
+        width: 100%;
+        min-height: 260px;
+      }
+    }
+  }
+}

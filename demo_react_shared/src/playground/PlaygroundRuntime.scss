@@ -1,0 +1,15 @@
+html,
+body,
+#root,
+.playground-runtime-root {
+  min-height: 100%;
+  margin: 0;
+}
+
+.playground-runtime-error {
+  margin: 0;
+  padding: 16px;
+  color: #9b2b22;
+  background: #fff0ee;
+  white-space: pre-wrap;
+}

@@ -11,6 +11,6 @@ declare const config: {
     zIndexStep: number;
     readonly parseQuery: any;
     readonly stringifyQuery: any;
-    createMergeStrategie(router: ReactViewRouter): (parent: any, child: any, vm: any) => any;
+    createMergeStrategies(router: ReactViewRouter): (parent: any, child: any, vm: any) => any;
 };
 export default config;

@@ -1,1 +1,0 @@
-declare module 'history-fix';

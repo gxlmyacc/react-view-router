@@ -1,0 +1,66 @@
+.query-refresh-example {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  overflow: auto;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  background: #fff;
+
+  &:scope {
+    .query-actions {
+      display: flex;
+      gap: 8px;
+
+      button {
+        padding: 7px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        background: #fff;
+        color: #278f1c;
+        cursor: pointer;
+      }
+    }
+
+    .query-url {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 9px 11px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      font-size: 12px;
+    }
+
+    .query-preview {
+      margin-top: 14px;
+    }
+
+    .permission-card {
+      padding: 22px;
+      border: 1px dashed #f59e0b;
+      border-radius: 8px;
+      background: #fffbeb;
+
+      h3 {
+        margin: 0;
+      }
+
+      dl {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        margin: 14px 0 0;
+      }
+
+      dt,
+      dd {
+        margin: 0;
+        padding: 5px 0;
+      }
+
+      dt {
+        color: #92400e;
+      }
+    }
+  }
+}

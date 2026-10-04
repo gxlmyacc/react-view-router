@@ -1,0 +1,93 @@
+.memory-routing-example {
+  &:scope {
+  display: grid;
+  height: 100%;
+  box-sizing: border-box;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+
+  > article {
+    min-width: 0;
+    padding: 16px;
+    overflow: auto;
+    border: 1px solid #d8e5d5;
+    border-radius: 8px;
+    background: #fff;
+
+    > header {
+      h3 {
+        margin: 0;
+      }
+
+      p {
+        margin: 7px 0 13px;
+        color: #64748b;
+        line-height: 1.55;
+      }
+    }
+
+    > code {
+      display: block;
+      margin: 10px 0;
+      padding: 7px 9px;
+      border-radius: 5px;
+      background: #eff8ec;
+      color: #278f1c;
+    }
+  }
+
+  .memory-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+
+    button {
+      padding: 7px 10px;
+      border: 1px solid #b9d8b3;
+      border-radius: 5px;
+      background: #fff;
+      color: #278f1c;
+      cursor: pointer;
+    }
+  }
+
+  .history-identity {
+    color: #475569;
+    font-size: 13px;
+  }
+
+  .memory-page {
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px dashed #72bd68;
+    border-radius: 7px;
+
+    h3 {
+      margin: 0 0 8px;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      margin: 0;
+    }
+
+    dt {
+      color: #64748b;
+    }
+
+    dd {
+      margin: 0;
+      font-family: Consolas, monospace;
+    }
+  }
+  }
+}
+
+@media (max-width: 900px) {
+  .memory-routing-example {
+    &:scope {
+      grid-template-columns: 1fr;
+    }
+  }
+}

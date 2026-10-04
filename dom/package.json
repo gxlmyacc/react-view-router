@@ -2,8 +2,17 @@
   "name": "react-view-router-dom",
   "version": "1.0.0",
   "main": "esm/index.js",
-  "module": "esm/index.js",
+  "module": "es/index.js",
   "typings": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./es/index.js",
+      "require": "./esm/index.js",
+      "default": "./esm/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "es",
     "esm",

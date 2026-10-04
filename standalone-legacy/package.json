@@ -1,0 +1,6 @@
+{
+  "main": "../esm/standalone-legacy.js",
+  "module": "../es/standalone-legacy.js",
+  "types": "../types/standalone-legacy.d.ts",
+  "sideEffects": false
+}

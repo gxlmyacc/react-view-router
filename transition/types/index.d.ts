@@ -5,6 +5,7 @@ import ReplaceTransition from 'react-transition-group/ReplaceTransition';
 import TransitionGroupContext from 'react-transition-group/TransitionGroupContext';
 import CSSTransition from './CSSTransition';
 import RouterView from './router-view';
+export type { TransitionName, TransitionRouterViewProps } from './router-view';
 
 export {
   CSSTransition,

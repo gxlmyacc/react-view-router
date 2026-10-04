@@ -4,6 +4,11 @@ export declare enum HistoryType {
     memory = "memory"
 }
 /**
+ * Version of the shared history-object protocol. A missing version identifies
+ * a legacy history created before protocol metadata was introduced.
+ */
+export declare const HISTORY_PROTOCOL_VERSION = 2;
+/**
  * Actions represent the type of change to a location value.
  *
  * @see https://github.com/ReactTraining/history/tree/master/docs/api-reference.md#action
@@ -223,6 +228,11 @@ export interface HistoryOptions {
  */
 export interface History<S extends State = State> {
     /**
+     * Shared history-object protocol version. This is independent of any router
+     * package version and may be absent on legacy history objects.
+     */
+    readonly version?: number;
+    /**
      * custom extra data
      */
     readonly extra: any;
@@ -256,7 +266,7 @@ export interface History<S extends State = State> {
      */
     readonly state: State;
     /**
-     * The current realtimie location
+     * The current realtime location
      */
     readonly realtimeLocation: Location<S>;
     /**
@@ -277,7 +287,7 @@ export interface History<S extends State = State> {
      * Refresh current index and location from window.location
      *
      */
-    refresh(): [number, Location];
+    refresh(action?: Action): [number, Location];
     /**
      * Pushes a new location onto the history stack, increasing its length by one.
      * If there were any entries in the stack after the current one, they are

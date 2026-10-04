@@ -1,9 +1,11 @@
-import { ComponentType } from 'react';
 import { HistoryFix } from './history-fix';
+import NavigationLoopProtection from './navigation-loop-protection';
 import { normalizeLocation, nextTick, getHostRouterView } from './util';
 import { RouterViewComponent as RouterView } from './router-view';
-import { ReactViewRouterOptions, ReactViewRouterMoreOptions, NormalizedConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, LazyResolveFn, OnBindInstance, OnGetLazyResovle, VuelikeComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
+import { ReactViewRouterOptions, ReactViewRouterMoreOptions, NormalizedConfigRouteArray, RouteBeforeGuardFn, RouteAfterGuardFn, RouteNextFn, RouteHistoryLocation, RouteGuardInterceptor, RouteEvent, RouteChildrenFn, RouteLocation, matchPathResult, ConfigRoute, RouteErrorCallback, ReactViewRoutePlugin, Route, MatchedRoute, MatchedRouteArray, LazyResolveFn, OnBindInstance, OnGetLazyResolve, ReactViewComponent, RouteInterceptorCallback, HistoryStackInfo, RouteResolveNameFn, onRouteChangeEvent, UserConfigRoute, ParseQueryProps } from './types';
 import { Action, HistoryType } from './history';
+import { RouteRuntimeAdapter } from './route-runtime';
+import { RouteRuntimeNavigationGateway } from './route-runtime-navigation';
 declare const version: string;
 declare class ReactViewRouter {
     static version: string;
@@ -37,8 +39,9 @@ declare class ReactViewRouter {
     apps: any[];
     Apps: React.ComponentClass[];
     isRunning: boolean;
-    isHistoryCreater: boolean;
+    isHistoryCreator: boolean;
     rememberInitialRoute: boolean;
+    get routerStateName(): string;
     getHostRouterView: typeof getHostRouterView;
     nextTick: typeof nextTick;
     protected _history: HistoryFix | null;
@@ -46,8 +49,10 @@ declare class ReactViewRouter {
     protected _uninterceptor?: () => void;
     protected id: number;
     protected _nexting: RouteNextFn | null;
-    protected vuelike?: VuelikeComponent;
+    protected vuelike?: ReactViewComponent;
     protected _interceptorCounter: number;
+    protected _navigationLoopProtection: NavigationLoopProtection;
+    protected _routeRuntimeNavigation: RouteRuntimeNavigationGateway;
     [key: string]: any;
     constructor(options?: ReactViewRouterOptions);
     _initRouter(options: ReactViewRouterOptions): void;
@@ -67,11 +72,16 @@ declare class ReactViewRouter {
     }): void;
     use({ routes, inheritProps, rememberInitialRoute, install, queryProps, ...restOptions }: ReactViewRouterMoreOptions): void;
     plugin(plugin: ReactViewRoutePlugin | onRouteChangeEvent): (() => void) | undefined;
+    registerRouteRuntimeAdapter(adapter: RouteRuntimeAdapter): () => void;
+    _commitRouteRuntimeNavigation(location: RouteHistoryLocation, route: Route): Promise<import("./route-runtime").NavigationResult | null> | null;
+    _hasRouteRuntimeNavigationAdapters(): boolean;
+    isFrameworkRouteRuntime(location: string | RouteHistoryLocation | Route, runtime?: string): boolean;
+    syncRouteRuntimeLocation(location: string | RouteHistoryLocation | Route, action?: Action): void;
     _walkRoutes(routes: ConfigRoute[] | RouteChildrenFn, parent?: ConfigRoute): void;
     _refreshInitialRoute(): void;
     _callEvent<E extends Exclude<keyof ReactViewRoutePlugin, 'name' | 'install' | 'uninstall'>>(event: E, ...args: Parameters<ReactViewRoutePlugin[E]>): ReturnType<ReactViewRoutePlugin[E]>;
-    _isVuelikeComponent(comp: any): any;
-    _getComponentGurads<T extends RouteGuardInterceptor>(mr: MatchedRoute, guardName: string, onBindInstance?: OnBindInstance<Exclude<T, 'LazyResolveFn'>>, onGetLazyResovle?: OnGetLazyResovle | null): T[];
+    _isReactViewComponent(comp: any): comp is ReactViewComponent;
+    _getComponentGuards<T extends RouteGuardInterceptor>(mr: MatchedRoute, guardName: string, onBindInstance?: OnBindInstance<Exclude<T, 'LazyResolveFn'>>, onGetLazyResolve?: OnGetLazyResolve | null): T[];
     _getSameMatched(route: Route | null, compare?: Route): MatchedRoute[];
     _getChangeMatched(route: Route, route2?: Route | null, options?: {
         containLazy?: boolean;
@@ -85,10 +95,11 @@ declare class ReactViewRouter {
     _isMatchBasename(location: RouteHistoryLocation | Route): boolean;
     _transformLocation(location: RouteHistoryLocation | Route): Route | RouteHistoryLocation<import("./history").State>;
     _getInterceptor(interceptors: RouteGuardInterceptor[], index: number): Promise<any>;
-    _routetInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn): Promise<void>;
+    _routeInterceptors(interceptors: RouteGuardInterceptor[], to: Route, from: Route | null, next?: RouteNextFn, stopRedirects?: boolean): Promise<void>;
     _handleRouteInterceptor(location: null | RouteHistoryLocation | Route, callback: (ok: boolean | RouteInterceptorCallback, route?: Route | null) => void, isInit?: boolean): Promise<void>;
     _normalizeLocation(to: Parameters<typeof normalizeLocation>[0], options?: Parameters<typeof normalizeLocation>[1]): RouteHistoryLocation<import("./history").State> | null;
     _internalHandleRouteInterceptor(location: RouteHistoryLocation | Route, callback: (ok: boolean | RouteInterceptorCallback, route?: Route | null) => void, isInit?: boolean): void;
+    _getRouteState(to: RouteLocation | Route | RouteHistoryLocation): import("./history").State | undefined;
     _go(to: string | RouteLocation | Route | null, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null, replace?: boolean): Promise<unknown>;
     _replace(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
     _push(to: string | RouteLocation | Route, onComplete?: RouteEvent, onAbort?: RouteEvent, onInit?: RouteEvent | null): Promise<unknown>;
@@ -103,9 +114,15 @@ declare class ReactViewRouter {
         ignoreConfigRoute?: boolean;
     }): undefined;
     createMatchedRoute(route: ConfigRoute, match: matchPathResult): MatchedRoute;
+    /**
+     * Create a new matched-route snapshot while preserving the mounted runtime bindings.
+     * A supplied match replaces URL-specific fields such as params; when omitted, the
+     * source matching data is copied.
+     */
+    cloneMatchedRoute(source: MatchedRoute, match?: matchPathResult): MatchedRoute;
     getMatched(to: Route | RouteHistoryLocation | string, from?: Route | null, parent?: ConfigRoute): MatchedRouteArray;
-    getMatchedComponents(to: Route, from?: Route, parent?: ConfigRoute): ComponentType<{}>[];
-    getMatchedViews(to: Route, from?: Route, parent?: ConfigRoute): RouterView<import("./router-view").RouterViewProps, import("./router-view").RouterViewState, any>[];
+    getMatchedComponents(to: Route, from?: Route, parent?: ConfigRoute): import("react").ComponentType<{}>[];
+    getMatchedViews(to: Route, from?: Route, parent?: ConfigRoute): RouterView<import("./router-view").RouterViewProps<HTMLElement>, import("./router-view").RouterViewState, any>[];
     getMatchedPath(path?: string): string;
     createRoute(to: RouteHistoryLocation | string | Route | null, options?: {
         action?: Action;

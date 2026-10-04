@@ -1,0 +1,331 @@
+.hooks-meta-example {
+  display: flex;
+  height: 100%;
+  box-sizing: border-box;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #dce4ee;
+  border-radius: 10px;
+  background: #fff;
+
+  &:scope {
+    .hooks-title-intro {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid #dce4ee;
+      background: #f4fbf2;
+
+      > div {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        span {
+          color: #64748b;
+          font-size: 12px;
+        }
+      }
+
+      .hooks-title-runtime:scope {
+        align-items: flex-end;
+
+        code {
+          color: #237a1a;
+          font-size: 11px;
+        }
+      }
+    }
+
+    .hooks-workbench {
+      display: grid;
+      min-height: 0;
+      flex: 1;
+      grid-template-columns: 210px minmax(0, 1fr);
+    }
+
+    .hooks-route-menu {
+      padding: 14px 10px;
+      overflow: auto;
+      border-right: 1px solid #dce4ee;
+
+      > strong {
+        display: block;
+        padding: 0 8px 8px;
+        color: #64748b;
+        font-size: 12px;
+      }
+
+      ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      ul ul {
+        padding-left: 12px;
+      }
+
+      button {
+        width: 100%;
+        padding: 7px 8px;
+        border: 0;
+        border-radius: 5px;
+        background: transparent;
+        color: #475569;
+        cursor: pointer;
+        text-align: left;
+
+        &.is-active {
+          background: #eaf8e6;
+          color: #294f25;
+          font-weight: bold;
+        }
+
+        &[aria-expanded] {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          &::after {
+            content: '›';
+            transition: transform 0.15s ease;
+          }
+
+          &[aria-expanded='true']::after {
+            transform: rotate(90deg);
+          }
+        }
+      }
+    }
+
+    .hooks-route-content {
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      flex-direction: column;
+    }
+
+    .hooks-route-tabs {
+      display: flex;
+      gap: 5px;
+      padding: 9px 12px 0;
+      overflow-x: auto;
+      border-bottom: 1px solid #dce4ee;
+
+      button {
+        flex: none;
+        padding: 7px 11px;
+        border: 1px solid transparent;
+        border-bottom: 0;
+        border-radius: 6px 6px 0 0;
+        background: transparent;
+        color: #64748b;
+        cursor: pointer;
+
+        &.is-active {
+          border-color: #bfe4b8;
+          background: #f4fbf2;
+          color: #294f25;
+        }
+      }
+    }
+
+    .hooks-breadcrumb {
+      padding: 9px 14px;
+      border-bottom: 1px solid #edf2f7;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .hooks-route-view {
+      min-height: 0;
+      flex: 1;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    .hooks-inspector {
+      display: grid;
+      gap: 16px;
+    }
+
+    .hook-reference-page {
+      display: grid;
+      gap: 18px;
+
+      header {
+        display: grid;
+        gap: 7px;
+
+        span {
+          color: #27801f;
+          font-size: 12px;
+          font-weight: bold;
+        }
+
+        h2 {
+          margin: 0;
+          color: #183b16;
+          font-size: 24px;
+        }
+
+        p {
+          margin: 0;
+          color: #64748b;
+          line-height: 1.7;
+        }
+      }
+
+      section {
+        display: grid;
+        gap: 9px;
+
+        h3 {
+          margin: 0;
+          color: #334155;
+          font-size: 14px;
+        }
+
+        > p {
+          margin: 0;
+          color: #64748b;
+        }
+      }
+
+      .hook-parameter-table {
+        overflow: hidden;
+        border: 1px solid #dce4ee;
+        border-radius: 7px;
+
+        > div {
+          display: grid;
+          grid-template-columns: minmax(130px, 0.8fr) minmax(150px, 1fr) minmax(220px, 2fr);
+
+          + div {
+            border-top: 1px solid #e8eef4;
+          }
+
+          > * {
+            padding: 9px 11px;
+            overflow-wrap: anywhere;
+          }
+
+          > * + * {
+            border-left: 1px solid #e8eef4;
+          }
+        }
+
+        .is-heading {
+          background: #f8fafc;
+          color: #475569;
+          font-size: 12px;
+          font-weight: bold;
+        }
+      }
+
+      .hook-return-value {
+        width: fit-content;
+        padding: 7px 9px;
+        border-radius: 5px;
+        background: #eef8eb;
+        color: #237a1a;
+      }
+    }
+
+    .hooks-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      button {
+        padding: 7px 10px;
+        border: 1px solid #b8d7b3;
+        border-radius: 6px;
+        background: #f4fbf2;
+        color: #237a1a;
+        cursor: pointer;
+      }
+    }
+
+    .hooks-values {
+      display: grid;
+      grid-template-columns: minmax(180px, 0.7fr) minmax(220px, 1.3fr);
+      margin: 0;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+
+      dt,
+      dd {
+        margin: 0;
+        padding: 9px 12px;
+        border-bottom: 1px solid #edf2f7;
+      }
+
+      dt {
+        background: #f8fafc;
+        color: #475569;
+        font-family: Consolas, monospace;
+      }
+
+      dd {
+        overflow-wrap: anywhere;
+        color: #172033;
+      }
+    }
+  }
+}
+
+@media (max-width: 720px) {
+  .hooks-meta-example:scope {
+    .hooks-title-intro {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .hooks-workbench {
+      grid-template-columns: 1fr;
+      overflow: auto;
+    }
+
+    .hooks-route-menu {
+      max-height: 180px;
+      border-right: 0;
+      border-bottom: 1px solid #dce4ee;
+    }
+
+    .hooks-route-content {
+      overflow: visible;
+    }
+
+    .hooks-route-view {
+      overflow: visible;
+    }
+
+    .hook-parameter-table > div {
+      grid-template-columns: 1fr;
+    }
+
+    .hook-parameter-table > div > * + * {
+      border-top: 1px solid #e8eef4;
+      border-left: 0;
+    }
+
+    .hooks-values {
+      grid-template-columns: 1fr;
+
+      dt,
+      dd {
+        border-bottom: 0;
+      }
+
+      dd {
+        border-bottom: 1px solid #edf2f7;
+      }
+    }
+  }
+}

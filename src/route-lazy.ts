@@ -1,8 +1,35 @@
-import React from 'react';
 import { innumerable } from './util';
 import { REACT_LAZY_TYPE } from './route-guard';
 import { LazyImportMethod, RouteLazyUpdater, MatchedRoute, ConfigRoute, ReactAllComponentType } from './types';
 import ReactViewRouter from './router';
+import { renderBrowserRoute } from './route-lazy-renderer';
+
+export type RouteHydrationMismatch = 'client-render' | 'preserve' | 'throw';
+
+export interface RouteHydrationInfo {
+  route?: ConfigRoute;
+  router?: ReactViewRouter;
+  viewName?: string;
+  descriptor?: import('./route-runtime').RouteRuntimeDescriptor;
+}
+
+export interface RouteLazyHydrateOptions {
+  required?: boolean;
+  mismatch?: RouteHydrationMismatch;
+  owner?: import('./route-runtime').RouteRuntimeOwner;
+  runtime?: string;
+  container?: string;
+  payloadRef?: string;
+  checksum?: string;
+  wrapElement?: (element: any, info: RouteHydrationInfo) => any;
+  onError?: (error: Error, info: RouteHydrationInfo) => void;
+}
+
+export type RouteLazyHydrateOption = boolean | RouteLazyHydrateOptions;
+
+export interface RouteLazyOptions extends Partial<any> {
+  hydrate?: RouteLazyHydrateOption;
+}
 
 
 function isEsModule(value: any): value is EsModule {
@@ -15,22 +42,25 @@ export class RouteLazy<P = any> {
 
   private _result: ReactAllComponentType<P> | null;
 
+  private _pending: Promise<ReactAllComponentType<P>> | null;
+
   private resolved: boolean;
 
   routeLazyInstance: boolean;
 
   $$typeof: Symbol | number = REACT_LAZY_TYPE;
 
-  options: Partial<any>;
+  options: RouteLazyOptions;
 
   updaters: RouteLazyUpdater[] = [];
 
   constructor(
     ctor: ReactAllComponentType<P> | LazyImportMethod<P> | Promise<ReactAllComponentType<P>>,
-    options: Partial<any> = {}
+    options: RouteLazyOptions = {}
   ) {
     this._ctor = ctor;
     this._result = null;
+    this._pending = null;
 
     this.routeLazyInstance = true;
     this.options = options;
@@ -40,48 +70,60 @@ export class RouteLazy<P = any> {
     this.updaters = [];
   }
 
+  get isResolved() {
+    return this.resolved;
+  }
+
+  get resolvedComponent() {
+    return this._result;
+  }
+
+  get shouldHydrate() {
+    return this.options.hydrate === true
+      || Boolean(this.options.hydrate && typeof this.options.hydrate === 'object');
+  }
+
   toResolve(router: ReactViewRouter, route: ConfigRoute, key: string): Promise<ReactAllComponentType | null> {
-    return new Promise(async (resolve, reject) => {
-      const _resolve = (v: ReactAllComponentType<P> | EsModule<ReactAllComponentType<P>>) => {
-        v = isEsModule(v) ? v.default : v;
-        const updaters = this.updaters.splice(0, this.updaters.length);
-        updaters.forEach(updater => v = updater(v as any, router) as any || v);
-        if (!this.resolved) {
-          this._result = v;
-          this.resolved = true;
-        }
-        resolve(v as any);
-      };
+    if (this.resolved) return Promise.resolve(this._result);
+    if (this._pending) return this._pending;
 
-      if (this.resolved) {
-        _resolve(this._result as any);
-        return;
-      }
-
-      let component = (this._ctor as LazyImportMethod<P>).__lazyImportMethod
+    const load = () => (
+      (this._ctor as LazyImportMethod<P>).__lazyImportMethod
         ? (this._ctor as LazyImportMethod<P>)(route, key, router, this.options)
-        : (this._ctor as ReactAllComponentType<P>|Promise<ReactAllComponentType<P>>);
+        : this._ctor as ReactAllComponentType<P>|Promise<ReactAllComponentType<P>>
+    );
 
-      try {
-        component = isPromise<ReactAllComponentType<P>>(component) ? await component : (component as ReactAllComponentType<P>);
-      } catch (ex) {
-        reject(ex);
-        return;
-      }
-      if (!component) {
-        reject(new Error('component should not null!'));
-        return;
-      }
+    const pending = Promise.resolve()
+      .then(load)
+      .then((loaded) => {
+        let component = isEsModule(loaded) ? loaded.default : loaded;
+        if (!component) throw new Error('component should not null!');
 
-      if (component instanceof Promise) {
-        component.then(_resolve).catch(function () { return reject(...arguments); });
-      } else _resolve(component);
-    });
+        const updaters = this.updaters.splice(0, this.updaters.length);
+        updaters.forEach((updater) => {
+          component = updater(component as any, router) as any || component;
+        });
+
+        this._result = component as ReactAllComponentType<P>;
+        this.resolved = true;
+        return this._result;
+      });
+
+    this._pending = pending.then(
+      (component) => {
+        this._pending = null;
+        return component;
+      },
+      (error) => {
+        this._pending = null;
+        throw error;
+      }
+    );
+    return this._pending;
   }
 
   render(props: any, ref: any) {
-    if (!this.resolved || !this._result) return null;
-    return React.createElement(this._result as any, { ...props, ref }, props.children);
+    return renderBrowserRoute(this._result, props, ref);
   }
 
 }
@@ -98,10 +140,10 @@ export function hasRouteLazy(route: MatchedRoute | ConfigRoute) {
 }
 
 export function hasMatchedRouteLazy(matched: MatchedRoute[]) {
-  return matched && matched.some(r => hasRouteLazy(r));
+  return matched && matched.some((r) => hasRouteLazy(r));
 }
 
-export function lazyImport<P = any>(importMethod: LazyImportMethod<P>, options: Partial<any> = {}) {
+export function lazyImport<P = any>(importMethod: LazyImportMethod<P>, options: RouteLazyOptions = {}) {
   innumerable(importMethod, '__lazyImportMethod', true);
   return new RouteLazy<P>(importMethod, options || {});
 }

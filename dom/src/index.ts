@@ -2,6 +2,17 @@ import ReactDOM from 'react-dom';
 import type { ReactRenderUtils } from '../..';
 
 const renderUtils: ReactRenderUtils = {
+  /** sessionStorage */
+  getSessionStorage: () => globalThis.sessionStorage,
+
+  /** position */
+  getPosition: (container) => ({ x: container.scrollLeft, y: container.scrollTop }),
+  setPosition: (container, position) => {
+    if (container.scrollTo) container.scrollTo(position.x || 0, position.y || 0);
+    else { container.scrollLeft = position.x || 0; container.scrollTop = position.y || 0; }
+  },
+  queryPositionTarget: (container, selector) => container.querySelector<HTMLElement>(selector),
+
   /** ReactDOM */
   createPortal: ReactDOM.createPortal,
   findDOMNode: ReactDOM.findDOMNode,
@@ -20,7 +31,7 @@ const renderUtils: ReactRenderUtils = {
 
   /** ChildNode */
   replaceWith: (el, ...nodes) => el.replaceWith(...nodes),
-  remove: el => el.remove(),
+  remove: (el) => el.remove(),
 };
 
 export default renderUtils;

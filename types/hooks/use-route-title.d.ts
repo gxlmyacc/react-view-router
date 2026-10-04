@@ -1,6 +1,5 @@
-/// <reference types="react" />
 import ReactViewRouter from '../router';
-import { ConfigRoute, MatchedRoute, RouteChildrenFn } from '../types';
+import { ConfigRoute, MatchedRoute, RouteChildrenFn, RouteMeta } from '../types';
 import { isCommonPage } from './base';
 type filterCallback = (r: ConfigRoute, routes: ConfigRoute[], props: {
     router: ReactViewRouter;
@@ -9,6 +8,7 @@ type filterCallback = (r: ConfigRoute, routes: ConfigRoute[], props: {
     refresh?: () => void;
     title?: string;
     visible?: boolean;
+    meta: Partial<RouteMeta>;
 }) => boolean;
 type RouteTitleInfo = {
     title: string;
@@ -47,6 +47,7 @@ type UseRouteTitleProps = {
     titleName?: string;
     onNoMatchedPath?: ':first' | string | OnNoMatchedPathCallback;
 };
+declare function findTitleByMatchedPath(matchedPath: string, titles: RouteTitleInfo[], matchedTitles?: RouteTitleInfo[]): RouteTitleInfo | undefined;
 type RefreshTitlesFn = () => void;
 declare function useRouteTitle(props?: UseRouteTitleProps, defaultRouter?: ReactViewRouter, deps?: React.DependencyList[]): {
     parsed: boolean;
@@ -57,5 +58,5 @@ declare function useRouteTitle(props?: UseRouteTitleProps, defaultRouter?: React
     matchedTitles: RouteTitleInfo[];
     currentPaths: string[];
 };
-export { isTitleRoute, isCommonPage, readRouteTitle, readRouteTitles, filterCallback, RouteTitleInfo, };
+export { isTitleRoute, isCommonPage, readRouteTitle, readRouteTitles, findTitleByMatchedPath, filterCallback, RouteTitleInfo, };
 export default useRouteTitle;

@@ -1,0 +1,75 @@
+.code-block {
+  position: relative;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 18px;
+  overflow: auto;
+  border: 1px solid #243247;
+  border-radius: 8px;
+  background: #111827;
+  color: #dbeafe;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.65;
+  tab-size: 2;
+
+  &::before {
+    position: absolute;
+    top: 6px;
+    right: 9px;
+    color: #7f93ad;
+    content: attr(data-language);
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+
+  &:not([data-language])::before {
+    display: none;
+  }
+
+  code {
+    display: inline-block;
+    min-width: 100%;
+    color: inherit;
+    white-space: pre;
+  }
+
+  .code-token-comment {
+    color: #7f9f7f;
+    font-style: italic;
+  }
+
+  .code-token-keyword {
+    color: #c792ea;
+  }
+  .code-token-literal,
+  .code-token-number {
+    color: #f78c6c;
+  }
+
+  .code-token-operator {
+    color: #89ddff;
+  }
+
+  .code-token-property {
+    color: #82aaff;
+  }
+
+  .code-token-selector {
+    color: #ffcb6b;
+  }
+
+  .code-token-string {
+    color: #c3e88d;
+  }
+
+  .code-token-tag {
+    color: #82aaff;
+  }
+
+  .code-token-variable {
+    color: #f07178;
+  }
+}

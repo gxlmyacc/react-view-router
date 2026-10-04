@@ -1,0 +1,85 @@
+.drawer-home-page {
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  flex: 1;
+  height: 100%;
+  min-height: 300px;
+  padding: 20px;
+  border-radius: 8px;
+  background: #f2faf0;
+
+  &:scope {
+    h3 {
+      margin: 0 0 8px;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: #526b5a;
+    }
+
+    button {
+      padding: 9px 14px;
+      border: 1px solid #65ab67;
+      border-radius: 6px;
+      background: #fff;
+      color: #236a37;
+      cursor: pointer;
+    }
+
+    .drawer-settings {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .drawer-settings label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .drawer-settings input {
+      width: 160px;
+    }
+
+    .drawer-settings input[type='checkbox'], .drawer-settings input[type='radio'] {
+      width: auto;
+    }
+
+    .drawer-direction-group {
+      display: flex;
+      gap: 12px;
+      margin: 0;
+      padding: 6px 10px;
+      border: 1px solid #b7cfc0;
+      border-radius: 6px;
+    }
+
+    .drawer-direction-group legend {
+      padding: 0 4px;
+    }
+
+    .drawer-settings select, .drawer-settings input {
+      padding: 6px;
+      border: 1px solid #b7cfc0;
+      border-radius: 6px;
+    }
+
+    .drawer-parent-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .drawer-parent-note input {
+      min-width: 0;
+      padding: 7px 9px;
+      border: 1px solid #b7cfc0;
+      border-radius: 6px;
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "react-view-router-standalone-ssr-demo",
+  "private": true,
+  "scripts": {
+    "build": "webpack --mode development",
+    "start": "npm run build && node dist/server.js"
+  },
+  "dependencies": {
+    "react-view-router": "file:..",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "7.28.4",
+    "@babel/preset-env": "7.28.3",
+    "@babel/preset-react": "7.27.1",
+    "babel-loader": "10.0.0",
+    "webpack": "5.101.3",
+    "webpack-cli": "6.0.1"
+  }
+}

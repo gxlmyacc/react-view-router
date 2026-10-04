@@ -1,0 +1,19 @@
+.save-position-scroll {
+  height: 100%;
+  overflow: auto;
+  background: #fff;
+
+  &:scope {
+    ol {
+      margin: 0;
+      padding: 12px 20px;
+      list-style: none;
+    }
+
+    li {
+      padding: 18px 12px;
+      border-bottom: 1px solid #e0e7ef;
+      color: #203248;
+    }
+  }
+}
