@@ -8,11 +8,10 @@ const CAN_USE_DOM = !!(
   && window.document.createElement
 );
 
-// eslint-disable-next-line no-constant-condition
-/* istanbul ignore next -- __DEV__ 下才 freeze */
-const freeze: <T extends unknown>(obj: T) => T = false /** __DEV__* */
-  ? (obj) => Object.freeze(obj)
-  : (obj) => obj;
+/** 保留历史工具入口；location 的 state、fromEvent 等字段需要保持可修改。 */
+function freeze<T>(obj: T): T {
+  return obj;
+}
 
 
 function getPossibleHashType(_window: Window = document.defaultView!, hash: string = '') {
