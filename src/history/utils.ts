@@ -10,7 +10,7 @@ const CAN_USE_DOM = !!(
 
 /** 保留历史工具入口；location 的 state、fromEvent 等字段需要保持可修改。 */
 function freeze<T>(obj: T): T {
-  return obj;
+  return obj; // Object.freeze(obj)
 }
 
 
