@@ -26,9 +26,16 @@ const messages = {
     positionPreviewText: 'The list has unmounted. Return uses POP to restore its saved scroll position.',
     positionReturn: 'Return to list',
     positionScoped: 'Provide getContainerRef',
-    positionContainerHelp: 'Without getContainerRef, the container is document.body. With it, the container is the returned element. Toggle this option to compare selector lookup scopes; Transition supplies its own container.',
-    positionSettingHelp: 'savePosition: true saves the container itself (page scrolling for body). A string searches inside that container and saves the matched element, falling back to the container when unmatched. This list example uses a string selector; true would save body or the outer container rather than the inner list.',
-    positionAdapterHelp: 'Browser position operations work by default without ReactDOM. A custom renderUtils replaces the defaults; non-DOM hosts supply position.getPosition, position.setPosition, position.queryPositionTarget and optional storage.getSessionStorage.',
+    positionContainerHelp: 'Without getContainerRef, the container is document.body. With it, the container is the returned '
+      + 'element. Toggle this option to compare selector lookup scopes; Transition supplies its own '
+      + 'container.',
+    positionSettingHelp: 'savePosition: true saves the container itself (page scrolling for body). A string searches inside '
+      + 'that container and saves the matched element, falling back to the container when unmatched. This '
+      + 'list example uses a string selector; true would save body or the outer container rather than the '
+      + 'inner list.',
+    positionAdapterHelp: 'Browser position operations work by default without ReactDOM. A custom renderUtils replaces the '
+      + 'defaults; non-DOM hosts supply position.getPosition, position.setPosition, '
+      + 'position.queryPositionTarget and optional storage.getSessionStorage.',
     appTitle: 'ReactViewRouter', appSubtitle: 'Documentation and runnable React 16 examples',
     overview: 'Overview', guides: 'Guides', examples: 'Demos', demos: 'Demos',
     home: 'Home', quickStart: 'Quick Start', architecture: 'Host and module integration', routeConfig: 'Route configuration',
@@ -339,7 +346,9 @@ const messages = {
     positionScoped: '指定 getContainerRef',
     positionContainerHelp: '不传 getContainerRef 时容器是 document.body；传入后容器是 getter 返回的元素。切换开关可对比选择器的查找范围；Transition 会自动提供内容容器。',
     positionSettingHelp: 'savePosition: true 保存容器本身的位置（body 对应页面滚动）；字符串在当前容器内查找并保存匹配元素的位置，未匹配时使用容器。本例使用字符串选择器；若改为 true，则保存 body 或外层容器，不会保存内部列表。',
-    positionAdapterHelp: '浏览器位置操作默认可用，无需 ReactDOM。自定义 renderUtils 完全接管默认工具；非 DOM 宿主可提供 position.getPosition、position.setPosition、position.queryPositionTarget 和可选的 storage.getSessionStorage。',
+    positionAdapterHelp: '浏览器位置操作默认可用，无需 ReactDOM。自定义 renderUtils 完全接管默认工具；非 DOM 宿主可提供 '
+      + 'position.getPosition、position.setPosition、position.queryPositionTarget 和可选的 '
+      + 'storage.getSessionStorage。',
     appTitle: 'ReactViewRouter', appSubtitle: '文档与 React 16 可运行示例',
     overview: '概览', guides: '指南', examples: '演示示例', demos: '演示示例',
     home: '首页', quickStart: '快速开始', architecture: '前台与中台集成', routeConfig: '路由配置实践',
