@@ -4444,7 +4444,7 @@ babel-jest@30.4.1, babel-jest@^30.4.1:
     graceful-fs "^4.2.11"
     slash "^3.0.0"
 
-babel-plugin-alias-config@^0:
+babel-plugin-alias-config@^0, babel-plugin-alias-config@^0.0.14:
   version "0.0.16"
   resolved "https://registry.npmjs.org/babel-plugin-alias-config/-/babel-plugin-alias-config-0.0.16.tgz#a06159b75661aa6916b3620c3c797f122ba8694b"
   integrity sha512-i1sPnOcIW2gesRYDJM8j3jlUznTTwH6gqJaS7Ni53Ii8TxNzFi5+M4js7UotfAWjP0e9dRxHQrDNCzGTdK+fLA==
