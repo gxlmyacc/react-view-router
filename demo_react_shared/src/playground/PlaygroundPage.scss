@@ -32,11 +32,19 @@
     gap: 8px;
 
     button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       border: 1px solid #b7cfc0;
       border-radius: 6px;
       padding: 8px 14px;
       background: #fff;
       cursor: pointer;
+
+      &:disabled {
+        cursor: wait;
+        opacity: .65;
+      }
 
       &.is-primary {
         border-color: #278f1c;
@@ -90,6 +98,7 @@
 
   .playground-workspace,
   .playground-preview {
+    position: relative;
     overflow: hidden;
     border: 1px solid #c9d9cf;
     border-radius: 8px;
@@ -121,6 +130,39 @@
 
   .code-editor {
     min-height: 0;
+  }
+
+  .playground-loading {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, .9);
+    color: #315044;
+    z-index: 1;
+  }
+
+  .playground-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: playground-spin .8s linear infinite;
+  }
+
+  @keyframes playground-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .playground-spinner { animation: none; }
   }
 
   iframe {

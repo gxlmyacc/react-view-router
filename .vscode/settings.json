@@ -1,3 +1,20 @@
 {
-  "window.zoomLevel": 0
+  "window.zoomLevel": 0,
+  "eslint.enable": true,
+  "eslint.run": "onType",
+  "eslint.useFlatConfig": false,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.workingDirectories": [
+    ".",
+    "./demo_react_shared",
+    "./demo_react16",
+    "./demo_react17",
+    "./demo_react18",
+    "./demo_react19"
+  ]
 }

@@ -44,6 +44,8 @@ export default function PlaygroundPage(): React.ReactElement {
   const workerRef = useRef<Worker | null>(null);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const compiledWorkspaceRef = useRef<CompiledWorkspace | null>(null);
+  const isRunning = status === 'compiling' || status === 'running';
+  const actionsDisabled = isRunning || status === 'loading' || Boolean(exampleId && !originalWorkspaceRef.current);
 
   useEffect(() => {
     originalWorkspaceRef.current = null;
@@ -159,16 +161,19 @@ export default function PlaygroundPage(): React.ReactElement {
           <p>{t('playgroundDescription')}</p>
         </div>
         <div className="playground-actions">
-          <span className={`playground-status is-${status}`}>{t(`playgroundStatus_${status}`)}</span>
+          <span role="status" className={`playground-status is-${status}`}>{t(`playgroundStatus_${status}`)}</span>
           <button
             type="button"
             aria-pressed={codeCollapsed}
             onClick={() => setCodeCollapsed(current => !current)}
           >{t(codeCollapsed ? 'playgroundExpandCode' : 'playgroundCollapseCode')}</button>
-          <button type="button" disabled={status === 'loading' || Boolean(exampleId && !originalWorkspaceRef.current)}
+          <button type="button" disabled={actionsDisabled}
             onClick={reset}>{t('playgroundReset')}</button>
-          <button className="is-primary" type="button" disabled={status === 'loading' || Boolean(exampleId && !originalWorkspaceRef.current)}
-            onClick={run}>{t('playgroundRun')}</button>
+          <button className="is-primary" type="button" disabled={actionsDisabled} aria-busy={isRunning}
+            onClick={run}>
+            {isRunning && <span className="playground-spinner" aria-hidden="true" />}
+            {t(isRunning ? `playgroundStatus_${status}` : 'playgroundRun')}
+          </button>
         </div>
       </header>
       <div className={`playground-grid${codeCollapsed ? ' is-code-collapsed' : ''}`}>
@@ -179,8 +184,14 @@ export default function PlaygroundPage(): React.ReactElement {
           files={workspace.files}
           onChange={updateFile}
         />
-        <div className="playground-preview">
+        <div className="playground-preview" aria-busy={isRunning}>
           <strong>{t('playgroundPreview')}</strong>
+          {isRunning && (
+            <div className="playground-loading">
+              <span className="playground-spinner" aria-hidden="true" />
+              <span>{t(`playgroundStatus_${status}`)}</span>
+            </div>
+          )}
           <iframe
             key={exampleId}
             ref={frameRef}
