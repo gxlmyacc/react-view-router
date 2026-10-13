@@ -4444,7 +4444,7 @@ babel-jest@30.4.1, babel-jest@^30.4.1:
     graceful-fs "^4.2.11"
     slash "^3.0.0"
 
-babel-plugin-alias-config@^0, babel-plugin-alias-config@^0.0.14:
+babel-plugin-alias-config@^0:
   version "0.0.16"
   resolved "https://registry.npmjs.org/babel-plugin-alias-config/-/babel-plugin-alias-config-0.0.16.tgz#a06159b75661aa6916b3620c3c797f122ba8694b"
   integrity sha512-i1sPnOcIW2gesRYDJM8j3jlUznTTwH6gqJaS7Ni53Ii8TxNzFi5+M4js7UotfAWjP0e9dRxHQrDNCzGTdK+fLA==
@@ -4452,6 +4452,19 @@ babel-plugin-alias-config@^0, babel-plugin-alias-config@^0.0.14:
     "@babel/helper-plugin-utils" "^7.0.0"
     babel-types "^6.26.0"
     core-js "^2"
+    escape-string-regexp "^2.0.0"
+    find-up "^4.1.0"
+    lodash.some "^4.6.0"
+    lodash.template "^4.5.0"
+    require-json5 "^1.1.0"
+
+babel-plugin-alias-config@^0.0.14:
+  version "0.0.14"
+  resolved "https://registry.npmjs.org/babel-plugin-alias-config/-/babel-plugin-alias-config-0.0.14.tgz#4fa9f4ec231c62803c3a95c3f36afcb2864a6d81"
+  integrity sha512-5oIrIaPofa8IABe2cM7nkvJrEgFYdJGIsG0OnnMoGFCYtT/GEv3fTcRQAz/l6HXYfnCDG5GudIV8cDaOcA3eAg==
+  dependencies:
+    "@babel/helper-plugin-utils" "^7.0.0"
+    babel-types "^6.26.0"
     escape-string-regexp "^2.0.0"
     find-up "^4.1.0"
     lodash.some "^4.6.0"
@@ -7026,7 +7039,7 @@ get-package-type@^0.1.0:
   resolved "https://registry.npmjs.org/get-package-type/-/get-package-type-0.1.0.tgz#8de2d803cff44df3bc6c456e6668b36c3926e11a"
   integrity sha1-jeLYA8/0TfO8bEVuZmizbDkm4Ro=
 
-get-proto@^1.0.0, get-proto@^1.0.1:
+get-proto@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/get-proto/-/get-proto-1.0.1.tgz#150b3f2743869ef3e851ec0c49d15b1d14d00ee1"
   integrity sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==
@@ -10357,7 +10370,7 @@ redent@^3.0.0:
     indent-string "^4.0.0"
     strip-indent "^3.0.0"
 
-reflect.getprototypeof@^1.0.10, reflect.getprototypeof@^1.0.9:
+reflect.getprototypeof@^1.0.10, reflect.getprototypeof@^1.0.4, reflect.getprototypeof@^1.0.9:
   version "1.0.10"
   resolved "https://registry.npmjs.org/reflect.getprototypeof/-/reflect.getprototypeof-1.0.10.tgz#c629219e78a3316d8b604c765ef68996964e7bf9"
   integrity sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw==
@@ -10949,7 +10962,7 @@ set-function-length@^1.2.1, set-function-length@^1.2.2:
     gopd "^1.0.1"
     has-property-descriptors "^1.0.2"
 
-set-function-name@^2.0.2:
+set-function-name@^2.0.1, set-function-name@^2.0.2:
   version "2.0.2"
   resolved "https://registry.npmmirror.com/set-function-name/-/set-function-name-2.0.2.tgz#16a705c5a0dc2f5e638ca96d8a8cd4e1c2b90985"
   integrity sha512-7PGFlmtwsEADb0WYyvCMa1t+yke6daIG4Wirafur5kcf+MhUnPms1UeR0CKQdTZD81yESwMHbtn+TR+dMviakQ==
@@ -11099,15 +11112,10 @@ snapdragon@^0.8.1:
     source-map-resolve "^0.5.0"
     use "^3.1.0"
 
-"source-map-js@>=0.6.2 <2.0.0":
-  version "1.0.2"
-  resolved "https://registry.npmjs.org/source-map-js/-/source-map-js-1.0.2.tgz#adbc361d9c62df380125e7f161f71c826f1e490c"
-  integrity sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==
-
-source-map-js@^1.2.1:
-  version "1.2.1"
-  resolved "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz#1ce5650fddd87abc099eda37dcff024c2667ae46"
-  integrity sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==
+"source-map-js@>=0.6.2 <2.0.0", source-map-js@^1.2.1:
+  version "1.2.2"
+  resolved "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz#79fb88d97535a21cb27162cb05d211b67acea4ab"
+  integrity sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==
 
 source-map-resolve@^0.5.0:
   version "0.5.3"
