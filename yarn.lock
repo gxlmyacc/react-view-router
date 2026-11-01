@@ -4444,7 +4444,7 @@ babel-jest@30.4.1, babel-jest@^30.4.1:
     graceful-fs "^4.2.11"
     slash "^3.0.0"
 
-babel-plugin-alias-config@^0, babel-plugin-alias-config@^0.0.14:
+babel-plugin-alias-config@^0:
   version "0.0.16"
   resolved "https://registry.npmjs.org/babel-plugin-alias-config/-/babel-plugin-alias-config-0.0.16.tgz#a06159b75661aa6916b3620c3c797f122ba8694b"
   integrity sha512-i1sPnOcIW2gesRYDJM8j3jlUznTTwH6gqJaS7Ni53Ii8TxNzFi5+M4js7UotfAWjP0e9dRxHQrDNCzGTdK+fLA==
@@ -4452,6 +4452,19 @@ babel-plugin-alias-config@^0, babel-plugin-alias-config@^0.0.14:
     "@babel/helper-plugin-utils" "^7.0.0"
     babel-types "^6.26.0"
     core-js "^2"
+    escape-string-regexp "^2.0.0"
+    find-up "^4.1.0"
+    lodash.some "^4.6.0"
+    lodash.template "^4.5.0"
+    require-json5 "^1.1.0"
+
+babel-plugin-alias-config@^0.0.14:
+  version "0.0.14"
+  resolved "https://registry.npmjs.org/babel-plugin-alias-config/-/babel-plugin-alias-config-0.0.14.tgz#4fa9f4ec231c62803c3a95c3f36afcb2864a6d81"
+  integrity sha512-5oIrIaPofa8IABe2cM7nkvJrEgFYdJGIsG0OnnMoGFCYtT/GEv3fTcRQAz/l6HXYfnCDG5GudIV8cDaOcA3eAg==
+  dependencies:
+    "@babel/helper-plugin-utils" "^7.0.0"
+    babel-types "^6.26.0"
     escape-string-regexp "^2.0.0"
     find-up "^4.1.0"
     lodash.some "^4.6.0"
@@ -7026,7 +7039,7 @@ get-package-type@^0.1.0:
   resolved "https://registry.npmjs.org/get-package-type/-/get-package-type-0.1.0.tgz#8de2d803cff44df3bc6c456e6668b36c3926e11a"
   integrity sha1-jeLYA8/0TfO8bEVuZmizbDkm4Ro=
 
-get-proto@^1.0.0, get-proto@^1.0.1:
+get-proto@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/get-proto/-/get-proto-1.0.1.tgz#150b3f2743869ef3e851ec0c49d15b1d14d00ee1"
   integrity sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==
@@ -10093,9 +10106,9 @@ postcss-load-config@^5.0.0:
     yaml "^2.4.2"
 
 postcss-selector-parser@^6.0.6:
-  version "6.0.10"
-  resolved "https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-6.0.10.tgz#79b61e2c0d1bfc2602d549e11d0876256f8df88d"
-  integrity sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==
+  version "6.1.5"
+  resolved "https://registry.npmjs.org/postcss-selector-parser/-/postcss-selector-parser-6.1.5.tgz#20e988ce8eab87575d54824d9800236c5fd872ca"
+  integrity sha512-TEHFzb5KRDKaOgJ4TYE+0jyJtFbjLvkdVOu0fZ2b6MTWzoqZd4Le+61aEppWkvTlYePgOX4ATL1wsAIPMLTw6Q==
   dependencies:
     cssesc "^3.0.0"
     util-deprecate "^1.0.2"
@@ -10357,7 +10370,7 @@ redent@^3.0.0:
     indent-string "^4.0.0"
     strip-indent "^3.0.0"
 
-reflect.getprototypeof@^1.0.10, reflect.getprototypeof@^1.0.9:
+reflect.getprototypeof@^1.0.10, reflect.getprototypeof@^1.0.4, reflect.getprototypeof@^1.0.9:
   version "1.0.10"
   resolved "https://registry.npmjs.org/reflect.getprototypeof/-/reflect.getprototypeof-1.0.10.tgz#c629219e78a3316d8b604c765ef68996964e7bf9"
   integrity sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw==
@@ -10949,7 +10962,7 @@ set-function-length@^1.2.1, set-function-length@^1.2.2:
     gopd "^1.0.1"
     has-property-descriptors "^1.0.2"
 
-set-function-name@^2.0.2:
+set-function-name@^2.0.1, set-function-name@^2.0.2:
   version "2.0.2"
   resolved "https://registry.npmmirror.com/set-function-name/-/set-function-name-2.0.2.tgz#16a705c5a0dc2f5e638ca96d8a8cd4e1c2b90985"
   integrity sha512-7PGFlmtwsEADb0WYyvCMa1t+yke6daIG4Wirafur5kcf+MhUnPms1UeR0CKQdTZD81yESwMHbtn+TR+dMviakQ==
